@@ -33,11 +33,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          gh release create v0.20.0-test20
-          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V20.md
+          gh release create v0.21.0-test21
+          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V21.md deadcity_source.zip
           --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA"
-          --title "DEAD CITY JAPAN CHRONICLE v20 - unsigned test IPA"
-          --notes "CHRONICLE TEST 20. Adds a three-page opening about Toya and ordinary life at home; prologue pauses simulation time and supports continuing an existing save. Full-command action validation, finite NPC supplies, event image fallbacks, exact save continuation, and landscape text UI. Godot 4.6.3 source tests run in this build. Unsigned arm64 iPhoneOS IPA for SideStore re-signing. Real iPhone installation, Japanese keyboard, safe area, and decades-scale simulation remain unverified. See attached TEST_REPORT_V20.md."
+          --title "DEAD CITY JAPAN CHRONICLE v21 - unsigned test IPA"
+          --notes "CHRONICLE TEST 21. Five-item revision: swipe/tap arbitration on both panels; room/street/shop journeys; positive vitality gauges; configurable protagonist and ordinary-life prologue; 40 stateful autonomous events with delayed/nearby information gating, finite stocks, persistent cooldowns and archive counts. All Godot regression tests run before compilation. Source ZIP and test report attached. Backgrounds are state-aware schematic fallbacks; dedicated anime event illustrations and real iPhone keyboard/touch verification remain incomplete. Unsigned arm64 iPhoneOS IPA for SideStore re-signing."
           --prerelease
       - name: Upload build logs
         if: always()
