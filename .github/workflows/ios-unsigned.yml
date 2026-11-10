@@ -1,0 +1,39 @@
+name: Build SideStore IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - deadcity_source.zip
+      - .github/workflows/ios-unsigned.yml
+permissions:
+  contents: read
+concurrency:
+  group: ios-unsigned
+  cancel-in-progress: false
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack game source
+        run: unzip -q deadcity_source.zip -d game
+      - name: Export Godot and compile unsigned IPA
+        run: bash game/build_scripts/build-ios-unsigned.sh
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeadCityJapan-SideStore-unsigned
+          path: |
+            game/build/DeadCityJapan-Godot-unsigned.ipa
+            game/build/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: game/build/*.log
+          if-no-files-found: ignore
