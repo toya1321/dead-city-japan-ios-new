@@ -1,0 +1,47 @@
+name: Build on-device AI probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [foundation_probe_source.zip]
+permissions:
+  contents: write
+concurrency:
+  group: foundation-probe
+  cancel-in-progress: false
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack isolated probe source
+        run: unzip -q foundation_probe_source.zip -d foundation-probe
+      - name: Compile and validate unsigned iPhone IPA
+        run: bash foundation-probe/build-probe.sh
+      - name: Simulator UI smoke test when available
+        timeout-minutes: 5
+        continue-on-error: true
+        run: bash foundation-probe/simulator-smoke.sh
+      - name: Publish probe download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          files=(foundation-probe/build/DCJ-Local-AI-Probe-v1-unsigned.ipa foundation-probe/build/SHA256SUMS.txt foundation-probe/build/IPA_VALIDATION.json foundation-probe/README.md foundation_probe_source.zip)
+          for file in foundation-probe/build/probe-simulator.png foundation-probe/build/simulator-runtime.json foundation-probe/build/simulator-status.txt; do
+            if [[ -f "$file" ]]; then files+=("$file"); fi
+          done
+          gh release create local-ai-probe-v1 "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "DCJ Local AI Probe v1 - unsigned iPhone test" --notes "Isolated native SwiftUI test for Apple's on-device SystemLanguageModel. No external AI API, API key or PCC. Shows availability, Japanese responses, interpretation checks, latency and detailed errors; exports diagnostics for SideStore vs LiveContainer comparison. iOS 26+, Apple Intelligence-capable device and prepared model required. Unsigned IPA for re-signing. Actual iPhone / LiveContainer inference remains unverified. Does not modify the game." --prerelease
+      - name: Upload probe logs and artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Foundation-Probe-build
+          path: |
+            foundation-probe/build/*.log
+            foundation-probe/build/*.json
+            foundation-probe/build/*.txt
+            foundation-probe/build/*.png
+            foundation-probe/build/*.ipa
+          if-no-files-found: warn
