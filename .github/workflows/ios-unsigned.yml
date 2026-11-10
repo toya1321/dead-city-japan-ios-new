@@ -33,11 +33,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          gh release create v0.23.0-test23
-          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V23.md deadcity_source.zip
+          gh release create v0.24.0-test24
+          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V24.md deadcity_source.zip
           --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA"
-          --title "DEAD CITY JAPAN CHRONICLE v23 - unsigned test IPA"
-          --notes "CHRONICLE TEST 23. Fixes reported touch scrolling and nonresponsive right-panel actions. Reproduced a cold-start emulated-mouse-before-touch capture deadlock using the Godot input pipeline. Scroll areas now suppress emulated mouse independently of event order and reset capture on pause/visibility changes. Adds scaled physical-input tests and preserves desktop mouse and standard GUI emulation. All 31 tests run before compilation. Real iPhone finger testing remains unverified. Source ZIP and focused test report attached. Unsigned IPA for SideStore re-signing."
+          --title "DEAD CITY JAPAN CHRONICLE v24 - unsigned test IPA"
+          --notes "CHRONICLE TEST 24. Replaces the action menu with multiline text input and a two-column scene/chronicle UI. Adds 12 generated photoreal location backgrounds. Managed waits consume finite food/water and include sleep, interrupting on shortage or felt health deterioration. Supports validated multi-action text plans and opt-in AI connection settings. All 35 tests run before export. Actual LLM service and iPhone hardware testing remain unverified; offline parsing works without setup. Unsigned IPA for SideStore re-signing. Source and report attached."
           --prerelease
       - name: Upload build logs
         if: always()
