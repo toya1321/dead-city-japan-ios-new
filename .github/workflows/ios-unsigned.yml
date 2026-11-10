@@ -5,9 +5,8 @@ on:
     branches: [main]
     paths:
       - deadcity_source.zip
-      - .github/workflows/ios-unsigned.yml
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: ios-unsigned
   cancel-in-progress: false
@@ -30,6 +29,16 @@ jobs:
             game/build/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
+      - name: Publish private IPA download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release create v0.2.0-build12
+          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt
+          --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA"
+          --title "DEAD CITY JAPAN v12 - normal city start"
+          --notes "Fix NPC physics transforms and entrance re-entry. Start at 2026-11-10 08:00 with healthy pedestrians, traffic, functioning shops, water and grid. New v12 save preserves v11 data. Unsigned arm64 iOS build; real iPhone verification pending. Later outbreak timeline is not implemented."
+          --prerelease
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
