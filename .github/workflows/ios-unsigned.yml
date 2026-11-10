@@ -33,11 +33,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          gh release create v0.21.0-test21
-          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V21.md deadcity_source.zip
+          gh release create v0.22.0-test22
+          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V22.md deadcity_source.zip
           --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA"
-          --title "DEAD CITY JAPAN CHRONICLE v21 - unsigned test IPA"
-          --notes "CHRONICLE TEST 21. Five-item revision: swipe/tap arbitration on both panels; room/street/shop journeys; positive vitality gauges; configurable protagonist and ordinary-life prologue; 40 stateful autonomous events with delayed/nearby information gating, finite stocks, persistent cooldowns and archive counts. All Godot regression tests run before compilation. Source ZIP and test report attached. Backgrounds are state-aware schematic fallbacks; dedicated anime event illustrations and real iPhone keyboard/touch verification remain incomplete. Unsigned arm64 iPhoneOS IPA for SideStore re-signing."
+          --title "DEAD CITY JAPAN CHRONICLE v22 - unsigned test IPA"
+          --notes "CHRONICLE TEST 22. Normal-play audit of TEST 21 reproduced 16 defects. Fixes central touch log scrolling, inventory visibility, keyboard-space layout, news aliases and knowledge gating, finite order stock, outdoor water, door and barricade consistency, battery-powered work and old long-log save recovery. Includes a 14-cycle normal-input survival scenario with a cohabitant and expanded regression tests. Source and detailed audit report attached. All 29 tests run before compilation. Unsigned arm64 iPhone IPA for SideStore. Dedicated anime event artwork, arbitrary natural-language understanding and real iPhone touch/keyboard validation remain incomplete."
           --prerelease
       - name: Upload build logs
         if: always()
