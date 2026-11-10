@@ -33,16 +33,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          gh release create v0.2.0-build12
-          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt
+          gh release create v0.19.0-test19
+          game/build/DeadCityJapan-Godot-unsigned.ipa game/build/SHA256SUMS.txt game/TEST_REPORT_V19.md
           --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA"
-          --title "DEAD CITY JAPAN v12 - normal city start"
-          --notes "Fix NPC physics transforms and entrance re-entry. Start at 2026-11-10 08:00 with healthy pedestrians, traffic, functioning shops, water and grid. New v12 save preserves v11 data. Unsigned arm64 iOS build; real iPhone verification pending. Later outbreak timeline is not implemented."
+          --title "DEAD CITY JAPAN CHRONICLE v19 - unsigned test IPA"
+          --notes "CHRONICLE TEST 19. Full-command action validation, finite NPC supplies, event image fallbacks, exact save continuation, and landscape text UI. Godot 4.6.3 source tests run in this build. Unsigned arm64 iPhoneOS IPA for SideStore re-signing. Real iPhone installation, Japanese keyboard, safe area, and decades-scale simulation remain unverified. See attached TEST_REPORT_V19.md."
           --prerelease
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: game/build/*.log
+          path: |
+            game/build/*.log
+            game/build/test-results/
           if-no-files-found: ignore
