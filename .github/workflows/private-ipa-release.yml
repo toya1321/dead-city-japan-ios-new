@@ -1,0 +1,47 @@
+name: Prepare private IPA download
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/private-ipa-release.yml]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Retrieve successful unsigned build
+        uses: actions/download-artifact@v8
+        with:
+          name: DeadCityJapan-SideStore-unsigned
+          path: package
+          run-id: 42761715798
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify and publish private download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import pathlib, hashlib, zipfile, plistlib, struct
+          p=pathlib.Path('package/DeadCityJapan-Godot-unsigned.ipa')
+          expected=pathlib.Path('package/SHA256SUMS.txt').read_text().split()[0]
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==expected
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              root='Payload/DeadCityJapan.app/'
+              info=plistlib.loads(z.read(root+'Info.plist'))
+              assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+              data=z.read(root+info['CFBundleExecutable'])
+              h=struct.unpack_from('<8I',data)
+              assert h[0]==0xfeedfacf and h[1]==0x100000c
+              pos=32
+              for _ in range(h[4]):
+                  cmd,size=struct.unpack_from('<II',data,pos)
+                  assert cmd!=0x1d
+                  pos+=size
+              assert any(n.endswith('.pck') for n in z.namelist())
+          print('Verified unsigned arm64 iPhoneOS IPA:', expected)
+          PY
+          gh release create v0.1.0-build11 package/DeadCityJapan-Godot-unsigned.ipa package/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target 2ace1b0aec57c6ed977faadef6ca6b266cc6f8ee --title "DEAD CITY JAPAN v11 - unsigned IPA" --notes "Godot 3D prototype. Unsigned arm64 iPhoneOS build for SideStore re-signing. Build and package verified; installation on iPhone is not yet tested." --prerelease
