@@ -1,0 +1,38 @@
+name: Build Chronicle TEST28 IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [deadcity_test28.zip]
+permissions:
+  contents: write
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack game
+        run: unzip -q deadcity_test28.zip -d game
+      - name: Compile and verify unsigned IPA
+        run: bash game/build_scripts/build-ios-unsigned.sh
+      - name: Publish test build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=v0.28.0-test28
+          assets=(game/build/DeadCityJapan-v28-unsigned.ipa game/build/SHA256SUMS.txt deadcity_test28.zip)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${assets[@]}" --clobber
+          else
+            gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --title "CHRONICLE TEST 28 - District exploration and shelters" --notes "Adds local streets, shops and shelters, portable supplies, overnight stays and persistent shelter caches. Keeps the portrait interface." --prerelease
+          fi
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chronicle-TEST28-build-logs
+          path: |
+            game/build/*.log
+            game/build/test-results/
+          if-no-files-found: ignore
