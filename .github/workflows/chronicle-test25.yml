@@ -1,0 +1,49 @@
+name: Build Chronicle TEST25 IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [deadcity_test25.zip]
+permissions:
+  contents: write
+concurrency:
+  group: chronicle-test25
+  cancel-in-progress: false
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack source
+        run: unzip -q deadcity_test25.zip -d game
+      - name: Compile and verify unsigned IPA
+        run: bash game/build_scripts/build-ios-unsigned.sh
+      - name: Upload IPA and test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chronicle-TEST25-iOS
+          path: |
+            game/build/DeadCityJapan-v25-unsigned.ipa
+            game/build/SHA256SUMS.txt
+            game/build/test-results/
+          if-no-files-found: error
+      - name: Publish test build to private repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=v0.25.0-test25
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" game/build/DeadCityJapan-v25-unsigned.ipa game/build/SHA256SUMS.txt deadcity_test25.zip --clobber
+          else
+            gh release create "$tag" game/build/DeadCityJapan-v25-unsigned.ipa game/build/SHA256SUMS.txt deadcity_test25.zip --target "$GITHUB_SHA" --title "CHRONICLE TEST 25 - Apple on-device AI" --notes "Unsigned iPhone test build. Adds Apple Foundation Models to free text actions. Godot validates time and executes actions. Real-device verification of the integrated app is pending." --prerelease
+          fi
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chronicle-TEST25-build-logs
+          path: |
+            game/build/*.log
+            game/build/test-results/
+          if-no-files-found: ignore
