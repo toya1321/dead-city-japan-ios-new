@@ -1,0 +1,181 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+index e2560f4..1060aeb 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.12"
+-application/version="161"
++application/short_version="0.149.13"
++application/version="162"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index b4326f0..08e2b1d 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '161'
+-assert info['CFBundleShortVersionString'] == '0.149.12'
++assert str(info['CFBundleVersion']) == '162'
++assert info['CFBundleShortVersionString'] == '0.149.13'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.12-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.13-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.12-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.13-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/build_scripts/local_llm/inference.cpp b/build_scripts/local_llm/inference.cpp
+index aa8bd8e..8c5a65a 100644
+--- a/build_scripts/local_llm/inference.cpp
++++ b/build_scripts/local_llm/inference.cpp
+@@ -21,7 +21,7 @@ string ::= "\"" ([^"\\\x00-\x1f] | "\\" ["\\/bfnrt])* "\""
+ ws ::= [ \t]*
+ )GRAM";
+ 
+-// Qwen3 ChatML non-thinking mode. Do not allow user-supplied special tokens.
++// Qwen3 and Qwen3.5 share this non-thinking ChatML template. Escape user-supplied special tokens.
+ std::string escape_markers(std::string text) {
+     for (size_t at = text.find("<"); at != std::string::npos; at = text.find("<", at + 3)) {
+         text.replace(at, 1, "＜");
+@@ -131,8 +131,11 @@ InferenceResult LocalInference::generate(const std::string &path, const std::str
+     result.prompt_tokens = count;
+     // Keep only the identical prefix. Decode at least the final input token to get fresh logits.
+     int prefix = 0;
+-    while (prefix < count - 1 && prefix < static_cast<int>(cached_prompt_.size()) &&
+-           cached_prompt_[prefix] == tokens[prefix]) ++prefix;
++    if (!llama_model_is_hybrid(model_)) {
++        while (prefix < count - 1 && prefix < static_cast<int>(cached_prompt_.size()) &&
++               cached_prompt_[prefix] == tokens[prefix]) ++prefix;
++    }
++    // Hybrid models also retain recurrent state, which cannot roll back to a partial prefix.
+     llama_synchronize(context_);
+     auto memory = llama_get_memory(context_);
+     if (prefix == 0 || !llama_memory_seq_rm(memory, 0, prefix, -1)) {
+diff --git a/build_scripts/local_llm/ios_runtime.mm b/build_scripts/local_llm/ios_runtime.mm
+index 951aa49..d1f64b9 100644
+--- a/build_scripts/local_llm/ios_runtime.mm
++++ b/build_scripts/local_llm/ios_runtime.mm
+@@ -33,12 +33,18 @@ NSURL *model_directory() {
+     return [documents URLByAppendingPathComponent:@"Models" isDirectory:YES];
+ }
+ 
++NSArray<NSString *> *model_names() {
++    return @[@"Qwen3-4B-Q4_K_M", @"Qwen3-1.7B-Q4_K_M",
++             @"Qwen3.5-9B-Q4_K_M", @"Qwen3.5-9B-Q3_K_M"];
++}
++
+ NSString *model_path() {
+     NSFileManager *files = NSFileManager.defaultManager;
+     NSURL *directory = model_directory();
+-    NSArray<NSString *> *names = @[@"Qwen3-4B-Q4_K_M", @"Qwen3-1.7B-Q4_K_M"];
++    NSArray<NSString *> *names = model_names();
+     const int selection = model_choice.load();
+-    if (selection > 0) names = @[names[selection - 1]];
++    // Keep high-memory models opt-in, including when the 4B model is absent.
++    names = selection > 0 ? @[names[selection - 1]] : [names subarrayWithRange:NSMakeRange(0, 2)];
+     for (NSString *name in names) {
+         NSString *filename = [name stringByAppendingPathExtension:@"gguf"];
+         NSURL *path = [directory URLByAppendingPathComponent:filename];
+@@ -60,7 +66,7 @@ std::string snapshot(NSString *model, NSString *phase, const InferenceResult &me
+         @"load_ms": @(metrics.load_ms), @"first_token_ms": @(metrics.first_token_ms),
+         @"total_ms": @(metrics.total_ms), @"generation_ms": @(metrics.generation_ms),
+         @"tokens_per_second": @(rate), @"cached_tokens": @(metrics.cached_tokens),
+-        @"metal": @(metrics.gpu_offload),
++        @"metal": @(metrics.gpu_offload), @"peak_bytes": @(metrics.sampled_peak_bytes),
+         @"error": [NSString stringWithUTF8String:metrics.error.c_str()]
+     };
+     NSData *json = [NSJSONSerialization dataWithJSONObject:data options:0 error:nullptr];
+@@ -78,7 +84,9 @@ id memory_observer;
+ }
+ 
+ extern "C" void dcj_llm_select_model(int64_t choice) {
+-    if (choice >= 0 && choice <= 2) model_choice.store(static_cast<int>(choice));
++    if (choice >= 0 && choice <= static_cast<int64_t>([model_names() count])) {
++        model_choice.store(static_cast<int>(choice));
++    }
+ }
+ 
+ extern "C" char *dcj_llm_status(int64_t id) {
+diff --git a/build_scripts/local_llm/run-real-model-smoke.sh b/build_scripts/local_llm/run-real-model-smoke.sh
+index b5931b2..e83f04e 100755
+--- a/build_scripts/local_llm/run-real-model-smoke.sh
++++ b/build_scripts/local_llm/run-real-model-smoke.sh
+@@ -17,14 +17,20 @@ export DCJ_LLAMA_PROBE="$PWD/build/probe/dcj_local_llm_probe"
+ 
+ run_model() {
+   local variant="$1" url="$2" sha="$3"
+-  export DCJ_GGUF="$PWD/build/models/Qwen3-${variant}-Q4_K_M.gguf"
++  export DCJ_GGUF="$PWD/build/models/${url##*/}"
+   if [[ ! -f "$DCJ_GGUF" ]]; then
+     curl -fLsS --retry 3 "$url" -o "$DCJ_GGUF.part" || return
+     mv "$DCJ_GGUF.part" "$DCJ_GGUF" || return
+   fi
+   printf '%s  %s\n' "$sha" "$DCJ_GGUF" | shasum -a 256 -c - || return
+   local failed=0
+-  if [[ "${DCJ_COMPARE_NPC_ONLY:-0}" != 1 ]]; then
++  if [[ "${DCJ_QWEN35_SMOKE:-0}" == 1 ]]; then
++    local warm_log="build/model-${variant}.tsv"
++    printf '%s\n' '{"spoken_by_player":"青と紫が混ざった色って何色？"}' '{"spoken_by_player":"海の色が好き。君は？"}' |
++      "$DCJ_LLAMA_PROBE" "$DCJ_GGUF" build/probe/system.txt | tee "$warm_log" || failed=1
++    # Reuse the loaded model across two turns, with the recurrent state reset each time.
++    awk -F '\t' 'NF >= 10 && $5 == 0 && $8 == "gpu" && $9 == "ok" { ++ok } END { exit (ok != 2) }' "$warm_log" || failed=1
++  elif [[ "${DCJ_COMPARE_NPC_ONLY:-0}" != 1 ]]; then
+     {
+       printf 'load_ms\tfirst_token_ms\ttotal_ms\tprompt_tokens\tcached_tokens\toutput_tokens\tprocess_peak_rss_bytes\tbackend\tstatus\tjson\n'
+       "$DCJ_LLAMA_PROBE" "$DCJ_GGUF" build/probe/system.txt < build_scripts/local_llm/probe-cases.jsonl
+@@ -42,6 +48,19 @@ run_model() {
+ }
+ 
+ failed=0
++if [[ "${DCJ_QWEN35_SMOKE:-0}" == 1 ]]; then
++  export DCJ_COLOR_REGRESSION_ONLY=1
++  model_base=https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main
++  run_model 9B-Q4 "$model_base/Qwen3.5-9B-Q4_K_M.gguf" \
++    03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8 || failed=1
++  rm -f "$PWD/build/models/Qwen3.5-9B-Q4_K_M.gguf.part"
++  if [[ "${GITHUB_ACTIONS:-}" == true ]]; then
++    rm -f "$PWD/build/models/Qwen3.5-9B-Q4_K_M.gguf"
++  fi
++  run_model 9B-Q3 "$model_base/Qwen3.5-9B-Q3_K_M.gguf" \
++    8fed90306e4f019e2bf35f3766470b7bc59ea1a9dae00f5ceb20b43cb5514393 || failed=1
++  exit "$failed"
++fi
+ run_model 4B \
+   https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf \
+   7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5 || failed=1
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 32a5c22..bd5670e 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -264,7 +264,8 @@ func _build_ui() -> void:
+ 	)
+ 	settings_box.add_child(local_model_toggle)
+ 	local_model_picker = OptionButton.new()
+-	for name in ["自動（4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M"]:
++	for name in ["自動（4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M",
++			"Qwen3.5-9B Q4_K_M", "Qwen3.5-9B Q3_K_M"]:
+ 		local_model_picker.add_item(name)
+ 	local_model_picker.visible = local_model_toggle.visible
+ 	local_model_picker.custom_minimum_size.y = 48
+@@ -426,6 +427,8 @@ func _refresh_local_ai_status() -> void:
+ 	if phase == "done" or phase == "error":
+ 		if state.get("total_ms", 0) > 0:
+ 			local_model_status.text += "\n完了まで: %.2f 秒\n生成速度: %.1f tok/s" % [float(state.total_ms) / 1000.0, float(state.tokens_per_second)]
++		if state.get("peak_bytes", 0) > 0:
++			local_model_status.text += "\nアプリのメモリ使用量（計測ピーク）: %.2f GiB" % (float(state.peak_bytes) / 1073741824.0)
+ 		if not str(state.get("error", "")).is_empty():
+ 			local_model_status.text += "\n状態: " + str(state.error)
+ 
