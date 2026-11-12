@@ -1,0 +1,84 @@
+diff --git a/build_scripts/local_llm/inference.h b/build_scripts/local_llm/inference.h
+index fdec412..c9976ae 100644
+--- a/build_scripts/local_llm/inference.h
++++ b/build_scripts/local_llm/inference.h
+@@ -34,7 +34,7 @@ public:
+     InferenceResult generate(const std::string &path, const std::string &system,
+                              const std::string &input, std::atomic_bool &cancelled,
+                              uint64_t (*measure_memory)() = nullptr,
+-                             const std::function<void(const InferenceResult &)> &progress = {});
++                             const std::function<void(const InferenceResult &)> &progress = {}, bool structured = true);
+     void unload();
+     bool loaded() const { return model_ != nullptr; }
+ 
+diff --git a/build_scripts/local_llm/inference.cpp b/build_scripts/local_llm/inference.cpp
+index 8c5a65a..d399439 100644
+--- a/build_scripts/local_llm/inference.cpp
++++ b/build_scripts/local_llm/inference.cpp
+@@ -54,7 +54,7 @@ void LocalInference::unload() {
+ InferenceResult LocalInference::generate(const std::string &path, const std::string &system,
+                                          const std::string &input, std::atomic_bool &cancelled,
+                                          uint64_t (*measure_memory)(),
+-                                         const std::function<void(const InferenceResult &)> &progress) {
++                                         const std::function<void(const InferenceResult &)> &progress, bool structured) {
+     static std::once_flag backend_init;
+     std::call_once(backend_init, [] { llama_backend_init(); });
+     const auto started = Clock::now();
+@@ -158,9 +158,11 @@ InferenceResult LocalInference::generate(const std::string &path, const std::str
+     std::unique_ptr<llama_sampler, decltype(&llama_sampler_free)> sampler(
+         llama_sampler_chain_init(llama_sampler_chain_default_params()), llama_sampler_free);
+     if (!sampler) return finish("sampler_init_failed");
+-    auto *grammar = llama_sampler_init_grammar(vocab, response_grammar, "root");
+-    if (!grammar) return finish("grammar_init_failed");
+-    llama_sampler_chain_add(sampler.get(), grammar);
++    if (structured) {
++        auto *grammar = llama_sampler_init_grammar(vocab, response_grammar, "root");
++        if (!grammar) return finish("grammar_init_failed");
++        llama_sampler_chain_add(sampler.get(), grammar);
++    }
+     llama_sampler_chain_add(sampler.get(), llama_sampler_init_top_k(24));
+     llama_sampler_chain_add(sampler.get(), llama_sampler_init_temp(0.55f));
+     llama_sampler_chain_add(sampler.get(), llama_sampler_init_dist(seed_));
+@@ -186,7 +188,7 @@ InferenceResult LocalInference::generate(const std::string &path, const std::str
+             if (escaping) escaping = false;
+             else if (current == '\\' && in_string) escaping = true;
+             else if (current == '"') in_string = !in_string;
+-            else if (current == '}' && !in_string) return finish("");
++            else if (structured && current == '}' && !in_string) return finish("");
+         }
+         if (llama_decode(context_, llama_batch_get_one(&token, 1)) != 0)
+             return finish(cancelled.load() ? "cancelled" : "generation_decode_failed");
+diff --git a/build_scripts/local_llm/probe.cpp b/build_scripts/local_llm/probe.cpp
+index 95d548e..8436932 100644
+--- a/build_scripts/local_llm/probe.cpp
++++ b/build_scripts/local_llm/probe.cpp
+@@ -1,6 +1,8 @@
+ #include "inference.h"
+ 
++#include <algorithm>
+ #include <atomic>
++#include <cstdlib>
+ #include <fstream>
+ #include <iostream>
+ #include <iterator>
+@@ -50,9 +52,19 @@ int main(int argc, char **argv) {
+         return output ? 0 : 2;
+     }
+     std::string input;
++    std::string mode;
++    std::string prompt;
++    const bool matrix = std::getenv("DCJ_ACCURACY_MATRIX") != nullptr;
+     bool all_ok = true;
+     while (std::getline(std::cin, input)) {
+-        auto result = inference.generate(argv[1], system, input, cancelled);
++        if (matrix && (!std::getline(std::cin, mode) || !std::getline(std::cin, prompt))) return 2;
++        if (matrix) std::replace(prompt.begin(), prompt.end(), '\v', '\n');
++        auto result = inference.generate(argv[1], matrix ? prompt : system, input, cancelled, nullptr, {}, mode != "plain");
++        if (matrix) {
++            std::string one_line;
++            for (char ch : result.text) one_line += (ch == '\n' || ch == '\r' || ch == '\t') ? ' ' : ch;
++            result.text = one_line;
++        }
+         report(std::cout, result);
+         all_ok = all_ok && result.error.empty() && !result.text.empty();
+     }
