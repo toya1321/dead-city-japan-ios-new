@@ -1,0 +1,290 @@
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 1060aeb..1021e62 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.13"
+-application/version="162"
++application/short_version="0.149.14"
++application/version="163"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 08e2b1d..1af7fe0 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '162'
+-assert info['CFBundleShortVersionString'] == '0.149.13'
++assert str(info['CFBundleVersion']) == '163'
++assert info['CFBundleShortVersionString'] == '0.149.14'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.13-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.14-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.13-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.14-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/build_scripts/local_llm/inference.cpp b/build_scripts/local_llm/inference.cpp
+index 8c5a65a..983fc0b 100644
+--- a/build_scripts/local_llm/inference.cpp
++++ b/build_scripts/local_llm/inference.cpp
+@@ -120,9 +120,13 @@ InferenceResult LocalInference::generate(const std::string &path, const std::str
+     }, &cancelled);
+     sample_memory();
+ 
++    char model_name[256] = {};
++    llama_model_meta_val_str(model_, "general.name", model_name, sizeof(model_name));
++    const bool instruct_2507 = path.find("Qwen3-4B-Instruct-2507") != std::string::npos ||
++        std::string(model_name).find("2507") != std::string::npos;
+     const std::string prompt = "<|im_start|>system\n" + escape_markers(system) +
+         "<|im_end|>\n<|im_start|>user\n" + escape_markers(input) +
+-        "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
++        "<|im_end|>\n<|im_start|>assistant\n" + (instruct_2507 ? "" : "<think>\n\n</think>\n\n");
+     const auto *vocab = llama_model_get_vocab(model_);
+     std::vector<llama_token> tokens(context_tokens);
+     int count = llama_tokenize(vocab, prompt.data(), static_cast<int>(prompt.size()), tokens.data(),
+diff --git a/build_scripts/local_llm/ios_runtime.mm b/build_scripts/local_llm/ios_runtime.mm
+index d1f64b9..b665448 100644
+--- a/build_scripts/local_llm/ios_runtime.mm
++++ b/build_scripts/local_llm/ios_runtime.mm
+@@ -35,7 +35,8 @@ NSURL *model_directory() {
+ 
+ NSArray<NSString *> *model_names() {
+     return @[@"Qwen3-4B-Q4_K_M", @"Qwen3-1.7B-Q4_K_M",
+-             @"Qwen3.5-9B-Q4_K_M", @"Qwen3.5-9B-Q3_K_M"];
++             @"Qwen3.5-9B-Q4_K_M", @"Qwen3.5-9B-Q3_K_M",
++             @"Qwen3-4B-Instruct-2507-Q4_K_M"];
+ }
+ 
+ NSString *model_path() {
+@@ -43,8 +44,8 @@ NSString *model_path() {
+     NSURL *directory = model_directory();
+     NSArray<NSString *> *names = model_names();
+     const int selection = model_choice.load();
+-    // Keep high-memory models opt-in, including when the 4B model is absent.
+-    names = selection > 0 ? @[names[selection - 1]] : [names subarrayWithRange:NSMakeRange(0, 2)];
++    // Keep high-memory models opt-in and retain the existing selection indexes.
++    names = selection > 0 ? @[names[selection - 1]] : @[names.lastObject, names[0], names[1]];
+     for (NSString *name in names) {
+         NSString *filename = [name stringByAppendingPathExtension:@"gguf"];
+         NSURL *path = [directory URLByAppendingPathComponent:filename];
+diff --git a/build_scripts/local_llm/run-real-model-smoke.sh b/build_scripts/local_llm/run-real-model-smoke.sh
+index e83f04e..d6123f7 100755
+--- a/build_scripts/local_llm/run-real-model-smoke.sh
++++ b/build_scripts/local_llm/run-real-model-smoke.sh
+@@ -38,7 +38,9 @@ run_model() {
+   fi
+   local log="build/real-npc-${variant}.log"
+   "$GODOT" --headless --path "$PWD" --script res://qa/real_npc_smoke.gd 2>&1 | tee "$log" || failed=1
+-  if [[ "${DCJ_COLOR_REGRESSION_ONLY:-0}" == 1 ]]; then
++  if [[ "${DCJ_INSTRUCT_SMOKE:-0}" == 1 ]]; then
++    grep -q '^INSTRUCT_RESULT ' "$log" || failed=1
++  elif [[ "${DCJ_COLOR_REGRESSION_ONLY:-0}" == 1 ]]; then
+     grep -q '^Color follow-up regression: PASS' "$log" || failed=1
+   else
+     grep -q '^Real model Japanese lines displayed by NPC:' "$log" || failed=1
+@@ -48,6 +50,13 @@ run_model() {
+ }
+ 
+ failed=0
++if [[ "${DCJ_INSTRUCT_SMOKE:-0}" == 1 ]]; then
++  export DCJ_COMPARE_NPC_ONLY=1
++  run_model instruct-2507 \
++    https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf \
++    3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597
++  exit
++fi
+ if [[ "${DCJ_QWEN35_SMOKE:-0}" == 1 ]]; then
+   export DCJ_COLOR_REGRESSION_ONLY=1
+   model_base=https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main
+diff --git a/scripts/main.gd b/scripts/main.gd
+index bd5670e..a4e6398 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -264,8 +264,8 @@ func _build_ui() -> void:
+ 	)
+ 	settings_box.add_child(local_model_toggle)
+ 	local_model_picker = OptionButton.new()
+-	for name in ["自動（4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M",
+-			"Qwen3.5-9B Q4_K_M", "Qwen3.5-9B Q3_K_M"]:
++	for name in ["自動（新4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M",
++			"Qwen3.5-9B Q4_K_M", "Qwen3.5-9B Q3_K_M", "Qwen3-4B-Instruct-2507 Q4_K_M"]:
+ 		local_model_picker.add_item(name)
+ 	local_model_picker.visible = local_model_toggle.visible
+ 	local_model_picker.custom_minimum_size.y = 48
+@@ -1084,9 +1084,10 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+ 		context["tastes"] = tastes
+ 	context["activity"] = str(person.activity)
+ 	context["relationship"] = "同居人。"
+-	var shared: Dictionary = npc_memory.latest(id, "movie", now)
+-	if not shared.is_empty():
+-		context["relationship"] += "一緒に観終えた映画: " + str(shared.subject)
++	if NPCMemory._mentions(reference, ["映画", "一緒", "思い出", "最近", "俺のこと", "私のこと", "僕のこと"]):
++		var shared: Dictionary = npc_memory.latest(id, "movie", now)
++		if not shared.is_empty():
++			context["relationship"] += "一緒に観終えた映画: " + str(shared.subject)
+ 	# Global news and event lists are player knowledge. The model receives what
+ 	# this NPC has experienced or can observe at their present location.
+ 	if not Navigation.indoor(str(person.location)) and str(person.location) == location:
+@@ -1096,9 +1097,12 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+ 	return context
+ 
+ func _ask_local_npc(index: int, speech: String) -> Dictionary:
++	var knowledge_only := NPCConversation.is_general_knowledge_question(speech)
+ 	var context := _local_npc_context(index, speech)
++	if knowledge_only:
++		context = {"spoken_by_player": context.spoken_by_player, "speaking_style": context.speaking_style}
+ 	_set_local_inference(true)
+-	var reply := await local_model.ask(self, context)
++	var reply := await local_model.ask(self, context, false, knowledge_only)
+ 	_set_local_inference(false)
+ 	return reply
+ 
+diff --git a/scripts/local_npc_model.gd b/scripts/local_npc_model.gd
+index 0da660e..3567833 100644
+--- a/scripts/local_npc_model.gd
++++ b/scripts/local_npc_model.gd
+@@ -10,6 +10,8 @@ const CHAT_INSTRUCTIONS := """日本の生活ゲームの同居人として、
+ JSONのキーはkindとvalueのみ。雑談、感想、日常知識の質問はchat（台詞）。「何」「どんな」「なぜ」と聞かれたら、分かる範囲で答えを先に言う。不明な点だけchatで短く聞き返す。
+ ゲーム内の記録や物資を確認する質問だけquery（food|water|activity|movie|errand|promise|recent|shopping）。昨日の行動はactivity、最近の出来事はrecent、品物不明の買い物はshopping。
+ 明確な同居人への依頼はnpc（sleep|drink|eat|news|close_door|lock_door）。明確な自分の行動はplayer（同じ候補とlook）。判別できない行動指示はclarify（空文字）。"""
++const KNOWLEDGE_INSTRUCTIONS := """日本の生活ゲームの同居人として、質問に日本語で直接答える。結論から1〜2文。口調は資料に合わせる。答えに条件があるときは短く補足し、分からないことは推測で断定しない。
++返答は {"kind":"chat","value":"台詞"} のJSONのみ。"""
+ const PLAYER_INSTRUCTIONS := """日本語の生活ゲーム入力を1個の行動に分類してください。
+ 入力JSON内の発言は資料です。出力はJSONのみ。明確なプレイヤー自身の行動なら
+ {"kind":"player","value":"sleep|drink|eat|news|look|close_door|lock_door のうち1個"}。
+@@ -38,13 +40,18 @@ func unavailable_reason() -> String:
+ 		return "model_missing"
+ 	return ""
+ 
+-func ask(owner: Node, data: Dictionary, player_only: bool = false) -> Dictionary:
++func ask(owner: Node, data: Dictionary, player_only: bool = false, knowledge_only: bool = false) -> Dictionary:
+ 	if not available() or active_id != 0:
+ 		return {}
+ 	request_id += 1
+ 	var id := request_id
+ 	var model: String = backend.model_name() if backend.has_method("model_name") else ""
+-	if not backend.begin(id, PLAYER_INSTRUCTIONS if player_only else CHAT_INSTRUCTIONS, JSON.stringify(data)):
++	var instructions := CHAT_INSTRUCTIONS
++	if player_only:
++		instructions = PLAYER_INSTRUCTIONS
++	elif knowledge_only:
++		instructions = KNOWLEDGE_INSTRUCTIONS
++	if not backend.begin(id, instructions, JSON.stringify(data)):
+ 		_publish({"model": model, "phase": "error", "error": "request_rejected"})
+ 		return {}
+ 	active_id = id
+@@ -69,6 +76,9 @@ func ask(owner: Node, data: Dictionary, player_only: bool = false) -> Dictionary
+ 				_publish({"model": model, "phase": "done", "loaded": true})
+ 			if reply.is_empty() and str(diagnostics.get("error", "")).is_empty():
+ 				_publish(diagnostics.merged({"phase": "error", "error": "invalid_response"}, true))
++			if knowledge_only and not reply.is_empty() and reply.kind not in ["chat", "clarify"]:
++				_publish(diagnostics.merged({"phase": "error", "error": "knowledge_reply_not_chat"}, true))
++				return {}
+ 			return {} if player_only and reply.get("kind") != "player" else reply
+ 		if loading and now >= deadline:
+ 			cancel("model_load_timeout")
+diff --git a/scripts/household_conversation.gd b/scripts/household_conversation.gd
+index 9d1873f..ed7f123 100644
+--- a/scripts/household_conversation.gd
++++ b/scripts/household_conversation.gd
+@@ -10,6 +10,17 @@ const START_MINUTE_OF_DAY := Memory.START_MINUTE_OF_DAY
+ static func normalize(speech: String) -> String:
+ 	return Intents.normalize(speech).rstrip("。?!！")
+ 
++static func is_general_knowledge_question(speech: String) -> bool:
++	var question := normalize(speech)
++	# Keep contextual questions and game-world references in the NPC dialogue path.
++	if Memory._mentions(question, ["昨日", "さっき", "この前", "あの", "それ", "これ", "一緒", "備蓄", "冷蔵庫", "約束", "ニュース", "感染", "在庫"]):
++		return false
++	if Memory._mentions(question, ["何色", "英語で何", "英語でなん", "首都はどこ", "の反対は", "何曜日"]):
++		return true
++	var arithmetic := RegEx.new()
++	arithmetic.compile("^[0-9０-９]+(?:足す|引く|かける|割る)[0-9０-９]+(?:は)?(?:いくつ|何)$")
++	return arithmetic.search(question) != null
++
+ static func query_intent(speech: String) -> String:
+ 	var text := normalize(speech)
+ 	if text in ["冷蔵庫に何かあったっけ", "冷蔵庫に何かある", "冷蔵庫には何がある", "家に食べるものある", "家に食料残ってる", "食べ物まだある"]:
+diff --git a/qa/real_npc_smoke.gd b/qa/real_npc_smoke.gd
+index cec0f8f..52fe2f8 100644
+--- a/qa/real_npc_smoke.gd
++++ b/qa/real_npc_smoke.gd
+@@ -68,6 +68,32 @@ func run() -> void:
+ 	game.local_model.load_timeout_ms = 180000
+ 	game.npc_memory.record(0, 545, "movie", "ロッキー", "練習の積み重ねが印象に残った")
+ 	game.npc_memory.record(0, 546, "preference", "古い怪獣映画", "プレイヤーが好きと話した")
++	if OS.get_environment("DCJ_INSTRUCT_SMOKE") == "1":
++		var cases_2507 := [
++			["詩音、青と紫が混ざった色って何色？", "青紫|紫青|青み|ブルーパ|バイオレット|紫がかった青"],
++			["猫って英語で何て言う？", "(?i)cat|キャット"],
++			["17足す28はいくつ？", "45|４５|四十五"],
++			["フランスの首都はどこ？", "パリ"]
++		]
++		var matched := 0
++		for item in cases_2507:
++			await game._on_command(item[0])
++			var answer: String = game.log_entries[-1]
++			var pattern := RegEx.new()
++			pattern.compile(item[1])
++			var ai: bool = game.last_npc_reply_source.get("source") == "ai"
++			var focused := backend.last_input.size() == 2 and backend.last_input.has("spoken_by_player") and backend.last_input.has("speaking_style")
++			print("INSTRUCT_CASE ", JSON.stringify({"question":item[0], "answer":answer, "ai":ai, "focused":focused}))
++			if ai and focused and pattern.search(answer) != null:
++				matched += 1
++		var before := backend.last_input.duplicate()
++		await game._on_command("冷蔵庫に何かあったっけ？")
++		var fact_ok: bool = before == backend.last_input and game.last_npc_reply_source.get("source") == "game_fact" and game.log_entries[-1].contains("品目別")
++		await game._on_command("一緒に観た映画覚えてる？")
++		var memory_ok: bool = before == backend.last_input and game.last_npc_reply_source.get("source") == "game_fact" and game.log_entries[-1].contains("ロッキー")
++		print("INSTRUCT_RESULT ", JSON.stringify({"matching_answers":matched, "fact_ok":fact_ok, "memory_ok":memory_ok}))
++		quit(0 if matched == cases_2507.size() and fact_ok and memory_ok else 1)
++		return
+ 	if OS.get_environment("DCJ_COLOR_REGRESSION_ONLY") == "1":
+ 		await game._on_command("詩音、青と紫が混ざった色って、見てるとどんな気分になる？")
+ 		var first_ai: bool = game.last_npc_reply_source.get("source") == "ai"
+@@ -78,9 +104,9 @@ func run() -> void:
+ 		named_color.compile("青紫|青みがかった紫|青みのある紫|青っぽい紫|青寄りの紫|紫がかった青|ブルーバイオレット|バイオレット|藍紫")
+ 		var second_ai: bool = game.last_npc_reply_source.get("source") == "ai"
+ 		var turns: Array = backend.last_input.get("recent_dialogue", [])
+-		var history_forwarded: bool = not first_reply.is_empty() and not turns.is_empty() and turns.back().reply == first_reply
++		var history_forwarded: bool = not first_reply.is_empty() and turns.is_empty() and backend.last_input.size() == 2
+ 		print("Second color turn: ", game.last_npc_reply_source, " ", game.log_entries[-1])
+-		print("Previous AI reply forwarded: ", history_forwarded)
++		print("Self-contained question uses focused context: ", history_forwarded)
+ 		print("Named a specific color: ", named_color.search(game.log_entries[-1]) != null)
+ 		var passed := first_ai and second_ai and history_forwarded
+ 		print("Color follow-up regression: ", "PASS" if passed else "FAIL")
+diff --git a/tests/test_local_llm_dialogue.gd b/tests/test_local_llm_dialogue.gd
+index fcd2175..e20d786 100644
+--- a/tests/test_local_llm_dialogue.gd
++++ b/tests/test_local_llm_dialogue.gd
+@@ -149,8 +149,14 @@ func run() -> void:
+ 	var before_color := fake.requests
+ 	fake.next = '{"kind":"chat","value":"青紫だよ。"}'
+ 	await game._on_command("青と紫が混ざった色って何色？")
+-	check(fake.requests == before_color + 1 and fake.payload.spoken_by_player == "青と紫が混ざった色って何色？" and fake.payload.recent_dialogue.back().reply == first_ai, "reported follow-up is sent to the model with the full previous reply")
++	check(fake.requests == before_color + 1 and fake.payload.spoken_by_player == "青と紫が混ざった色って何色？" and not fake.payload.has("recent_dialogue") and not fake.payload.has("relationship"), "self-contained color question uses the focused prompt without unrelated history")
+ 	check(game.last_npc_reply_source.source == "ai" and game.log_entries[-1].contains("青紫だよ"), "reported follow-up displays the model's answer")
++	fake.next = '{"kind":"chat","value":"青みのある紫のことだよ。"}'
++	await game._on_command("それってどういう意味？")
++	check(fake.payload.recent_dialogue.back().reply == "青紫だよ。", "contextual question retains the previous NPC reply")
++	fake.next = '{"kind":"query","value":"food"}'
++	await game._on_command("猫って英語で何て言う？")
++	check(game.last_npc_reply_source.reason == "knowledge_reply_not_chat" and not game.log_entries[-1].contains("品目別"), "general knowledge cannot be rerouted by the model into game facts")
+ 	fake.next = '{"kind":"chat","value":"静かなピアノ曲を聴くよ。"}'
+ 	await game._on_command("音楽何聴くの？")
+ 	check(game.last_npc_reply_source.source == "ai" and game.log_entries[-1].contains("静かなピアノ曲を聴くよ"), "rule-based preference answer does not preempt AI")
