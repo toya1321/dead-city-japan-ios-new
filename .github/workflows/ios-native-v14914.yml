@@ -4,6 +4,7 @@ on:
   push:
     branches: [recovery/v149.14-ios]
     paths:
+      - '.github/workflows/ios-native-v14914.yml'
       - 'ci/v149.14-instruct.patch'
       - 'ci/v149.10-ios-build.patch'
       - 'ci/v149.10-source/**'
@@ -19,7 +20,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 55
     defaults:
       run:
