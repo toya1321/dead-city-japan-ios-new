@@ -405,3 +405,22 @@ index de7df74..fcd2175 100644
  	check(LocalModel.parse('{"kind":"chat","value":"一文。二文？三文！四文。"}').is_empty(), "chat is limited to three sentences")
  	check(LocalModel.parse('{"kind":"player","value":"save"}').is_empty(), "model cannot choose a save or arbitrary command")
  	check(LocalModel.parse('{"kind":"chat","value":"台詞","world":{}}').is_empty(), "unknown state fields rejected")
+diff --git a/tests/test_v94_question_dedup.py b/tests/test_v94_question_dedup.py
+index c8a1c1b..d455b12 100644
+--- a/tests/test_v94_question_dedup.py
++++ b/tests/test_v94_question_dedup.py
+@@ -7,9 +7,11 @@ checks=[
+ 'func _last_question(reply: String) -> String:',
+ 'if not _is_answer_to_question(old_question, recorded_answer):',
+ 'if prefix.is_empty():',
+-'else:\n\t\t\treply = dialogue.avoid_repeated_question(index, speech, reply)',
++'reply = dialogue.avoid_repeated_question(index, speech, reply)',
+ '\tdialogue.remember(index, speech, reply)',
+ ]
+ for c in checks: assert c in d+m,c
+-assert m.index('reply = dialogue.avoid_repeated_question(index, speech, reply)') < m.index('dialogue.remember(index, speech, reply)')
+-print('v94 static checks:',len(checks) + 1,'passed')
++talk = m[m.index('func _talk_to('):m.index('func _record_npc_memory(')]
++assert talk.index('reply = dialogue.offline_reply(world, index, speech, observed_news)') < talk.index('reply = dialogue.avoid_repeated_question(index, speech, reply)')
++assert talk.index('reply = dialogue.avoid_repeated_question(index, speech, reply)') < talk.index('_finish_npc_reply(index, speech, reply, source, reason)')
++print('v94 static checks:',len(checks) + 2,'passed')
