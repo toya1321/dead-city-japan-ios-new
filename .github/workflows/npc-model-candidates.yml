@@ -1,0 +1,50 @@
+name: Compare NPC model candidates
+on:
+  push:
+    branches: [qa/npc-model-candidates]
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    runs-on: macos-15
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Qwen3-4B-Instruct-2507
+            template: qwen2507
+            url: https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf
+            sha: 3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597
+          - label: Gemma4-E4B
+            template: gemma4
+            url: https://huggingface.co/lmstudio-community/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf
+            sha: 0ffb122c8b6921f13cbc34186e052524d0b5803b17f4867b7197a561400b3770
+          - label: Qwen35-9B-Q4
+            template: qwen35
+            url: https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-Q4_K_M.gguf
+            sha: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build evaluation probe
+        run: bash ci/npc-candidates/setup.sh
+      - name: Download and verify the model
+        env:
+          MODEL_URL: ${{ matrix.url }}
+          MODEL_SHA: ${{ matrix.sha }}
+        run: |
+          curl -fLsS --retry 3 "$MODEL_URL" -o "$RUNNER_TEMP/model.gguf"
+          printf '%s  %s\n' "$MODEL_SHA" "$RUNNER_TEMP/model.gguf" | shasum -a 256 -c -
+      - name: Evaluate both prompt conditions
+        env:
+          DCJ_EVAL_TEMPLATE: ${{ matrix.template }}
+        run: python3 ci/npc-candidates/run.py "$RUNNER_TEMP/probe/dcj_local_llm_probe" "$RUNNER_TEMP/model.gguf"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.label }}-answers
+          path: results/
+          if-no-files-found: ignore
