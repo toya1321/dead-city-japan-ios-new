@@ -151,7 +151,7 @@ index 32c2107..0da660e 100644
  			return {} if player_only and reply.get("kind") != "player" else reply
  		if loading and now >= deadline:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 38a1f91..dc59a5b 100644
+index 38a1f91..32a5c22 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -26,6 +26,7 @@ var local_model_toggle: CheckButton
@@ -171,15 +171,6 @@ index 38a1f91..dc59a5b 100644
  	if state.is_empty():
  		local_model_status.text += "\n推論結果: 未計測"
  		return
-@@ -826,7 +829,7 @@ func _update_dialogue_input() -> void:
- 		return
- 	if dialogue.partner >= 0:
- 		var person: Dictionary = world.s.household_members[dialogue.partner]
--		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
-+		if not dialogue.obstacle(world, location, person).is_empty():
- 			dialogue.partner = -1
- 	command_input.placeholder_text = "どうする？"
- 	if dialogue.partner >= 0:
 @@ -841,11 +844,11 @@ func _talk_to(index: int, speech: String) -> void:
  		return
  	var query := NPCConversation.query_intent(speech)
