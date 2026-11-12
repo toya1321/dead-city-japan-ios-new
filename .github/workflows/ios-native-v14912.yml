@@ -39,6 +39,7 @@ jobs:
           git apply --directory=game ci/v149.11-local-ai.patch
           git apply --directory=game ci/v149.11-comparison.patch
           git apply --directory=game ci/v149.12-dialogue.patch
+          git apply --directory=game ci/v149.12-conversation-qa.patch
       - name: Build and verify native unsigned arm64 IPA
         working-directory: game
         env:

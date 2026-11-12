@@ -1,0 +1,44 @@
+diff --git a/qa/real_npc_smoke.gd b/qa/real_npc_smoke.gd
+index 9c33db9..cec0f8f 100644
+--- a/qa/real_npc_smoke.gd
++++ b/qa/real_npc_smoke.gd
+@@ -8,6 +8,7 @@ class RealModel extends RefCounted:
+ 	var model := OS.get_environment("DCJ_GGUF")
+ 	var process := -1
+ 	var raw := ""
++	var last_input: Dictionary = {}
+ 	var work := ProjectSettings.globalize_path("user://local-llm-smoke")
+ 
+ 	func model_available() -> bool:
+@@ -17,6 +18,7 @@ class RealModel extends RefCounted:
+ 		return false
+ 
+ 	func begin(_id: int, instructions: String, input: String) -> bool:
++		last_input = JSON.parse_string(input)
+ 		DirAccess.make_dir_recursive_absolute(work)
+ 		for pair in [["system.txt", instructions], ["input.json", input]]:
+ 			var file := FileAccess.open(work.path_join(pair[0]), FileAccess.WRITE)
+@@ -69,14 +71,20 @@ func run() -> void:
+ 	if OS.get_environment("DCJ_COLOR_REGRESSION_ONLY") == "1":
+ 		await game._on_command("詩音、青と紫が混ざった色って、見てるとどんな気分になる？")
+ 		var first_ai: bool = game.last_npc_reply_source.get("source") == "ai"
++		var first_reply := str(game.LocalNPCModel.parse(backend.raw).get("value", ""))
+ 		print("First color turn: ", game.last_npc_reply_source, " ", game.log_entries[-1])
+ 		await game._on_command("青と紫が混ざった色って何色？")
+ 		var named_color := RegEx.new()
+ 		named_color.compile("青紫|青みがかった紫|青みのある紫|青っぽい紫|青寄りの紫|紫がかった青|ブルーバイオレット|バイオレット|藍紫")
+-		var second_ai: bool = game.last_npc_reply_source.get("source") == "ai" and named_color.search(game.log_entries[-1]) != null
++		var second_ai: bool = game.last_npc_reply_source.get("source") == "ai"
++		var turns: Array = backend.last_input.get("recent_dialogue", [])
++		var history_forwarded: bool = not first_reply.is_empty() and not turns.is_empty() and turns.back().reply == first_reply
+ 		print("Second color turn: ", game.last_npc_reply_source, " ", game.log_entries[-1])
+-		print("Color follow-up regression: ", "PASS" if first_ai and second_ai else "FAIL")
+-		quit(0 if first_ai and second_ai else 1)
++		print("Previous AI reply forwarded: ", history_forwarded)
++		print("Named a specific color: ", named_color.search(game.log_entries[-1]) != null)
++		var passed := first_ai and second_ai and history_forwarded
++		print("Color follow-up regression: ", "PASS" if passed else "FAIL")
++		quit(0 if passed else 1)
+ 		return
+ 	var recognized := 0
+ 	var japanese := RegEx.new()
