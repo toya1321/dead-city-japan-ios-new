@@ -1,0 +1,71 @@
+name: Build v149.12 native Qwen IPA
+
+on:
+  push:
+    branches: [recovery/v149.12-ios]
+    paths:
+      - 'ci/v149.12-dialogue.patch'
+      - 'ci/v149.10-ios-build.patch'
+      - 'ci/v149.10-source/**'
+  workflow_dispatch:
+    inputs:
+      run_model_smoke:
+        description: Run the color follow-up with the real Qwen3-4B model on macOS
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 55
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and unpack v149.10 source
+        run: |
+          source_parts=(ci/v149.10-source/part-*)
+          test "${#source_parts[@]}" -eq 30
+          archive="$RUNNER_TEMP/deadcity-v149.10.zip"
+          cat "${source_parts[@]}" > "$archive"
+          printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
+          unzip -tq "$archive"
+          unzip -q "$archive" -d game
+          git apply --directory=game ci/v149.10-ios-build.patch
+          git apply --directory=game ci/v149.11-local-ai.patch
+          git apply --directory=game ci/v149.11-comparison.patch
+          git apply --directory=game ci/v149.12-dialogue.patch
+      - name: Build and verify native unsigned arm64 IPA
+        working-directory: game
+        env:
+          DCJ_LOCAL_LLM: '1'
+        run: bash build_scripts/build-ios-unsigned.sh
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeadCityJapan-v149.12-local-llm-unsigned
+          path: |
+            game/build/DeadCityJapan-v149.12-local-llm-unsigned.ipa
+            game/build/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Reproduce the reported conversation with real Qwen3-4B
+        if: github.event_name == 'push' || inputs.run_model_smoke
+        working-directory: game
+        env:
+          DCJ_COLOR_REGRESSION_ONLY: '1'
+          DCJ_COMPARE_NPC_ONLY: '1'
+        run: bash build_scripts/local_llm/run-real-model-smoke.sh 2>&1 | tee build/real-model-runner.log
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v149.12-ios-and-model-logs
+          path: |
+            game/build/*.log
+            game/build/*.tsv
+            game/build/test-results/
+          if-no-files-found: ignore
