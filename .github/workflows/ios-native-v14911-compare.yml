@@ -1,0 +1,57 @@
+name: Compare Qwen NPC dialogue on macOS
+
+on:
+  push:
+    branches: [recovery/v149.11-ios]
+    paths:
+      - 'ci/v149.11-comparison.patch'
+      - '.github/workflows/ios-native-v14911-compare.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: macos-15
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack and verify the game source
+        run: |
+          archive="$RUNNER_TEMP/deadcity-v149.10.zip"
+          cat ci/v149.10-source/part-* > "$archive"
+          printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
+          unzip -q "$archive" -d game
+          git apply --directory=game ci/v149.10-ios-build.patch
+          git apply --directory=game ci/v149.11-local-ai.patch
+          git apply --directory=game ci/v149.11-comparison.patch
+      - name: Prepare Godot and llama.cpp
+        working-directory: game
+        run: |
+          mkdir -p build/tools
+          touch build/.gdignore
+          cd build/tools
+          base=https://github.com/godotengine/godot/releases/download/4.6.3-stable
+          editor=Godot_v4.6.3-stable_macos.universal.zip
+          curl -fLsS --retry 3 "$base/$editor" -o "$editor"
+          curl -fLsS --retry 3 "$base/SHA512-SUMS.txt" -o SHA512-SUMS.txt
+          grep -F "$editor" SHA512-SUMS.txt | shasum -a 512 -c -
+          unzip -q "$editor"
+          curl -fLsS --retry 3 https://github.com/ggml-org/llama.cpp/archive/refs/tags/b12247.tar.gz -o llama.tar.gz
+          tar -xzf llama.tar.gz
+      - name: Verify both models in the same Godot conversation
+        working-directory: game
+        env:
+          DCJ_COMPARE_NPC_ONLY: '1'
+        run: |
+          build/tools/Godot.app/Contents/MacOS/Godot --headless --path . --editor --import --quit
+          bash build_scripts/local_llm/run-real-model-smoke.sh 2>&1 | tee build/real-model-runner.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v149.11-npc-model-comparison
+          path: game/build/*.log
+          if-no-files-found: ignore

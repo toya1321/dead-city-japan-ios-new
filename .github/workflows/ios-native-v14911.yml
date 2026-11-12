@@ -3,6 +3,10 @@ name: Build v149.11 native Qwen IPA
 on:
   push:
     branches: [recovery/v149.11-ios]
+    paths:
+      - 'ci/v149.11-local-ai.patch'
+      - 'ci/v149.10-ios-build.patch'
+      - 'ci/v149.10-source/**'
   workflow_dispatch:
     inputs:
       run_model_smoke:
@@ -33,6 +37,7 @@ jobs:
           unzip -q "$archive" -d game
           git apply --directory=game ci/v149.10-ios-build.patch
           git apply --directory=game ci/v149.11-local-ai.patch
+          git apply --directory=game ci/v149.11-comparison.patch
       - name: Build and verify native unsigned arm64 IPA
         working-directory: game
         env:

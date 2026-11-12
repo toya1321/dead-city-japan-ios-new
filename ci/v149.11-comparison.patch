@@ -1,0 +1,39 @@
+diff --git a/qa/real_npc_smoke.gd b/qa/real_npc_smoke.gd
+index fd38f7e..ba543ae 100644
+--- a/qa/real_npc_smoke.gd
++++ b/qa/real_npc_smoke.gd
+@@ -85,7 +85,7 @@ func run() -> void:
+ 		await game._on_command("詩音、" + prompt)
+ 		var actual: Dictionary = game.LocalNPCModel.parse(backend.raw)
+ 		var line: String = game.log_entries[-1]
+-		var displayed := actual.get("kind") == "chat" and japanese.search(str(actual.get("value", ""))) != null and line.contains(str(actual.get("value", "")))
++		var displayed: bool = actual.get("kind") == "chat" and japanese.search(str(actual.get("value", ""))) != null and line.contains(str(actual.get("value", "")))
+ 		var memory_ok := not expected.is_empty() and line.contains(expected)
+ 		print(JSON.stringify({"prompt":prompt, "raw_model":backend.raw, "npc_line":line, "generated_displayed":displayed,
+ 			"expected_memory":expected, "memory_correct":memory_ok, "used_model":not backend.raw.is_empty()}))
+diff --git a/build_scripts/local_llm/run-real-model-smoke.sh b/build_scripts/local_llm/run-real-model-smoke.sh
+index 7cd0ea6..11b3b2d 100755
+--- a/build_scripts/local_llm/run-real-model-smoke.sh
++++ b/build_scripts/local_llm/run-real-model-smoke.sh
+@@ -24,11 +24,16 @@ run_model() {
+   fi
+   printf '%s  %s\n' "$sha" "$DCJ_GGUF" | shasum -a 256 -c - || return
+   local failed=0
+-  {
+-    printf 'load_ms\tfirst_token_ms\ttotal_ms\tprompt_tokens\tcached_tokens\toutput_tokens\tprocess_peak_rss_bytes\tbackend\tstatus\tjson\n'
+-    "$DCJ_LLAMA_PROBE" "$DCJ_GGUF" build/probe/system.txt < build_scripts/local_llm/probe-cases.jsonl
+-  } | tee "build/model-${variant}.tsv" || failed=1
+-  "$GODOT" --headless --path "$PWD" --script res://qa/real_npc_smoke.gd 2>&1 | tee "build/real-npc-${variant}.log" || failed=1
++  if [[ "${DCJ_COMPARE_NPC_ONLY:-0}" != 1 ]]; then
++    {
++      printf 'load_ms\tfirst_token_ms\ttotal_ms\tprompt_tokens\tcached_tokens\toutput_tokens\tprocess_peak_rss_bytes\tbackend\tstatus\tjson\n'
++      "$DCJ_LLAMA_PROBE" "$DCJ_GGUF" build/probe/system.txt < build_scripts/local_llm/probe-cases.jsonl
++    } | tee "build/model-${variant}.tsv" || failed=1
++  fi
++  local log="build/real-npc-${variant}.log"
++  "$GODOT" --headless --path "$PWD" --script res://qa/real_npc_smoke.gd 2>&1 | tee "$log" || failed=1
++  grep -q '^Real model Japanese lines displayed by NPC:' "$log" || failed=1
++  grep -q '^NPC memory checks ' "$log" || failed=1
+   return "$failed"
+ }
+ 
