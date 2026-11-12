@@ -31,6 +31,7 @@ jobs:
           printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
           unzip -tq "$archive"
           unzip -q "$archive" -d game
+          git apply --directory=game ci/v149.10-ios-build.patch
       - name: Build and verify native unsigned arm64 IPA
         working-directory: game
         env:

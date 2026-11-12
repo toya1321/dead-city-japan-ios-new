@@ -1,0 +1,18 @@
+--- a/build_scripts/local_llm/build-ios-plugin.sh
++++ b/build_scripts/local_llm/build-ios-plugin.sh
+@@ -39,10 +39,13 @@
+ (
+   cd "$ENGINE"
+   "$TOOLS/plugin-venv/bin/scons" platform=ios target=template_release arch=arm64 \
+-    simulator=no dcj_local_llm_bridge
++    simulator=no redirect_build_objects=no dcj_local_llm_bridge
+ )
+ OBJECT="$(find "$ENGINE/modules/dcj_local_llm" -name 'bridge*.o' -type f -print -quit)"
+-test -f "$OBJECT"
++if [[ ! -f "$OBJECT" ]]; then
++  echo 'SCons did not write the iOS bridge object to the module directory.' >&2
++  exit 1
++fi
+ xcrun --sdk iphoneos clang++ -target arm64-apple-ios16.4 -isysroot "$SDK" \
+   -std=c++17 -O2 -DDCJ_REQUIRE_METAL -I "$LLAMA/include" -I "$LLAMA/ggml/include" \
+   -c "$BRIDGE_DIR/inference.cpp" -o "$TOOLS/inference.o"
