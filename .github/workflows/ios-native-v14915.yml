@@ -5,6 +5,7 @@ on:
     branches: [recovery/v149.15-ios]
     paths:
       - 'ci/v149.15-grounded.patch'
+      - 'ci/v149.15-smoke.patch'
       - 'ci/v149.10-ios-build.patch'
       - 'ci/v149.10-source/**'
   workflow_dispatch:
@@ -43,6 +44,7 @@ jobs:
           git apply --directory=game ci/v149.13-qwen35.patch
           git apply --directory=game ci/v149.14-instruct.patch
           git apply --directory=game ci/v149.15-grounded.patch
+          git apply --directory=game ci/v149.15-smoke.patch
       - name: Build and verify native unsigned arm64 IPA
         working-directory: game
         env:

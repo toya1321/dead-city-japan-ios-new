@@ -1,0 +1,26 @@
+diff --git a/qa/real_npc_smoke.gd b/qa/real_npc_smoke.gd
+index de257b0..7613871 100644
+--- a/qa/real_npc_smoke.gd
++++ b/qa/real_npc_smoke.gd
+@@ -101,18 +101,12 @@ func run() -> void:
+ 	if OS.get_environment("DCJ_COLOR_REGRESSION_ONLY") == "1":
+ 		await game._on_command("詩音、青と紫が混ざった色って、見てるとどんな気分になる？")
+ 		var first_ai: bool = game.last_npc_reply_source.get("source") == "ai"
+-		var first_reply := str(game.LocalNPCModel.parse(backend.raw).get("value", ""))
++		var previous_input := backend.last_input.duplicate()
+ 		print("First color turn: ", game.last_npc_reply_source, " ", game.log_entries[-1])
+ 		await game._on_command("青と紫が混ざった色って何色？")
+-		var named_color := RegEx.new()
+-		named_color.compile("青紫|青みがかった紫|青みのある紫|青っぽい紫|青寄りの紫|紫がかった青|ブルーバイオレット|バイオレット|藍紫")
+-		var second_ai: bool = game.last_npc_reply_source.get("source") == "ai"
+-		var turns: Array = backend.last_input.get("recent_dialogue", [])
+-		var history_forwarded: bool = not first_reply.is_empty() and turns.is_empty() and backend.last_input.size() == 2
++		var color_grounded: bool = backend.last_input == previous_input and game.last_npc_reply_source.get("reason") == "grounded_knowledge" and game.log_entries[-1].contains("青紫系")
+ 		print("Second color turn: ", game.last_npc_reply_source, " ", game.log_entries[-1])
+-		print("Self-contained question uses focused context: ", history_forwarded)
+-		print("Named a specific color: ", named_color.search(game.log_entries[-1]) != null)
+-		var passed := first_ai and second_ai and history_forwarded
++		var passed := first_ai and color_grounded
+ 		print("Color follow-up regression: ", "PASS" if passed else "FAIL")
+ 		quit(0 if passed else 1)
+ 		return
