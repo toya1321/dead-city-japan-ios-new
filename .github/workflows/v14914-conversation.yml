@@ -1,0 +1,52 @@
+name: Verify v149.14 conversations with Instruct-2507
+on:
+  push:
+    branches: [qa/v14914-conversation]
+permissions:
+  contents: read
+jobs:
+  dialogue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore and verify v149.14
+        run: |
+          cat ci/v149.10-source/part-* > "$RUNNER_TEMP/game.zip"
+          printf '%s  %s\n' 36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158 "$RUNNER_TEMP/game.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/game.zip" -d game
+          for patch in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.12-dialogue v149.12-conversation-qa v149.13-qwen35 v149.14-instruct; do
+            git apply --directory=game "ci/$patch.patch"
+          done
+          cp ci/v14914-conversation/conversation.gd game/qa/
+      - name: Build llama.cpp probe and fetch verified model
+        run: |
+          curl -fLsS --retry 3 https://github.com/ggml-org/llama.cpp/archive/refs/tags/b12247.tar.gz -o "$RUNNER_TEMP/llama.tar.gz"
+          tar -xzf "$RUNNER_TEMP/llama.tar.gz" -C "$RUNNER_TEMP"
+          cmake -S game/build_scripts/local_llm -B "$RUNNER_TEMP/probe" -DCMAKE_BUILD_TYPE=Release -DLLAMA_SOURCE="$RUNNER_TEMP/llama.cpp-b12247" -DGGML_NATIVE=OFF
+          cmake --build "$RUNNER_TEMP/probe" --parallel 2
+          model="$RUNNER_TEMP/Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+          curl -fLsS --retry 4 --retry-all-errors https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf -o "$model"
+          printf '%s  %s\n' 3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597 "$model" | sha256sum -c -
+      - name: Run live NPC conversations in Godot
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/4.6.3-stable
+          editor=Godot_v4.6.3-stable_linux.x86_64
+          curl -fLsS --retry 3 "$base/$editor.zip" -o "$RUNNER_TEMP/$editor.zip"
+          curl -fLsS --retry 3 "$base/SHA512-SUMS.txt" -o "$RUNNER_TEMP/SHA512-SUMS.txt"
+          (cd "$RUNNER_TEMP" && grep -F "$editor.zip" SHA512-SUMS.txt | sha512sum -c -)
+          unzip -q "$RUNNER_TEMP/$editor.zip" -d "$RUNNER_TEMP"
+          export DCJ_LLAMA_PROBE="$RUNNER_TEMP/probe/dcj_local_llm_probe"
+          export DCJ_GGUF="$RUNNER_TEMP/Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+          "$RUNNER_TEMP/$editor" --headless --path game --editor --import --quit
+          "$RUNNER_TEMP/$editor" --headless --path game --script res://qa/conversation.gd 2>&1 | tee conversation.log
+          grep -q '^CONVERSATION_RESULT ' conversation.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v14914-conversation
+          path: conversation.log
+          if-no-files-found: ignore
