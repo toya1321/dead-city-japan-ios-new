@@ -1,0 +1,16 @@
+name: Linux runner control
+# Control for macos-runner-probe: same trigger, account and repository.
+on:
+  push:
+    branches: [claude/blissful-fermat-8e7k1b-u8y7jb]
+    paths:
+      - '.github/workflows/linux-runner-control.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: echo "runner=$RUNNER_NAME image=$ImageOS/$ImageVersion"
