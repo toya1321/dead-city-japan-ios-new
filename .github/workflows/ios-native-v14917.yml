@@ -1,0 +1,76 @@
+name: Build v149.17 native Qwen IPA (NPC retry fix)
+
+on:
+  push:
+    branches: [claude/blissful-fermat-8e7k1b-u8y7jb]
+    paths:
+      - 'ci/v149.17-npc-retry.patch'
+      - '.github/workflows/ios-native-v14917.yml'
+  workflow_dispatch:
+    inputs:
+      run_model_smoke:
+        description: Compare Qwen3-4B and Qwen3-1.7B with the same macOS NPC tests
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 55
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and unpack v149.10 source
+        run: |
+          source_parts=(ci/v149.10-source/part-*)
+          test "${#source_parts[@]}" -eq 30
+          archive="$RUNNER_TEMP/deadcity-v149.10.zip"
+          cat "${source_parts[@]}" > "$archive"
+          printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
+          unzip -tq "$archive"
+          unzip -q "$archive" -d game
+          git apply --directory=game ci/v149.10-ios-build.patch
+          git apply --directory=game ci/v149.11-local-ai.patch
+          git apply --directory=game ci/v149.11-comparison.patch
+          git apply --directory=game ci/v149.16-npc-dialogue.patch
+          git apply --directory=game ci/v149.17-npc-retry.patch
+      - name: Build and verify native unsigned arm64 IPA
+        working-directory: game
+        env:
+          DCJ_LOCAL_LLM: '1'
+        run: bash build_scripts/build-ios-unsigned.sh
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeadCityJapan-v149.17-local-llm-unsigned
+          path: |
+            game/build/DeadCityJapan-v149.17-local-llm-unsigned.ipa
+            game/build/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Compare both real Qwen models and Godot NPC dialogue
+        if: github.event_name == 'push' || inputs.run_model_smoke
+        working-directory: game
+        run: bash build_scripts/local_llm/run-real-model-smoke.sh 2>&1 | tee build/real-model-runner.log
+      - name: Publish NPC smoke summary
+        if: always()
+        working-directory: game
+        run: |
+          for log in build/real-npc-*.log; do
+            [[ -f "$log" ]] || continue
+            { echo "### $log"; echo '```'; grep -E '^\{"prompt"|^Real model|^NPC memory|NPC_REPLY|NPC_REJECT' "$log" || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v149.17-ios-and-model-logs
+          path: |
+            game/build/*.log
+            game/build/*.tsv
+            game/build/test-results/
+          if-no-files-found: ignore

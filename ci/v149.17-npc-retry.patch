@@ -1,0 +1,305 @@
+diff --git a/NPC_UPDATE_v149.17.md b/NPC_UPDATE_v149.17.md
+new file mode 100644
+index 0000000..a3154cb
+--- /dev/null
++++ b/NPC_UPDATE_v149.17.md
+@@ -0,0 +1,26 @@
++# v149.17 NPC会話：自己コピーの再生成を修正（v149.16ベース）
++
++## 問題（v149.16の実モデル検証）
++
++Qwen3-1.7Bで「青と紫が混ざった色って何色？」が `filtered_repeated_reply+filtered_repeated_reply` となり、固定文に戻った。
++
++- 再生成の「注意」に、却下した返事をそのまま引用していた。また、その返事は会話履歴のassistantターンとしても残っていた。小さいモデルは、引用された文をもう一度写した。
++- 繰り返しの判定は、同じ話題の追加質問で話題語（「青と紫が混ざった色は…」）を言い直すだけでも、類似度が上がった。
++- 却下した文はログに出ていなかった。本当の繰り返しなのか、判定が厳しすぎるのかを区別できなかった。
++
++## 変更
++
++| 内容 | ファイル |
++| --- | --- |
++| 繰り返し・おうむ返しで再生成するときは、却下した文を引用しない。会話履歴のassistantターンを外し、プレイヤーの直前の発言だけを `直前のプレイヤーの発言` として渡す。数値・約束などの事実の却下は、従来どおり文を引用し、履歴も残す。 | `scripts/main.gd` |
++| 繰り返しの判定は、今のプレイヤーの発言に含まれる文字bigramを除いてから比較する（`NPCMind.similarity_beyond`）。完全に同じ文と、ほぼ同じ文は従来どおり却下する。 | `scripts/npc_mind.gd` |
++| 却下した文を `last_npc_rejected` に保持し、ログ `[NPC_REJECT] npc= reason= line=` に出す。CIの要約にも載せる。 | `scripts/main.gd`, ワークフロー |
++| バージョン 0.149.17（ビルド166）。 | `export_presets.cfg`, `build_scripts/build-ios-unsigned.sh` |
++
++ネイティブの推論コア（`inference.cpp`）は変更していない。
++
++## テスト
++
++- `tests/test_npc_mind149_17.gd`（新規、12項目）：話題を言い直す追加回答の許可、同一・ほぼ同一の返事の却下、引用なしの再生成、assistantターンの除去、プレイヤー発言の保持、修正後の表示、却下文の診断、事実の却下での引用と履歴の維持。
++- 全133テストに合格（Godot 4.6.3、Linux、ヘッドレス）。
++- 実モデルでの効果は、CI（Linuxの実Qwen3スモーク、macOSのIPAビルドとスモーク）で確認する。
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 04ae3a9..fb0ac03 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '165'
+-assert info['CFBundleShortVersionString'] == '0.149.16'
++assert str(info['CFBundleVersion']) == '166'
++assert info['CFBundleShortVersionString'] == '0.149.17'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.16-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.17-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.16-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.17-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 37efc8d..00fe5b7 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.16"
+-application/version="165"
++application/short_version="0.149.17"
++application/version="166"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 6969adb..a573068 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -32,6 +32,9 @@ const RETRYABLE_REJECTIONS := {
+ 	"filtered_completion_claim": "まだしていない行動を済ませたと言っている",
+ 	"filtered_invented_experience": "記録にない過去の出来事",
+ }
++# Rejections where the model reproduced earlier text rather than misstating facts.
++const COPYING_REJECTIONS := ["filtered_repeated_reply", "filtered_echoed_question"]
++var last_npc_rejected: Dictionary = {}
+ var npc_memory := NPCMemory.new()
+ var local_model := LocalNPCModel.new()
+ var pending_local_action: Dictionary = {}
+@@ -1034,6 +1037,13 @@ func _record_npc_reply_source(index: int, source: String, reason: String) -> voi
+ 	if is_instance_valid(local_model_status):
+ 		_refresh_local_ai_status()
+ 
++## Rejected model lines are shown in the diagnostics so real-model runs can
++## tell a true repetition from an over-strict guard.
++func _log_rejected_line(index: int, reason: String, line: String) -> void:
++	last_npc_rejected = {"npc": index, "reason": reason, "line": line.left(120)}
++	if OS.is_debug_build() or is_instance_valid(local_model.backend):
++		print("[NPC_REJECT] npc=%d reason=%s line=%s" % [index, reason, line.left(120).replace("\n", " ")])
++
+ func _finish_npc_reply(index: int, speech: String, reply: String, source: String = "game_fact", reason: String = "") -> void:
+ 	var person: Dictionary = world.s.household_members[index]
+ 	_record_npc_reply_source(index, source, reason)
+@@ -1083,11 +1093,19 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+ 			memories.pop_back()
+ 	return context
+ 
+-func _ask_local_npc(index: int, speech: String, retry_note: String = "") -> Dictionary:
++func _ask_local_npc(index: int, speech: String, retry_note: String = "", fresh_turns: bool = false) -> Dictionary:
+ 	var context := _local_npc_context(index, speech)
+ 	if not retry_note.is_empty():
+-		var history = context.get("_history", [])
++		var history: Array = context.get("_history", [])
+ 		context.erase("_history")
++		# A model that copied its own earlier line copies it again while that
++		# line is still an assistant turn; keep only what the player said.
++		if fresh_turns and not history.is_empty():
++			var said: Array = []
++			for turn in history:
++				said.append(str(turn[0]))
++			context["直前のプレイヤーの発言"] = said
++			history = []
+ 		context["注意"] = retry_note
+ 		context["_history"] = history
+ 	last_npc_context = context
+@@ -1105,8 +1123,11 @@ func _npc_model_reply(index: int, person: Dictionary, speech: String) -> Diction
+ 	# One corrective retry for a reply that is well-formed but unusable. The
+ 	# changed request also changes the deterministic sample.
+ 	if not cancel_requested and answer.get("source") == "fallback" and reason in RETRYABLE_REJECTIONS:
+-		var note := "前回の返事「%s」は使えない（%s）。今の発言にだけ、一人称の台詞で新しく答える。" % [str(answer.get("rejected", "")).left(80), RETRYABLE_REJECTIONS[reason]]
+-		var second := await _npc_model_attempt(index, person, speech, note)
++		var copied: bool = reason in COPYING_REJECTIONS
++		# Quoting a copied line in the correction makes small models copy it a
++		# third time, so those retries name only the problem.
++		var note := "前回の返事は使えない（%s）。今の発言にだけ、一人称の台詞で新しく答える。" % RETRYABLE_REJECTIONS[reason] if copied else "前回の返事「%s」は使えない（%s）。今の発言にだけ、一人称の台詞で新しく答える。" % [str(answer.get("rejected", "")).left(80), RETRYABLE_REJECTIONS[reason]]
++		var second := await _npc_model_attempt(index, person, speech, note, copied)
+ 		if second.get("source") != "fallback" or second.has("proposal"):
+ 			second["reason"] = str(second.get("reason", "")) + "_after_retry"
+ 			return second
+@@ -1114,8 +1135,8 @@ func _npc_model_reply(index: int, person: Dictionary, speech: String) -> Diction
+ 		return second
+ 	return answer
+ 
+-func _npc_model_attempt(index: int, person: Dictionary, speech: String, retry_note: String) -> Dictionary:
+-	var generated := await _ask_local_npc(index, speech, retry_note)
++func _npc_model_attempt(index: int, person: Dictionary, speech: String, retry_note: String, fresh_turns: bool = false) -> Dictionary:
++	var generated := await _ask_local_npc(index, speech, retry_note, fresh_turns)
+ 	if cancel_requested:
+ 		return {}
+ 	var kind := str(generated.get("kind", ""))
+@@ -1131,6 +1152,7 @@ func _npc_model_attempt(index: int, person: Dictionary, speech: String, retry_no
+ 			var rejected := NPCMind.reject_reason(value, speech, {"facts": last_npc_context.get("事実", {}), "context": last_npc_context, "name": str(person.name), "own_replies": own_replies})
+ 			if rejected.is_empty():
+ 				return {"reply": value, "source": "ai", "reason": "generated_chat"}
++			_log_rejected_line(index, rejected, value)
+ 			return {"reply": "", "source": "fallback", "reason": "filtered_" + rejected, "rejected": value}
+ 		"query":
+ 			var fact := NPCConversation.fact(self, person, value, speech)
+@@ -1150,6 +1172,7 @@ func _npc_model_attempt(index: int, person: Dictionary, speech: String, retry_no
+ 			var problem := NPCMind.reject_reason(value, speech, {"facts": last_npc_context.get("事実", {}), "context": last_npc_context, "name": str(person.name)})
+ 			if problem.is_empty():
+ 				return {"reply": value, "source": "ai", "reason": "generated_question"}
++			_log_rejected_line(index, problem, value)
+ 			return {"reply": "", "source": "fallback", "reason": "filtered_" + problem, "rejected": value}
+ 	var error := str(local_model.diagnostics.get("error", ""))
+ 	return {"reply": "", "source": "fallback", "reason": error if not error.is_empty() else "no_model_reply"}
+diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
+index 0d3f36f..1a90b3b 100644
+--- a/scripts/npc_mind.gd
++++ b/scripts/npc_mind.gd
+@@ -343,6 +343,24 @@ static func similarity(a: String, b: String) -> float:
+ 			shared += 1
+ 	return float(shared) / float(mini(x.size(), y.size()))
+ 
++## Similarity of two replies after removing the words the player just used.
++## Answers to a follow-up on the same topic naturally restate it ("青と紫が
++## 混ざった色は…"); only the rest shows whether the reply was copied.
++static func similarity_beyond(a: String, b: String, topic: String) -> float:
++	var x := Memory.bigrams(a)
++	var y := Memory.bigrams(b)
++	var said := Memory.bigrams(topic)
++	for gram in said:
++		x.erase(gram)
++		y.erase(gram)
++	if x.size() < 3 or y.size() < 3:
++		return similarity(a, b) if a.strip_edges() == b.strip_edges() else 0.0
++	var shared := 0
++	for gram in x:
++		if y.has(gram):
++			shared += 1
++	return float(shared) / float(mini(x.size(), y.size()))
++
+ static func reject_reason(line: String, speech: String, evidence: Dictionary) -> String:
+ 	var own_name := str(evidence.get("name", ""))
+ 	if not own_name.is_empty() and (line.begins_with(own_name + "は") or line.begins_with(own_name + "が")):
+@@ -350,7 +368,7 @@ static func reject_reason(line: String, speech: String, evidence: Dictionary) ->
+ 	if similarity(line, speech) >= 0.8 and line.length() <= speech.length() + 6:
+ 		return "echoed_question"
+ 	for previous in evidence.get("own_replies", []):
+-		if similarity(line, str(previous)) >= 0.8:
++		if similarity_beyond(line, str(previous), speech) >= 0.8:
+ 			return "repeated_reply"
+ 	if line.contains("<") or line.contains(">") or line.contains("://") or line.contains("▶") or line.contains("{"):
+ 		return "markup"
+diff --git a/tests/test_npc_mind149_17.gd b/tests/test_npc_mind149_17.gd
+new file mode 100644
+index 0000000..bb01ba5
+--- /dev/null
++++ b/tests/test_npc_mind149_17.gd
+@@ -0,0 +1,92 @@
++extends SceneTree
++## v149.17: a reply that copies the model's own earlier line is retried without
++## quoting it and without the copied assistant turn; follow-ups that restate
++## the topic are not mistaken for repetition.
++const Main = preload("res://main.tscn")
++const Mind = preload("res://scripts/npc_mind.gd")
++const Model = preload("res://scripts/local_npc_model.gd")
++
++class ScriptedModel extends RefCounted:
++	var queue: Array = []
++	var payload := {}
++	var requests := 0
++	func model_available() -> bool:
++		return true
++	func model_name() -> String:
++		return "Scripted.gguf"
++	func is_warm() -> bool:
++		return true
++	func begin(_id: int, _instructions: String, input: String) -> bool:
++		requests += 1
++		payload = Model.decode_request(input)
++		return true
++	func take_result(_id: int) -> String:
++		return "" if queue.is_empty() else str(queue.pop_front())
++	func cancel(_id: int) -> void:
++		pass
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func say(model: ScriptedModel, line: String) -> void:
++	model.queue.append(JSON.stringify({"kind":"chat", "value":line}))
++
++func run() -> void:
++	# --- Guard: restating the player's topic is not a copied reply.
++	var previous := "青と紫が混ざった色は、落ち着きがあって心地よい気分になるね。"
++	var follow_up := "青と紫が混ざった色は、青紫とかすみれ色って呼ばれるよ。"
++	check(Mind.reject_reason(follow_up, "青と紫が混ざった色って何色？", {"own_replies": [previous]}).is_empty(), "a follow-up answer that restates the topic is accepted")
++	check(Mind.reject_reason(previous, "青と紫が混ざった色って何色？", {"own_replies": [previous]}) == "repeated_reply", "an identical earlier reply is still rejected")
++	check(Mind.reject_reason("青と紫が混ざった色は、落ち着きがあって心地よい気分になるよ。", "それってどういう意味？", {"own_replies": [previous]}) == "repeated_reply", "a near copy is still rejected")
++	check(Mind.reject_reason("うん。", "そう？", {"own_replies": ["うん。"]}) == "repeated_reply", "a short identical reply is rejected")
++
++	var game = Main.instantiate()
++	root.add_child(game)
++	await process_frame
++	var profile: Dictionary = game.world.DEFAULT_PROFILE.duplicate(true)
++	profile.cohabitants = 1
++	profile.companion_names = ["詩音"]
++	game._start_new_game(profile)
++	game._finish_intro()
++	game.location = "居間"
++	game._sync_player_position()
++	game.world.s.minute = 120
++	game.world.s.society = "disrupted"
++	game.world._household_hour()
++	var fake := ScriptedModel.new()
++	game.local_model.backend = fake
++	game.local_model.generation_timeout_ms = 300
++
++	say(fake, previous)
++	await game._on_command("詩音、青と紫が混ざった色って、見てるとどんな気分になる？")
++	check(game.last_npc_reply_source.source == "ai", "first answer is shown")
++
++	# --- The model copies itself; the retry must neither quote the line nor
++	# keep it as an assistant turn, but keep what the player said.
++	say(fake, previous)
++	say(fake, follow_up)
++	await game._on_command("青と紫が混ざった色って何色？")
++	var note := str(fake.payload.get("注意", ""))
++	check(fake.requests == 3, "a copied reply triggers one retry")
++	check(note.contains("繰り返し") and not note.contains(previous.left(10)), "the retry names the problem without quoting the copied line")
++	check((fake.payload.get("_history", []) as Array).is_empty(), "the copied assistant turn is removed from the retry")
++	var said: Array = fake.payload.get("直前のプレイヤーの発言", [])
++	check(said.size() == 1 and str(said[0]).contains("気分"), "the retry still carries the player's earlier line")
++	check(game.last_npc_reply_source.reason == "generated_chat_after_retry" and game.log_entries[-1].contains("すみれ色"), "the corrected line is shown")
++	check(game.last_npc_rejected.get("reason", "") == "repeated_reply" and str(game.last_npc_rejected.get("line", "")) == previous, "the rejected line is kept for diagnostics")
++
++	# --- Other rejections still quote the line so the model knows what to fix.
++	say(fake, "約束したよね、明日一緒に出かけるって。")
++	say(fake, "今日はのんびりしようか。")
++	await game._on_command("明日どうする？")
++	check(str(fake.payload.get("注意", "")).contains("約束したよね") and not (fake.payload.get("_history", []) as Array).is_empty(), "a factual rejection keeps the quote and the conversation turns")
++
++	print("v149.17 NPC retry checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_npc_mind149_17.gd.uid b/tests/test_npc_mind149_17.gd.uid
+new file mode 100644
+index 0000000..b328749
+--- /dev/null
++++ b/tests/test_npc_mind149_17.gd.uid
+@@ -0,0 +1 @@
++uid://cuvrmf6rqebk5

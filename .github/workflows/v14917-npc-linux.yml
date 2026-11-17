@@ -1,0 +1,72 @@
+name: Verify v149.17 NPC dialogue with real Qwen3 on Linux
+on:
+  push:
+    branches: [claude/blissful-fermat-8e7k1b-u8y7jb]
+    paths:
+      - 'ci/v149.17-npc-retry.patch'
+      - '.github/workflows/v14917-npc-linux.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dialogue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore v149.11 and apply v149.16 + v149.17
+        run: |
+          cat ci/v149.10-source/part-* > "$RUNNER_TEMP/game.zip"
+          printf '%s  %s\n' 36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158 "$RUNNER_TEMP/game.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/game.zip" -d game
+          for patch in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry; do
+            git apply --directory=game "ci/$patch.patch"
+          done
+      - name: Prepare Godot and run the full test suite
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/4.6.3-stable
+          editor=Godot_v4.6.3-stable_linux.x86_64
+          curl -fLsS --retry 3 "$base/$editor.zip" -o "$RUNNER_TEMP/$editor.zip"
+          curl -fLsS --retry 3 "$base/SHA512-SUMS.txt" -o "$RUNNER_TEMP/SHA512-SUMS.txt"
+          (cd "$RUNNER_TEMP" && grep -F "$editor.zip" SHA512-SUMS.txt | sha512sum -c -)
+          unzip -q "$RUNNER_TEMP/$editor.zip" -d "$RUNNER_TEMP"
+          echo "GODOT=$RUNNER_TEMP/$editor" >> "$GITHUB_ENV"
+          mkdir -p game/build && touch game/build/.gdignore
+          "$RUNNER_TEMP/$editor" --headless --path game --editor --import --quit
+          GODOT="$RUNNER_TEMP/$editor" python3 game/tests/run_all.py game/build/test-results
+      - name: Build llama.cpp probe
+        run: |
+          curl -fLsS --retry 3 https://github.com/ggml-org/llama.cpp/archive/refs/tags/b12247.tar.gz -o "$RUNNER_TEMP/llama.tar.gz"
+          tar -xzf "$RUNNER_TEMP/llama.tar.gz" -C "$RUNNER_TEMP"
+          cmake -S game/build_scripts/local_llm -B "$RUNNER_TEMP/probe" -DCMAKE_BUILD_TYPE=Release -DLLAMA_SOURCE="$RUNNER_TEMP/llama.cpp-b12247" -DGGML_NATIVE=OFF
+          cmake --build "$RUNNER_TEMP/probe" --parallel 4
+      - name: Real Qwen3 NPC conversations in Godot (4B and 1.7B)
+        run: |
+          export DCJ_LLAMA_PROBE="$RUNNER_TEMP/probe/dcj_local_llm_probe"
+          failed=0
+          run_model() {
+            local variant="$1" url="$2" sha="$3"
+            export DCJ_GGUF="$RUNNER_TEMP/Qwen3-$variant-Q4_K_M.gguf"
+            curl -fLsS --retry 4 --retry-all-errors "$url" -o "$DCJ_GGUF" || return 1
+            printf '%s  %s\n' "$sha" "$DCJ_GGUF" | sha256sum -c - || return 1
+            "$GODOT" --headless --path game --script res://qa/real_npc_smoke.gd 2>&1 | tee "game/build/real-npc-$variant.log"
+          }
+          run_model 4B https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf \
+            7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5 || failed=1
+          run_model 1.7B https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/cc27747d7419139e44ba97777c2f2fd5dca92ee1/Qwen3-1.7B-Q4_K_M.gguf \
+            ba491cf470c3cadc624e4c8d6c9a27c998809e8ba8eb938d1689ae87e024b6b7 || failed=1
+          for log in game/build/real-npc-*.log; do
+            { echo "### $log"; echo '```'; grep -E '^\{"prompt"|^Real model|^NPC memory|NPC_REPLY|NPC_REJECT' "$log" || true; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          done
+          exit "$failed"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v14917-npc-linux
+          path: |
+            game/build/*.log
+            game/build/test-results/
+          if-no-files-found: ignore
