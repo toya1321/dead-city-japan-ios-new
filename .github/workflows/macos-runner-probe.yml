@@ -1,0 +1,20 @@
+name: macOS runner probe
+# Minimal job: shows whether a GitHub-hosted macOS runner is assigned at all.
+on:
+  push:
+    branches: [claude/blissful-fermat-8e7k1b-u8y7jb]
+    paths:
+      - '.github/workflows/macos-runner-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sw_vers
+          uname -m
+          xcodebuild -version
+          echo "runner=$RUNNER_NAME image=$ImageOS/$ImageVersion"
