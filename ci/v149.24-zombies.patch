@@ -1,3 +1,42 @@
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 7c1e8fd..66c875d 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '171'
+-assert info['CFBundleShortVersionString'] == '0.149.22'
++assert str(info['CFBundleVersion']) == '173'
++assert info['CFBundleShortVersionString'] == '0.149.24'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.22-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.24-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.22-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.24-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 798db9b..574374b 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.22"
+-application/version="171"
++application/short_version="0.149.24"
++application/version="173"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/play.gd b/qa/play.gd
 new file mode 100644
 index 0000000..b4400ac
@@ -1491,6 +1530,19 @@ index 0000000..560f398
 +	for i in range(items.size() - 1, maxi(-1, items.size() - 1 - count), -1):
 +		out.append(str(items[i].text))
 +	return out
+diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
+index ebe1a6a..9b94dc3 100644
+--- a/scripts/title_screen.gd
++++ b/scripts/title_screen.gd
+@@ -50,7 +50,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.22"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.24"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
 diff --git a/scripts/ui_kit.gd b/scripts/ui_kit.gd
 index a2b3e56..fabb501 100644
 --- a/scripts/ui_kit.gd

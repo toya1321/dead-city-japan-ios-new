@@ -1,4 +1,4 @@
-# 引き継ぎメモ（v149.22 時点、2026-11-18）
+# 引き継ぎメモ（v149.24 時点、2026-11-18）
 
 新しいセッションでは「ブランチ `claude/blissful-fermat-8e7k1b-u8y7jb` の HANDOFF.md から続けて」と伝える。
 
@@ -6,8 +6,8 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-wip-photos` 12. `v149.24-wip-walkers`（作業中：ゾンビ。`scripts/walkers.gd`）（作業中：写真の追加。画像がそろったら版を上げて正式なパッチにする。バイナリを含むので `git diff --binary` で作る）
-- 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.22 / ビルド171。
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`）
+- 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.24 / ビルド173（ワークフロー `ios-native-v14924.yml`）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
 ## 作業環境の作り方（Linux）
@@ -15,11 +15,11 @@
 ```bash
 cat ci/v149.10-source/part-* > game.zip && unzip -q game.zip -d game
 cd game && git init -q && git add -A && git commit -qm base   # 差分作成用
-for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping v149.20-npc-reasons v149.21-ui v149.22-chips-scroll; do git apply ../ci/$p.patch; done
+for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping v149.20-npc-reasons v149.21-ui v149.22-chips-scroll v149.23-photos v149.24-zombies; do git apply ../ci/$p.patch; done
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
-- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在136/136、約12分）。
+- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在139/139、約13分）。
 - 画面の撮影：`xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 390x844 --script res://qa/<撮影スクリプト>.gd`（Xvfbはコンテナにある）。
 
 ## 実モデル（Qwen3-4B）での会話テスト
