@@ -12,7 +12,7 @@ index 13e123e..53b8de4 100644
  		return "少し具合が悪い"
  	if float(person.thirst) >= 35.0:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..25c3592 100644
+index c54fcf5..d382e6a 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -22,6 +22,7 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
@@ -76,7 +76,7 @@ index c54fcf5..25c3592 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1475,7 +1494,12 @@ func _suggestions() -> Array:
+@@ -1475,7 +1494,15 @@ func _suggestions() -> Array:
  			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
  		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
  	for person in world.s.household_members:
@@ -85,12 +85,15 @@ index c54fcf5..25c3592 100644
 +			if str(person.get("isolated", "")).is_empty():
 +				out.append("%sを寝室に隔離する" % person.name)
 +			out.append("%sを看病する" % person.name)
++			out.append("%sを見送る" % person.name)
++	if bool(world.s.get("bitten", false)) and not world.s.household_members.filter(func(p): return float(p.health) > 0).is_empty():
++		out.append("みんなのために、一人で出ていく")
 +	for person in world.s.household_members:
 +		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -2088,6 +2112,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2088,6 +2115,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -100,13 +103,13 @@ index c54fcf5..25c3592 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2125,146 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2128,193 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
 +## v149.24 (D): when the player dies and a housemate is alive, the story goes
 +## on as that housemate. The household, base and supplies carry over.
-+func _succeed_to_housemate() -> void:
++func _succeed_to_housemate(farewell: String = "") -> void:
 +	var heir := -1
 +	# Prefer someone who was not bitten.
 +	for i in world.s.household_members.size():
@@ -118,7 +121,10 @@ index c54fcf5..25c3592 100644
 +	succession_running = true
 +	var person: Dictionary = world.s.household_members[heir]
 +	var previous := str(world.s.profile.name)
-+	_append("【記録】%sは%s、息を引き取った。" % [previous, "噛まれた傷の熱にうなされた末に" if bool(world.s.get("bitten", false)) else "力尽きて"])
++	if farewell.is_empty():
++		_append("【記録】%sは%s、息を引き取った。" % [previous, "噛まれた傷の熱にうなされた末に" if bool(world.s.get("bitten", false)) else "力尽きて"])
++	else:
++		_append(farewell)
 +	world.s.profile.name = str(person.name)
 +	world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
 +	for key in ["companion_names", "companion_genders"]:
@@ -165,8 +171,34 @@ index c54fcf5..25c3592 100644
 +		elif Navigation.indoor(str(mate.place)):
 +			_append("【危険】%sの方から、何かがぶつかるような音と、うめき声が聞こえてくる。" % mate.place)
 +
-+## "詩音を寝室に隔離する" / "詩音を看病する" for a bitten housemate.
++const LEAVE_WORDS := ["去る", "出ていく", "出て行く", "出ていこう", "出て行こう", "二度と戻らない", "一人で行く", "ひとりで行く", "別れを告げ"]
++
++## A bitten player leaves so as not to endanger the household; the story
++## goes on as a housemate. The one who left rises somewhere on the streets
++## days later.
++func _leave_home(cmd: String) -> bool:
++	if not bool(world.s.get("bitten", false)) or float(world.s.health) <= 0 or not NPCMemory._mentions(cmd, LEAVE_WORDS):
++		return false
++	var heirs: Array = world.s.household_members.filter(func(p): return float(p.health) > 0)
++	var w := Walkers.ensure(world)
++	var hours := maxi(6, int(float(world.s.health) / 0.022 / 60.0))
++	w.pending.append({"id": -2000 - int(world.s.minute) % 1000, "at": int(world.s.minute) + hours * 60, "place": ["駅前", "商店通り", "住宅街"][world.draw(int(world.s.minute), 5, "leaver", 3)]})
++	if heirs.is_empty():
++		location = "屋外"
++		_sync_player_position()
++		world.advance_safe(10)
++		_append("誰もいない家に背を向けて、通りへ出た。残された時間を、どこで過ごすか。")
++		_refresh()
++		return true
++	var heir: Dictionary = heirs[0]
++	world.s.health = 0.0
++	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
++	return true
++
++## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
 +func _care_command(cmd: String) -> bool:
++	if _leave_home(cmd):
++		return true
 +	for index in world.s.household_members.size():
 +		var person: Dictionary = world.s.household_members[index]
 +		if not cmd.contains(str(person.name)) or not bool(person.get("bitten", false)) or float(person.health) <= 0:
@@ -183,6 +215,24 @@ index c54fcf5..25c3592 100644
 +				dialogue.partner = -1
 +			world.advance_safe(10)
 +			_append("%sを%sに移し、扉を閉めた。中から「ありがとう。……ごめんね」と、かすれた声がした。" % [person.name, room])
++			_refresh()
++			return true
++		if NPCMemory._mentions(cmd, ["見送", "行かせ", "出ていかせ", "出て行かせ", "送り出"]):
++			var w := Walkers.ensure(world)
++			var hours := maxi(6, int(float(person.health) / (100.0 / 72.0)))
++			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + hours * 60, "place": ["駅前", "商店通り", "住宅街"][world.draw(int(world.s.minute), int(person.id), "leaver", 3)]})
++			world.advance_safe(15)
++			_append("%sは小さな荷物を背負って、玄関で振り返った。「みんなを危ない目にあわせたくないから。……今まで、ありがとう」。扉が閉まり、足音が遠ざかっていった。" % person.name)
++			world.s.household_members.remove_at(index)
++			world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
++			for key in ["companion_names", "companion_genders"]:
++				var values: Array = world.s.profile.get(key, [])
++				if index < values.size():
++					values.remove_at(index)
++				world.s.profile[key] = values
++			for i in world.s.household_members.size():
++				world.s.household_members[i].id = i
++			dialogue = HouseholdDialogue.new()
 +			_refresh()
 +			return true
 +		if NPCMemory._mentions(cmd, ["看病", "そばにいる", "付き添", "手当て"]):
@@ -238,10 +288,10 @@ index c54fcf5..25c3592 100644
 +			_append("%sまで戻った。" % (location if present.is_empty() else location + "まで、一緒に"))
 +	if result.has("mate_bitten"):
 +		var mate: Dictionary = world.s.household_members[int(result.mate_bitten)]
-+		_append("%sの腕に、くっきりと歯の跡が残っている。数日のうちに熱が出て、助からない。%sを看病するか、部屋に隔離するか、決めなければならない。" % [mate.name, mate.name])
++		_append("%sの腕に、くっきりと歯の跡が残っている。数日のうちに熱が出て、助からない。%sを看病するか、部屋に隔離するか、本人の望むように見送るか、決めなければならない。" % [mate.name, mate.name])
 +	if bool(result.bitten):
 +		var heirs: Array = world.s.household_members.filter(func(p): return float(p.health) > 0)
-+		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。動けるのは、あと数日。" + ("残された時間で、%sに物資や拠点を託すこともできる。" % heirs[0].name if not heirs.is_empty() else "残された時間で、何をするか決めなければならない。"))
++		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。動けるのは、あと数日。" + ("残された時間で、%sに物資や拠点を託すことも、巻き込まないように一人で出ていくこともできる。" % heirs[0].name if not heirs.is_empty() else "残された時間で、何をするか決めなければならない。"))
 +	_refresh()
 +
  func _report_household_errands() -> void:
@@ -649,10 +699,10 @@ index ff31294..a4b8548 100644
  			a.life_stage = "dead"
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..4b43bba
+index 0000000..082cb80
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,246 @@
 +extends SceneTree
 +## v149.24: the dead rise and walk; the player sees them, can be noticed, and
 +## chooses to hide, flee, fight or look. A bite is fatal over days.
@@ -860,6 +910,37 @@ index 0000000..4b43bba
 +	dw.s.household_members[0].location = "商店通り"
 +	await duo._on_command("逃げる")
 +	check(duo.location == "屋外" and str(dw.s.household_members[0].location) == "屋外", "the housemate flees with the player")
++
++	# --- A bitten player can leave so the housemate is not endangered.
++	var leaver = await new_game()
++	var lw = leaver.world
++	lw.s.bitten = true
++	lw.s.exposure = int(lw.s.minute)
++	lw.s.health = 80.0
++	leaver.location = "居間"
++	leaver._refresh()
++	check("みんなのために、一人で出ていく" in leaver._suggestions(), "a bitten player is offered to leave")
++	await leaver._on_command("みんなのために、一人で出ていく")
++	check(str(lw.s.profile.name) == "詩音" and lw.s.household_members.is_empty() and not bool(lw.s.bitten) and float(lw.s.health) > 0, "leaving hands the story to the housemate")
++	check(leaver.log_entries[-2].contains("一人で家を出ていった") and lw.validate_state(lw.s), "the chronicle records the departure")
++	var later := false
++	for p in lw.s.walkers.pending:
++		later = later or int(p.at) > int(lw.s.minute) + 6 * 60
++	check(later, "the one who left will rise on the streets days later")
++	var plain = await new_game()
++	plain.location = "玄関"
++	await plain._on_command("家を出る")
++	check(str(plain.world.s.profile.name) != "詩音", "an ordinary trip out does not end the story")
++
++	# --- Seeing a bitten housemate off.
++	var farewell = await new_game()
++	var fw = farewell.world
++	Walkers.bite_housemate(fw, 0)
++	farewell.location = "居間"
++	farewell._refresh()
++	check("詩音を見送る" in farewell._suggestions(), "seeing them off is offered")
++	await farewell._on_command("詩音を見送る")
++	check(fw.s.household_members.is_empty() and int(fw.s.profile.cohabitants) == 0 and farewell.log_entries[-1].contains("今まで、ありがとう") and fw.validate_state(fw.s), "the housemate leaves of their own will")
 +
 +	# --- Save and load keep the walkers.
 +	var saver = await new_game()
