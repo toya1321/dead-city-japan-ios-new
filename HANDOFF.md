@@ -6,7 +6,7 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip`（作業中：自由文の行動 `player_intents.gd`、デパートの中の移動。ビルド時に版を0.149.25/174に上げる）
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip`（作業中：自由文の行動 `player_intents.gd`、デパートの中の移動、同居人の心の限界。ビルド時に版を0.149.25/174に上げる）
 - 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.24 / ビルド173（ワークフロー `ios-native-v14924.yml`）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
@@ -19,7 +19,7 @@ for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialo
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
-- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在141/141、約13分）。
+- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在142/142、約13分）。
 - 画面の撮影：`xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 390x844 --script res://qa/<撮影スクリプト>.gd`（Xvfbはコンテナにある）。
 
 ## 実モデル（Qwen3-4B）での会話テスト
@@ -101,6 +101,14 @@ UIのモックアップ：https://claude.ai/artifact/Q1ZFHfhgNSeXFaJm3MxBpk（6�
 - 写真：`department_front_*`（1440×810）と `department_food_*`（1536×1024）の4段階。ユーザー作成（ChatGPT）。
 - 残り：2階衣料・3階生活用品・屋上・搬入口・警備室（画像があれば同じ形で足せる）。
 - テスト `test_dept149_25`（15項目）。全141テスト合格。
+
+## 同居人の心の限界（v149.25-wip、`mood.gd` の `_strain`）
+
+- 心25未満：半日ごとに「口論」（プレイヤー在宅時、自分−3、相手は6時間寝室にこもる）／「寝室から出てこない」（6時間）／「眠れない夜」（疲労+20）のどれか。25未満は30前後で落ち着く目張り生活の悪い時期に起きる程度。
+- 心20未満、またはこもっている間は、映画以外の頼みを断る（「……ごめん、今は何もしたくない」）。
+- 心15未満が48時間：「避難所に行けば、ここよりはましなのかな」と警告（会話の様子にも出る）。さらに24時間たち、合計72時間：書き置きを残して出ていく（`leaving` → `main._process_leavers`、自分の心−15）。心20以上に戻ると数え直し。
+- 「詩音の話を聞く」「励ます」「慰める」など：30分、相手+10（6時間以内は+3）、自分+2、こもりを解く、限界の時間を24時間戻す。相手のいる部屋まで歩く。心30未満の同居人がいると候補に出る。
+- 同居人を外す処理は `main._remove_housemate`（見送ると共通）。テスト `test_strain149_25`（12項目）。全142テスト合格。
 
 ## ユーザーについて
 

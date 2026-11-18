@@ -59024,6 +59024,19 @@ index 0000000..3bd9534
 +++ b/scripts/home_life.gd.uid
 @@ -0,0 +1 @@
 +uid://5jsflxvwlgrj
+diff --git a/scripts/household_dialogue.gd b/scripts/household_dialogue.gd
+index 45acede..205ba41 100644
+--- a/scripts/household_dialogue.gd
++++ b/scripts/household_dialogue.gd
+@@ -959,6 +959,8 @@ static func _condition(person: Dictionary) -> String:
+ 		return "噛まれて高い熱がある。もう助からないと分かっている" if float(person.health) < 60.0 else "噛まれた傷が痛み、熱が出始めている"
+ 	if float(person.health) < 70.0:
+ 		return "少し具合が悪い"
++	if person.has("leave_warned_at"):
++		return "心が限界で、ここを出て避難所に行こうか迷っている"
+ 	if float(person.get("mood", 70.0)) < 15.0:
+ 		return "心が限界に近い。閉じこもる暮らしに耐えられなくなりかけている"
+ 	if float(person.get("mood", 70.0)) < 35.0:
 diff --git a/scripts/local_npc_model.gd b/scripts/local_npc_model.gd
 index c40d468..2c72ddd 100644
 --- a/scripts/local_npc_model.gd
@@ -59053,7 +59066,7 @@ index c40d468..2c72ddd 100644
  			if not text.is_empty():
  				return {}
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 525ab5c..f68676f 100644
+index 525ab5c..e9811e6 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -25,6 +25,7 @@ const UI = preload("res://scripts/ui_kit.gd")
@@ -59109,7 +59122,18 @@ index 525ab5c..f68676f 100644
  		out.append("タバコを探す")
  	if location == "玄関" and not bool(world.s.door_locked) and not bool(world.s.get("door_broken", false)) and not "鍵を閉める" in out:
  		out.append("鍵を閉める")
-@@ -1576,7 +1595,7 @@ func _suggestions() -> Array:
+@@ -1554,6 +1573,10 @@ func _suggestions() -> Array:
+ 		var hour: float = world.hour_of_day()
+ 		if hour >= 16.0 or hour < 6.0:
+ 			out.append("窓を目張りする")
++	if Navigation.indoor(location):
++		for person in world.s.household_members:
++			if float(person.health) > 0 and not bool(person.get("bitten", false)) and Mood.of(person) < 30.0 and Navigation.indoor(str(person.location)):
++				out.append("%sの話を聞く" % person.name)
+ 	for person in world.s.household_members:
+ 		if bool(person.get("bitten", false)) and float(person.health) > 0:
+ 			if str(person.get("isolated", "")).is_empty():
+@@ -1576,7 +1599,7 @@ func _suggestions() -> Array:
  		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
  	else:
  		out.append("周囲を見る")
@@ -59118,22 +59142,42 @@ index 525ab5c..f68676f 100644
  			out.append("物資を探索する")
  		out.append("家に帰る")
  	return out.slice(0, 6)
-@@ -2271,9 +2290,12 @@ const LEAVE_WORDS := ["去る", "出ていく", "出て行く", "出ていこう
+@@ -2122,7 +2145,10 @@ func _run_household_movie(index: int, person: Dictionary, speech: String, movie:
+ func _run_household_request(index: int, person: Dictionary, speech: String, requested: String) -> void:
+ 	var plan := HouseholdActions.local(self, requested)
+ 	var reply := ""
+-	if plan.ok:
++	if Mood.refuses(world, person, requested):
++		# v149.25: worn down, they turn it down; listening first helps.
++		reply = ["……ごめん、今は何もしたくない。", "ちょっと、ひとりにしてほしい。", "今は無理。……ごめんね。"][world.draw(int(world.s.minute), index, "refuse", 3)]
++	elif plan.ok:
+ 		_set_busy(true, "%sが行動中…" % person.name)
+ 		reply = await HouseholdActions.execute(self, person, plan)
+ 		_set_busy(false)
+@@ -2263,6 +2289,7 @@ func _drain_walker_notices() -> void:
+ 			_append("【危険】%sの体が、ぎこちなく起き上がった。濁った目が、こちらを向いている。" % mate.name)
+ 		elif Navigation.indoor(str(mate.place)):
+ 			_append("【危険】%sの方から、何かがぶつかるような音と、うめき声が聞こえてくる。" % mate.place)
++	_process_leavers()
+ 
+ const LEAVE_WORDS := ["去る", "出ていく", "出て行く", "出ていこう", "出て行こう", "二度と戻らない", "一人で行く", "ひとりで行く", "別れを告げ"]
+ 
+@@ -2271,9 +2298,12 @@ const LEAVE_WORDS := ["去る", "出ていく", "出て行く", "出ていこう
  ## days later.
  ## "明かりを消す" / "明かりをつける": light at night draws walkers to the house.
  func _lights_command(cmd: String) -> bool:
 -	if not cmd.contains("明かり") and not cmd.contains("電気") and not cmd.contains("照明"):
 +	if PlayerIntents.negated(cmd):
-+		return false
-+	var darken := NPCMemory._mentions(cmd, ["部屋を暗く", "家を暗く", "真っ暗に", "暗くする", "暗くしよう"])
-+	if not cmd.contains("明かり") and not cmd.contains("電気") and not cmd.contains("照明") and not darken:
  		return false
 -	var off := NPCMemory._mentions(cmd, ["消す", "消して", "落とす", "消そう"])
++	var darken := NPCMemory._mentions(cmd, ["部屋を暗く", "家を暗く", "真っ暗に", "暗くする", "暗くしよう"])
++	if not cmd.contains("明かり") and not cmd.contains("電気") and not cmd.contains("照明") and not darken:
++		return false
 +	var off := darken or NPCMemory._mentions(cmd, ["消す", "消して", "落とす", "消そう", "消し"])
  	var on := NPCMemory._mentions(cmd, ["つける", "つけて", "点ける", "灯す"])
  	if off == on or not Navigation.indoor(location):
  		return false
-@@ -2301,8 +2323,9 @@ func _door_command(cmd: String) -> bool:
+@@ -2301,8 +2331,9 @@ func _door_command(cmd: String) -> bool:
  ## ladder of a flat. It avoids whatever is waiting at the front door.
  func _back_exit(cmd: String) -> bool:
  	var flat := str(world.s.profile.housing) == "集合住宅"
@@ -59145,7 +59189,7 @@ index 525ab5c..f68676f 100644
  	if not out and not back_in:
  		return false
  	var room := "居間" if flat else "台所"
-@@ -2341,8 +2364,11 @@ const UNBLACKOUT_WORDS := ["目張りを外", "目張りをはが", "目張り
+@@ -2341,8 +2372,11 @@ const UNBLACKOUT_WORDS := ["目張りを外", "目張りをはが", "目張り
  
  ## Covering the windows with blankets and cardboard keeps light inside.
  func _blackout_command(cmd: String) -> bool:
@@ -59158,7 +59202,84 @@ index 525ab5c..f68676f 100644
  		if cmd.contains("カーテン") and (cmd.contains("閉め") or cmd.contains("しめ")) and Navigation.indoor(location):
  			world.advance_safe(1)
  			_append("カーテンを閉めた。ただ、普通のカーテンでは夜の明かりが外に漏れる。毛布や段ボールで窓を目張りすれば、光は外に出ない。")
-@@ -2458,7 +2484,16 @@ func _check_walkers(previous: String) -> bool:
+@@ -2390,9 +2424,57 @@ func _leave_home(cmd: String) -> bool:
+ 	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
+ 	return true
+ 
++## A housemate leaves the household for good (seen off, or left on their own).
++func _remove_housemate(index: int) -> void:
++	world.s.household_members.remove_at(index)
++	world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
++	for key in ["companion_names", "companion_genders"]:
++		var values: Array = world.s.profile.get(key, [])
++		if index < values.size():
++			values.remove_at(index)
++		world.s.profile[key] = values
++	for i in world.s.household_members.size():
++		world.s.household_members[i].id = i
++	dialogue = HouseholdDialogue.new()
++
++## v149.25: a housemate at the end of their tether leaves a note and goes.
++func _process_leavers() -> void:
++	for i in range(world.s.household_members.size() - 1, -1, -1):
++		var person: Dictionary = world.s.household_members[i]
++		if not bool(person.get("leaving", false)) or float(person.health) <= 0:
++			continue
++		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
++		Mood.change(world.s, -15.0)
++		_remove_housemate(i)
++
++const COMFORT_WORDS := ["話を聞", "励ま", "慰め", "なぐさめ", "抱きしめ", "寄り添", "そばにい", "元気づけ", "声をかけ", "気持ちを聞", "相談に乗"]
++
++## "詩音の話を聞く" / "詩音を励ます": sit down with a worn-down housemate.
++func _comfort_command(cmd: String) -> bool:
++	if not NPCMemory._mentions(cmd, COMFORT_WORDS) or PlayerIntents.negated(cmd):
++		return false
++	for index in world.s.household_members.size():
++		var person: Dictionary = world.s.household_members[index]
++		if not cmd.contains(str(person.name)) or float(person.health) <= 0 or bool(person.get("bitten", false)):
++			continue
++		if str(person.get("activity", "")) == "外出" or not Navigation.indoor(str(person.location)):
++			_append("%sは今、家にいない。何も実行していません。" % person.name)
++			return true
++		if location != str(person.location):
++			if not Navigation.indoor(location):
++				_append("%sは家にいる。家に戻ってから話そう。何も実行していません。" % person.name)
++				return true
++			_append(_move_to(str(person.location)))
++		world.advance_safe(30)
++		_append(Mood.comfort(world, person) + "（30分）")
++		dialogue.partner = index
++		_refresh()
++		return true
++	return false
++
+ ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
+ func _care_command(cmd: String) -> bool:
+-	if _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
++	if _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
+ 		return true
+ 	for index in world.s.household_members.size():
+ 		var person: Dictionary = world.s.household_members[index]
+@@ -2418,16 +2500,7 @@ func _care_command(cmd: String) -> bool:
+ 			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + hours * 60, "place": ["駅前", "商店通り", "住宅街"][world.draw(int(world.s.minute), int(person.id), "leaver", 3)]})
+ 			world.advance_safe(15)
+ 			_append("%sは小さな荷物を背負って、玄関で振り返った。「みんなを危ない目にあわせたくないから。……今まで、ありがとう」。扉が閉まり、足音が遠ざかっていった。" % person.name)
+-			world.s.household_members.remove_at(index)
+-			world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
+-			for key in ["companion_names", "companion_genders"]:
+-				var values: Array = world.s.profile.get(key, [])
+-				if index < values.size():
+-					values.remove_at(index)
+-				world.s.profile[key] = values
+-			for i in world.s.household_members.size():
+-				world.s.household_members[i].id = i
+-			dialogue = HouseholdDialogue.new()
++			_remove_housemate(index)
+ 			_refresh()
+ 			return true
+ 		if NPCMemory._mentions(cmd, ["看病", "そばにいる", "付き添", "手当て"]):
+@@ -2458,7 +2531,16 @@ func _check_walkers(previous: String) -> bool:
  func _encounter_turn(cmd: String) -> void:
  	var w := Walkers.ensure(world)
  	var enc: Dictionary = w.encounter
@@ -59176,7 +59297,7 @@ index 525ab5c..f68676f 100644
  	if kind.is_empty():
  		_append("近くに感染者がいる。今は「隠れる」「逃げる」「物を投げて気をそらす」「戦う」「様子を見る」のどれかを選んでほしい。何も実行していません。")
  		_refresh()
-@@ -2537,6 +2572,7 @@ func _canonical_command(raw: String) -> String:
+@@ -2537,6 +2619,7 @@ func _canonical_command(raw: String) -> String:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
  		"窓を見る":"窓から外を見る", "窓の外を見る":"窓から外を見る",
@@ -59184,7 +59305,7 @@ index 525ab5c..f68676f 100644
  		"外の様子を見る":"窓から外を見る", "ニュースを確認する":"ニュースを見る",
  		"テレビを見る":"ニュースを見る", "ご飯を食べる":"食事する",
  		"食事をする":"食事する", "食べる":"食事する", "水を飲みたい":"水を飲む",
-@@ -2574,16 +2610,18 @@ func _interpret(raw: String) -> String:
+@@ -2574,16 +2657,18 @@ func _interpret(raw: String) -> String:
  	if clean == "街の地図を見る":
  		return _district_map()
  	if clean == "拠点の状態を見る":
@@ -59208,7 +59329,7 @@ index 525ab5c..f68676f 100644
  		if world.s.health > 0:
  			world.advance_safe(1)
  		return _look()
-@@ -2600,18 +2638,20 @@ func _interpret(raw: String) -> String:
+@@ -2600,18 +2685,20 @@ func _interpret(raw: String) -> String:
  		return world.work_at_home()
  	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
  	if clean in ["店の在庫を見る","買い物する"]:
@@ -59232,7 +59353,7 @@ index 525ab5c..f68676f 100644
  		var id: String = {"食品店":"grocer","金物店":"hardware","薬局":"pharmacy"}.get(location,"")
  		if id.is_empty():return "購入するには店頭へ移動してください。"
  		if not bought.get_string(1).is_empty() and bought.get_string(1)!=location:return "指定した店の前にいない。"
-@@ -2758,7 +2798,7 @@ func _execute_command(cmd: String) -> String:
+@@ -2758,7 +2845,7 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -59241,7 +59362,7 @@ index 525ab5c..f68676f 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var elapsed: int = world.advance_safe(480, true)
  		return "%d分眠った。目が覚めると、外の様子も変わっているかもしれない。" % elapsed
-@@ -2838,28 +2878,28 @@ func _scene_path() -> String:
+@@ -2838,28 +2925,28 @@ func _scene_path() -> String:
  func _weather_text() -> String:
  	return str({"clear":"晴れ","cloudy":"くもり","rain":"雨","snow":"雪"}.get(world.s.weather,"不明"))
  func _scene_caption() -> String:
@@ -59279,7 +59400,7 @@ index 525ab5c..f68676f 100644
  		elif SceneDescription.SHOPS.has(location):
  			paragraphs.append(_shop_inventory())
  	var observed := _observe("sight")
-@@ -2867,6 +2907,11 @@ func _look(inspect_details: bool = true) -> String:
+@@ -2867,6 +2954,11 @@ func _look(inspect_details: bool = true) -> String:
  		paragraphs.append(observed)
  	return "\n\n".join(paragraphs)
  
@@ -59291,6 +59412,88 @@ index 525ab5c..f68676f 100644
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
+diff --git a/scripts/mood.gd b/scripts/mood.gd
+index 298da99..59e1b64 100644
+--- a/scripts/mood.gd
++++ b/scripts/mood.gd
+@@ -97,11 +97,72 @@ static func hourly(world, sleeping: bool) -> void:
+ 	for person in living:
+ 		var home: bool = str(person.get("activity", "")) != "外出"
+ 		change(person, _hour_delta(world, person, home, str(person.get("activity", "")) == "睡眠", false))
+-		# A housemate at the end of their tether says so, twice a day at most.
+-		if of(person) < 15.0 and int(world.s.minute) - int(person.get("mood_said_at", -100000)) >= 720:
+-			person.mood_said_at = int(world.s.minute)
+-			if world.s.has("walkers"):
+-				world.s.walkers.notices.append("%sが、暗い顔で黙り込んでいる。「……もう、こんな暮らしは耐えられない」" % person.name)
++		if not bool(person.get("bitten", false)):
++			_strain(world, person, at_home)
++
++## v149.25: a housemate worn down. Below 25: every half day an argument, a
++## closed door or a sleepless night. Below 15 for two days: they say they are
++## thinking of the shelter. A day later, still there: they leave a note and go
++## (`leaving`, handled by the game). Listening and comfort undo it.
++const LEAVE_WARN_HOURS := 48
++const LEAVE_HOURS := 72
++
++static func _strain(world, person: Dictionary, player_home: bool) -> void:
++	var minute := int(world.s.minute)
++	var notices: Array = world.s.walkers.notices if world.s.has("walkers") else []
++	var value := of(person)
++	if value < 15.0:
++		person.low_hours = int(person.get("low_hours", 0)) + 1
++	elif value >= 20.0 and person.has("low_hours"):
++		person.erase("low_hours")
++		person.erase("leave_warned_at")
++	var awake: bool = not str(person.get("activity", "")) in ["睡眠", "外出"]
++	if value < 25.0 and awake and minute - int(person.get("mood_event_at", -100000)) >= 12 * 60:
++		person.mood_event_at = minute
++		var kind: int = world.draw(minute, int(person.id), "strain", 3)
++		if kind == 0 and player_home and float(world.s.health) > 0:
++			change(world.s, -3.0)
++			change(person, -1.0)
++			person.withdrawn_until = minute + 6 * 60
++			notices.append("%sと、ささいなことで口論になった。「……もういい」とだけ言って、%sは寝室にこもってしまった。" % [person.name, person.name])
++		elif kind == 1:
++			person.withdrawn_until = minute + 6 * 60
++			notices.append("%sが寝室から出てこない。ドア越しに声をかけても、返事は短い。" % person.name)
++		else:
++			person.fatigue = minf(100.0, float(person.get("fatigue", 0.0)) + 20.0)
++			notices.append("%sは夜中に何度も起きていたようだ。目の下に、濃いくまができている。" % person.name)
++	var low := int(person.get("low_hours", 0))
++	if low >= LEAVE_WARN_HOURS and not person.has("leave_warned_at"):
++		person.leave_warned_at = minute
++		notices.append("%s「……ねえ。避難所に行けば、ここよりはましなのかな。ここにいると、息が詰まりそう」" % person.name)
++	elif low >= LEAVE_HOURS and person.has("leave_warned_at") and minute - int(person.leave_warned_at) >= 24 * 60:
++		person.leaving = true
++
++## Whether a worn-down housemate turns a request down.
++static func refuses(world, person: Dictionary, request: String) -> bool:
++	if request.contains("映画"):
++		return false
++	return of(person) < 20.0 or int(person.get("withdrawn_until", -1)) > int(world.s.minute)
++
++## Sitting down and listening: a real lift, less if done again soon.
++static func comfort(world, person: Dictionary) -> String:
++	ensure(world)
++	var minute := int(world.s.minute)
++	var recent := minute - int(person.get("comforted_at", -100000)) < 6 * 60
++	var before := of(person)
++	person.comforted_at = minute
++	person.erase("withdrawn_until")
++	change(person, 3.0 if recent else 10.0)
++	change(world.s, 2.0)
++	if person.has("low_hours"):
++		person.low_hours = maxi(0, int(person.low_hours) - 24)
++	if recent:
++		return "%sの隣に座った。さっきも話したばかりで、今はただ黙ってそばにいた。" % person.name
++	if before < 15.0:
++		return "%sの隣に座り、何も言わずに待った。しばらくして、%sはぽつぽつと話し始めた。家族のこと、外のこと、眠れない夜のこと。最後に小さく「……聞いてくれて、ありがとう」と言った。" % [person.name, person.name]
++	if before < 35.0:
++		return "%sの話を、急かさずに聞いた。%sは少しだけ笑って、「なんか、ちょっと楽になった」と言った。" % [person.name, person.name]
++	return "%sとゆっくり話した。外のことを忘れて、昔の話で少し笑った。" % person.name
+ 
+ ## Talking lifts both a little, at most once every half hour per person.
+ static func talked(world, person: Dictionary) -> void:
 diff --git a/scripts/navigation.gd b/scripts/navigation.gd
 index dd03efd..2ecdf23 100644
 --- a/scripts/navigation.gd
@@ -59340,6 +59543,19 @@ index dd03efd..2ecdf23 100644
  	if from in STREETS and to in STREETS:
  		return 6
  	if from in STREETS or to in STREETS:
+diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
+index 56aaab0..c81c405 100644
+--- a/scripts/npc_mind.gd
++++ b/scripts/npc_mind.gd
+@@ -329,6 +329,8 @@ static func _condition(person: Dictionary) -> String:
+ 		return "噛まれて高い熱がある。もう助からないと分かっている" if float(person.health) < 60.0 else "噛まれた傷が痛み、熱が出始めている"
+ 	if float(person.health) < 70.0:
+ 		return "少し具合が悪い"
++	if person.has("leave_warned_at"):
++		return "心が限界で、ここを出て避難所に行こうか迷っている"
+ 	if float(person.get("mood", 70.0)) < 15.0:
+ 		return "心が限界に近い。閉じこもる暮らしに耐えられなくなりかけている"
+ 	if float(person.get("mood", 70.0)) < 35.0:
 diff --git a/scripts/outbreak_news.gd.uid b/scripts/outbreak_news.gd.uid
 new file mode 100644
 index 0000000..a959ddf
@@ -59746,3 +59962,129 @@ index 0000000..f4d4b01
 +++ b/tests/test_playtest149_24.gd.uid
 @@ -0,0 +1 @@
 +uid://cmx1chaghq5j1
+diff --git a/tests/test_strain149_25.gd b/tests/test_strain149_25.gd
+new file mode 100644
+index 0000000..d5b3976
+--- /dev/null
++++ b/tests/test_strain149_25.gd
+@@ -0,0 +1,107 @@
++extends SceneTree
++## v149.25: a worn-down housemate argues, shuts themself in, sleeps badly and
++## turns requests down; at the limit for two days they speak of the shelter,
++## and a day later they leave a note and go. Listening undoes it.
++const Main = preload("res://main.tscn")
++const Mood = preload("res://scripts/mood.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var profile: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	profile.cohabitants = 1
++	profile.companion_names = ["詩音"]
++	g._start_new_game(profile)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var shion: Dictionary = w.s.household_members[0]
++	g.location = "居間"
++	shion.location = "居間"
++	shion.activity = "在宅"
++	w.set_meta("player_at_home", true)
++	Mood.ensure(w)
++	# --- Strain below 25.
++	shion.mood = 20.0
++	var seen := {}
++	for i in 60:
++		w.s.minute += 60
++		shion.activity = "在宅"
++		shion.mood = 20.0
++		w.s.walkers.notices = []
++		Mood.hourly(w, false)
++		var text := str(w.s.walkers.notices)
++		if text.contains("口論"): seen.argue = true
++		if text.contains("出てこない"): seen.closed = true
++		if text.contains("くま"): seen.sleepless = true
++	check(seen.size() >= 2, "strain shows as arguments, a closed door or sleepless nights: " + str(seen.keys()))
++	shion.withdrawn_until = int(w.s.minute) + 120
++	g._run_household_request(0, shion, "水を飲んで", "水を飲んで")
++	check(g.log_entries[-1].begins_with("詩音「") and (g.log_entries[-1].contains("何もしたくない") or g.log_entries[-1].contains("ひとりに") or g.log_entries[-1].contains("今は無理")), "a worn-down housemate turns requests down")
++	check(not Mood.refuses(w, shion, "映画を観よう"), "but a film is still welcome")
++	# --- Listening.
++	shion.mood = 18.0
++	g.dialogue.partner = -1
++	g._refresh()
++	check("詩音の話を聞く" in g._suggestions(), "listening is suggested")
++	var t0: int = w.s.minute
++	await g._on_command("詩音の話を聞く")
++	check(float(shion.mood) >= 27.0 and int(w.s.minute) - t0 >= 30 and not shion.has("withdrawn_until") and g.log_entries[-1].contains("（30分）"), "listening lifts them and opens the door")
++	var m1: float = shion.mood
++	await g._on_command("詩音を励ます")
++	check(float(shion.mood) - m1 < 5.0, "again so soon, it helps less")
++	# --- At the limit: a warning, then a note.
++	g.location = "台所"
++	var warned := false
++	for i in 80:
++		w.s.minute += 60
++		shion.activity = "在宅"
++		shion.mood = 10.0
++		w.s.walkers.notices = []
++		Mood.hourly(w, false)
++		warned = warned or str(w.s.walkers.notices).contains("避難所に行けば")
++		if bool(shion.get("leaving", false)):
++			break
++	check(warned and bool(shion.get("leaving", false)), "two days at the limit bring a warning, a day later they decide to go")
++	g._refresh()
++	check(w.s.household_members.is_empty() and str(g.log_entries.slice(-3)).contains("書き置き") and int(w.s.profile.cohabitants) == 0, "they leave a note and are gone")
++	check(w.validate_state(w.s), "the household stays valid")
++	# --- Comfort in time stops it.
++	var g2 = Main.instantiate()
++	root.add_child(g2)
++	for i in 3: await process_frame
++	g2._start_new_game(profile)
++	g2._finish_intro()
++	g2.local_model.enabled = false
++	var w2 = g2.world
++	var mate: Dictionary = w2.s.household_members[0]
++	g2.location = "居間"
++	mate.location = "居間"
++	Mood.ensure(w2)
++	for i in 50:
++		w2.s.minute += 60
++		mate.activity = "在宅"
++		mate.mood = 10.0
++		Mood.hourly(w2, false)
++	check(mate.has("leave_warned_at"), "the warning comes")
++	await g2._on_command("詩音の話を聞く")
++	check(int(mate.get("low_hours", 0)) < Mood.LEAVE_WARN_HOURS, "listening after the warning buys time")
++	for i in 30:
++		w2.s.minute += 60
++		mate.activity = "在宅"
++		Mood.hourly(w2, false)
++	check(not bool(mate.get("leaving", false)) and w2.s.household_members.size() == 1, "and once they feel better they stay")
++	print("v149.25 strain checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
+index cd6cff3..8f42c24 100644
+--- a/tests/test_walkers149_24.gd
++++ b/tests/test_walkers149_24.gd
+@@ -397,7 +397,7 @@ func run() -> void:
+ 	check(NPCMind._condition(friend).contains("限界"), "a housemate at the end of their tether says so in conversation")
+ 	mw.s.walkers.notices = []
+ 	Mood.hourly(mw, false)
+-	check(str(mw.s.walkers.notices).contains("耐えられない"), "and the chronicle shows it")
++	check(not mw.s.walkers.notices.is_empty(), "and it shows in the chronicle")
+ 	friend.mood = 50.0
+ 	mw.s.mood = 50.0
+ 	mw.s.walkers.places = {"建物前": 1}
