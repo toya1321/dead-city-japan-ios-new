@@ -1,0 +1,317 @@
+diff --git a/UI_UPDATE_v149.22.md b/UI_UPDATE_v149.22.md
+new file mode 100644
+index 0000000..c75506d
+--- /dev/null
++++ b/UI_UPDATE_v149.22.md
+@@ -0,0 +1,18 @@
++# v149.22 候補ボタンの横スクロール（v149.21ベース）
++
++## 問題（iPhone実機、v149.21）
++
++入力欄の上の候補ボタンを横にスクロールしようとすると、指を置いたボタンが押されてしまった。候補の列が普通のスクロール領域で、ボタンが先に指の操作を受け取っていた。
++
++## 変更
++
++| 内容 | ファイル |
++| --- | --- |
++| 記録やメニューの縦スクロールで使っている「タップとスワイプの判定」に横向きの設定を追加し、候補の列とメニューのタブに使う。指が14px以上横に動いたらスクロールとして扱い、ボタンは押さない。ほとんど動かずに離したときだけボタンを押す。 | `scripts/gesture_scroll.gd`, `scripts/main.gd` |
++| メニューや写真の拡大を開いている間は、候補の列が指の操作を受け取らないようにした（記録の欄と同じ）。 | `scripts/main.gd` |
++| バージョン 0.149.22（ビルド171）。 | `export_presets.cfg`, `build_scripts/build-ios-unsigned.sh`, `scripts/title_screen.gd` |
++
++## テスト
++
++- `tests/test_chips_touch149_21.gd`（新規）：指をボタンに置いて横に動かすとスクロールし、ボタンは押されない。軽く触れて離すと押される。メニューを開いている間は反応しない。v149.21で実行すると「横スクロールしない」で失敗することを確認した。
++- 全136テストに合格（Godot 4.6.3、Linux）。
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 2ad6d92..7c1e8fd 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '170'
+-assert info['CFBundleShortVersionString'] == '0.149.21'
++assert str(info['CFBundleVersion']) == '171'
++assert info['CFBundleShortVersionString'] == '0.149.22'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.21-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.22-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.21-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.22-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 772aec5..798db9b 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.21"
+-application/version="170"
++application/short_version="0.149.22"
++application/version="171"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/scripts/gesture_scroll.gd b/scripts/gesture_scroll.gd
+index ff95c6e..5ce1b96 100644
+--- a/scripts/gesture_scroll.gd
++++ b/scripts/gesture_scroll.gd
+@@ -17,6 +17,23 @@ var drag_threshold := 14.0
+ var velocity := 0.0
+ var last_y := 0.0
+ var last_ms := 0
++# v149.21: true for a sideways strip (suggestion chips, menu tabs).
++var horizontal := false
++
++func _scroll_value() -> int:
++	return scroll_horizontal if horizontal else scroll_vertical
++
++func _set_scroll_value(value: int) -> void:
++	if horizontal:
++		scroll_horizontal = value
++	else:
++		scroll_vertical = value
++
++func _axis(v: Vector2) -> float:
++	return v.x if horizontal else v.y
++
++func _cross(v: Vector2) -> float:
++	return v.y if horizontal else v.x
+ 
+ func _ready() -> void:
+ 	scroll_deadzone = 14
+@@ -66,14 +83,14 @@ func _input(event: InputEvent) -> void:
+ 	if pressed:
+ 		if not inside: return
+ 		# Leave the narrow native scroll bar usable for desktop users.
+-		if mouse and pos.x >= get_global_rect().end.x-18: return
++		if mouse and not horizontal and pos.x >= get_global_rect().end.x-18: return
+ 		if pointer != -999:
+ 			get_viewport().set_input_as_handled()
+ 			return
+ 		pointer = id
+ 		start_pos = pos
+-		start_scroll = scroll_vertical
+-		last_y = pos.y
++		start_scroll = _scroll_value()
++		last_y = _axis(pos)
+ 		last_ms = Time.get_ticks_msec()
+ 		velocity = 0.0
+ 		dragging = false
+@@ -97,20 +114,20 @@ func _input(event: InputEvent) -> void:
+ 		else:
+ 			var delta := pos-start_pos
+ 			if delta.length() >= drag_threshold:moved=true
+-			if not dragging and absf(delta.y) >= drag_threshold and absf(delta.y) >= absf(delta.x)*0.7:
++			if not dragging and absf(_axis(delta)) >= drag_threshold and absf(_axis(delta)) >= absf(_cross(delta))*0.7:
+ 				dragging = true
+ 				if is_instance_valid(pressed_button): pressed_button.set_pressed_no_signal(false)
+ 			if dragging:
+-				scroll_vertical = start_scroll + int(start_pos.y-pos.y)
++				_set_scroll_value(start_scroll + int(_axis(start_pos)-_axis(pos)))
+ 				var now := Time.get_ticks_msec()
+-				velocity = clampf((last_y-pos.y)*1000.0/maxf(16.0,float(now-last_ms)), -1500.0,1500.0)
+-				last_y = pos.y
++				velocity = clampf((last_y-_axis(pos))*1000.0/maxf(16.0,float(now-last_ms)), -1500.0,1500.0)
++				last_y = _axis(pos)
+ 				last_ms = now
+ 			get_viewport().set_input_as_handled()
+ 
+ func _process(delta: float) -> void:
+ 	if pointer == -999 and absf(velocity) > 15.0:
+-		scroll_vertical += int(velocity*delta)
++		_set_scroll_value(_scroll_value() + int(velocity*delta))
+ 		velocity *= exp(-9.0*delta)
+ 	else:
+ 		if pointer == -999: velocity = 0.0
+diff --git a/scripts/main.gd b/scripts/main.gd
+index e530d56..b25b040 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -39,7 +39,7 @@ var convo_bar: PanelContainer
+ var convo_avatar: Label
+ var convo_label: Label
+ var convo_end_button: Button
+-var chips_scroll: ScrollContainer
++var chips_scroll
+ var chips_row: HBoxContainer
+ var log_box: VBoxContainer
+ var log_bubbles: Array = []
+@@ -352,7 +352,8 @@ func _build_ui() -> void:
+ 	convo_row.add_child(convo_end_button)
+ 
+ 	# Suggestions for the current situation; free text stays the main input.
+-	chips_scroll = ScrollContainer.new()
++	chips_scroll = GestureScroll.new()
++	chips_scroll.horizontal = true
+ 	chips_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+ 	chips_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+ 	chips_scroll.custom_minimum_size.y = 42
+@@ -394,7 +395,8 @@ func _build_menu() -> void:
+ 	drawer_cancel.pressed.connect(_cancel_action)
+ 	bar.add_child(drawer_cancel)
+ 	var close:=UI.button("閉じる", false, 44, 14);close.custom_minimum_size.x=72;close.pressed.connect(_close_drawer);bar.add_child(close)
+-	var tabs_scroll := ScrollContainer.new()
++	var tabs_scroll := GestureScroll.new()
++	tabs_scroll.horizontal = true
+ 	tabs_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+ 	tabs_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+ 	tabs_scroll.custom_minimum_size.y = 46
+@@ -535,7 +537,7 @@ func _open_tool(key: String) -> void:
+ 	command_input.release_focus()
+ 	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+ 		DisplayServer.virtual_keyboard_hide()
+-	drawer.show();log_scroll.interaction_enabled=false
++	drawer.show();log_scroll.interaction_enabled=false;chips_scroll.interaction_enabled=false
+ 	_show_tab({"menu": "status"}.get(key, key))
+ 
+ func _show_tab(key: String) -> void:
+@@ -581,7 +583,7 @@ func _close_drawer() -> void:
+ 	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+ 		DisplayServer.virtual_keyboard_hide()
+ 	drawer.hide()
+-	log_scroll.interaction_enabled=true
++	log_scroll.interaction_enabled=true;chips_scroll.interaction_enabled=true
+ 
+ func _day_number() -> int:
+ 	return int(world.s.minute) / 1440 + 1
+@@ -883,12 +885,12 @@ func _open_image_preview() -> void:
+ 	if picture.texture == null or (advancing and not local_inference_active) or drawer.visible or intro_active or is_instance_valid(title_screen):
+ 		return
+ 	preview_texture.texture = picture.texture
+-	log_scroll.interaction_enabled = false
++	log_scroll.interaction_enabled=false;chips_scroll.interaction_enabled=false
+ 	image_preview.show()
+ 
+ func _close_image_preview() -> void:
+ 	image_preview.hide()
+-	log_scroll.interaction_enabled = true
++	log_scroll.interaction_enabled=true;chips_scroll.interaction_enabled=true
+ 
+ func _apply_ai_settings() -> void:
+ 	var endpoint:String=ai_fields.endpoint.text.strip_edges()
+@@ -1050,7 +1052,7 @@ func _apply_font(node: Node, font: Font) -> void:
+ 
+ func _show_title() -> void:
+ 	left_scroll.interaction_enabled=false
+-	log_scroll.interaction_enabled=false
++	log_scroll.interaction_enabled=false;chips_scroll.interaction_enabled=false
+ 	if is_instance_valid(title_screen): return
+ 	title_screen = TitleScreen.new()
+ 	title_screen.save_exists = FileAccess.file_exists(SAVE_PATH)
+@@ -1089,7 +1091,7 @@ func _continue_from_title() -> void:
+ 	title_screen.queue_free()
+ 	title_screen = null
+ 	left_scroll.interaction_enabled=true
+-	log_scroll.interaction_enabled=true
++	log_scroll.interaction_enabled=true;chips_scroll.interaction_enabled=true
+ 	_append(result)
+ 	_refresh()
+ 
+@@ -1098,7 +1100,7 @@ func _intro_pages() -> Array:
+ 
+ func _show_intro() -> void:
+ 	left_scroll.interaction_enabled=false
+-	log_scroll.interaction_enabled=false
++	log_scroll.interaction_enabled=false;chips_scroll.interaction_enabled=false
+ 	_sync_player_position()
+ 	_refresh()
+ 	intro_active = true
+@@ -1205,7 +1207,7 @@ func _finish_intro() -> void:
+ 
+ func _close_intro_layer() -> void:
+ 	left_scroll.interaction_enabled=true
+-	log_scroll.interaction_enabled=true
++	log_scroll.interaction_enabled=true;chips_scroll.interaction_enabled=true
+ 	intro_active = false
+ 	if is_instance_valid(intro_layer):
+ 		intro_layer.hide()
+diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
+index c5d89fa..ebe1a6a 100644
+--- a/scripts/title_screen.gd
++++ b/scripts/title_screen.gd
+@@ -50,7 +50,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.21"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.22"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
+diff --git a/tests/test_chips_touch149_21.gd b/tests/test_chips_touch149_21.gd
+new file mode 100644
+index 0000000..6dca2c6
+--- /dev/null
++++ b/tests/test_chips_touch149_21.gd
+@@ -0,0 +1,54 @@
++extends SceneTree
++## v149.21 (iPhone feedback): a sideways swipe on the suggestion strip scrolls
++## it without pressing a suggestion; a tap still runs the suggestion.
++const Main=preload("res://main.tscn")
++var failures:Array[String]=[]
++func check(ok:bool,label:String)->void:
++	print(("PASS " if ok else "FAIL ")+label)
++	if not ok:failures.append(label)
++func _initialize()->void:call_deferred("run")
++func point(c:Control)->Vector2:return root.get_screen_transform()*c.get_global_transform_with_canvas()*(c.size*0.5)
++func touch(down:bool,p:Vector2)->void:
++	var e:=InputEventScreenTouch.new();e.index=0;e.position=p;e.pressed=down;Input.parse_input_event(e)
++func drag(p:Vector2,d:Vector2)->void:
++	var e:=InputEventScreenDrag.new();e.index=0;e.position=p;e.relative=d;Input.parse_input_event(e)
++func settle()->void:
++	Input.flush_buffered_events()
++	for i in range(5):await process_frame
++func run()->void:
++	Input.emulate_mouse_from_touch=true
++	root.size=Vector2i(390,844)
++	var g=Main.instantiate();root.add_child(g);await process_frame
++	var profile:Dictionary=g.world.DEFAULT_PROFILE.duplicate(true)
++	profile.cohabitants=1;profile.companion_names=["詩音"]
++	g._start_new_game(profile);g._finish_intro();g.local_model.enabled=false;await settle()
++	await g._on_command("居間へ行く");await settle()
++	await g._on_command("詩音、おはよう");await settle()
++	check(g.chips_scroll.get_h_scroll_bar().max_value>g.chips_scroll.size.x,"the suggestions are wider than the screen")
++	var entries:int=g.log_entries.size()
++	var minute:int=g.world.s.minute
++	var first:Button=g.chips_row.get_child(0)
++	var p:=point(first)
++	# Finger lands on a suggestion and moves left.
++	touch(true,p)
++	for step in range(1,7):
++		drag(p-Vector2(20*step,2),Vector2(-20,0))
++		await process_frame
++	touch(false,p-Vector2(120,2));await settle()
++	check(g.chips_scroll.scroll_horizontal>60,"a sideways swipe scrolls the strip")
++	check(g.log_entries.size()==entries and g.world.s.minute==minute,"the swipe does not press a suggestion")
++	# A short wobble is still a tap.
++	g.chips_scroll.scroll_horizontal=0;g.chips_scroll.velocity=0.0;await settle()
++	var target:Button=g.chips_row.get_child(0)
++	var label:String=target.text
++	p=point(target)
++	touch(true,p);drag(p+Vector2(4,1),Vector2(4,1));touch(false,p+Vector2(4,1));await settle()
++	await settle()
++	check(g.log_entries.size()>entries and g.log_entries.has("▶ "+label),"a tap runs the suggestion: "+label)
++	# Behind the open menu the strip ignores touches.
++	g._open_tool("menu");await settle()
++	check(not g.chips_scroll.interaction_enabled,"the strip ignores touches behind the menu")
++	g._close_drawer();await settle()
++	check(g.chips_scroll.interaction_enabled,"the strip works again after the menu closes")
++	print("chip touch checks failed: %d"%failures.size())
++	quit(1 if not failures.is_empty() else 0)
+diff --git a/tests/test_chips_touch149_21.gd.uid b/tests/test_chips_touch149_21.gd.uid
+new file mode 100644
+index 0000000..08aff1f
+--- /dev/null
++++ b/tests/test_chips_touch149_21.gd.uid
+@@ -0,0 +1 @@
++uid://b7rqd8jdxtafn
