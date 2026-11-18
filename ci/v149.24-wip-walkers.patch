@@ -1,3 +1,18 @@
+diff --git a/scripts/care_wait.gd b/scripts/care_wait.gd
+index 03ffee1..fea67cb 100644
+--- a/scripts/care_wait.gd
++++ b/scripts/care_wait.gd
+@@ -34,6 +34,10 @@ static func tick(game, run: Dictionary, limit: int = 30) -> void:
+ 			if float(w.s.fatigue)<=20:run.sleeping=false
+ 		if why.is_empty() and (float(w.s.hunger)>=85 or float(w.s.thirst)>=85 or (not run.care and float(w.s.fatigue)>=85)):
+ 			why="空腹・渇き・疲労が危険に近づいたため、待機を中断しました。"
++		# v149.24: a sound at the door or a walker inside wakes everyone up.
++		if why.is_empty() and w.s.has("walkers") and bool(w.s.walkers.get("alarm", false)):
++			w.s.walkers.alarm = false
++			why = "物音がして、待機を中断しました。"
+ 		if not why.is_empty():run.reason=why;run.stopped=true;break
+ 		w.advance_safe(1,bool(run.care and run.sleeping))
+ 		run.elapsed+=1
 diff --git a/scripts/household_dialogue.gd b/scripts/household_dialogue.gd
 index 13e123e..53b8de4 100644
 --- a/scripts/household_dialogue.gd
@@ -12,7 +27,7 @@ index 13e123e..53b8de4 100644
  		return "少し具合が悪い"
  	if float(person.thirst) >= 35.0:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..d382e6a 100644
+index c54fcf5..2ff5629 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -22,6 +22,7 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
@@ -76,9 +91,17 @@ index c54fcf5..d382e6a 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1475,7 +1494,15 @@ func _suggestions() -> Array:
+@@ -1474,8 +1493,23 @@ func _suggestions() -> Array:
+ 			var unit := HouseholdErrands.unit(str(order.item))
  			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
  		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
++	if Navigation.indoor(location) and (Walkers.count(world, "建物前") > 0 or Walkers.count(world, "玄関") > 0):
++		if not bool(world.s.door_locked) and location == "玄関":
++			out.append("鍵を閉める")
++		if world.has_home_power() and not bool(world.s.get("lights_off", false)):
++			out.append("明かりを消す")
++		if location == "玄関" and int(world.s.barricade) <= 0:
++			out.append("玄関を補強")
  	for person in world.s.household_members:
 -		if str(person.location) == location and float(person.health) > 0:
 +		if bool(person.get("bitten", false)) and float(person.health) > 0:
@@ -93,7 +116,7 @@ index c54fcf5..d382e6a 100644
  			out.append("%sに話しかける" % person.name)
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -2088,6 +2115,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2088,6 +2122,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -103,7 +126,7 @@ index c54fcf5..d382e6a 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2128,193 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2135,209 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
@@ -161,7 +184,9 @@ index c54fcf5..d382e6a 100644
 +	var notices: Array = w.notices
 +	w.notices = []
 +	for line in notices:
-+		_append("【記録】" + str(line))
++		_append(str(line) if str(line).begins_with("【") else "【記録】" + str(line))
++	if w.places.has("玄関") and Navigation.indoor(location) and location != "玄関" and w.encounter.is_empty() and not notices.is_empty():
++		_append("玄関の方で、何かが動いている気配がする。")
 +	var mates: Array = w.risen_mates
 +	w.risen_mates = []
 +	for mate in mates:
@@ -176,6 +201,20 @@ index c54fcf5..d382e6a 100644
 +## A bitten player leaves so as not to endanger the household; the story
 +## goes on as a housemate. The one who left rises somewhere on the streets
 +## days later.
++## "明かりを消す" / "明かりをつける": light at night draws walkers to the house.
++func _lights_command(cmd: String) -> bool:
++	if not cmd.contains("明かり") and not cmd.contains("電気") and not cmd.contains("照明"):
++		return false
++	var off := NPCMemory._mentions(cmd, ["消す", "消して", "落とす", "消そう"])
++	var on := NPCMemory._mentions(cmd, ["つける", "つけて", "点ける", "灯す"])
++	if off == on or not Navigation.indoor(location):
++		return false
++	world.s.lights_off = off
++	world.advance_safe(1)
++	_append("家の明かりを消した。外からは、人がいるようには見えないはずだ。" if off else "家の明かりをつけた。")
++	_refresh()
++	return true
++
 +func _leave_home(cmd: String) -> bool:
 +	if not bool(world.s.get("bitten", false)) or float(world.s.health) <= 0 or not NPCMemory._mentions(cmd, LEAVE_WORDS):
 +		return false
@@ -197,7 +236,7 @@ index c54fcf5..d382e6a 100644
 +
 +## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
 +func _care_command(cmd: String) -> bool:
-+	if _leave_home(cmd):
++	if _leave_home(cmd) or _lights_command(cmd):
 +		return true
 +	for index in world.s.household_members.size():
 +		var person: Dictionary = world.s.household_members[index]
@@ -324,10 +363,10 @@ index b89279e..034a217 100644
  	if float(state.fatigue) >= 85: lines.append("休息が必要です。寝室で眠れます。")
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 new file mode 100644
-index 0000000..085675d
+index 0000000..10d3216
 --- /dev/null
 +++ b/scripts/walkers.gd
-@@ -0,0 +1,292 @@
+@@ -0,0 +1,335 @@
 +extends RefCounted
 +## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
 +## Slow walkers; a bite infects and kills over days; fighting is possible but
@@ -341,7 +380,7 @@ index 0000000..085675d
 +const WEAPONS := {"バール": 25, "金づち": 25, "ハンマー": 25, "包丁": 10, "木刀": 20, "傘": 0}
 +
 +static func fresh() -> Dictionary:
-+	return {"places": {}, "risen": [], "pending": [], "noise": {}, "encounter": {}, "killed": 0, "last_day": -1, "risen_mates": [], "notices": []}
++	return {"places": {}, "risen": [], "pending": [], "noise": {}, "encounter": {}, "killed": 0, "last_day": -1, "risen_mates": [], "notices": [], "alarm": false}
 +
 +static func ensure(world) -> Dictionary:
 +	if not world.s.has("walkers") or not world.s.walkers is Dictionary:
@@ -448,6 +487,49 @@ index 0000000..085675d
 +	for place in w.noise.keys():
 +		if int(w.noise[place]) < minute:
 +			w.noise.erase(place)
++
++## v149.24: random events at the player's home. Walkers outside are drawn by
++## light at night (power on and lights not turned off) and by noise; at the
++## door they knock, and an unlocked, unbarricaded door lets one in.
++const HOME_OUTSIDE := ["屋外", "建物前"]
++
++static func home_events(world) -> void:
++	var w := ensure(world)
++	var minute := int(world.s.minute)
++	var hour: float = world.hour_of_day()
++	var night := hour < 6.0 or hour >= 18.0
++	var lit: bool = night and world.has_home_power() and not bool(world.s.get("lights_off", false))
++	var street := count(world, "屋外")
++	var porch := count(world, "建物前")
++	# Drawn to the house from the street.
++	if street > 0:
++		var pull := 4 + (12 if lit else 0) + (15 if int(w.noise.get("玄関", -1)) >= minute or int(w.noise.get("居間", -1)) >= minute else 0)
++		if world.draw(minute, street, "home-pull", 100) < pull:
++			_add(world, "屋外", -1)
++			_add(world, "建物前", 1)
++			porch += 1
++			if night and world.draw(minute, 3, "home-shadow", 100) < 50:
++				w.notices.append("【危険】窓の外を、ふらつく人影が横切った。家の前で立ち止まったように見える。")
++	if porch <= 0:
++		return
++	var roll: int = world.draw(minute, porch * 7, "home-door", 100)
++	var open_door: bool = not bool(world.s.door_locked) and int(world.s.barricade) <= 0
++	if open_door and roll < 25:
++		_add(world, "建物前", -1)
++		_add(world, "玄関", 1)
++		w.alarm = true
++		w.notices.append("【危険】玄関の扉が、きしみながら開く音がした。誰かが家の中に入ってきた。")
++	elif roll < 30:
++		# Knocking on a locked door is recorded; only an unlocked one is an alarm.
++		w.alarm = open_door
++		if int(world.s.barricade) > 0:
++			w.notices.append("【危険】玄関の補強板が、外から叩かれている。うめき声が聞こえる。板はまだ持ちこたえている。")
++		else:
++			world.s.longplay.shelter_integrity = maxf(0.0, float(world.s.longplay.shelter_integrity) - 1.0)
++			w.notices.append("【危険】玄関の扉を、どん、どんと叩く音がする。鍵はかかっている。音はなかなかやまない。")
++	elif roll >= 85:
++		_add(world, "建物前", -1)
++		_add(world, "屋外", 1)
 +
 +static func make_noise(world, place: String, minutes: int = 60) -> void:
 +	var w := ensure(world)
@@ -628,7 +710,7 @@ index 0000000..a6ae833
 @@ -0,0 +1 @@
 +uid://b81f14dwsw6cu
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 4971378..5d669aa 100644
+index 4971378..b2d9da6 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -4,6 +4,9 @@ const Events = preload("res://scripts/world_events.gd")
@@ -655,16 +737,17 @@ index 4971378..5d669aa 100644
  	return true
  
  static func valid_profile(profile: Dictionary) -> bool:
-@@ -57,6 +67,8 @@ func step(sleeping: bool) -> void:
+@@ -57,6 +67,9 @@ func step(sleeping: bool) -> void:
  	super.step(sleeping)
  	if int(s.minute)%60==0:
  		_household_hour()
 +		Walkers.hourly(self)
 +		Walkers.housemates_hourly(self)
++		Walkers.home_events(self)
  		if not s.has("district"):
  			s.district = District.fresh()
  		District.tick(self)
-@@ -362,6 +374,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+@@ -362,6 +375,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
  func validate_state(data: Dictionary) -> bool:
  	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
  		return false
@@ -699,10 +782,10 @@ index ff31294..a4b8548 100644
  			a.life_stage = "dead"
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..082cb80
+index 0000000..3a3e8dc
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,303 @@
 +extends SceneTree
 +## v149.24: the dead rise and walk; the player sees them, can be noticed, and
 +## chooses to hide, flee, fight or look. A bite is fatal over days.
@@ -941,6 +1024,63 @@ index 0000000..082cb80
 +	check("詩音を見送る" in farewell._suggestions(), "seeing them off is offered")
 +	await farewell._on_command("詩音を見送る")
 +	check(fw.s.household_members.is_empty() and int(fw.s.profile.cohabitants) == 0 and farewell.log_entries[-1].contains("今まで、ありがとう") and fw.validate_state(fw.s), "the housemate leaves of their own will")
++
++	# --- Random events at home: drawn by light, knocking, getting in.
++	var home = await new_game()
++	var hw2 = home.world
++	home.location = "居間"
++	hw2.s.minute = 13 * 60 + 1440   # 21:00 on day 2
++	hw2.s.walkers.places = {"屋外": 3}
++	var lit_pulls := 0
++	var dark_pulls := 0
++	for i in 200:
++		hw2.s.minute += 60
++		hw2.s.walkers.places = {"屋外": 3}
++		hw2.s.lights_off = false
++		Walkers.home_events(hw2)
++		lit_pulls += 1 if Walkers.count(hw2, "建物前") > 0 else 0
++		hw2.s.walkers.places = {"屋外": 3}
++		hw2.s.lights_off = true
++		Walkers.home_events(hw2)
++		dark_pulls += 1 if Walkers.count(hw2, "建物前") > 0 else 0
++	check(lit_pulls > dark_pulls, "lights draw walkers to the house (%d lit / %d dark)" % [lit_pulls, dark_pulls])
++	hw2.s.walkers.notices = []
++	hw2.s.door_locked = true
++	hw2.s.barricade = 0
++	var knocked := false
++	for i in 100:
++		hw2.s.minute += 60
++		hw2.s.walkers.places = {"建物前": 2}
++		Walkers.home_events(hw2)
++		knocked = knocked or str(hw2.s.walkers.notices).contains("叩く音")
++	check(knocked and Walkers.count(hw2, "玄関") == 0, "a locked door is knocked on but holds")
++	hw2.s.door_locked = false
++	var entered := false
++	for i in 100:
++		hw2.s.minute += 60
++		hw2.s.walkers.places = {"建物前": 2}
++		Walkers.home_events(hw2)
++		if Walkers.count(hw2, "玄関") > 0:
++			entered = true
++			break
++	check(entered and str(hw2.s.walkers.notices).contains("家の中に入ってきた"), "an unlocked door lets one in")
++	home._refresh()
++	check(home.log_entries[-1].contains("玄関の方で") or home.log_entries[-2].contains("家の中に入ってきた"), "the player hears it from another room")
++	await home._on_command("玄関へ行く")
++	check(not hw2.s.walkers.encounter.is_empty() and str(hw2.s.walkers.encounter.place) == "玄関", "going to the entrance means facing it")
++	hw2.s.walkers.encounter = {}
++	hw2.s.walkers.places = {"建物前": 1}
++	hw2.s.lights_off = false
++	home.location = "居間"
++	home._refresh()
++	check("明かりを消す" in home._suggestions(), "the suggestions offer to turn the lights off")
++	await home._on_command("明かりを消す")
++	check(bool(hw2.s.lights_off), "the lights can be turned off")
++	hw2.s.walkers.alarm = true
++	hw2.s.food = 20.0
++	hw2.s.water = 40.0
++	await home._on_command("3時間待つ")
++	check(int(home.active_wait.elapsed) < 180 and str(home.active_wait.reason).contains("物音"), "a sound at the door interrupts a wait")
 +
 +	# --- Save and load keep the walkers.
 +	var saver = await new_game()
