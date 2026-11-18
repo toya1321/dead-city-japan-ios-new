@@ -1,0 +1,560 @@
+diff --git a/scripts/main.gd b/scripts/main.gd
+index c54fcf5..9e69073 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -22,6 +22,7 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
+ const NPCMind = preload("res://scripts/npc_mind.gd")
+ const NPCRequests = preload("res://scripts/npc_requests.gd")
+ const UI = preload("res://scripts/ui_kit.gd")
++const Walkers = preload("res://scripts/walkers.gd")
+ const UI_SETTINGS_PATH := "user://ui_settings.cfg"
+ const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
+ # Map layout (mockup coordinates, 358 x 476): node -> [x, y, w, h].
+@@ -1353,6 +1354,10 @@ func _refresh() -> void:
+ 	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
+ 	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
+ 	danger_label.text = "街：" + str(stage[0])
++	var here := Walkers.count(world, location) if not Navigation.indoor(location) else 0
++	if here > 0:
++		danger_label.text = "感染者 %d" % here
++		stage = ["", 3]
+ 	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
+ 	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
+ 	var normalized := Vitals.values(world.s)
+@@ -1398,6 +1403,12 @@ func _on_command(raw: String) -> void:
+ 	cancel_requested=false
+ 	var suggested := pending_local_action.duplicate()
+ 	pending_local_action.clear()
++	var encounter: Dictionary = Walkers.ensure(world).encounter
++	if not encounter.is_empty() and str(encounter.get("place", "")) != location:
++		Walkers.ensure(world).encounter = {}
++	elif not encounter.is_empty():
++		_encounter_turn(cmd)
++		return
+ 	if NPCConversation.normalize(cmd) == "提案を実行":
+ 		await _execute_local_suggestion(suggested)
+ 		return
+@@ -1463,6 +1474,8 @@ func _update_dialogue_input() -> void:
+ ## and things to do otherwise. They send the text as if typed.
+ func _suggestions() -> Array:
+ 	var out: Array = []
++	if not Walkers.ensure(world).encounter.is_empty():
++		return ["隠れる", "逃げる", "戦う", "様子を見る"]
+ 	if dialogue.partner >= 0:
+ 		var person: Dictionary = world.s.household_members[dialogue.partner]
+ 		var order: Dictionary = person.get("water_errand", {})
+@@ -2088,6 +2101,9 @@ func _run_plan(plan: Dictionary) -> void:
+ 			var already_there: bool = world.s.health > 0 and destination == old_location
+ 			var result:=_interpret(command)
+ 			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
++			if _check_walkers(old_location):
++				if index<validated.actions.size():_append("感染者がいるため、続きの行動は止めた。")
++				break
+ 			var unchanged:=before==var_to_bytes(world.s) and location==old_location
+ 			var missed_destination := not destination.is_empty() and destination != location
+ 			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
+@@ -2098,6 +2114,49 @@ func _run_plan(plan: Dictionary) -> void:
+ 	_report_household_errands()
+ 	_refresh()
+ 
++## The player sees walkers where they are; returns true when an encounter began.
++func _check_walkers(previous: String) -> bool:
++	if world.s.health <= 0 or Navigation.indoor(location):
++		return false
++	var w := Walkers.ensure(world)
++	if not w.encounter.is_empty():
++		return true
++	var enc := Walkers.check(world, location, false, previous if previous != location else "")
++	if enc.is_empty():
++		return false
++	_append("【危険】" + Walkers.describe(enc))
++	_refresh()
++	return true
++
++## One turn while walkers are in sight: hide, flee, fight or look.
++func _encounter_turn(cmd: String) -> void:
++	var w := Walkers.ensure(world)
++	var enc: Dictionary = w.encounter
++	var kind := Walkers.intent(cmd)
++	if kind.is_empty():
++		_append("近くに感染者がいる。今は「隠れる」「逃げる」「戦う」「様子を見る」のどれかを選んでほしい。何も実行していません。")
++		_refresh()
++		return
++	var allies := 0
++	for person in world.s.household_members:
++		if str(person.location) == location and float(person.health) > 0:
++			allies += 1
++	var back := str(enc.get("from", ""))
++	var result := Walkers.resolve(world, kind, Walkers.weapon_bonus(world.s.inventory), allies)
++	world.advance_safe(int(result.minutes))
++	_append(("【危険】" if bool(result.bitten) else "") + str(result.text))
++	if kind == "flee" and bool(result.ended) and not bool(result.bitten):
++		var destination := back if not back.is_empty() and back != location else ("屋外" if location != "屋外" else "建物前")
++		var path := Navigation.route(location, destination, str(world.s.profile.housing))
++		if path.size() >= 2:
++			location = destination
++			_sync_player_position()
++			world.advance_safe(Navigation.duration(path[0], path[1]))
++			_append("%sまで戻った。" % location)
++	if bool(result.bitten):
++		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。残された時間で、何をするか決めなければならない。")
++	_refresh()
++
+ func _report_household_errands() -> void:
+ 	if not Navigation.indoor(location) or float(world.s.health) <= 0:
+ 		return
+diff --git a/scripts/vitals.gd b/scripts/vitals.gd
+index b89279e..034a217 100644
+--- a/scripts/vitals.gd
++++ b/scripts/vitals.gd
+@@ -9,6 +9,7 @@ static func description(value: float) -> String:
+ static func warning(state: Dictionary) -> String:
+ 	var lines: Array[String] = []
+ 	if float(state.health) <= 0: return "死亡しています。保存した記録を読み込めます。"
++	if bool(state.get("bitten", false)): lines.append("噛まれた傷が熱を持っている。感染は治らない。")
+ 	if float(state.hunger) >= 85: lines.append("食事が必要です。満腹度が尽きると体力が減少します。")
+ 	if float(state.thirst) >= 85: lines.append("水分が不足しています。飲料水を飲んでください。")
+ 	if float(state.fatigue) >= 85: lines.append("休息が必要です。寝室で眠れます。")
+diff --git a/scripts/walkers.gd b/scripts/walkers.gd
+new file mode 100644
+index 0000000..5066061
+--- /dev/null
++++ b/scripts/walkers.gd
+@@ -0,0 +1,227 @@
++extends RefCounted
++## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
++## Slow walkers; a bite infects and kills over days; fighting is possible but
++## risky. All randomness goes through world.draw so results are reproducible.
++const Navigation = preload("res://scripts/navigation.gd")
++
++const OUTDOOR := ["屋外", "商店通り", "住宅街", "駅前", "建物前"]
++const BUILDINGS := ["コンビニ", "近所の空き家", "デパート", "食品店", "金物店", "薬局"]
++const RISE_MIN_HOURS := 2
++const RISE_MAX_HOURS := 6
++const WEAPONS := {"バール": 25, "金づち": 25, "ハンマー": 25, "包丁": 10, "木刀": 20, "傘": 0}
++
++static func fresh() -> Dictionary:
++	return {"places": {}, "risen": [], "pending": [], "noise": {}, "encounter": {}, "killed": 0, "last_day": -1}
++
++static func ensure(world) -> Dictionary:
++	if not world.s.has("walkers") or not world.s.walkers is Dictionary:
++		world.s.walkers = fresh()
++	var w: Dictionary = world.s.walkers
++	for key in fresh():
++		if not w.has(key):
++			w[key] = fresh()[key]
++	return w
++
++static func valid(value: Variant) -> bool:
++	if not value is Dictionary:
++		return false
++	for key in ["places", "noise", "encounter"]:
++		if not value.get(key) is Dictionary:
++			return false
++	for key in ["risen", "pending"]:
++		if not value.get(key) is Array:
++			return false
++	for place in value.places:
++		var n = value.places[place]
++		if not (n is int or n is float) or int(n) < 0 or int(n) > 500:
++			return false
++	return true
++
++static func count(world, place: String) -> int:
++	return int(ensure(world).places.get(place, 0))
++
++static func _add(world, place: String, amount: int) -> void:
++	var w := ensure(world)
++	w.places[place] = maxi(0, int(w.places.get(place, 0)) + amount)
++	if int(w.places[place]) == 0:
++		w.places.erase(place)
++
++## Place nearest to a resident's street position.
++static func place_for(x: float, z: float) -> String:
++	if x >= 45.0:
++		return "駅前"
++	if z >= 30.0:
++		return "住宅街"
++	if z >= 12.0:
++		return "商店通り"
++	return "屋外"
++
++## Hourly: the dead rise after a few hours, walkers drift, newcomers arrive.
++static func hourly(world) -> void:
++	var w := ensure(world)
++	var minute := int(world.s.minute)
++	# Residents who died are scheduled to rise once.
++	for a in world.s.agents:
++		if not bool(a.get("dead", false)) or int(a.id) in w.risen:
++			continue
++		var queued := false
++		for p in w.pending:
++			queued = queued or int(p.id) == int(a.id)
++		if not queued:
++			var delay: int = (RISE_MIN_HOURS + world.draw(minute, int(a.id), "rise-delay", RISE_MAX_HOURS - RISE_MIN_HOURS + 1)) * 60
++			w.pending.append({"id": int(a.id), "at": minute + delay, "place": place_for(float(a.x), float(a.z))})
++	var still: Array = []
++	for p in w.pending:
++		if minute >= int(p.at):
++			w.risen.append(int(p.id))
++			_add(world, str(p.place), 1)
++		else:
++			still.append(p)
++	w.pending = still
++	# Newcomers from outside the map once the region is affected.
++	var day := minute / 1440
++	if minute % 1440 == 0 and day != int(w.last_day):
++		w.last_day = day
++		var arriving: int = {"normal": 0, "alert": world.draw(minute, 0, "walker-arrival", 2), "disrupted": 1 + world.draw(minute, 0, "walker-arrival", 2), "emergency": 2 + world.draw(minute, 0, "walker-arrival", 3)}.get(str(world.s.society), 0)
++		for i in arriving:
++			_add(world, ["駅前", "商店通り"][world.draw(minute, i, "walker-entry", 2)], 1)
++		# Long after the collapse the dead slowly fall apart.
++		if day >= 60:
++			for place in w.places.keys():
++				if world.draw(minute, place.hash(), "walker-decay", 100) < 1 * int(w.places[place]):
++					_add(world, place, -1)
++	# Drift between neighbouring outdoor places, toward recent noise.
++	var graph: Dictionary = Navigation.graph(str(world.s.profile.housing))
++	var moves: Array = []
++	for place in w.places.keys():
++		var n := int(w.places[place])
++		var chance := 25 if place in OUTDOOR else 10
++		for i in n:
++			if world.draw(minute, place.hash() + i, "walker-move", 100) >= chance:
++				continue
++			var options: Array = []
++			for next in graph.get(place, []):
++				if next in OUTDOOR or next in BUILDINGS:
++					options.append(next)
++			if options.is_empty():
++				continue
++			var target: String = options[world.draw(minute, place.hash() + i, "walker-dir", options.size())]
++			for next in options:
++				if int(w.noise.get(next, -1)) >= minute:
++					target = next
++			moves.append([place, target])
++	for m in moves:
++		_add(world, m[0], -1)
++		_add(world, m[1], 1)
++	for place in w.noise.keys():
++		if int(w.noise[place]) < minute:
++			w.noise.erase(place)
++
++static func make_noise(world, place: String, minutes: int = 60) -> void:
++	var w := ensure(world)
++	w.noise[place] = int(world.s.minute) + minutes
++	var graph: Dictionary = Navigation.graph(str(world.s.profile.housing))
++	for next in graph.get(place, []):
++		w.noise[next] = maxi(int(w.noise.get(next, -1)), int(world.s.minute) + minutes / 2)
++
++## At a place with walkers the player sees them; whether they notice the
++## player depends on light, noise and numbers. Returns the encounter or {}.
++static func check(world, place: String, loud: bool = false, from: String = "") -> Dictionary:
++	var w := ensure(world)
++	var n := count(world, place)
++	if n <= 0 or Navigation.indoor(place):
++		return {}
++	if not w.encounter.is_empty() and str(w.encounter.place) == place:
++		return w.encounter
++	var hour: float = world.hour_of_day()
++	var night := hour < 6.0 or hour >= 18.0
++	var per := (20 if night else 10) + (30 if loud else 0)
++	var chance := 100 - int(100.0 * pow(1.0 - per / 100.0, n))
++	var noticed: bool = world.draw(int(world.s.minute), place.hash(), "walker-notice", 100) < chance
++	w.encounter = {"place": place, "count": n, "near": noticed, "since": int(world.s.minute), "from": from}
++	return w.encounter
++
++static func describe(enc: Dictionary) -> String:
++	var n := int(enc.count)
++	var who := "様子のおかしい人" if n == 1 else "様子のおかしい人たち（%d人）" % n
++	if bool(enc.near):
++		return "%sが、ふらつきながらこちらへ近づいてくる。目が濁り、うめき声が聞こえる。" % who
++	return "少し先に%sがいる。ゆっくりと歩き回っている。まだこちらには気づいていないようだ。" % who
++
++## Only things the player actually carries help: wood as a club, metal parts
++## as a bar. Named weapons the player does not own give nothing.
++static func weapon_bonus(inventory: Dictionary) -> int:
++	if int(inventory.get("parts", 0)) > 0:
++		return 20
++	if int(inventory.get("wood", 0)) > 0:
++		return 15
++	return 0
++
++## Which encounter action a line asks for ("" when it is something else).
++static func intent(text: String) -> String:
++	for spec in [["hide", ["隠れ", "潜", "やり過ご", "息を殺", "身を伏せ", "物陰"]], ["flee", ["逃げ", "引き返", "戻る", "戻ろう", "走って", "離れ", "家に帰"]], ["fight", ["戦", "殴", "倒す", "倒そ", "攻撃", "叩", "刺", "やっつけ", "撃退"]], ["look", ["様子", "観察", "数え", "見張", "うかが"]]]:
++		for word in spec[1]:
++			if text.contains(word):
++				return spec[0]
++	return ""
++
++## Resolves one action during an encounter. kind: hide / flee / fight / look.
++## Returns {"text", "bitten": bool, "ended": bool, "minutes": int}.
++static func resolve(world, kind: String, weapon: int = 0, allies: int = 0) -> Dictionary:
++	var w := ensure(world)
++	var enc: Dictionary = w.encounter
++	if enc.is_empty():
++		return {"text": "近くに感染者はいない。", "bitten": false, "ended": true, "minutes": 0}
++	var minute := int(world.s.minute)
++	var n := maxi(1, count(world, str(enc.place)))
++	enc.count = n
++	var near := bool(enc.near)
++	var roll: int = world.draw(minute, n * 31 + (7 if near else 0), "walker-" + kind, 100)
++	match kind:
++		"look":
++			enc.near = true if roll < 30 else near
++			return {"text": describe(enc) + ("　気づかれた。" if not near and bool(enc.near) else ""), "bitten": false, "ended": false, "minutes": 3}
++		"hide":
++			var chance := (80 if not near else 45) - 6 * (n - 1)
++			if roll < chance:
++				w.encounter = {}
++				return {"text": "物陰に身を潜めて息を殺した。足音とうめき声が、やがて遠ざかっていった。", "bitten": false, "ended": true, "minutes": 20}
++			enc.near = true
++			return {"text": "隠れようとしたが、物音を立ててしまった。こちらに向かってくる。", "bitten": false, "ended": false, "minutes": 5}
++		"flee":
++			var chance := (95 if not near else 75) - 5 * (n - 1)
++			if roll < chance:
++				w.encounter = {}
++				return {"text": "背を向けて、来た道を足早に引き返した。追ってくる気配は遠ざかった。", "bitten": false, "ended": true, "minutes": 5}
++			return _bite(world, enc, "逃げようとしたところで、腕をつかまれた。")
++		"fight":
++			make_noise(world, str(enc.place))
++			var chance := clampi(30 + weapon + 15 * allies, 5, 90)
++			var text := ""
++			if roll < chance:
++				_add(world, str(enc.place), -1)
++				w.killed = int(w.killed) + 1
++				text = "力いっぱい打ちつけた。相手は崩れ落ち、動かなくなった。"
++				if count(world, str(enc.place)) <= 0:
++					w.encounter = {}
++					return {"text": text + "　あたりに、ほかの姿はない。物音が響いたので、長居はしない方がいい。", "bitten": false, "ended": true, "minutes": 5}
++				enc.count = count(world, str(enc.place))
++				enc.near = true
++				return {"text": text + "　まだ%d人いる。" % int(enc.count), "bitten": false, "ended": false, "minutes": 5}
++			var bite_roll: int = world.draw(minute, n, "walker-bite", 100)
++			if bite_roll < 20 + 10 * mini(n, 5):
++				return _bite(world, enc, "打ちかかったが、かわされた。もつれ合ったはずみに、")
++			enc.near = true
++			return {"text": "打ちかかったが、うまく当たらなかった。相手はまだ迫ってくる。", "bitten": false, "ended": false, "minutes": 5}
++	return {"text": "", "bitten": false, "ended": false, "minutes": 0}
++
++static func _bite(world, enc: Dictionary, lead: String) -> Dictionary:
++	var minute := int(world.s.minute)
++	world.s.health = maxf(0.0, float(world.s.health) - 15.0)
++	world.s.injuries = int(world.s.injuries) + 1
++	if int(world.s.exposure) < 0:
++		world.s.exposure = minute
++		world.s.symptoms_due = minute + (6 + world.draw(minute, 1, "bite-fever", 19)) * 60
++	world.s.bitten = true
++	ensure(world).encounter = {}
++	return {"text": lead + "腕に鋭い痛みが走った。噛まれた。必死に振りほどいて、その場を離れた。", "bitten": true, "ended": true, "minutes": 5}
+diff --git a/scripts/walkers.gd.uid b/scripts/walkers.gd.uid
+new file mode 100644
+index 0000000..a6ae833
+--- /dev/null
++++ b/scripts/walkers.gd.uid
+@@ -0,0 +1 @@
++uid://b81f14dwsw6cu
+diff --git a/scripts/world.gd b/scripts/world.gd
+index 4971378..8cd1bac 100644
+--- a/scripts/world.gd
++++ b/scripts/world.gd
+@@ -4,6 +4,9 @@ const Events = preload("res://scripts/world_events.gd")
+ const HouseholdSmalltalk = preload("res://scripts/household_smalltalk.gd")
+ const HouseholdDialogue = preload("res://scripts/household_dialogue.gd")
+ const HouseholdErrands = preload("res://scripts/household_errands.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++# v149.24: the first local infection starts with this resident.
++const PATIENT_ZERO := 7
+ signal household_memory_event(id: int, minute: int, kind: String, subject: String, detail: String)
+ 
+ const HOUSEHOLD_LEAVE := 9
+@@ -32,6 +35,13 @@ func configure(profile: Dictionary) -> bool:
+ 		var names: Array = profile.get("companion_names",[])
+ 		var name := str(names[i]).strip_edges() if i < names.size() else ""
+ 		s.household_members.append({"id":i,"name":name if not name.is_empty() else "同居人%d"%(i+1),"health":100.0,"hunger":0.0,"thirst":0.0,"fatigue":0.0,"location":"居間","activity":"在宅","food_used":0.0,"water_used":0.0,"tastes":HouseholdSmalltalk.roll_preferences(taste_rng)})
++	s.walkers = Walkers.fresh()
++	s.bitten = false
++	# The outbreak reaches the neighbourhood within the first days.
++	for a in s.agents:
++		if int(a.id) == PATIENT_ZERO:
++			a.exposure = 0
++			a.symptoms_due = (36 + draw(0, PATIENT_ZERO, "patient-zero", 37)) * 60
+ 	return true
+ 
+ static func valid_profile(profile: Dictionary) -> bool:
+@@ -57,6 +67,7 @@ func step(sleeping: bool) -> void:
+ 	super.step(sleeping)
+ 	if int(s.minute)%60==0:
+ 		_household_hour()
++		Walkers.hourly(self)
+ 		if not s.has("district"):
+ 			s.district = District.fresh()
+ 		District.tick(self)
+@@ -362,6 +373,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+ func validate_state(data: Dictionary) -> bool:
+ 	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
+ 		return false
++	if data.has("walkers") and not Walkers.valid(data.walkers):
++		return false
+ 	for person in data.household_members:
+ 		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
+ 			return false
+diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
+index ff31294..a4b8548 100644
+--- a/scripts/world_legacy.gd
++++ b/scripts/world_legacy.gd
+@@ -111,7 +111,8 @@ func step(sleeping: bool) -> void:
+ 	if s.exposure >= 0 and s.minute>=int(s.symptoms_due):
+ 		s.symptomatic = true
+ 	if s.symptomatic:
+-		s.health = maxf(0.0,s.health-0.01)
++		# A bite is fatal over a few days (v149.24); other infection as before.
++		s.health = maxf(0.0,s.health-(0.022 if bool(s.get("bitten", false)) else 0.01))
+ 	var symptomatic_positions: Array[Vector2] = []
+ 	for actor in s.agents:
+ 		if not actor.dead and actor.kind == "symptomatic":
+@@ -131,7 +132,8 @@ func step(sleeping: bool) -> void:
+ 			if a.exposure >= 0 and s.minute>=int(a.symptoms_due):
+ 				a.kind = "symptomatic"
+ 		else:
+-			a.health = maxf(0.0, float(a.health) - 0.0014)
++			# v149.24: the infected die within about a day or two, then rise.
++			a.health = maxf(0.0, float(a.health) - 0.06)
+ 		if a.health <= 0:
+ 			a.dead = true
+ 			a.life_stage = "dead"
+diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
+new file mode 100644
+index 0000000..f32fc9e
+--- /dev/null
++++ b/tests/test_walkers149_24.gd
+@@ -0,0 +1,121 @@
++extends SceneTree
++## v149.24: the dead rise and walk; the player sees them, can be noticed, and
++## chooses to hide, flee, fight or look. A bite is fatal over days.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func new_game():
++	var game = Main.instantiate()
++	root.add_child(game)
++	await process_frame
++	var profile: Dictionary = game.world.DEFAULT_PROFILE.duplicate(true)
++	profile.cohabitants = 1
++	profile.companion_names = ["詩音"]
++	game._start_new_game(profile)
++	game._finish_intro()
++	game.local_model.enabled = false
++	return game
++
++func run() -> void:
++	var game = await new_game()
++	var world = game.world
++	check(Walkers.valid(world.s.walkers) and world.validate_state(world.s), "a new game has a valid walker state")
++	var zero: Dictionary = world.s.agents[world.PATIENT_ZERO]
++	check(int(zero.exposure) == 0 and int(zero.symptoms_due) >= 36 * 60, "the first local infection starts at the beginning")
++
++	# --- The dead rise once, a few hours after death, near where they fell.
++	var a: Dictionary = world.s.agents[3]
++	a.dead = true
++	a.x = 10.0
++	a.z = 38.0
++	Walkers.hourly(world)
++	check(Walkers.count(world, "住宅街") == 0 and world.s.walkers.pending.size() >= 1, "a death is scheduled to rise later")
++	world.s.minute += 7 * 60
++	Walkers.hourly(world)
++	Walkers.hourly(world)
++	var risen: Array = world.s.walkers.risen
++	check(3 in risen and risen.count(3) == 1, "the resident rose exactly once")
++	var total := 0
++	for place in world.s.walkers.places:
++		total += int(world.s.walkers.places[place])
++	check(total >= 1, "the risen walker is somewhere on the map")
++
++	# --- Meeting them outside.
++	world.s.walkers.places = {"商店通り": 2}
++	world.s.walkers.encounter = {}
++	await game._on_command("商店通りへ行く")
++	var enc: Dictionary = world.s.walkers.encounter
++	check(not enc.is_empty() and str(enc.place) == "商店通り" and game.log_entries[-1].begins_with("【危険】"), "arriving where walkers are shows them")
++	check(game.danger_label.text == "感染者 2", "the header shows how many are here")
++	check(game._suggestions() == ["隠れる", "逃げる", "戦う", "様子を見る"], "the suggestions turn into encounter choices")
++	var minute: int = world.s.minute
++	await game._on_command("ニュースを見る")
++	check(world.s.minute == minute and game.log_entries[-1].contains("何も実行していません"), "other actions wait while walkers are in sight")
++	await game._on_command("物陰に隠れてやり過ごす")
++	check(world.s.minute > minute, "hiding takes time")
++	check(Walkers.intent("走って家に戻る") == "flee" and Walkers.intent("木材で殴る") == "fight" and Walkers.intent("少し様子を見る") == "look", "free text maps to encounter actions")
++
++	# --- Fleeing returns to where the player came from.
++	world.s.walkers.encounter = {"place": "商店通り", "count": 2, "near": false, "since": world.s.minute, "from": "屋外"}
++	game.location = "商店通り"
++	await game._on_command("逃げる")
++	check(world.s.walkers.encounter.is_empty() and game.location == "屋外", "fleeing from afar gets back to the previous place")
++
++	# --- Fighting: a hit removes one; noise spreads; repeated fights resolve.
++	world.s.walkers.places = {"商店通り": 1}
++	world.s.walkers.encounter = {"place": "商店通り", "count": 1, "near": true, "since": world.s.minute, "from": "屋外"}
++	game.location = "商店通り"
++	world.s.inventory.parts = 1
++	var outcome := ""
++	for i in 8:
++		if world.s.walkers.encounter.is_empty() or float(world.s.health) <= 0:
++			break
++		world.s.minute += 1
++		await game._on_command("戦う")
++		outcome = game.log_entries[-1]
++	check(world.s.walkers.encounter.is_empty(), "a fight ends one way or another: " + outcome)
++	check(int(world.s.walkers.noise.get("商店通り", -1)) > 0, "fighting makes noise that carries")
++
++	# --- A bite infects and is fatal over days.
++	var bitten = await new_game()
++	var bw = bitten.world
++	bw.s.walkers.places = {"屋外": 5}
++	bw.s.walkers.encounter = {"place": "屋外", "count": 5, "near": true, "since": 0, "from": "建物前"}
++	bitten.location = "屋外"
++	var result := {}
++	for i in 30:
++		bw.s.minute += 1
++		bw.s.walkers.encounter = {"place": "屋外", "count": 5, "near": true, "since": 0, "from": "建物前"}
++		result = Walkers.resolve(bw, "flee")
++		if bool(result.bitten):
++			break
++	check(bool(result.bitten) and bool(bw.s.bitten) and int(bw.s.exposure) >= 0, "being caught by many leads to a bite and infection")
++	check(bitten.Vitals.warning(bw.s).contains("噛まれた"), "the status warns about the bite")
++	var start: int = bw.s.minute
++	for h in 24 * 6:
++		bw.s.hunger = 0.0
++		bw.s.thirst = 0.0
++		bw.s.fatigue = 0.0
++		bw.advance_safe(60)
++		if float(bw.s.health) <= 0:
++			break
++	var days := float(int(bw.s.minute) - start) / 1440.0
++	check(float(bw.s.health) <= 0 and days >= 1.5 and days <= 6.0, "a bite is fatal after %.1f days" % days)
++
++	# --- Save and load keep the walkers.
++	var saver = await new_game()
++	saver.world.s.walkers.places = {"駅前": 4}
++	check(saver._save().begins_with("保存") and saver._load() == "保存データを読み込んだ。" and Walkers.count(saver.world, "駅前") == 4, "walkers survive save and load")
++
++	print("v149.24 walker checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_walkers149_24.gd.uid b/tests/test_walkers149_24.gd.uid
+new file mode 100644
+index 0000000..a0c8557
+--- /dev/null
++++ b/tests/test_walkers149_24.gd.uid
+@@ -0,0 +1 @@
++uid://cmk1aui70ijja
