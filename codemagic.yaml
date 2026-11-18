@@ -9,13 +9,7 @@ workflows:
       xcode: latest
       vars:
         DCJ_LOCAL_LLM: "1"
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: claude/blissful-fermat-8e7k1b-u8y7jb
-          include: true
-      cancel_previous_builds: true
+    # No automatic trigger: start builds from the Codemagic UI when needed.
     scripts:
       - name: Verify and unpack v149.10 source, apply patches
         script: |
