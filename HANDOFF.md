@@ -19,7 +19,7 @@ for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialo
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
-- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在143/143、約13分）。
+- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在144/144、約13分）。
 - 画面の撮影：`xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 390x844 --script res://qa/<撮影スクリプト>.gd`（Xvfbはコンテナにある）。
 
 ## 実モデル（Qwen3-4B）での会話テスト
@@ -123,6 +123,11 @@ UIのモックアップ：https://claude.ai/artifact/Q1ZFHfhgNSeXFaJm3MxBpk（6�
 - 実モデル：生存者の会話は1回8〜9秒。噛み傷を隠す人は「その腕、どうしたの？」に「傷じゃない。ただ、古いものだ。」とごまかした。`qa/survivor_talk.gd`（`DCJ_SEED`・`DCJ_COUNT`）、生成結果の一覧は `qa/survivor_worlds.gd`。
 - テスト `test_survivors149_26`（23項目、40の世界で生成を検査）。全143テスト合格。
 - 次：世界ごとに変わる要素を増やす（最初の感染者・流行の早さ・群れの道と間隔・店の物資・停電断水の時期・出来事の組み合わせ）。役割（見張り・料理・修理・探索）、避難所での再会、略奪者。
+
+## 世界ごとの性格（`world_traits.gd`、`s.world_traits`、パッチは v149.26-wip に同梱）
+
+- 世界シードから一度だけ作る：流行の早さ（`pace` 0.7〜1.4、地域の感染の伸びに掛ける）、最初の持ち込み日（2〜6日目）、最初の感染者（住民の誰か）と発症まで（24〜132時間）、停電・断水の起きやすさ（0.4〜2.0倍）、群れの通り道4種（`past_home` 家の前を通る・`direct` 駅から直接・`reverse` 商店通りから・`elsewhere` 家の前を通らない）と間隔・大きさ、店の物資（コンビニ・空き家・デパートを0.5〜1.5倍。District.valid の上限は2倍まで）、コンビニが緊急まで持ちこたえるか（1/3）、出来事3つ（略奪＝店の物資半分・住宅街の火事＝12時間の音で感染者を寄せる・計画停電8時間・夜間外出禁止・自衛隊の救助の噂・避難所の閉鎖）。古いセーブには無く、無い時は前と同じ動き。
+- テスト `test_world_traits149_27`（15項目）。既存テストの3本は、物資と最初の感染者が固定だった前提を直した。全144テスト合格。
 
 ## 全体のバグ点検（2026-11-19）
 

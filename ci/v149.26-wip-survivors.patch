@@ -573,6 +573,31 @@ index 0000000..c70014a
 +			print("    性格: ", p.trait, " ", p.traits)
 +			print("    出会い: ", p.intro)
 +	quit()
+diff --git a/scripts/district.gd b/scripts/district.gd
+index ace9d9c..bbcdb5a 100644
+--- a/scripts/district.gd
++++ b/scripts/district.gd
+@@ -31,7 +31,8 @@ static func valid(value: Variant) -> bool:
+ 		return false
+ 	for place in SITES:
+ 		var site = value.sites.get(place)
+-		if not _supplies(site, SITES[place].food, SITES[place].water):
++		# v149.27: a well-stocked world may hold up to twice the usual stock.
++		if not _supplies(site, SITES[place].food * 2.0, SITES[place].water * 2.0):
+ 			return false
+ 		if not site.get("vacant") is bool or not _amount(site.get("level"), 2) or float(site.level) != floorf(float(site.level)):
+ 			return false
+@@ -40,7 +41,9 @@ static func valid(value: Variant) -> bool:
+ 	return true
+ 
+ static func tick(world) -> void:
+-	if world.s.society == "emergency" or (world.s.society == "disrupted" and float(world.s.sim.logistics) < 60.0):
++	# v149.27: in some worlds the konbini holds out until the very end.
++	var holds: bool = bool(world.s.get("world_traits", {}).get("konbini_holds", false)) if world.s.get("world_traits") is Dictionary else false
++	if world.s.society == "emergency" or (world.s.society == "disrupted" and float(world.s.sim.logistics) < 60.0 and not holds):
+ 		world.s.district.sites["コンビニ"].vacant = true
+ 	if world.s.society == "emergency":
+ 		world.s.district.sites["デパート"].vacant = true
 diff --git a/scripts/home_life.gd b/scripts/home_life.gd
 index ee24b3d..f5fb1da 100644
 --- a/scripts/home_life.gd
@@ -1936,27 +1961,125 @@ index 1c39054..0ae078b 100644
  	var randomize := _button("別の世界シードにする",form)
  	randomize.pressed.connect(func(): seed_input.value = randi_range(1,999999999))
  	var begin := _button("この設定で始める",form)
+diff --git a/scripts/walkers.gd b/scripts/walkers.gd
+index 13013bf..feff6d9 100644
+--- a/scripts/walkers.gd
++++ b/scripts/walkers.gd
+@@ -4,6 +4,7 @@ extends RefCounted
+ ## risky. All randomness goes through world.draw so results are reproducible.
+ const Navigation = preload("res://scripts/navigation.gd")
+ const Mood = preload("res://scripts/mood.gd")
++const WorldTraits = preload("res://scripts/world_traits.gd")
+ 
+ const OUTDOOR := ["屋外", "商店通り", "住宅街", "駅前", "建物前", "デパート正面"]
+ const BUILDINGS := ["コンビニ", "近所の空き家", "デパート", "デパート地下", "食品店", "金物店", "薬局"]
+@@ -347,6 +348,7 @@ static func total(world) -> int:
+ static func horde_hourly(world) -> void:
+ 	var w := ensure(world)
+ 	var minute := int(world.s.minute)
++	var traits: Dictionary = world.s.get("world_traits", {}) if world.s.get("world_traits") is Dictionary else {}
+ 	var horde: Dictionary = w.get("horde", {})
+ 	if horde.is_empty():
+ 		if not w.has("horde_next"):
+@@ -356,32 +358,40 @@ static func horde_hourly(world) -> void:
+ 		if minute < int(w.horde_next):
+ 			return
+ 		# A horde is made of the town's dead: it grows as the town empties.
+-		var size: int = clampi(total(world) / 2 + 8 + world.draw(minute, 12, "horde-size", 8), 12, 60)
+-		w.horde = {"place": HORDE_ROUTE[0], "step": 0, "size": size}
+-		w.horde_next = minute + (5 * 24 + world.draw(minute, 13, "horde-gap", 4 * 24)) * 60
++		var size: int = clampi(int((total(world) / 2 + 8 + world.draw(minute, 12, "horde-size", 8)) * float(traits.get("horde_size", 1.0))), 10, 70)
++		var route: Array = WorldTraits.HORDE_ROUTES.get(str(traits.get("horde_route", "past_home")), HORDE_ROUTE)
++		w.horde = {"place": route[0], "step": 0, "size": size, "route": route.duplicate()}
++		var gap: Array = traits.get("horde_gap", [5, 9])
++		w.horde_next = minute + (int(gap[0]) * 24 + world.draw(minute, 13, "horde-gap", maxi(1, (int(gap[1]) - int(gap[0])) * 24))) * 60
+ 		w.alarm = true
++		var toward := ""
++		for place in route:
++			if place != route[0]:
++				toward = place
++				break
+ 		if minute < 60 * 1440:
+-			w.notices.append("【防災無線】こちらは、防災無線です。駅前付近に多数の感染者が集まり、住宅街の方向へ移動しています。付近の方は外出を控え、屋内で明かりを消し、物音を立てずに過ごしてください。")
++			w.notices.append("【防災無線】こちらは、防災無線です。%s付近に多数の感染者が集まり、%sの方向へ移動しています。付近の方は外出を控え、屋内で明かりを消し、物音を立てずに過ごしてください。" % [route[0], "家々の並ぶ通り" if toward == "屋外" else toward])
+ 		else:
+-			w.notices.append("【警告】駅の方角から、風に乗って、大勢のうめき声がかすかに聞こえる。")
++			w.notices.append("【警告】%sの方角から、風に乗って、大勢のうめき声がかすかに聞こえる。" % ("駅" if route[0] == "駅前" else route[0]))
+ 		Mood.everyone(world, -2.0)
+ 		return
++	var route: Array = horde.get("route", HORDE_ROUTE)
+ 	var step := int(horde.step) + 1
+-	if step >= HORDE_ROUTE.size():
+-		# It breaks up: a few stay behind on the shopping street.
+-		_add(world, "商店通り", mini(int(horde.size) / 3, maxi(0, TOWN_CAP - total(world))))
++	if step >= route.size():
++		# It breaks up: a few stay behind where it ended.
++		_add(world, str(route[-1]), mini(int(horde.size) / 3, maxi(0, TOWN_CAP - total(world))))
+ 		w.erase("horde")
+ 		if bool(world.get_meta("player_at_home", true)):
+ 			w.notices.append("群れの足音が遠ざかり、やがて聞こえなくなった。張りつめていた息を、ようやく吐いた。")
+ 			Mood.everyone(world, 3.0)
+ 		return
+ 	horde.step = step
+-	horde.place = HORDE_ROUTE[step]
+-	if step + 1 < HORDE_ROUTE.size() and HORDE_ROUTE[step + 1] == "屋外" and str(horde.place) != "屋外":
++	horde.place = route[step]
++	if step + 1 < route.size() and route[step + 1] == "屋外" and str(horde.place) != "屋外":
+ 		w.alarm = true
+ 		Mood.everyone(world, -3.0)
+ 		w.notices.append("【危険】遠くから、大勢の引きずるような足音とうめき声が近づいてくる。群れが、もうすぐこの通りに来る。")
+-	elif str(horde.place) == "屋外" and HORDE_ROUTE[step - 1] != "屋外":
++	elif str(horde.place) == "屋外" and route[step - 1] != "屋外":
+ 		Mood.everyone(world, -5.0)
+ 		w.alarm = true
+ 		w.notices.append("【危険】家の前の通りを、感染者の群れがぞろぞろと通り過ぎていく。数えきれない。物音ひとつ立てられない。")
+@@ -389,8 +399,10 @@ static func horde_hourly(world) -> void:
+ 		# Every hour it is outside, the wait stops: this is lived through, not skipped.
+ 		w.alarm = true
+ 		w.notices.append(["【危険】窓のすぐ外を、引きずる足音が途切れなく続いている。誰かが家の壁に肩をぶつけ、鈍い音がした。", "【危険】群れはまだ通りを埋めている。うめき声が、すぐそこで重なり合う。"][world.draw(minute, step, "horde-line", 2)])
+-	elif HORDE_ROUTE[step - 1] == "屋外":
++	elif route[step - 1] == "屋外":
+ 		w.notices.append("群れの最後尾が、家の前を過ぎていった。足音が少しずつ遠ざかっていく。")
++	elif not "屋外" in route and step == route.size() / 2:
++		w.notices.append("遠くで、大勢の足音が続いている。群れは%sの方を通っているようだ。この通りには来ない。" % horde.place)
+ 
+ ## Ordinary household sound (a film at normal volume, voices): heard only
+ ## by something already standing at the door.
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 3109e97..634981c 100644
+index 3109e97..54acbe9 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -7,6 +7,7 @@ const HouseholdErrands = preload("res://scripts/household_errands.gd")
+@@ -7,6 +7,8 @@ const HouseholdErrands = preload("res://scripts/household_errands.gd")
  const Walkers = preload("res://scripts/walkers.gd")
  const Mood = preload("res://scripts/mood.gd")
  const OutbreakNews = preload("res://scripts/outbreak_news.gd")
 +const Survivors = preload("res://scripts/survivors.gd")
++const WorldTraits = preload("res://scripts/world_traits.gd")
  # v149.24: the first local infection starts with this resident.
  const PATIENT_ZERO := 7
  signal household_memory_event(id: int, minute: int, kind: String, subject: String, detail: String)
-@@ -38,6 +39,7 @@ func configure(profile: Dictionary) -> bool:
+@@ -38,12 +40,18 @@ func configure(profile: Dictionary) -> bool:
  		var name := str(names[i]).strip_edges() if i < names.size() else ""
  		s.household_members.append({"id":i,"name":name if not name.is_empty() else "同居人%d"%(i+1),"health":100.0,"hunger":0.0,"thirst":0.0,"fatigue":0.0,"location":"居間","activity":"在宅","food_used":0.0,"water_used":0.0,"tastes":HouseholdSmalltalk.roll_preferences(taste_rng)})
  	s.walkers = Walkers.fresh()
++	# v149.27: this world's character, from its seed.
++	s.world_traits = WorldTraits.generate(int(s.seed), s.agents.size())
++	WorldTraits.apply_start(self)
 +	Survivors.ensure(self)
  	s.bitten = false
  	# The outbreak reaches the neighbourhood within the first days.
++	var zero := int(s.world_traits.patient_zero)
++	var onset: Array = s.world_traits.symptoms_hours
  	for a in s.agents:
-@@ -54,9 +56,9 @@ static func valid_profile(profile: Dictionary) -> bool:
+-		if int(a.id) == PATIENT_ZERO:
++		if int(a.id) == zero:
+ 			a.exposure = 0
+-			a.symptoms_due = (36 + draw(0, PATIENT_ZERO, "patient-zero", 37)) * 60
++			a.symptoms_due = (int(onset[0]) + draw(0, zero, "patient-zero", maxi(1, int(onset[1]) - int(onset[0]) + 1))) * 60
+ 	return true
+ 
+ static func valid_profile(profile: Dictionary) -> bool:
+@@ -54,9 +62,9 @@ static func valid_profile(profile: Dictionary) -> bool:
  	for key in ["age","seed","cohabitants"]:
  		if not (profile.get(key) is int or profile.get(key) is float): return false
  		if not is_finite(float(profile[key])) or float(profile[key]) != floor(float(profile[key])): return false
@@ -1968,10 +2091,12 @@ index 3109e97..634981c 100644
  	for name_value in profile.companion_names:
  		if not name_value is String or str(name_value).length()>24: return false
  	var genders = profile.get("companion_genders", [])
-@@ -75,6 +77,12 @@ func step(sleeping: bool) -> void:
+@@ -75,6 +83,14 @@ func step(sleeping: bool) -> void:
  		Walkers.home_events(self)
  		Mood.hourly(self, sleeping)
  		OutbreakNews.hourly(self)
++		WorldTraits.hourly(self)
++		WorldTraits.restore(self)
 +		if int(s.minute) % 1440 == 0:
 +			Survivors.daily(self, func(place): return Walkers.count(self, place))
 +		for index in Survivors.household_hourly(self):
@@ -1981,20 +2106,40 @@ index 3109e97..634981c 100644
  		if not s.has("district"):
  			s.district = District.fresh()
  		District.tick(self)
-@@ -382,6 +390,8 @@ func validate_state(data: Dictionary) -> bool:
+@@ -382,6 +398,10 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("walkers") and not Walkers.valid(data.walkers):
  		return false
 +	if data.has("survivors") and not Survivors.valid(data.survivors):
 +		return false
++	if data.has("world_traits") and not WorldTraits.valid(data.world_traits):
++		return false
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
 diff --git a/scripts/world_events.gd b/scripts/world_events.gd
-index 4b4819d..51fdf9a 100644
+index 4b4819d..4fca69a 100644
 --- a/scripts/world_events.gd
 +++ b/scripts/world_events.gd
-@@ -456,7 +456,7 @@ static func valid_data(data: Dictionary) -> bool:
+@@ -90,12 +90,15 @@ static func _epidemic(w: RefCounted) -> void:
+ 	var reported_total:=0
+ 	for region in sim.regions:
+ 		var id:=int(region.id)
+-		if minute>=3*1440 and int(region.active)==0 and int(region.cumulative)<int(region.population) and w.draw(minute,id,"independent-introduction",10000)<60:
++		var traits=w.s.get("world_traits",{})
++		var first_day:int=int(traits.get("first_case_day",3)) if traits is Dictionary else 3
++		var pace:float=float(traits.get("pace",1.0)) if traits is Dictionary else 1.0
++		if minute>=first_day*1440 and int(region.active)==0 and int(region.cumulative)<int(region.population) and w.draw(minute,id,"independent-introduction",10000)<60:
+ 			region.active=1
+ 			region.cumulative+=1
+ 		if int(region.active)>0:
+ 			var susceptible:=int(region.population)-int(region.cumulative)
+-			var fractional:float=float(region.active)*(0.16+float(w.draw(minute,id,"spread-variation",15))/100.0)*float(sim.contact_factor)
++			var fractional:float=float(region.active)*(0.16+float(w.draw(minute,id,"spread-variation",15))/100.0)*float(sim.contact_factor)*pace
+ 			var growth:=int(fractional)
+ 			if w.draw(minute,id,"spread-rounding",10000)<int(fmod(fractional,1)*10000):growth+=1
+ 			growth=mini(susceptible,growth)
+@@ -456,7 +459,7 @@ static func valid_data(data: Dictionary) -> bool:
  		for key in ["region","report_at"]:
  			if not (event.get(key) is int or event.get(key) is float) or not is_finite(float(event[key])):return false
  		if int(event.region)<0 or int(event.region)>7:return false
@@ -2004,7 +2149,7 @@ index 4b4819d..51fdf9a 100644
  		if not person is Dictionary or not person.get("name") is String or not person.get("location") is String or not person.get("activity") is String:return false
  		for key in ["health","hunger","thirst","fatigue","food_used","water_used"]:
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index b60b74f..0090ac0 100644
+index b60b74f..db03b3a 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
 @@ -193,13 +193,21 @@ func step(sleeping: bool) -> void:
@@ -2033,6 +2178,194 @@ index b60b74f..0090ac0 100644
  		if a.kind == "symptomatic":
  			for b in s.agents:
  				if b.kind == "survivor" and not b.dead and Vector2(b.x,b.z).distance_to(pos)<1.0:
+@@ -235,7 +243,8 @@ func _update_outbreak() -> void:
+ 	if minute % 60 != 0: return
+ 	# The first reports occur after a deterministic delay, not on observation.
+ 	if minute >= 2 * 1440:
+-		var growth: int = 1 + int(float(s.regional_cases) * 0.12)
++		var pace_traits = s.get("world_traits", {})
++		var growth: int = 1 + int(float(s.regional_cases) * 0.12 * (float(pace_traits.get("pace", 1.0)) if pace_traits is Dictionary else 1.0))
+ 		s.regional_cases = mini(100000000, int(s.regional_cases) + growth + draw(day, minute, "regional", 4))
+ 		s.outbreak_pressure = minf(100.0, float(s.regional_cases) / 35.0)
+ 	if s.regional_cases >= 20 and s.society == "normal":
+@@ -250,10 +259,13 @@ func _update_outbreak() -> void:
+ 		_record_event("emergency_declared", "一部地域で移動制限が発表された。", "window_collapse")
+ 		s.society = "emergency"
+ 		s.last_news = "一部地域で移動制限。生活物資の供給が不安定になっている。"
+-	if s.society == "emergency" and bool(s.grid_online) and draw(day, minute, "grid", 10000) < 90:
++	var traits = s.get("world_traits", {})
++	var grid_factor: float = float(traits.get("outage_grid", 1.0)) if traits is Dictionary else 1.0
++	var water_factor: float = float(traits.get("outage_water", 1.0)) if traits is Dictionary else 1.0
++	if s.society == "emergency" and bool(s.grid_online) and draw(day, minute, "grid", 10000) < int(90 * grid_factor):
+ 		s.grid_online = false
+ 		_record_event("blackout", "地域の電力供給が停止した。", "living_collapse")
+-	if s.society == "emergency" and bool(s.water_online) and draw(day, minute, "water", 10000) < 65:
++	if s.society == "emergency" and bool(s.water_online) and draw(day, minute, "water", 10000) < int(65 * water_factor):
+ 		s.water_online = false
+ 		_record_event("water_outage", "地域の水道供給が停止した。", "kitchen_collapse")
+ 	# Local infections follow background prevalence, not player choices.
+diff --git a/scripts/world_traits.gd b/scripts/world_traits.gd
+new file mode 100644
+index 0000000..432401c
+--- /dev/null
++++ b/scripts/world_traits.gd
+@@ -0,0 +1,156 @@
++extends RefCounted
++## v149.27: what makes this world unlike the last one, drawn from the world
++## seed once at the start: how fast the outbreak spreads and who carries it
++## first, when the power and water fail, where the hordes walk and how often,
++## how well stocked the shops are and when they are abandoned, and which
++## events the news will carry. Old saves without traits behave as before
++## (`defaults()`).
++
++const HORDE_ROUTES := {
++	# Through the street outside the house (the original route).
++	"past_home": ["駅前", "駅前", "住宅街", "住宅街", "屋外", "屋外", "屋外", "商店通り", "商店通り"],
++	# Straight from the station down the house's street.
++	"direct": ["駅前", "駅前", "屋外", "屋外", "屋外", "商店通り", "商店通り"],
++	# From the shopping street, past the house, toward the station.
++	"reverse": ["商店通り", "商店通り", "屋外", "屋外", "屋外", "住宅街", "住宅街", "駅前"],
++	# Along the residential streets, never past the house.
++	"elsewhere": ["駅前", "駅前", "住宅街", "住宅街", "住宅街", "商店通り", "商店通り"],
++}
++
++## Events a world may carry: [id, stage at which it happens, weight].
++const EVENTS := {
++	"looting": {"stage": "disrupted", "weight": 30},
++	"fire": {"stage": "emergency", "weight": 20},
++	"rolling_blackout": {"stage": "alert", "weight": 20},
++	"curfew": {"stage": "disrupted", "weight": 20},
++	"rescue_rumor": {"stage": "emergency", "weight": 25},
++	"shelter_closed": {"stage": "emergency", "weight": 15},
++}
++
++static func defaults() -> Dictionary:
++	return {"pace": 1.0, "first_case_day": 3, "patient_zero": 7, "symptoms_hours": [36, 72],
++		"outage_grid": 1.0, "outage_water": 1.0, "horde_route": "past_home", "horde_gap": [5, 9], "horde_size": 1.0,
++		"stock": {}, "konbini_holds": false, "events": [], "done_events": []}
++
++static func generate(seed_value: int, residents: int) -> Dictionary:
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([seed_value, "world-traits-v1"])
++	var t := defaults()
++	t.pace = snappedf(rng.randf_range(0.7, 1.4), 0.05)
++	t.first_case_day = rng.randi_range(2, 6)
++	t.patient_zero = rng.randi_range(0, maxi(0, residents - 1))
++	var onset := rng.randi_range(24, 96)
++	t.symptoms_hours = [onset, onset + rng.randi_range(12, 36)]
++	t.outage_grid = snappedf(rng.randf_range(0.4, 2.0), 0.1)
++	t.outage_water = snappedf(rng.randf_range(0.4, 2.0), 0.1)
++	var routes: Array = HORDE_ROUTES.keys()
++	t.horde_route = routes[rng.randi_range(0, routes.size() - 1)]
++	var gap_min := rng.randi_range(3, 7)
++	t.horde_gap = [gap_min, gap_min + rng.randi_range(2, 5)]
++	t.horde_size = snappedf(rng.randf_range(0.7, 1.4), 0.05)
++	var stock := {}
++	for site in ["コンビニ", "近所の空き家", "デパート"]:
++		stock[site] = snappedf(rng.randf_range(0.5, 1.5), 0.05)
++	t.stock = stock
++	t.konbini_holds = rng.randi_range(0, 2) == 0
++	# Three events, drawn by weight without repeats.
++	var pool: Array = EVENTS.keys()
++	var chosen: Array = []
++	while chosen.size() < 3 and not pool.is_empty():
++		var total := 0
++		for id in pool:
++			total += int(EVENTS[id].weight)
++		var roll := rng.randi_range(1, total)
++		for id in pool:
++			roll -= int(EVENTS[id].weight)
++			if roll <= 0:
++				chosen.append(id)
++				pool.erase(id)
++				break
++	t.events = chosen
++	return t
++
++static func of(world) -> Dictionary:
++	var t = world.s.get("world_traits", null)
++	return t if t is Dictionary else defaults()
++
++static func valid(value: Variant) -> bool:
++	if not value is Dictionary:
++		return false
++	for key in ["pace", "outage_grid", "outage_water", "horde_size"]:
++		var n = value.get(key)
++		if not (n is int or n is float) or float(n) < 0.1 or float(n) > 5.0:
++			return false
++	return HORDE_ROUTES.has(str(value.get("horde_route", ""))) and value.get("events") is Array and value.get("stock") is Dictionary
++
++## Applied once when the world is made: shop stock.
++static func apply_start(world) -> void:
++	var t := of(world)
++	for site in t.stock:
++		if world.s.district.sites.has(site):
++			var s: Dictionary = world.s.district.sites[site]
++			s.food = snappedf(float(s.food) * float(t.stock[site]), 0.5)
++			s.water = snappedf(float(s.water) * float(t.stock[site]), 0.5)
++
++## The stage order, for "has the world reached this stage".
++const STAGES := ["normal", "alert", "disrupted", "emergency"]
++
++static func reached(world, stage: String) -> bool:
++	return STAGES.find(str(world.s.society)) >= STAGES.find(stage)
++
++## Hourly: this world's events, each once when its stage comes.
++static func hourly(world) -> void:
++	var t = world.s.get("world_traits", null)
++	if not t is Dictionary:
++		return
++	if not t.has("done_events"):
++		t.done_events = []
++	for id in t.events:
++		if id in t.done_events or not reached(world, str(EVENTS[id].stage)):
++			continue
++		t.done_events.append(id)
++		_happen(world, str(id))
++		break   # one a hour, so they arrive as separate moments
++
++static func _happen(world, id: String) -> void:
++	var notices: Array = world.s.walkers.notices if world.s.has("walkers") else []
++	var news: Dictionary = world.s.get("outbreak_news", {})
++	var items: Array = news.get("items", [])
++	match id:
++		"looting":
++			# The shops are stripped before the player gets there.
++			for site in world.s.district.sites:
++				var s: Dictionary = world.s.district.sites[site]
++				s.food = snappedf(float(s.food) * 0.5, 0.5)
++				s.water = snappedf(float(s.water) * 0.5, 0.5)
++			items.append({"minute": int(world.s.minute), "text": "商店街やコンビニで略奪が相次ぐ。警察は対応しきれていない。"})
++			notices.append("【ニュース速報】このあたりの店で、略奪が始まったらしい。（スマホに届いた通知）")
++		"fire":
++			# A fire in the residential streets: noise and smoke draw the dead.
++			if world.s.has("walkers"):
++				var w: Dictionary = world.s.walkers
++				w.noise["住宅街"] = int(world.s.minute) + 12 * 60
++			notices.append("【危険】住宅街の方角に、黒い煙が上がっている。サイレンは聞こえない。燃える音に、感染者が引き寄せられていく。")
++		"rolling_blackout":
++			world.s.grid_online = false
++			world.s.rolling_blackout_until = int(world.s.minute) + 8 * 60
++			notices.append("【記録】計画停電が始まった。家の電気が止まった。（8時間の予定）")
++		"curfew":
++			items.append({"minute": int(world.s.minute), "text": "区が夜間の外出禁止を要請。午後8時から午前6時まで。"})
++			notices.append("【防災無線】こちらは防災無線です。本日より、夜間の外出を禁止します。夜は家から出ないでください。")
++		"rescue_rumor":
++			items.append({"minute": int(world.s.minute), "text": "（SNS）「自衛隊が駅の向こうで救助拠点を開いた」という書き込みが広がっている。真偽は不明。"})
++			notices.append("スマホに、救助拠点の噂が流れてきた。駅の向こうで、自衛隊が人を集めているという。……本当だろうか。")
++		"shelter_closed":
++			items.append({"minute": int(world.s.minute), "text": "区立小学校の避難所で感染者が出て、閉鎖された。"})
++			notices.append("【記録】ラジオによれば、避難所になっていた小学校で感染者が出て、閉鎖されたという。")
++	news["items"] = items
++
++## A rolling blackout ends on its own.
++static func restore(world) -> void:
++	if world.s.has("rolling_blackout_until") and int(world.s.minute) >= int(world.s.rolling_blackout_until):
++		world.s.erase("rolling_blackout_until")
++		if str(world.s.society) != "emergency":
++			world.s.grid_online = true
++			if world.s.has("walkers"):
++				world.s.walkers.notices.append("【記録】計画停電が終わり、電気が戻った。")
 diff --git a/tests/test_dept149_25.gd b/tests/test_dept149_25.gd
 index f27eeae..88e244a 100644
 --- a/tests/test_dept149_25.gd
@@ -2058,6 +2391,32 @@ index f27eeae..88e244a 100644
  	# Home from the basement goes back up and out.
  	await g._on_command("家に帰る")
  	check(g.location == "玄関", "the way home goes up and out")
+diff --git a/tests/test_district28.gd b/tests/test_district28.gd
+index fbb2322..e8b29c7 100644
+--- a/tests/test_district28.gd
++++ b/tests/test_district28.gd
+@@ -18,6 +18,8 @@ func run() -> void:
+ 	await process_frame
+ 	game._start_new_game(game.world.DEFAULT_PROFILE.duplicate(true))
+ 	game._finish_intro()
++	# v149.27: stock varies by world; these checks use the base stock.
++	game.world.s.district = load("res://scripts/district.gd").fresh()
+ 	var world = game.world
+ 	var state: Dictionary = world.s.district
+ 
+diff --git a/tests/test_scene_description30.gd b/tests/test_scene_description30.gd
+index 8e5f82c..867619a 100644
+--- a/tests/test_scene_description30.gd
++++ b/tests/test_scene_description30.gd
+@@ -19,6 +19,8 @@ func run() -> void:
+ 	await process_frame
+ 	game._start_new_game(game.world.DEFAULT_PROFILE.duplicate(true))
+ 	game._finish_intro()
++	# v149.27: stock varies by world; these checks use the base stock.
++	game.world.s.district = load("res://scripts/district.gd").fresh()
+ 	var world = game.world
+ 
+ 	await game._on_command("台所へ行く")
 diff --git a/tests/test_strain149_25.gd b/tests/test_strain149_25.gd
 index d5b3976..94cce56 100644
 --- a/tests/test_strain149_25.gd
@@ -2308,4 +2667,152 @@ index 0000000..2bf2b5f
 +	old.erase("survivors")
 +	check(w.validate_state(old), "an old save without survivors is valid")
 +	print("v149.26 survivor checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
+index 8f42c24..c6efb63 100644
+--- a/tests/test_walkers149_24.gd
++++ b/tests/test_walkers149_24.gd
+@@ -34,8 +34,8 @@ func run() -> void:
+ 	var game = await new_game()
+ 	var world = game.world
+ 	check(Walkers.valid(world.s.walkers) and world.validate_state(world.s), "a new game has a valid walker state")
+-	var zero: Dictionary = world.s.agents[world.PATIENT_ZERO]
+-	check(int(zero.exposure) == 0 and int(zero.symptoms_due) >= 36 * 60, "the first local infection starts at the beginning")
++	var zero: Dictionary = world.s.agents[int(world.s.world_traits.patient_zero)]
++	check(int(zero.exposure) == 0 and int(zero.symptoms_due) >= int(world.s.world_traits.symptoms_hours[0]) * 60, "the first local infection starts at the beginning (this world's own first case)")
+ 
+ 	# --- The dead rise once, a few hours after death, near where they fell.
+ 	var a: Dictionary = world.s.agents[3]
+diff --git a/tests/test_world_traits149_27.gd b/tests/test_world_traits149_27.gd
+new file mode 100644
+index 0000000..cb109b0
+--- /dev/null
++++ b/tests/test_world_traits149_27.gd
+@@ -0,0 +1,127 @@
++extends SceneTree
++## v149.27: every world has its own character: outbreak pace and first case,
++## outages, hordes, shop stock, and a few events of its own.
++const Main = preload("res://main.tscn")
++const WorldTraits = preload("res://scripts/world_traits.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func world_for(seed: int):
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	return g
++
++func run() -> void:
++	# --- Generation.
++	check(var_to_bytes(WorldTraits.generate(77, 48)) == var_to_bytes(WorldTraits.generate(77, 48)), "the same seed gives the same world")
++	var routes := {}
++	var paces := {}
++	var zeros := {}
++	var events := {}
++	for seed in range(1, 61):
++		var t := WorldTraits.generate(seed * 31337, 48)
++		routes[t.horde_route] = true
++		paces[t.pace] = true
++		zeros[t.patient_zero] = true
++		for e in t.events:
++			events[e] = true
++		check(WorldTraits.valid(t) and t.events.size() == 3, "") if not WorldTraits.valid(t) else null
++	check(routes.size() == WorldTraits.HORDE_ROUTES.size() and paces.size() >= 8 and zeros.size() >= 20 and events.size() == WorldTraits.EVENTS.size(), "worlds differ: %d routes, %d paces, %d first cases, %d events" % [routes.size(), paces.size(), zeros.size(), events.size()])
++	# --- Applied in a world.
++	var g = await world_for(4242)
++	var w = g.world
++	var t: Dictionary = w.s.world_traits
++	var zero_agent: Dictionary = {}
++	for a in w.s.agents:
++		if int(a.id) == int(t.patient_zero):
++			zero_agent = a
++	check(int(zero_agent.get("exposure", -1)) == 0, "the first case is this world's own")
++	check(w.validate_state(w.s), "the world is valid")
++	# Stock follows the world.
++	var base_food: float = float(load("res://scripts/district.gd").SITES["デパート"].food)
++	check(absf(float(w.s.district.sites["デパート"].food) - snappedf(base_food * float(t.stock["デパート"]), 0.5)) < 0.01, "shop stock follows the world")
++	# Hordes walk this world's route.
++	t.horde_route = "reverse"
++	w.s.walkers.horde_next = int(w.s.minute)
++	w.s.walkers.places = {"駅前": 12}
++	w.s.walkers.notices = []
++	Walkers.horde_hourly(w)
++	check(str(w.s.walkers.horde.place) == "商店通り" and str(w.s.walkers.notices).contains("商店通り付近"), "a horde starts where this world's route does")
++	t.horde_route = "elsewhere"
++	w.s.walkers.erase("horde")
++	w.s.walkers.horde_next = int(w.s.minute)
++	Walkers.horde_hourly(w)
++	var passed_home := false
++	var told := false
++	for i in 10:
++		w.s.minute += 60
++		w.s.walkers.notices = []
++		Walkers.horde_hourly(w)
++		passed_home = passed_home or Walkers.horde_at(w, "屋外") > 0
++		told = told or str(w.s.walkers.notices).contains("この通りには来ない")
++	check(not passed_home and told, "a horde on another route never comes down the street, and says so")
++	# Events, each once, with effects.
++	t.events = ["looting", "rolling_blackout", "fire"]
++	t.done_events = []
++	w.s.society = "emergency"
++	var food_before: float = float(w.s.district.sites["コンビニ"].food)
++	w.s.walkers.notices = []
++	for i in 3:
++		WorldTraits.hourly(w)
++	check(float(w.s.district.sites["コンビニ"].food) <= food_before * 0.5 + 0.5 and str(w.s.walkers.notices).contains("略奪"), "looting strips the shops and is reported")
++	check(not bool(w.s.grid_online) and w.s.has("rolling_blackout_until"), "a rolling blackout cuts the power")
++	check(int(w.s.walkers.noise.get("住宅街", -1)) > int(w.s.minute), "a fire draws the dead with its noise")
++	WorldTraits.hourly(w)
++	check(t.done_events.size() == 3, "each event happens once")
++	w.s.society = "alert"
++	w.s.minute = int(w.s.rolling_blackout_until)
++	WorldTraits.restore(w)
++	check(bool(w.s.grid_online), "and the power comes back")
++	# The konbini may hold out.
++	t.konbini_holds = true
++	w.s.society = "disrupted"
++	w.s.sim.logistics = 40.0
++	w.s.district.sites["コンビニ"].vacant = false
++	load("res://scripts/district.gd").tick(w)
++	check(not bool(w.s.district.sites["コンビニ"].vacant), "in some worlds the konbini holds out through the disruption")
++	# Pace: a fast world falls sooner than a slow one.
++	var days := []
++	for pace in [0.7, 1.4]:
++		var gp = await world_for(999)
++		var wp = gp.world
++		wp.s.world_traits.pace = pace
++		var day := -1
++		for h in 24 * 40:
++			wp.s.food = 10.0
++			wp.s.water = 10.0
++			wp.s.hunger = 0.0
++			wp.s.thirst = 0.0
++			wp.s.health = 100.0
++			wp.advance_safe(60)
++			if str(wp.s.society) in ["disrupted", "emergency"]:
++				day = h / 24
++				break
++		days.append(day)
++		gp.queue_free()
++	check(days[1] >= 0 and (days[0] < 0 or days[1] < days[0]), "a fast world breaks down sooner (slow %d, fast %d)" % [days[0], days[1]])
++	# Old saves.
++	var old: Dictionary = w.s.duplicate(true)
++	old.erase("world_traits")
++	check(w.validate_state(old) and WorldTraits.of({"s": old}) is Dictionary if false else w.validate_state(old), "an old save without traits is valid and behaves as before")
++	print("v149.27 world trait checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
