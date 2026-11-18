@@ -1,5 +1,5 @@
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..9e69073 100644
+index c54fcf5..5e2fe11 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -22,6 +22,7 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
@@ -10,7 +10,24 @@ index c54fcf5..9e69073 100644
  const UI_SETTINGS_PATH := "user://ui_settings.cfg"
  const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
  # Map layout (mockup coordinates, 358 x 476): node -> [x, y, w, h].
-@@ -1353,6 +1354,10 @@ func _refresh() -> void:
+@@ -57,6 +58,7 @@ var chips_toggle: CheckButton
+ var ui_font_size := 17
+ var ui_fold_photo := false
+ var ui_show_chips := true
++var succession_running := false
+ # About 1.0-1.3 Qwen tokens per Japanese character; leaves room for the
+ # system prompt and the reply in the 3072-token native context.
+ const PROMPT_CHAR_BUDGET := 1500
+@@ -1344,6 +1346,8 @@ func _scroll_log_to_end() -> void:
+ 	log_follow_queued=false
+ 
+ func _refresh() -> void:
++	if float(world.s.health) <= 0 and not succession_running:
++		_succeed_to_housemate()
+ 	_update_dialogue_input()
+ 	var stamp := world.clock()
+ 	day_label.text = "%d日目" % _day_number()
+@@ -1353,6 +1357,10 @@ func _refresh() -> void:
  	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
  	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
  	danger_label.text = "街：" + str(stage[0])
@@ -21,7 +38,7 @@ index c54fcf5..9e69073 100644
  	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
  	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
  	var normalized := Vitals.values(world.s)
-@@ -1398,6 +1403,12 @@ func _on_command(raw: String) -> void:
+@@ -1398,6 +1406,12 @@ func _on_command(raw: String) -> void:
  	cancel_requested=false
  	var suggested := pending_local_action.duplicate()
  	pending_local_action.clear()
@@ -34,7 +51,7 @@ index c54fcf5..9e69073 100644
  	if NPCConversation.normalize(cmd) == "提案を実行":
  		await _execute_local_suggestion(suggested)
  		return
-@@ -1463,6 +1474,8 @@ func _update_dialogue_input() -> void:
+@@ -1463,6 +1477,8 @@ func _update_dialogue_input() -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -43,7 +60,7 @@ index c54fcf5..9e69073 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -2088,6 +2101,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2088,6 +2104,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -53,10 +70,50 @@ index c54fcf5..9e69073 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2114,49 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2117,90 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
++## v149.24 (D): when the player dies and a housemate is alive, the story goes
++## on as that housemate. The household, base and supplies carry over.
++func _succeed_to_housemate() -> void:
++	var heir := -1
++	for i in world.s.household_members.size():
++		if float(world.s.household_members[i].health) > 0:
++			heir = i
++			break
++	if heir < 0:
++		return
++	succession_running = true
++	var person: Dictionary = world.s.household_members[heir]
++	var previous := str(world.s.profile.name)
++	_append("【記録】%sは%s、息を引き取った。" % [previous, "噛まれた傷の熱にうなされた末に" if bool(world.s.get("bitten", false)) else "力尽きて"])
++	world.s.profile.name = str(person.name)
++	world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
++	for key in ["companion_names", "companion_genders"]:
++		var values: Array = world.s.profile.get(key, [])
++		if heir < values.size():
++			values.remove_at(heir)
++		world.s.profile[key] = values
++	world.s.health = maxf(1.0, float(person.health))
++	for key in ["hunger", "thirst", "fatigue"]:
++		world.s[key] = float(person.get(key, 0.0))
++	world.s.injuries = 0
++	world.s.exposure = -1
++	world.s.symptoms_due = -1
++	world.s.symptomatic = false
++	world.s.bitten = false
++	Walkers.ensure(world).encounter = {}
++	location = str(person.location) if Navigation.indoor(str(person.location)) or District.SITES.has(str(person.location)) or str(person.location) in Navigation.STREETS else location
++	world.s.household_members.remove_at(heir)
++	for i in world.s.household_members.size():
++		world.s.household_members[i].id = i
++	dialogue = HouseholdDialogue.new()
++	_sync_player_position()
++	_append("ここからは%sとして生きていく。%sが残した家と物資は、そのまま引き継がれる。" % [person.name, previous])
++	succession_running = false
++	_refresh()
++
 +## The player sees walkers where they are; returns true when an encounter began.
 +func _check_walkers(previous: String) -> bool:
 +	if world.s.health <= 0 or Navigation.indoor(location):
@@ -97,7 +154,8 @@ index c54fcf5..9e69073 100644
 +			world.advance_safe(Navigation.duration(path[0], path[1]))
 +			_append("%sまで戻った。" % location)
 +	if bool(result.bitten):
-+		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。残された時間で、何をするか決めなければならない。")
++		var heirs: Array = world.s.household_members.filter(func(p): return float(p.health) > 0)
++		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。動けるのは、あと数日。" + ("残された時間で、%sに物資や拠点を託すこともできる。" % heirs[0].name if not heirs.is_empty() else "残された時間で、何をするか決めなければならない。"))
 +	_refresh()
 +
  func _report_household_errands() -> void:
@@ -117,10 +175,10 @@ index b89279e..034a217 100644
  	if float(state.fatigue) >= 85: lines.append("休息が必要です。寝室で眠れます。")
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 new file mode 100644
-index 0000000..5066061
+index 0000000..5835d8d
 --- /dev/null
 +++ b/scripts/walkers.gd
-@@ -0,0 +1,227 @@
+@@ -0,0 +1,246 @@
 +extends RefCounted
 +## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
 +## Slow walkers; a bite infects and kills over days; fighting is possible but
@@ -316,7 +374,7 @@ index 0000000..5066061
 +			if roll < chance:
 +				w.encounter = {}
 +				return {"text": "背を向けて、来た道を足早に引き返した。追ってくる気配は遠ざかった。", "bitten": false, "ended": true, "minutes": 5}
-+			return _bite(world, enc, "逃げようとしたところで、腕をつかまれた。")
++			return _caught(world, enc, n, near, "逃げようとしたところで、腕をつかまれた。")
 +		"fight":
 +			make_noise(world, str(enc.place))
 +			var chance := clampi(30 + weapon + 15 * allies, 5, 90)
@@ -331,12 +389,31 @@ index 0000000..5066061
 +				enc.count = count(world, str(enc.place))
 +				enc.near = true
 +				return {"text": text + "　まだ%d人いる。" % int(enc.count), "bitten": false, "ended": false, "minutes": 5}
-+			var bite_roll: int = world.draw(minute, n, "walker-bite", 100)
-+			if bite_roll < 20 + 10 * mini(n, 5):
-+				return _bite(world, enc, "打ちかかったが、かわされた。もつれ合ったはずみに、")
++			if near and world.draw(minute, n, "walker-grab", 100) < 50:
++				var caught := _caught(world, enc, n, near, "打ちかかったが、かわされた。もつれ合ったはずみに、")
++				if not bool(caught.bitten):
++					caught.ended = false
++					w.encounter = enc
++				return caught
 +			enc.near = true
 +			return {"text": "打ちかかったが、うまく当たらなかった。相手はまだ迫ってくる。", "bitten": false, "ended": false, "minutes": 5}
 +	return {"text": "", "bitten": false, "ended": false, "minutes": 0}
++
++## v149.24 (B): most failures end in a scratch or a bruise. A bite needs a
++## grab at close range, and is likelier when surrounded. Protection (thick
++## clothes, guards; `s.protection`, 0-80) lowers it.
++static func _caught(world, enc: Dictionary, n: int, near: bool, lead: String) -> Dictionary:
++	var minute := int(world.s.minute)
++	var chance := 0
++	if near:
++		chance = 8 + 12 * (mini(n, 5) - 1)
++	chance = maxi(0, chance - int(world.s.get("protection", 0)) * chance / 100)
++	if world.draw(minute, n * 13, "walker-bite", 100) < chance:
++		return _bite(world, enc, lead)
++	world.s.health = maxf(0.0, float(world.s.health) - 6.0)
++	world.s.injuries = int(world.s.injuries) + 1
++	ensure(world).encounter = {}
++	return {"text": lead + "爪が服を裂き、腕に引っかき傷ができた。歯は届かなかった。振りほどいて距離をとった。", "bitten": false, "ended": true, "minutes": 5}
 +
 +static func _bite(world, enc: Dictionary, lead: String) -> Dictionary:
 +	var minute := int(world.s.minute)
@@ -426,10 +503,10 @@ index ff31294..a4b8548 100644
  			a.life_stage = "dead"
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..f32fc9e
+index 0000000..93981b4
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,163 @@
 +extends SceneTree
 +## v149.24: the dead rise and walk; the player sees them, can be noticed, and
 +## chooses to hide, flee, fight or look. A bite is fatal over days.
@@ -543,6 +620,48 @@ index 0000000..f32fc9e
 +			break
 +	var days := float(int(bw.s.minute) - start) / 1440.0
 +	check(float(bw.s.health) <= 0 and days >= 1.5 and days <= 6.0, "a bite is fatal after %.1f days" % days)
++
++	# --- (B) Failing while they are still at a distance is a scratch, never a bite.
++	var careful = await new_game()
++	var cw = careful.world
++	var scratches := 0
++	for i in 40:
++		cw.s.minute += 1
++		cw.s.walkers.places = {"屋外": 4}
++		cw.s.walkers.encounter = {"place": "屋外", "count": 4, "near": false, "since": 0, "from": "建物前"}
++		var r := Walkers._caught(cw, cw.s.walkers.encounter, 4, false, "")
++		scratches += 1 if not bool(r.bitten) else 0
++	check(scratches == 40 and not bool(cw.s.get("bitten", false)) and int(cw.s.exposure) < 0, "being grabbed at a distance only scratches")
++	var bites := 0
++	for i in 200:
++		cw.s.minute += 1
++		cw.s.bitten = false
++		cw.s.exposure = -1
++		var r := Walkers._caught(cw, {"place": "屋外", "count": 1, "near": true}, 1, true, "")
++		bites += 1 if bool(r.bitten) else 0
++	check(bites > 0 and bites < 40, "one walker up close rarely bites (%d / 200)" % bites)
++	cw.s.protection = 80
++	var guarded := 0
++	for i in 200:
++		cw.s.minute += 1
++		cw.s.bitten = false
++		var r := Walkers._caught(cw, {"place": "屋外", "count": 5, "near": true}, 5, true, "")
++		guarded += 1 if bool(r.bitten) else 0
++	check(guarded < 40, "protection lowers bites when surrounded (%d / 200)" % guarded)
++
++	# --- (D) After death the story continues as a living housemate.
++	var heir = await new_game()
++	var hw = heir.world
++	hw.s.bitten = true
++	hw.s.exposure = 10
++	hw.s.health = 0.0
++	heir._refresh()
++	check(str(hw.s.profile.name) == "詩音" and hw.s.household_members.is_empty() and float(hw.s.health) > 0 and not bool(hw.s.bitten) and int(hw.s.exposure) < 0, "the housemate takes over with their own health")
++	check(heir.log_entries[-2].contains("息を引き取った") and heir.log_entries[-1].contains("詩音として"), "the chronicle records the death and the handover")
++	check(hw.validate_state(hw.s), "the state after the handover is valid")
++	hw.s.health = 0.0
++	heir._refresh()
++	check(float(hw.s.health) <= 0, "with nobody left the game ends")
 +
 +	# --- Save and load keep the walkers.
 +	var saver = await new_game()
