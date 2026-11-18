@@ -1,0 +1,169 @@
+diff --git a/NPC_UPDATE_v149.20.md b/NPC_UPDATE_v149.20.md
+new file mode 100644
+index 0000000..7cfd7a7
+--- /dev/null
++++ b/NPC_UPDATE_v149.20.md
+@@ -0,0 +1,30 @@
++# v149.20 買い物の決まりの理由と、崩れた文の作り直し（v149.19ベース）
++
++## 問題（iPhone実機、v149.19）
++
++「30本」→「水は12本までなら頼めるよ。」の後、「なんで12本までなの？」に「水を12本まで頼めるのは、17時ごろの帰り道で買う予定だからね。それ以上は荷物に厳しいんだ。また話そう。」と答えた。上限の理由をモデルに渡していなかったため、理由を作っていた。会話の途中で「また話そう」と締めくくった。
++
++Linuxの実モデル試験では、「水10本と食料1ってるよ。」のように、モデルの出力そのものが崩れる例もあった（サンプリングの乱れ）。
++
++## 変更
++
++| 内容 | ファイル |
++| --- | --- |
++| 買い物の注文がある時・品物を聞いている時は、「事実」に「買い物の決まり」（一人で持ち帰れる量に限りがあるので1品12個まで、設備は1台、4品まで、帰り道に寄る）を渡す。 | `scripts/npc_mind.gd` |
++| 理由は「事実」に書かれたものだけで答え、会話の途中で締めくくらないよう指示した。 | `scripts/local_npc_model.gd` |
++| 数字の直後に小さい仮名や「ん」が続く崩れた文を `broken_text` として却下し、1回だけ作り直す。 | `scripts/npc_mind.gd`, `scripts/main.gd` |
++| バージョン 0.149.20（ビルド169）。 | `export_presets.cfg`, `build_scripts/build-ios-unsigned.sh` |
++
++## テスト
++
++- `tests/test_npc_requests149_18.gd`：買い物の決まりが事実に入ること、崩れた文の却下を追加（72項目）。全134テストに合格（Godot 4.6.3、Linux）。
++
++## 実モデル（Linux CPU、Qwen3-4B Q4_K_M）
++
++| プレイヤー | NPCの返答 |
++|---|---|
++| 買い物行ってきて | 詩音「いいよ。何を買ってくればいい？ 水や食料なら数も教えて。」 |
++| 水 | 詩音「うん。水、何本くらい？」 |
++| 30本 | 詩音「水は12本までなら頼めるよ。いくつにする？」 |
++| なんで12本までなの？ | 詩音「水は12本までが持てるので、それ以上は持ち帰りにくいからね。」 |
++| じゃあ12本で | 詩音「分かった。水12本ね。帰りに寄ってみるよ。」 |
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 518b46d..d36b3e8 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '168'
+-assert info['CFBundleShortVersionString'] == '0.149.19'
++assert str(info['CFBundleVersion']) == '169'
++assert info['CFBundleShortVersionString'] == '0.149.20'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.19-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.20-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.19-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.20-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 1d5fcfb..b5e9b51 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.19"
+-application/version="168"
++application/short_version="0.149.20"
++application/version="169"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/qa/real_npc_scenarios.gd b/qa/real_npc_scenarios.gd
+index 446aed1..a9b0013 100644
+--- a/qa/real_npc_scenarios.gd
++++ b/qa/real_npc_scenarios.gd
+@@ -70,6 +70,7 @@ const SCENARIOS := [
+ 	["variety2", ["今日の晩ご飯、みんなの分作ってくれる？", "帰りに包帯2個買ってきてくれる？", "今日は買い物行かなくていいからね"]],
+ 	["variety3", ["鍵開けといてくれる？", "駅前まで一緒に行かない？"]],
+ 	["iphone_shopping", ["買い物行ってきて", "水を10個", "今すぐ行ってきて", "何時に行ってくれる？", "わかったありがとう", "食料も買ってきて欲しい", "10個", "いつ買ってきてくれるの？"]],
++	["shopping_limit", ["買い物行ってきて", "水", "30本", "なんで12本までなの？", "じゃあ12本で"]],
+ 	["shopping_both", ["水と食料どっちも買ってきて欲しいんだけど", "10個ずつ"]],
+ 	["chat2", ["昨日はよく眠れた？", "最近ハマってることある？", "それいいね、今度教えてよ"]],
+ ]
+diff --git a/scripts/local_npc_model.gd b/scripts/local_npc_model.gd
+index 5302215..c40d468 100644
+--- a/scripts/local_npc_model.gd
++++ b/scripts/local_npc_model.gd
+@@ -13,6 +13,7 @@ const CHAT_INSTRUCTIONS := """あなたは日本の家で暮らす同居人を
+ - 好み・性格・目標は「人物」、今の状況・予定・家の物資・約束・頼まれている買い物とその時間は「事実」、過去は「記憶」と会話の履歴に合わせる。書かれていない出来事・数量・時刻・約束は作らず、分からなければ分からないと言う。「人物」の好みは好き嫌いの話にだけ使い、実際にしたこととして話さない。最近したことや一緒にしたことは「事実」と「記憶」にあるものだけを話す。今していることは「事実」の「今していること」だけで、ほかの作業をしているとは言わない。
+ - これまでのやりとりは会話の履歴として続いている。今の発言にだけ新しく答え、前に自分が言った台詞を繰り返さない。「それ」などの指す内容は直前の会話から判断する。
+ - まだ何も実行していない。行動を終えた・引き受けて済ませたとは言わない。
++- 理由を聞かれたら「事実」に書かれた理由で答え、書かれていない理由は作らない。会話の途中で「また話そう」などと会話を締めくくらない。
+ - 自分のことは一人称で話し、自分の名前で自分を呼ばない。状況の説明や語りではなく、相手に向けた台詞だけを書く。話し方は「人物」に従う。1〜3文、100字以内の自然な話し言葉。
+ 出力はJSONのみ。普段の返事は{"kind":"chat","value":"台詞"}。
+ 同居人（あなた）への依頼・お願い・勧めは、言い方が違っても台詞ではなく{"kind":"npc","value":"依頼"}で返す。依頼は次のどれか1個:
+diff --git a/scripts/main.gd b/scripts/main.gd
+index be3a683..ff0f059 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -32,6 +32,7 @@ const RETRYABLE_REJECTIONS := {
+ 	"filtered_invented_promise": "存在しない約束",
+ 	"filtered_completion_claim": "まだしていない行動を済ませたと言っている",
+ 	"filtered_invented_experience": "記録にない過去の出来事",
++	"filtered_broken_text": "文が途中で崩れている。自然な日本語の文で言い直す",
+ 	"filtered_unsupported_title": "資料にない作品名。好きな作品は「人物」に書かれたものだけを言う",
+ 	"filtered_negated_request": "相手は頼んでいない（しなくていい・やめてと言っている）。行動は選ばずchatで返事する",
+ }
+diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
+index f3f4230..5343fc9 100644
+--- a/scripts/npc_mind.gd
++++ b/scripts/npc_mind.gd
+@@ -286,6 +286,10 @@ static func facts(game, index: int) -> Dictionary:
+ 	result["外出の状況"] = "普段どおり外出できる" if str(world.s.society) == "normal" else "最近は外出を控えて、家の中で過ごしている"
+ 	result["最近の出来事"] = recent_events(game.npc_memory, id, now)
+ 	result["頼まれている買い物"] = errand_status(world, person)
++	# The rules behind the shopping limits; without them the model invented
++	# reasons ("12本までなのは17時に買うから").
++	if result["頼まれている買い物"] != "なし" or bool(person.get("shopping_ask", false)) or not person.get("errand_multi_pending", []).is_empty():
++		result["買い物の決まり"] = SHOPPING_RULES % [Errands.MAX_QUANTITY, Errands.MAX_EXTRA_ITEMS + 1, world.HOUSEHOLD_RETURN]
+ 	if Navigation.indoor(str(person.location)):
+ 		result["家の状況"] = "食料は%.1f人日分、飲料水は%.1fリットル、電気は%s" % [float(world.s.food), float(world.s.water), "使える" if world.has_home_power() else "使えない"]
+ 	var promise: Dictionary = game.npc_memory.latest(id, "promise", now)
+@@ -301,6 +305,8 @@ static func facts(game, index: int) -> Dictionary:
+ 
+ ## The shopping order as the NPC knows it, with when it will happen. Without
+ ## this the real model answered "今すぐ行ってきて" with invented times.
++const SHOPPING_RULES := "一人で持って帰れる量に限りがあるので、1品につき%d個（水は本）まで、浄水器・ソーラーパネル・蓄電池は1台まで。一度に頼めるのは%d品まで。買い物は外出の帰り道（%d時ごろ）に店に寄って買う"
++
+ static func errand_status(world, person: Dictionary) -> String:
+ 	var order: Dictionary = person.get("water_errand", {})
+ 	var phase := str(order.get("phase", ""))
+@@ -406,6 +412,12 @@ static func reject_reason(line: String, speech: String, evidence: Dictionary) ->
+ 			return "repeated_reply"
+ 	if line.contains("<") or line.contains(">") or line.contains("://") or line.contains("▶") or line.contains("{"):
+ 		return "markup"
++	# Sampling glitches from small models: "食料1ってるよ" (a number running into
++	# a small kana or ん) never occurs in a well-formed line.
++	var broken := RegEx.new()
++	broken.compile("[0-9０-９][ぁぃぅぇぉっゃゅょゎんゝ]")
++	if broken.search(line) != null:
++		return "broken_text"
+ 	# With an accepted shopping order, "帰りに買ってくるね" describes the plan.
+ 	var shopping := str(evidence.get("facts", {}).get("頼まれている買い物", "なし")) != "なし"
+ 	for claim in COMPLETION_CLAIMS:
+diff --git a/tests/test_npc_requests149_18.gd b/tests/test_npc_requests149_18.gd
+index 026210f..7ddd6be 100644
+--- a/tests/test_npc_requests149_18.gd
++++ b/tests/test_npc_requests149_18.gd
+@@ -77,6 +77,8 @@ func run() -> void:
+ 		check(not Requests.looks_like_request(line), "conversation skips the request call: " + line)
+ 	check(Requests.negated("まだ寝なくていいよ") and Requests.negated("買い物は行かなくていいよ") and not Requests.negated("そろそろ寝たら？"), "negation guard keeps suggestions as requests")
+ 
++	check(Mind.reject_reason("水10本と食料1ってるよ。", "いつ買ってきてくれるの？", {}) == "broken_text" and Mind.reject_reason("水は10本あるよ。", "水ある？", {"facts": {"x": "水10本"}}).is_empty(), "a garbled number is rejected, a normal one is not")
++
+ 	# --- Quoted titles must be grounded in the profile, record or player's words.
+ 	var context := {"人物": {"一番好きな映画": "『リング』が好き。"}}
+ 	check(Mind.reject_reason("『千と千尋の神隠し』が好き。", "好きな映画ある？", {"context": context}) == "unsupported_title", "invented favourite title is rejected")
+@@ -153,6 +155,7 @@ func run() -> void:
+ 	await game._on_command("水を10個")
+ 	check(int(shion.water_errand.quantity) == 10 and shion.water_errand.phase == "queued", "water order from the item question")
+ 	var facts: Dictionary = Mind.facts(game, 0)
++	check(str(facts.get("買い物の決まり", "")).contains("持って帰れる量") and str(facts.get("買い物の決まり", "")).contains("12"), "the shopping limits and their reason are in the facts")
+ 	check(str(facts["頼まれている買い物"]).contains("水10本") and str(facts["頼まれている買い物"]).contains("今すぐ買いに行く予定はない") and str(facts["頼まれている買い物"]).contains("17時"), "the model is told the order and when it happens: " + str(facts["頼まれている買い物"]))
+ 	npc(fake, "buy")
+ 	await game._on_command("買い物、今すぐ行ってきて")

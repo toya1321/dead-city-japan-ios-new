@@ -1,8 +1,8 @@
 # Codemagic: build the unsigned native-Qwen IPA on a hosted Mac.
-# Same steps as .github/workflows/ios-native-v14919.yml (macOS job).
+# Same steps as .github/workflows/ios-native-v14920.yml (macOS job).
 workflows:
-  ios-v14919-unsigned:
-    name: v149.19 unsigned IPA (native Qwen)
+  ios-v14920-unsigned:
+    name: v149.20 unsigned IPA (native Qwen)
     instance_type: mac_mini_m2
     max_build_duration: 90
     environment:
@@ -26,7 +26,7 @@ workflows:
           cat "${source_parts[@]}" > "$archive"
           printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
           unzip -q "$archive" -d game
-          for patch in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping; do
+          for patch in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping v149.20-npc-reasons; do
             git apply --directory=game "ci/$patch.patch"
           done
       - name: Build and verify native unsigned arm64 IPA
@@ -35,6 +35,6 @@ workflows:
           cd game
           bash build_scripts/build-ios-unsigned.sh
     artifacts:
-      - game/build/DeadCityJapan-v149.19-*-unsigned.ipa
+      - game/build/DeadCityJapan-v149.20-*-unsigned.ipa
       - game/build/SHA256SUMS.txt
       - game/build/*.log
