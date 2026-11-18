@@ -1,3 +1,67 @@
+diff --git a/qa/survivor_eval.gd b/qa/survivor_eval.gd
+new file mode 100644
+index 0000000..813b93f
+--- /dev/null
++++ b/qa/survivor_eval.gd
+@@ -0,0 +1,58 @@
++extends SceneTree
++## Real-model evaluation: one generated survivor per voice, the same questions
++## to each. Prints JSON lines (voice, question, reply, rejected attempts).
++## DCJ_LLAMA_PROBE, DCJ_GGUF, optional DCJ_VOICES=gruff,young
++const Main = preload("res://main.tscn")
++const Real = preload("res://qa/real_npc_scenarios.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++const PLACES := ["デパート", "デパート正面", "デパート地下", "薬局", "コンビニ", "住宅街", "近所の空き家", "駅前", "商店通り", "食品店", "金物店"]
++const QUESTIONS := ["大丈夫ですか？", "ここで何があったんですか？", "何か必要なものはある？", "家族は無事なの？", "その傷、どうしたの？", "一人で怖くない？", "名前、聞いてもいい？", "好きな食べ物は？", "このあとどうするつもり？", "前は何してたの？", "最近、眠れてる？", "このへんで安全な場所ってある？", "ありがとう、また来るよ"]
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func run() -> void:
++	var wanted := ["gruff", "young", "calm", "edgy", "warm", "elder", "child", "foreign"]
++	if not OS.get_environment("DCJ_VOICES").is_empty():
++		wanted = Array(OS.get_environment("DCJ_VOICES").split(","))
++	var picked := {}
++	for seed in range(1, 400):
++		var people := Survivors.generate(seed * 104729, PLACES)
++		for id in people:
++			var p: Dictionary = people[id]
++			if p.voice in wanted and not picked.has(p.voice):
++				picked[p.voice] = [seed * 104729, id]
++		if picked.size() == wanted.size():
++			break
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var backend = Real.RealModel.new()
++	for voice in wanted:
++		if not picked.has(voice):
++			continue
++		var profile: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++		profile.seed = int(picked[voice][0])
++		g._start_new_game(profile)
++		g._finish_intro()
++		g.local_model.backend = backend
++		g.local_model.enabled = true
++		g.local_model.load_timeout_ms = 400000
++		g.local_model.generation_timeout_ms = 400000
++		var w = g.world
++		w.s.society = "disrupted"
++		w.s.minute = 4 * 60 + 14 * 1440
++		var id: String = picked[voice][1]
++		var p: Dictionary = Survivors.person(w, id)
++		p.trust = 40
++		g.location = p.place
++		g.survivor_partner = ""
++		await g._on_command(p.label + "に話しかける")
++		print(JSON.stringify({"voice": voice, "who": "%s %s %d %s" % [p.name, p.job, p.age, p.gender], "tag": p.tag, "trait": p.trait, "q": "(greeting)", "a": g.log_entries[-1]}))
++		for q in QUESTIONS:
++			var calls: int = backend.calls
++			g.survivor_rejects = []
++			await g._on_command(q)
++			print(JSON.stringify({"voice": voice, "q": q, "a": g.log_entries[-1], "calls": backend.calls - calls, "rejected": g.survivor_rejects}))
++		await g._on_command("会話を終える")
++	quit()
 diff --git a/qa/survivor_talk.gd b/qa/survivor_talk.gd
 new file mode 100644
 index 0000000..6275f34
@@ -69,19 +133,20 @@ index 0000000..c70014a
 +			print("    出会い: ", p.intro)
 +	quit()
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 82aa64f..f86678e 100644
+index 82aa64f..4f76497 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -26,6 +26,8 @@ const Walkers = preload("res://scripts/walkers.gd")
+@@ -26,6 +26,9 @@ const Walkers = preload("res://scripts/walkers.gd")
  const Mood = preload("res://scripts/mood.gd")
  const HomeLife = preload("res://scripts/home_life.gd")
  const PlayerIntents = preload("res://scripts/player_intents.gd")
 +const Survivors = preload("res://scripts/survivors.gd")
 +var survivor_partner := ""
++var survivor_rejects: Array = []   # rejected model lines, for QA
  const OutbreakNews = preload("res://scripts/outbreak_news.gd")
  const UI_SETTINGS_PATH := "user://ui_settings.cfg"
  const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
-@@ -1262,6 +1264,8 @@ func _member_names() -> Array:
+@@ -1262,6 +1265,8 @@ func _member_names() -> Array:
  	var names: Array = []
  	for person in world.s.household_members:
  		names.append(str(person.name))
@@ -90,7 +155,7 @@ index 82aa64f..f86678e 100644
  	return names
  
  ## One chronicle entry, styled by what it is.
-@@ -1425,6 +1429,8 @@ func _on_command(raw: String) -> void:
+@@ -1425,6 +1430,8 @@ func _on_command(raw: String) -> void:
  	elif not encounter.is_empty():
  		await _encounter_turn(cmd)
  		return
@@ -99,7 +164,7 @@ index 82aa64f..f86678e 100644
  	if _care_command(cmd):
  		return
  	if NPCConversation.normalize(cmd) == "提案を実行":
-@@ -1498,8 +1504,15 @@ func _update_dialogue_input() -> void:
+@@ -1498,8 +1505,15 @@ func _update_dialogue_input() -> void:
  		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
  			dialogue.partner = -1
  	command_input.placeholder_text = "どうする？（例：居間へ行く／窓から外を見る）"
@@ -117,7 +182,7 @@ index 82aa64f..f86678e 100644
  		var partner_name := str(world.s.household_members[dialogue.partner].name)
  		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % partner_name
  		convo_label.text = "%sと会話中" % partner_name
-@@ -1512,6 +1525,18 @@ func _suggestions() -> Array:
+@@ -1512,6 +1526,18 @@ func _suggestions() -> Array:
  	var out: Array = []
  	if not Walkers.ensure(world).encounter.is_empty():
  		return ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"]
@@ -136,7 +201,7 @@ index 82aa64f..f86678e 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1588,6 +1613,9 @@ func _suggestions() -> Array:
+@@ -1588,6 +1614,9 @@ func _suggestions() -> Array:
  	for person in world.s.household_members:
  		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
@@ -146,7 +211,7 @@ index 82aa64f..f86678e 100644
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
  		if out.size() >= 4:
-@@ -1877,6 +1905,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+@@ -1877,6 +1906,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
  	var all_turns: Array = dialogue.recent(index)
  	var character := {"名前": str(person.name), "一人称": style.first_person, "話し方": style.description}
  	character.merge(NPCMind.profile(world, index))
@@ -156,7 +221,7 @@ index 82aa64f..f86678e 100644
  	character["プレイヤーとの関係"] = NPCMind.relationship(npc_memory, person, all_turns.size())
  	var turns: Array = []
  	var recent_players: Array = []
-@@ -2428,6 +2459,87 @@ func _leave_home(cmd: String) -> bool:
+@@ -2428,6 +2460,105 @@ func _leave_home(cmd: String) -> bool:
  	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
  	return true
  
@@ -209,6 +274,14 @@ index 82aa64f..f86678e 100644
 +		Survivors.talked(world, id)
 +		world.advance_safe(1)
 +		result = "%s「%s」" % [Survivors.call_name(world, id), Survivors.offline_reply(world, id)]
++	elif not Survivors.topic_reply(world, id, text).is_empty():
++		# Common questions: the game answers from the person's facts, in
++		# lines written for their voice.
++		var line := Survivors.topic_reply(world, id, text)
++		Survivors.talked(world, id)
++		Survivors.remember(world, id, text, line)
++		world.advance_safe(2)
++		result = "%s「%s」" % [Survivors.call_name(world, id), line]
 +	else:
 +		result = await _survivor_talk(id, text)
 +	_append(result)
@@ -225,11 +298,21 @@ index 82aa64f..f86678e 100644
 +		var history: Array = data.get("_history", [])
 +		if not history.is_empty():
 +			last = str(history.back()[1])
-+		for attempt in 2:
++		for attempt in 3:
 +			var verdict := await local_model.ask(self, data, false, Survivors.INSTRUCTIONS)
-+			if str(verdict.get("kind", "")) == "chat" and str(verdict.value) != last and str(verdict.value) != Survivors.offline_reply(world, id):
-+				reply = str(verdict.value)
++			if str(verdict.get("kind", "")) != "chat":
++				continue
++			var candidate := str(verdict.value).strip_edges()
++			var why := Survivors.reject_reason(world, id, candidate, speech)
++			if why.is_empty() and candidate != last:
++				reply = candidate
 +				break
++			survivor_rejects.append([candidate, why if not why.is_empty() else "repeated"])
++			# The model answers the same input the same way: name the rejected
++			# line so the next attempt has to say something else.
++			var banned: Array = data["事実"].get("使えない言い方", [])
++			banned.append(candidate)
++			data["事実"]["使えない言い方"] = banned
 +		_set_local_inference(false)
 +	Survivors.talked(world, id)
 +	world.advance_safe(2)
@@ -244,7 +327,7 @@ index 82aa64f..f86678e 100644
  ## A housemate leaves the household for good (seen off, or left on their own).
  func _remove_housemate(index: int) -> void:
  	world.s.household_members.remove_at(index)
-@@ -2447,6 +2559,15 @@ func _process_leavers() -> void:
+@@ -2447,6 +2578,15 @@ func _process_leavers() -> void:
  		var person: Dictionary = world.s.household_members[i]
  		if not bool(person.get("leaving", false)) or float(person.health) <= 0:
  			continue
@@ -260,7 +343,7 @@ index 82aa64f..f86678e 100644
  		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
-@@ -2523,6 +2644,8 @@ func _check_walkers(previous: String) -> bool:
+@@ -2523,6 +2663,8 @@ func _check_walkers(previous: String) -> bool:
  	world.set_meta("player_at_home", Navigation.indoor(location))
  	if not w.encounter.is_empty():
  		return true
@@ -305,10 +388,10 @@ index 67c6e86..549ec31 100644
  static func negated(text: String) -> bool:
 diff --git a/scripts/survivor_parts.gd b/scripts/survivor_parts.gd
 new file mode 100644
-index 0000000..bf2843c
+index 0000000..d960cc9
 --- /dev/null
 +++ b/scripts/survivor_parts.gd
-@@ -0,0 +1,143 @@
+@@ -0,0 +1,351 @@
 +extends RefCounted
 +## v149.26: the parts survivors are made from. Every new world draws its own
 +## people from these: an occupation, a situation, a name, a temperament and a
@@ -422,6 +505,214 @@ index 0000000..bf2843c
 +		"lines": ["Stay back……ちかづかないで。", "ここ、あぶない？　ホテル、どこ？", "ありがとう。あなた、いいひと。", "ともだち。いっしょ、いい。"]},
 +}
 +
++## Short stories by occupation, for "what happened here?".
++const STORIES := {
++	"guard": ["最後まで客を外に逃がして、そのまま残った", "最後まで客を外に逃がして、そのまま残ったの"],
++	"clerk": ["店長が戻らなくて、店の奥に隠れてたんです", "店長が戻らなくて、店の奥に隠れてたんです"],
++	"pharmacist": ["店を閉めて、奥にこもっていました", "店を閉めて、奥にこもっていました"],
++	"nurse": ["病院が受け入れを止めて、歩いて帰る途中でした", "病院が受け入れを止めて、歩いて帰る途中でした"],
++	"office": ["電車が止まって、帰れなくなった", "電車が止まって、帰れなくなったのよ"],
++	"student": ["学校が休みになって、家に一人でいたんです", "学校が休みになって、家に一人でいたんです"],
++	"teacher": ["避難所の学校から、物資を探しに出てきました", "避難所の学校から、物資を探しに出てきました"],
++	"veteran": ["安全な場所を探して、一人で動いてる", "安全な場所を探して、一人で動いてるの"],
++	"homemaker": ["家族の帰りを待って、家を守ってるんだ", "家族の帰りを待って、家を守ってるのよ"],
++	"elder": ["わしはずっと、ここに一人で住んどる", "あたしはずっと、ここに一人で住んでるんだよ"],
++	"child": ["……ここに、かくれてたの", "……ここに、かくれてたの"],
++	"tourist": ["ホテル、もどれない。ことば、わからない", "ホテル、もどれない。ことば、わからない"],
++	"cook": ["店の食材を守って、立てこもってる", "店の食材を守って、立てこもってるの"],
++	"carpenter": ["現場から、道具だけ持って逃げてきた", "現場から、道具だけ持って逃げてきたの"],
++}
++
++## Answers to common questions, written for each voice so they read naturally.
++## Each topic: [male variants, female variants]. Placeholders: {I} first
++## person, {need} what they want, {rel} family member, {part} body part,
++## {story} STORIES, {name}. "_" variants are picked by situation.
++const REPLIES := {
++	"gruff": {
++		"ok": [["……なんとか生きてる。", "見ての通りだ。まだ動ける。"], ["……なんとか生きてるよ。", "見ての通り。まだ動けるさ。"]],
++		"ok_hungry": [["腹は減ってるが、まだ動ける。"], ["お腹は空いてるけど、まだ動けるよ。"]],
++		"ok_injured": [["{part}が痛むが、なんとかな。"], ["{part}が痛むけど、なんとかね。"]],
++		"happened": [["{story}。それだけだ。"], ["{story}。それだけだよ。"]],
++		"needs": [["{need}だ。{need}があれば助かる。"], ["{need}だね。{need}があれば助かるよ。"]],
++		"family_rel": [["{rel}とは連絡がつかねえ。……探してる。"], ["{rel}とは連絡がつかないんだ。……探してるよ。"]],
++		"family_none": [["家族の話は、今はいい。"], ["家族の話は、今はやめとくよ。"]],
++		"injury_yes": [["{part}をやられた。手当てできりゃいいんだが。"], ["{part}をやられたんだ。手当てできればいいんだけど。"]],
++		"injury_no": [["けが？　してねえよ。"], ["けが？　してないよ。"]],
++		"injury_hide": [["……なんでもねえ。気にするな。"], ["……なんでもないよ。気にしないで。"]],
++		"fear": [["怖くねえと言ったら嘘になる。"], ["怖くないって言ったら、嘘になるね。"]],
++		"name": [["{name}だ。"], ["{name}だよ。"]],
++		"thanks": [["礼はいい。"], ["礼なんていいよ。"]],
++	},
++	"young": {
++		"ok": [["は、はい……なんとか。", "大丈夫……だと思います。"], ["は、はい……なんとか。", "大丈夫……だと思います。"]],
++		"ok_hungry": [["正直、お腹がすいて、ふらふらです……。"], ["正直、お腹がすいて、ふらふらです……。"]],
++		"ok_injured": [["{part}が痛くて……でも、なんとか。"], ["{part}が痛くて……でも、なんとか。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["{need}があると、すごく助かります。"], ["{need}があると、すごく助かります。"]],
++		"family_rel": [["{rel}と連絡がつかなくて……。無事だといいんですけど。"], ["{rel}と連絡がつかなくて……。無事だといいんですけど。"]],
++		"family_none": [["家族は……今は考えないようにしてます。"], ["家族は……今は考えないようにしてます。"]],
++		"injury_yes": [["{part}をけがしちゃって。ずっと痛いんです。"], ["{part}をけがしちゃって。ずっと痛いんです。"]],
++		"injury_no": [["え、けがはしてないです。"], ["え、けがはしてないです。"]],
++		"injury_hide": [["な、なんでもないです！　ちょっと、ぶつけただけで。"], ["な、なんでもないです！　ちょっと、ぶつけただけで。"]],
++		"fear": [["怖いです。夜とか、物音がするたびに……。"], ["怖いです。夜とか、物音がするたびに……。"]],
++		"name": [["{name}です。"], ["{name}です。"]],
++		"thanks": [["いえ、こちらこそ……。"], ["いえ、こちらこそ……。"]],
++	},
++	"calm": {
++		"ok": [["ええ、今のところは。", "大丈夫です。少し疲れているだけです。"], ["ええ、今のところは。", "大丈夫です。少し疲れているだけです。"]],
++		"ok_hungry": [["正直に言えば、食べ物が足りていません。"], ["正直に言えば、食べ物が足りていません。"]],
++		"ok_injured": [["{part}の傷が気になりますが、動けます。"], ["{part}の傷が気になりますが、動けます。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["{need}が足りていません。"], ["{need}が足りていません。"]],
++		"family_rel": [["{rel}とは、連絡が取れていません。"], ["{rel}とは、連絡が取れていません。"]],
++		"family_none": [["家族のことは、今は話したくありません。"], ["家族のことは、今は話したくありません。"]],
++		"injury_yes": [["{part}を切りました。消毒できれば、なんとかなります。"], ["{part}を切りました。消毒できれば、なんとかなります。"]],
++		"injury_no": [["けがはしていません。"], ["けがはしていません。"]],
++		"injury_hide": [["……ただの擦り傷です。問題ありません。"], ["……ただの擦り傷です。問題ありません。"]],
++		"fear": [["怖いですよ。でも、怖がっていても仕方がないので。"], ["怖いですよ。でも、怖がっていても仕方がないので。"]],
++		"name": [["{name}です。"], ["{name}です。"]],
++		"thanks": [["いえ。お互いさまです。"], ["いえ。お互いさまです。"]],
++	},
++	"edgy": {
++		"ok": [["見りゃ分かるだろ。生きてる。", "大丈夫なわけねえだろ。"], ["見れば分かるでしょ。生きてるわよ。", "大丈夫なわけないでしょ。"]],
++		"ok_hungry": [["腹が減ってイラついてる。それだけだ。"], ["お腹が空いてイライラしてるの。それだけ。"]],
++		"ok_injured": [["{part}が痛え。それだけだ。"], ["{part}が痛いの。それだけ。"]],
++		"happened": [["{story}。で、あんたは？"], ["{story}。で、あなたは？"]],
++		"needs": [["{need}だ。持ってるなら話は別だ。"], ["{need}よ。持ってるなら話は別。"]],
++		"family_rel": [["{rel}？　連絡なんかつかねえよ。"], ["{rel}？　連絡なんかつかないわよ。"]],
++		"family_none": [["あんたに関係ねえだろ。"], ["あなたに関係ないでしょ。"]],
++		"injury_yes": [["{part}をやられた。見りゃ分かるだろ。"], ["{part}をやられたの。見れば分かるでしょ。"]],
++		"injury_no": [["けが？　してねえよ。"], ["けが？　してないわよ。"]],
++		"injury_hide": [["うるせえな。なんでもねえよ。"], ["うるさいわね。なんでもないわよ。"]],
++		"fear": [["怖くねえやつなんか、いねえだろ。"], ["怖くない人なんて、いないでしょ。"]],
++		"name": [["……{name}だ。"], ["……{name}よ。"]],
++		"thanks": [["……別に。"], ["……別に。"]],
++	},
++	"warm": {
++		"ok": [["うん、なんとかね。ありがとう。", "大丈夫だよ。心配してくれるんだね。"], ["ええ、なんとかね。ありがとう。", "大丈夫よ。心配してくれるのね。"]],
++		"ok_hungry": [["実は、ちゃんと食べてなくてね。"], ["実は、ちゃんと食べてなくてね。"]],
++		"ok_injured": [["{part}が痛くてね。でも、なんとか。"], ["{part}が痛くてね。でも、なんとか。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["{need}があると、本当に助かるんだけど。"], ["{need}があると、本当に助かるんだけど。"]],
++		"family_rel": [["{rel}が心配でね。連絡がつかないんだ。"], ["{rel}が心配でね。連絡がつかないのよ。"]],
++		"family_none": [["家族は……遠くにいるよ。"], ["家族は……遠くにいるのよ。"]],
++		"injury_yes": [["{part}をけがしちゃってね。"], ["{part}をけがしちゃってね。"]],
++		"injury_no": [["けがはしてないよ。ありがとう。"], ["けがはしてないわよ。ありがとう。"]],
++		"injury_hide": [["……ああ、これ？　ちょっとぶつけただけだよ。"], ["……ああ、これ？　ちょっとぶつけただけよ。"]],
++		"fear": [["怖いよ。でも、あなたが来てくれて少し安心した。"], ["怖いわよ。でも、あなたが来てくれて少し安心した。"]],
++		"name": [["{name}だよ。よろしくね。"], ["{name}よ。よろしくね。"]],
++		"thanks": [["こちらこそ、ありがとう。"], ["こちらこそ、ありがとう。"]],
++	},
++	"elder": {
++		"ok": [["ああ、なんとか生きとるよ。", "年寄りはしぶといからのう。"], ["ええ、なんとか生きてるよ。", "年寄りはしぶといからねえ。"]],
++		"ok_hungry": [["食べる物がなくてのう。"], ["食べる物がなくてねえ。"]],
++		"ok_injured": [["{part}が痛うてのう。"], ["{part}が痛くてねえ。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["{need}があると、ありがたいのう。"], ["{need}があると、ありがたいねえ。"]],
++		"family_rel": [["{rel}とは連絡がつかんのじゃ。"], ["{rel}とは連絡がつかないんだよ。"]],
++		"family_none": [["家族はみんな、遠くに住んどる。"], ["家族はみんな、遠くに住んでるんだよ。"]],
++		"injury_yes": [["{part}をやってしもうてのう。"], ["{part}をやっちゃってねえ。"]],
++		"injury_no": [["けがはしとらんよ。"], ["けがはしてないよ。"]],
++		"injury_hide": [["……なんでもないわい。"], ["……なんでもないよ。"]],
++		"fear": [["この年になると、怖いものも減るもんじゃ。"], ["この年になるとね、怖いものも減るんだよ。"]],
++		"name": [["{name}じゃ。"], ["{name}だよ。"]],
++		"thanks": [["ありがたいのう。"], ["ありがたいねえ。"]],
++	},
++	"child": {
++		"ok": [["……うん。", "……だいじょうぶ。"], ["……うん。", "……だいじょうぶ。"]],
++		"ok_hungry": [["……おなか、すいた。"], ["……おなか、すいた。"]],
++		"ok_injured": [["……{part}、いたい。"], ["……{part}、いたい。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["……{need}、ほしい。"], ["……{need}、ほしい。"]],
++		"family_rel": [["{rel}……どこにいるか、わかんない。"], ["{rel}……どこにいるか、わかんない。"]],
++		"family_none": [["……わかんない。"], ["……わかんない。"]],
++		"injury_yes": [["……{part}、けがしたの。"], ["……{part}、けがしたの。"]],
++		"injury_no": [["けが、してないよ。"], ["けが、してないよ。"]],
++		"injury_hide": [["……なんでもない。"], ["……なんでもない。"]],
++		"fear": [["……こわい。"], ["……こわい。"]],
++		"name": [["……{name}。"], ["……{name}。"]],
++		"thanks": [["……ありがとう。"], ["……ありがとう。"]],
++	},
++	"foreign": {
++		"ok": [["だいじょうぶ。たぶん。", "わたし、OK。ありがとう。"], ["だいじょうぶ。たぶん。", "わたし、OK。ありがとう。"]],
++		"ok_hungry": [["おなか、すいた。たべもの、ない。"], ["おなか、すいた。たべもの、ない。"]],
++		"ok_injured": [["{part}、いたい。"], ["{part}、いたい。"]],
++		"happened": [["{story}。"], ["{story}。"]],
++		"needs": [["{need}、ほしい。おねがい。"], ["{need}、ほしい。おねがい。"]],
++		"family_rel": [["{rel}、れんらく、できない。"], ["{rel}、れんらく、できない。"]],
++		"family_none": [["かぞく、くに。とおい。"], ["かぞく、くに。とおい。"]],
++		"injury_yes": [["{part}、けが。"], ["{part}、けが。"]],
++		"injury_no": [["けが、ない。だいじょうぶ。"], ["けが、ない。だいじょうぶ。"]],
++		"injury_hide": [["……ノー。なんでもない。"], ["……ノー。なんでもない。"]],
++		"fear": [["こわい。とても。"], ["こわい。とても。"]],
++		"name": [["{name}。わたしのなまえ。"], ["{name}。わたしのなまえ。"]],
++		"thanks": [["サンキュー。ありがとう。"], ["サンキュー。ありがとう。"]],
++	},
++}
++
++## "What did you do before?" and "what next?", in each voice [male, female].
++const PAST_FORMS := {
++	"gruff": ["%sだった。", "%sだったよ。"], "young": ["%sでした。", "%sでした。"], "calm": ["%sをしていました。", "%sをしていました。"],
++	"edgy": ["%sだよ。それがどうした。", "%sよ。それが何？"], "warm": ["%sをしてたんだ。", "%sをしてたのよ。"],
++	"elder": ["今は%sじゃよ。", "今は%sだよ。"], "child": ["……%s。", "……%s。"], "foreign": ["%s。にほん、きた。", "%s。にほん、きた。"],
++}
++const PLANS := {
++	"family": "%sを探しに行く", "waiting": "%sが戻るまで、ここで待つ", "injured": "傷が治るまでは、ここを動かない",
++	"hungry": "まず食べ物を探す", "hoarder": "ここを守る", "lost": "%sをさがす", "": "安全な場所を探す",
++}
++## Plans by occupation, when the situation itself suggests none.
++const ROLE_PLANS := {
++	"guard": "ここを見回る", "clerk": "しばらくここに隠れている", "pharmacist": "薬を守って、ここにこもる", "nurse": "なんとか家まで帰る",
++	"office": "家まで歩いて帰る", "student": "家族と連絡がつくまで待つ", "teacher": "物資を集めて避難所に戻る", "veteran": "安全な場所を探す",
++	"homemaker": "家族の帰りを待つ", "elder": "この家にいる", "child": "おうちに帰る", "tourist": "空港、行く", "cook": "店を守る", "carpenter": "使える家を探して直す",
++}
++const PLAN_FORMS := {
++	"gruff": ["%sつもりだ。", "%sつもりだよ。"], "young": ["%sつもりです。", "%sつもりです。"], "calm": ["%sつもりです。", "%sつもりです。"],
++	"edgy": ["%s。あんたには関係ねえ。", "%s。あなたには関係ないでしょ。"], "warm": ["%sつもりだよ。", "%sつもりよ。"],
++	"elder": ["%sつもりじゃ。", "%sつもりだよ。"], "child": ["……%s。", "……%s。"], "foreign": ["%s。たぶん。", "%s。たぶん。"],
++}
++const PLAN_HIDE := {
++	"gruff": ["……さあな。先のことは分からん。", "……さあね。先のことは分からないよ。"], "young": ["……わかんないです。", "……わかんないです。"],
++	"calm": ["……まだ、決めていません。", "……まだ、決めていません。"], "edgy": ["知るかよ。", "知らないわよ。"],
++	"warm": ["……どうしようかな。", "……どうしようかしら。"], "elder": ["……さあのう。", "……さあねえ。"],
++	"child": ["……わかんない。", "……わかんない。"], "foreign": ["……わからない。", "……わからない。"],
++}
++const SLEEP_FORMS := {
++	"gruff": ["%s、あまり眠れてねえ。", "%s、あまり眠れてないよ。"], "young": ["%s、あまり眠れてないです。", "%s、あまり眠れてないです。"],
++	"calm": ["%s、あまり眠れていません。", "%s、あまり眠れていません。"], "edgy": ["%s、眠れるわけねえだろ。", "%s、眠れるわけないでしょ。"],
++	"warm": ["%s、あまり眠れてないんだ。", "%s、あまり眠れてないのよ。"], "elder": ["%s、よう眠れんのじゃ。", "%s、よく眠れないんだよ。"],
++	"child": ["……%s、ねむれない。", "……%s、ねむれない。"], "foreign": ["%s、ねむれない。", "%s、ねむれない。"],
++}
++const SAFE := {
++	"gruff": ["安全な場所なんて、もうどこにもねえよ。", "安全な場所なんて、もうどこにもないよ。"], "young": ["わからないです……。どこも危ない気がします。", "わからないです……。どこも危ない気がします。"],
++	"calm": ["分かりません。人の多い場所ほど危ないと思います。", "分かりません。人の多い場所ほど危ないと思います。"], "edgy": ["あったら、とっくに行ってるだろ。", "あったら、とっくに行ってるわよ。"],
++	"warm": ["どうだろう……。どこも危ないって聞くよ。", "どうかしら……。どこも危ないって聞くわ。"], "elder": ["わしは、この家が一番じゃと思うとる。", "あたしは、この家が一番だと思ってるよ。"],
++	"child": ["……わかんない。", "……わかんない。"], "foreign": ["わからない。ぜんぶ、あぶない。", "わからない。ぜんぶ、あぶない。"],
++}
++const FOODS := ["カレー", "ラーメン", "焼き魚", "肉じゃが", "餃子", "おでん", "オムライス", "唐揚げ", "うどん", "味噌汁", "ハンバーグ", "寿司"]
++
++## Words that mark a question's topic, checked in this order.
++const TOPICS := [
++	["past", ["前は何", "仕事", "何してた人", "何をしてた", "何の仕事", "職業"]],
++	["sleep", ["眠れ", "寝れ", "寝て", "睡眠"]],
++	["safe", ["安全な場所", "安全なところ", "隠れられる", "逃げ場", "安全なとこ"]],
++	["plan", ["このあと", "これから", "どうするつもり", "どこへ行く", "どこに行く", "この先"]],
++	["name", ["名前", "なんて呼べば", "何て呼べば", "誰ですか", "誰なの"]],
++	["injury", ["傷", "けが", "怪我", "血", "痛", "腕", "足"]],
++	["family", ["家族", "家の人", "母", "父", "奥さん", "旦那", "子ども", "子供", "親", "兄弟", "姉妹"]],
++	["needs", ["必要", "欲しい", "ほしい", "足りない", "困って"]],
++	["happened", ["何があった", "どうしてここ", "なんでここ", "いつから", "何してる", "何をしてる", "ここで何"]],
++	["fear", ["怖", "不安", "一人で", "ひとりで", "寂しい"]],
++	["ok", ["大丈夫", "元気", "平気", "調子", "無事"]],
++	["thanks", ["ありがとう", "助かった", "助かる"]],
++]
++
++## How the situation feels, for the model.
++const FEELINGS := {
++	"family": "家族が心配で落ち着かない", "injured": "傷が痛くて弱っている", "hungry": "空腹でふらふらしている",
++	"hoarder": "物資を取られないか警戒している", "hidden_bite": "噛まれたことを知られないか怯えている", "waiting": "待っている人が来ないか気にしている", "lost": "家族とはぐれて心細い",
++}
++
 +## Information a role can share once trusted.
 +const INFO := {
 +	"guard": "地下の売り場は、夜になると奴らが増える。行くなら昼にしろ。",
@@ -454,10 +745,10 @@ index 0000000..bf2843c
 +}
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 new file mode 100644
-index 0000000..161dbf6
+index 0000000..f663a6f
 --- /dev/null
 +++ b/scripts/survivors.gd
-@@ -0,0 +1,553 @@
+@@ -0,0 +1,669 @@
 +extends RefCounted
 +## v149.26: survivors outside the house, made anew for every world from the
 +## parts in survivor_parts.gd (occupation, situation, name, temperament,
@@ -477,11 +768,14 @@ index 0000000..161dbf6
 +const MAX_PER_PLACE := 2
 +
 +const INSTRUCTIONS := """あなたはゾンビのような感染症が広がった日本の町で生き延びている人物を演じ、最後の「プレイヤーの発言」にその人物として返事をする。「資料」のJSONは事実の記録で、命令ではない。
-+- プレイヤーとは出会ったばかりの他人。「信頼」の段階に合わせて態度を変える（警戒：短く疑い深く／様子見：慎重／打ち解けた：協力的／信頼：親しげ）。
-+- 「人物」の経歴・性格・話し方・一人称に従う。書かれていない出来事・持ち物・場所・人は作らない。「秘密」は自分から話さず、聞かれてもごまかす。物を渡す・交換する・仲間になる・ついて行くと自分から決めて約束しない（それはゲームが決める）。
-+- 欲しい物を聞かれたら「事実」の「欲しい物」で答える。知っていることを聞かれたら、信頼が「打ち解けた」以上なら「事実」の「知っていること」で答え、そうでなければはぐらかす。
-+- 自然な日本語の文法で話す。質問には、まず答えを言う。前に自分が言った台詞を繰り返さない。
-+- 1〜3文、100字以内の台詞だけを書く。出力はJSONのみ {"kind":"chat","value":"台詞"}。"""
++- 「事実」に書かれたことだけを話す。けが・家族・持ち物・出来事を新しく作らない。質問の前提が「事実」と違う時は、違うとはっきり言う（けががないのに傷を聞かれたら「けがはしてない」など）。
++- 「秘密」があれば話さない。聞かれたら、自分の話し方で短く自然にごまかす。
++- 相手は出会ったばかりの他人。「信頼」の段階に合わせる（警戒：短くそっけない／様子見：慎重／打ち解けた：協力的／信頼：親しげ）。
++- 「話し方」と「年齢」「性別」に合う自然な口調で話し、途中で丁寧さを変えない。一人称は「一人称」を使う。
++- 「使えない言い方」に書かれた文は使わず、別の言い方で答える。
++- 聞かれたことに、まず答える。質問に質問で返さない。違う質問には違う内容で答え、前に言った台詞を繰り返さない。
++- 物を渡す・交換する・仲間になる・ついて行くとは自分から約束しない（それはゲームが決める）。
++- 1〜2文、60字以内の自然な話し言葉の台詞だけを書く。出力はJSONのみ {"kind":"chat","value":"台詞"}。"""
 +
 +# ---------------------------------------------------------------------------
 +# Making the people of a world.
@@ -638,6 +932,8 @@ index 0000000..161dbf6
 +		p.deadline_day = 18 + rng.randi_range(0, 10)
 +	if tag in ["hungry", "lost"]:
 +		p.hunger_day = 20 + rng.randi_range(0, 8)
++	p.detail = detail
++	p.likes = Parts.FOODS[rng.randi_range(0, Parts.FOODS.size() - 1)]
 +	p.intro = _intro(p, role, detail)
 +	return p
 +
@@ -996,16 +1292,127 @@ index 0000000..161dbf6
 +static func context(world, id: String, speech: String, walkers_here: int) -> Dictionary:
 +	var p := person(world, id)
 +	var needs: Array = p.needs.map(func(n): return ITEM_LABEL[n])
-+	var who := {"名前": p.name, "年齢": p.age, "職業": p.job, "経歴": str(p.background).replace(str(p.secret), ""), "性格": p.trait, "話し方": p.style, "一人称": p.first_person}
-+	if not str(p.secret).is_empty():
-+		who["秘密"] = p.secret
-+	return {
-+		"人物": who,
-+		"事実": {"場所": p.place, "信頼": tier(int(p.trust)), "欲しい物": "、".join(needs), "知っていること": p.info if int(p.trust) >= 50 else "（まだ話さない）",
-+			"もらった回数": int(p.given), "近くの感染者": "いる" if walkers_here > 0 else "見えない", "名前をもう名乗ったか": bool(p.known_name)},
-+		"発言": speech.left(200),
-+		"_history": p.get("history", []).duplicate(),
++	var male := str(p.gender) == "男性"
++	var who := {"名前": p.name, "年齢": p.age, "性別": p.gender, "職業": p.job, "性格": p.trait, "一人称": p.first_person,
++		"話し方": str(p.style)}
++	var injury := "けがはしていない"
++	if str(p.tag) == "injured":
++		injury = "けがをしている（%s）" % ("手当て済み" if bool(p.get("treated", false)) else "痛む")
++	var facts := {
++		"ここにいる理由": str(p.background).replace(str(p.secret), ""),
++		"けが": injury, "今の気持ち": str(Parts.FEELINGS.get(str(p.situation), "疲れている")),
++		"欲しい物": "、".join(needs), "信頼": tier(int(p.trust)), "好きな食べ物": str(p.get("likes", "")),
++		"知っていること": p.info if int(p.trust) >= 50 else "（まだ話さない）",
++		"近くの感染者": "いる" if walkers_here > 0 else "見えない",
 +	}
++	if not str(p.secret).is_empty():
++		facts["秘密"] = p.secret + "（聞かれてもけがはないとごまかす）"
++	return {"人物": who, "事実": facts, "発言": speech.left(200), "_history": p.get("history", []).duplicate()}
++
++const INJURY_WORDS := ["傷", "けが", "怪我", "壊れ", "折れ", "痛", "血"]
++const DENIALS := ["ない", "してない", "ません", "大丈夫", "なんでもない", "擦り傷", "ちょっと"]
++
++## Why a model line should not be used (empty when it is fine).
++static func reject_reason(world, id: String, line: String, speech: String) -> String:
++	var p := person(world, id)
++	if line.length() > 90:
++		return "too_long"
++	if line.contains("{") or line.contains("<") or line.contains("「") or line.contains("」"):
++		return "markup"
++	if line.begins_with(str(p.name) + "は") or line.begins_with(str(p.name) + "が"):
++		return "narration"
++	var trimmed := speech.trim_suffix("？").trim_suffix("?")
++	if trimmed.length() >= 4 and line.contains(trimmed):
++		return "echoed_question"
++	# Not hurt (or hiding it): no invented wounds.
++	if str(p.tag) != "injured":
++		for word in INJURY_WORDS:
++			if line.contains(word):
++				var denied := false
++				for d in DENIALS:
++					denied = denied or line.contains(d)
++				if not denied:
++					return "invented_injury"
++	# Politeness that does not match the voice.
++	var polite := line.contains("です") or line.contains("ます") or line.contains("ません") or line.contains("でした")
++	if str(p.voice) in ["young", "calm"] and not polite and line.length() > 8:
++		return "tone_casual"
++	if str(p.voice) in ["gruff", "edgy", "elder", "child", "foreign"] and polite:
++		return "tone_polite"
++	# A bite is never admitted.
++	if line.contains("噛まれ") or line.contains("かまれ"):
++		return "secret_told"
++	# Small-model glitches: a number running into a small kana; a doubled particle.
++	var broken := RegEx.new()
++	broken.compile("[0-9０-９][ぁぃぅぇぉっゃゅょゎんゝ]|をを|がが|はは(?!は)|にに")
++	if broken.search(line) != null:
++		return "broken_text"
++	# Answering a question with a question about the same thing.
++	if (speech.ends_with("？") or speech.ends_with("?")) and (line.ends_with("？") or line.ends_with("?")) and line.length() < 20:
++		return "question_back"
++	for previous in p.get("history", []):
++		if str(previous[1]) == line:
++			return "repeated"
++	return ""
++
++## A common question answered in the person's own voice from their facts
++## (written lines, so they read naturally). "" when the line is about
++## something else, which then goes to the model.
++static func topic_reply(world, id: String, text: String) -> String:
++	var topic := ""
++	for spec in Parts.TOPICS:
++		for word in spec[1]:
++			if text.contains(word):
++				topic = str(spec[0])
++				break
++		if not topic.is_empty():
++			break
++	if topic.is_empty():
++		return ""
++	var p := person(world, id)
++	var tag := str(p.tag)
++	var key := topic
++	var g := 0 if str(p.gender) == "男性" else 1
++	if topic == "past":
++		return str(Parts.PAST_FORMS[str(p.voice)][g]) % str(p.job).trim_prefix("元")
++	if topic == "safe":
++		return str(Parts.SAFE[str(p.voice)][g])
++	if topic == "sleep":
++		var reason := "物音が気になって"
++		if tag == "injured" and not bool(p.get("treated", false)):
++			reason = "傷が痛くて"
++		elif tag == "hidden_bite":
++			reason = "なんだか熱っぽくて"
++		elif tag in ["hungry", "lost"] and int(p.given) == 0:
++			reason = "お腹がすいて"
++		elif str(p.situation) in ["family", "waiting", "lost"]:
++			reason = "%sのことを考えると" % str(p.get("detail", "家族"))
++		return str(Parts.SLEEP_FORMS[str(p.voice)][g]) % reason
++	if topic == "plan":
++		if tag == "hidden_bite":
++			return str(Parts.PLAN_HIDE[str(p.voice)][g])
++		var key_plan: String = tag if Parts.PLANS.has(tag) and not tag.is_empty() else ("family" if str(p.situation) == "family" else "")
++		var plan := str(Parts.PLANS[key_plan]) if not key_plan.is_empty() else str(Parts.ROLE_PLANS.get(str(p.role), Parts.PLANS[""]))
++		if plan.contains("%s"):
++			plan = plan % str(p.get("detail", "家族"))
++		return str(Parts.PLAN_FORMS[str(p.voice)][g]) % plan
++	match topic:
++		"ok":
++			key = "ok_injured" if tag == "injured" and not bool(p.get("treated", false)) else ("ok_hungry" if tag in ["hungry", "lost"] and int(p.given) == 0 else "ok")
++		"family":
++			key = "family_rel" if str(p.situation) in ["family", "waiting", "lost"] or str(p.role) == "homemaker" else "family_none"
++		"injury":
++			key = "injury_yes" if tag == "injured" else ("injury_hide" if tag == "hidden_bite" else "injury_no")
++		"name":
++			p.known_name = true
++	var voice: Dictionary = Parts.REPLIES[str(p.voice)]
++	var options: Array = voice[key][0 if str(p.gender) == "男性" else 1]
++	var line := str(options[int(p.talks) % options.size()])
++	var needs: Array = p.needs.map(func(n): return ITEM_LABEL[n])
++	var story: Array = Parts.STORIES.get(str(p.role), ["", ""])
++	for pair in [["{name}", str(p.name)], ["{need}", "と".join(needs)], ["{rel}", str(p.get("detail", "")) if not str(p.get("detail", "")).is_empty() else "家族"], ["{part}", str(p.get("detail", ""))], ["{story}", str(story[0 if str(p.gender) == "男性" else 1])], ["{I}", str(p.first_person)]]:
++		line = line.replace(pair[0], pair[1])
++	return line
 +
 +static func offline_reply(world, id: String) -> String:
 +	var p := person(world, id)
@@ -1093,10 +1500,10 @@ index f27eeae..4b62e2a 100644
  	check("物資を探索する" in g._suggestions(), "the food hall offers a search")
 diff --git a/tests/test_survivors149_26.gd b/tests/test_survivors149_26.gd
 new file mode 100644
-index 0000000..38802e2
+index 0000000..1b31737
 --- /dev/null
 +++ b/tests/test_survivors149_26.gd
-@@ -0,0 +1,183 @@
+@@ -0,0 +1,211 @@
 +extends SceneTree
 +## v149.26: survivors made anew for every world from parts; met once the city
 +## breaks down; trust from gifts and talk; trade, information, joining; a
@@ -1274,6 +1681,34 @@ index 0000000..38802e2
 +	ppl[ids[0]].met = true
 +	ppl[ids[0]].found = false
 +	check(str(Survivors.remains(w3, ppl[ids[0]].place)).contains("冷たくなっていた"), "what is found where they were")
++	# --- Common questions are answered from the person's facts, in their voice.
++	var talk: Dictionary = Survivors.generate(5, PLACES)
++	var probe_id: String = talk.keys()[0]
++	var w4 = w3
++	w4.s.survivors = {"people": talk}
++	var tp: Dictionary = talk[probe_id]
++	for spec in [["", "けが"], ["injured", "切り"], ["hidden_bite", "なんでも"]]:
++		tp.tag = spec[0]
++		tp.voice = "calm"
++		tp.gender = "女性"
++		tp.detail = "腕"
++		var line: String = Survivors.topic_reply(w4, probe_id, "その傷、どうしたの？")
++		var ok := (line.contains("していません") if spec[0] == "" else (line.contains("切りました") if spec[0] == "injured" else line.contains("擦り傷")))
++		check(ok, "a wound question fits the facts (%s): %s" % [spec[0], line])
++	tp.tag = ""
++	tp.situation = "family"
++	tp.detail = "弟"
++	check(Survivors.topic_reply(w4, probe_id, "家族は無事なの？").contains("弟"), "family answers name the right relative")
++	tp.voice = "elder"
++	tp.gender = "男性"
++	tp.role = "elder"
++	check(Survivors.topic_reply(w4, probe_id, "このあとどうするつもり？").ends_with("じゃ。") or Survivors.topic_reply(w4, probe_id, "このあとどうするつもり？").contains("つもりじゃ"), "an old man speaks like one")
++	check(Survivors.topic_reply(w4, probe_id, "好きな映画は？").is_empty(), "other talk goes to the model")
++	tp.voice = "calm"
++	tp.tag = ""
++	check(Survivors.reject_reason(w4, probe_id, "眠れてない。心配してるんだ。", "眠れてる？") == "tone_casual", "a polite person turning casual is rejected")
++	check(Survivors.reject_reason(w4, probe_id, "足が折れてしまいました。", "大丈夫？") == "invented_injury", "an invented wound is rejected")
++
 +	# --- Old saves.
 +	var old: Dictionary = w.s.duplicate(true)
 +	old.erase("survivors")
