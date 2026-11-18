@@ -1,7 +1,12 @@
 name: Build v149.21 native Qwen IPA (new UI)
 
 on:
-  # Built only on request (Actions > Run workflow), not on every push.
+  # Built on request (Actions > Run workflow) or when this file changes;
+  # game patches alone do not start a build.
+  push:
+    branches: [claude/blissful-fermat-8e7k1b-u8y7jb]
+    paths:
+      - '.github/workflows/ios-native-v14921.yml'
   workflow_dispatch:
     inputs:
       run_model_smoke:
