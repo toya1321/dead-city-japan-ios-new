@@ -6,7 +6,7 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`）
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip-freetext`（作業中：自由文の行動。`player_intents.gd`。ビルド時に版を0.149.25/174に上げる）
 - 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.24 / ビルド173（ワークフロー `ios-native-v14924.yml`）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
@@ -87,6 +87,12 @@ UIのモックアップ：https://claude.ai/artifact/Q1ZFHfhgNSeXFaJm3MxBpk（6�
 - 一人の楽しみ：映画（一人なら「映画を観る」、電気がなければスマホで、電池−15%、+8、外に音なし）／タバコ（コンビニで1箱600円・20本、閉店後は「タバコを探す」、+6、続けて吸うと+2、換気扇からにおい30分、習慣5以上で12時間吸わないと心−0.15/時、1日ごとに習慣−1）／自分で料理（「温かい料理を作る」「みんなの分」、30分、+6、におい80分。熱源は都市ガス（緊急まで）→電気→カセットコンロ（初期3本、1食0.25本、コンビニ・金物店で150円））／「本を読む」（+4、3時間以内は+1、昼か電気が必要）。心が45未満で候補に出る。
 - `npc_mind.present` が「読んでいた」を「読んでいる」にするよう修正（同居人の好みが毎回ランダムなため、テストがたまに落ちていた）。
 - テスト `test_life149_24`（35項目）。全139テスト合格。
+
+## 自由文の行動（v149.25-wip、`player_intents.gd`）
+
+- 決まった言葉で拾えない行動は、ローカルAIに「行動の名前」だけを答えさせる（遭遇中は hide/flee/distract/fight/look、それ以外は明かり・目張り・待つ・息をひそめる・浴槽・料理・映画・タバコ・読書・裏口・窓から投げる・鍵・扉の修理・タバコ/ボンベを買う・寝る・水・食事・ニュース・窓）。ゲームは否定文（〜ない・やめ・いいや）を除き、行動ごとの関連語が文にある時だけ、決まったコマンドとして実行し「（「〜」として行動）」と表示。ネイティブの文法がkindを chat/query/npc/player/clarify に限るので "player" を使う（ネイティブは変更なし）。
+- 実モデル（Qwen3-4B、Linux CPU、1回5〜8秒）での言い方テスト：`qa/freetext_check.gd`（`DCJ_SET=1|2|3`、`DCJ_LLAMA_PROBE`・`DCJ_GGUF`）。調整後 60/60・43/44・32/32（否定文はすべて何もしない）。調整前の初見の結果は 2組目 38/44（キーワードのみ14/44）、3組目 26/32。
+- テスト `test_freetext149_24`（14項目、台本のモデル）。全140テスト合格。
 
 ## ユーザーについて
 
