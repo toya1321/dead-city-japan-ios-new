@@ -14,18 +14,19 @@ index 03ffee1..c9bd475 100644
  		w.advance_safe(1,bool(run.care and run.sleeping))
  		run.elapsed+=1
 diff --git a/scripts/household_actions.gd b/scripts/household_actions.gd
-index ce42a1a..9af4e42 100644
+index ce42a1a..32c3e63 100644
 --- a/scripts/household_actions.gd
 +++ b/scripts/household_actions.gd
-@@ -2,6 +2,7 @@ extends RefCounted
+@@ -2,6 +2,8 @@ extends RefCounted
  
  const Plan = preload("res://scripts/action_plan.gd")
  const Navigation = preload("res://scripts/navigation.gd")
 +const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
  const District = preload("res://scripts/district.gd")
  const Errands = preload("res://scripts/household_errands.gd")
  const Dialogue = preload("res://scripts/household_dialogue.gd")
-@@ -307,11 +308,16 @@ static func watch_movie(game, person: Dictionary, movie: Dictionary) -> String:
+@@ -307,15 +309,31 @@ static func watch_movie(game, person: Dictionary, movie: Dictionary) -> String:
  			interruption = "%sが映画を続けられなくなった" % person.name
  		elif int(world.advance_safe(1)) == 0:
  			interruption = "これ以上時間を進められない"
@@ -33,16 +34,32 @@ index ce42a1a..9af4e42 100644
 +			Walkers.ensure(world).alarm = false
 +			interruption = "外の気配が気になって、テレビを消した"
  		if not interruption.is_empty():
++			_movie_lift(world, person, movie, elapsed)
  			return "『%s』を%d分観たところで%s。" % [movie.title, elapsed, interruption]
  		elapsed += 1
  		if elapsed == 1:
  			game._append("%sと居間で『%s』を観始めた。" % [person.name, movie.title])
-+			# The film's sound carries outside for as long as it plays.
-+			Walkers.make_noise(world, "居間", int(movie.minutes))
++			# At normal volume the film is heard just past the door; turned down, not at all.
++			if not bool(movie.get("quiet", false)):
++				Walkers.make_sound(world, int(movie.minutes))
  		if elapsed % 10 == 0:
  			game.progress_label.text = "『%s』を鑑賞中… %d / %d分" % [movie.title, elapsed, movie.minutes]
  			await game.get_tree().process_frame
-@@ -368,6 +374,8 @@ static func cook_meal(game, person: Dictionary, recipient: Dictionary = {}, for_
+-	return "『%s』を一緒に観終わったね（%d分）。%s" % [movie.title, elapsed, movie.reaction]
++	_movie_lift(world, person, movie, elapsed)
++	return "『%s』を一緒に観終わったね（%d分）。%s" % [movie.title, elapsed, movie.reaction] + ("　音を小さくしていたから、少し物足りなかったけど。" if bool(movie.get("quiet", false)) else "")
++
++## A film lifts both viewers' spirits; less when the sound was turned down.
++static func _movie_lift(world, person: Dictionary, movie: Dictionary, elapsed: int) -> void:
++	var full := 10.0 if bool(movie.get("quiet", false)) else 15.0
++	var lift := full * clampf(float(elapsed) / maxf(1.0, float(movie.minutes)), 0.0, 1.0)
++	Mood.ensure(world)
++	Mood.change(world.s, lift)
++	Mood.change(person, lift)
+ 
+ # Cooking is an explicit household action. A meal uses the same food stock
+ # and hunger accounting as normal eating; no imaginary inventory is created.
+@@ -368,6 +386,8 @@ static func cook_meal(game, person: Dictionary, recipient: Dictionary = {}, for_
  	var old_location: String = str(person.get("location", ""))
  	var old_activity: String = str(person.get("activity", ""))
  	person["activity"] = "料理"
@@ -51,11 +68,23 @@ index ce42a1a..9af4e42 100644
  	var elapsed := 0
  	while elapsed < 20:
  		if game.cancel_requested or float(person.get("health", 0.0)) <= 0.0 or str(person.get("location", "")) != old_location or str(person.get("activity", "")) != "料理":
+@@ -411,6 +431,11 @@ static func cook_meal(game, person: Dictionary, recipient: Dictionary = {}, for_
+ 		if not still_resident:
+ 			return "調理中に相手が同居人ではなくなったので、食料は使っていないよ。"
+ 	world.s.food -= 0.25
++	# A warm meal does the heart good.
++	Mood.ensure(world)
++	Mood.change(serving, 6.0)
++	if not is_same(serving, person):
++		Mood.change(person, 2.0)
+ 	serving["food_used"] = float(serving.get("food_used", 0.0)) + 0.25
+ 	serving["hunger"] = maxf(0.0, float(serving.get("hunger", 0.0)) - 25.0)
+ 	if for_player:
 diff --git a/scripts/household_dialogue.gd b/scripts/household_dialogue.gd
-index 13e123e..53b8de4 100644
+index 13e123e..45acede 100644
 --- a/scripts/household_dialogue.gd
 +++ b/scripts/household_dialogue.gd
-@@ -955,6 +955,8 @@ static func _topic(speech: String) -> String:
+@@ -955,8 +955,14 @@ static func _topic(speech: String) -> String:
  	return ""
  
  static func _condition(person: Dictionary) -> String:
@@ -63,20 +92,27 @@ index 13e123e..53b8de4 100644
 +		return "噛まれて高い熱がある。もう助からないと分かっている" if float(person.health) < 60.0 else "噛まれた傷が痛み、熱が出始めている"
  	if float(person.health) < 70.0:
  		return "少し具合が悪い"
++	if float(person.get("mood", 70.0)) < 15.0:
++		return "心が限界に近い。閉じこもる暮らしに耐えられなくなりかけている"
++	if float(person.get("mood", 70.0)) < 35.0:
++		return "気が滅入っていて、元気がない"
  	if float(person.thirst) >= 35.0:
+ 		return "喉が渇いてきた"
+ 	if float(person.hunger) >= 35.0:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..632d6f2 100644
+index c54fcf5..4d8f5bb 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -22,6 +22,7 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
+@@ -22,6 +22,8 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
  const NPCMind = preload("res://scripts/npc_mind.gd")
  const NPCRequests = preload("res://scripts/npc_requests.gd")
  const UI = preload("res://scripts/ui_kit.gd")
 +const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
  const UI_SETTINGS_PATH := "user://ui_settings.cfg"
  const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
  # Map layout (mockup coordinates, 358 x 476): node -> [x, y, w, h].
-@@ -57,6 +58,7 @@ var chips_toggle: CheckButton
+@@ -57,6 +59,7 @@ var chips_toggle: CheckButton
  var ui_font_size := 17
  var ui_fold_photo := false
  var ui_show_chips := true
@@ -84,7 +120,25 @@ index c54fcf5..632d6f2 100644
  # About 1.0-1.3 Qwen tokens per Japanese character; leaves room for the
  # system prompt and the reply in the 3072-token native context.
  const PROMPT_CHAR_BUDGET := 1500
-@@ -1344,6 +1346,9 @@ func _scroll_log_to_end() -> void:
+@@ -262,7 +265,7 @@ func _build_ui() -> void:
+ 	hide_keyboard_button.pressed.connect(_dismiss_command_keyboard)
+ 	header_row.add_child(hide_keyboard_button)
+ 	vitals_row=HBoxContainer.new();vitals_row.add_theme_constant_override("separation",8);header.add_child(vitals_row)
+-	for key in ["体力","満腹度","水分状態","休息状態"]:
++	for key in ["体力","満腹度","水分状態","休息状態","心"]:
+ 		var column:=VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;column.add_theme_constant_override("separation",3);vitals_row.add_child(column)
+ 		var value:=UI.label(UI.VITAL_SHORT[key], 12, Color("#c8d4df"), false);column.add_child(value);vitals_values[key]=value
+ 		var bar:=UI.bar(100.0, UI.VITAL_COLORS[key], 5);column.add_child(bar);vitals_bars[key]=bar
+@@ -603,7 +606,7 @@ func _build_status_tab() -> void:
+ 	grid.add_theme_constant_override("v_separation", 10)
+ 	me.add_child(grid)
+ 	var values := Vitals.values(world.s)
+-	for key in ["体力","満腹度","水分状態","休息状態"]:
++	for key in ["体力","満腹度","水分状態","休息状態","心"]:
+ 		var cell := VBoxContainer.new()
+ 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 		grid.add_child(cell)
+@@ -1344,6 +1347,9 @@ func _scroll_log_to_end() -> void:
  	log_follow_queued=false
  
  func _refresh() -> void:
@@ -94,7 +148,7 @@ index c54fcf5..632d6f2 100644
  	_update_dialogue_input()
  	var stamp := world.clock()
  	day_label.text = "%d日目" % _day_number()
-@@ -1353,6 +1358,10 @@ func _refresh() -> void:
+@@ -1353,6 +1359,10 @@ func _refresh() -> void:
  	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
  	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
  	danger_label.text = "街：" + str(stage[0])
@@ -105,7 +159,7 @@ index c54fcf5..632d6f2 100644
  	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
  	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
  	var normalized := Vitals.values(world.s)
-@@ -1398,6 +1407,14 @@ func _on_command(raw: String) -> void:
+@@ -1398,6 +1408,14 @@ func _on_command(raw: String) -> void:
  	cancel_requested=false
  	var suggested := pending_local_action.duplicate()
  	pending_local_action.clear()
@@ -120,7 +174,7 @@ index c54fcf5..632d6f2 100644
  	if NPCConversation.normalize(cmd) == "提案を実行":
  		await _execute_local_suggestion(suggested)
  		return
-@@ -1463,6 +1480,8 @@ func _update_dialogue_input() -> void:
+@@ -1463,6 +1481,8 @@ func _update_dialogue_input() -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -129,7 +183,7 @@ index c54fcf5..632d6f2 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1474,8 +1493,27 @@ func _suggestions() -> Array:
+@@ -1474,8 +1494,27 @@ func _suggestions() -> Array:
  			var unit := HouseholdErrands.unit(str(order.item))
  			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
  		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
@@ -158,7 +212,30 @@ index c54fcf5..632d6f2 100644
  			out.append("%sに話しかける" % person.name)
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -2088,6 +2126,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -1747,6 +1786,7 @@ func _log_rejected_line(index: int, reason: String, line: String) -> void:
+ func _finish_npc_reply(index: int, speech: String, reply: String, source: String = "game_fact", reason: String = "") -> void:
+ 	var person: Dictionary = world.s.household_members[index]
+ 	_record_npc_reply_source(index, source, reason)
++	Mood.talked(world, person)
+ 	NPCConversation.disclosure(npc_memory, person, int(world.s.minute), speech)
+ 	# Long-term conversation memory, retrieved later by relevance.
+ 	if speech.strip_edges().length() >= 4 and not reply.is_empty():
+@@ -2008,10 +2048,14 @@ func _execute_local_suggestion(proposal: Dictionary) -> void:
+ 	var request := str(LocalNPCModel.NPC_ACTIONS[proposal.key])
+ 	await _run_household_request(index, person, request, request)
+ 
++const QUIET_WORDS := ["音を小さく", "小さい音", "小さな音", "音量を下げ", "音量を落と", "音を絞", "小声", "イヤホン", "ヘッドホン", "静かに観", "静かに見", "音を消"]
++
+ func _run_household_movie(index: int, person: Dictionary, speech: String, movie: Dictionary) -> void:
+ 	var reply: String = movie.get("clarify", "")
+ 	if reply.is_empty():
+ 		_set_busy(true, "映画の準備中…")
++		if NPCMemory._mentions(speech, QUIET_WORDS):
++			movie.quiet = true
+ 		reply = await HouseholdActions.watch_movie(self, person, movie)
+ 		_set_busy(false)
+ 		if reply.begins_with("『%s』を一緒に観終わった" % movie.title):
+@@ -2088,6 +2132,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -168,7 +245,7 @@ index c54fcf5..632d6f2 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2139,248 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2145,250 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
@@ -200,6 +277,7 @@ index c54fcf5..632d6f2 100644
 +	world.s.health = maxf(1.0, float(person.health))
 +	for key in ["hunger", "thirst", "fatigue"]:
 +		world.s[key] = float(person.get(key, 0.0))
++	world.s.mood = maxf(0.0, Mood.of(person) - 25.0)
 +	world.s.injuries = 0
 +	var heir_bitten := bool(person.get("bitten", false))
 +	world.s.exposure = int(person.get("bitten_at", 0)) if heir_bitten else -1
@@ -291,7 +369,7 @@ index c54fcf5..632d6f2 100644
 +		return true
 +	world.advance_safe(30)
 +	world.s.blackout = true
-+	_append("家じゅうの窓を、毛布と段ボールでふさいで目張りした（30分）。明かりをつけても、外に光は漏れない。そのかわり、昼でも部屋は薄暗い。")
++	_append("家じゅうの窓を、毛布と段ボールでふさいで目張りした（30分）。明かりをつけても、外に光は漏れない。そのかわり、昼でも部屋は薄暗く、気が滅入りやすくなる。")
 +	_refresh()
 +	return true
 +
@@ -373,6 +451,7 @@ index c54fcf5..632d6f2 100644
 +	var enc := Walkers.check(world, location, false, previous if previous != location else "")
 +	if enc.is_empty():
 +		return false
++	Mood.change(world.s, -6.0)
 +	_append("【危険】" + Walkers.describe(enc))
 +	_refresh()
 +	return true
@@ -417,7 +496,7 @@ index c54fcf5..632d6f2 100644
  func _report_household_errands() -> void:
  	if not Navigation.indoor(location) or float(world.s.health) <= 0:
  		return
-@@ -2299,6 +2582,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2299,6 +2590,8 @@ func _execute_command(cmd: String) -> String:
  		if location != "玄関": return "玄関で作業する必要がある。"
  		var response := world.action("fortify")
  		if response.begins_with("玄関を補強"):
@@ -426,7 +505,7 @@ index c54fcf5..632d6f2 100644
  			event_visual = "shelter"
  			visual_focus = "event"
  		return response
-@@ -2325,7 +2610,11 @@ func _execute_command(cmd: String) -> String:
+@@ -2325,7 +2618,11 @@ func _execute_command(cmd: String) -> String:
  		return world.longplay_action("rest")
  	if cmd.contains("住居を修繕") or cmd.contains("家を修理"):
  		if location != "玄関" and location != "台所": return "住居の修繕は玄関か台所から行う。"
@@ -439,7 +518,7 @@ index c54fcf5..632d6f2 100644
  	if cmd.contains("浄水"):
  		if location != "台所": return "台所で浄水設備を操作する。"
  		return world.longplay_action("purify")
-@@ -2395,6 +2684,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2395,6 +2692,8 @@ func _execute_command(cmd: String) -> String:
  		world.advance_safe(2)
  		visual_focus="window" if Navigation.indoor(location) else ""
  		var observed:=_observe("sight")
@@ -448,11 +527,133 @@ index c54fcf5..632d6f2 100644
  		return "通りを観察した。天候：%s。\n%s"%[_weather_text(),observed]
  
  	if cmd.contains("鍵を閉") or cmd.contains("施錠"):
+diff --git a/scripts/mood.gd b/scripts/mood.gd
+new file mode 100644
+index 0000000..a255bb4
+--- /dev/null
++++ b/scripts/mood.gd
+@@ -0,0 +1,109 @@
++extends RefCounted
++## v149.24: state of mind (心). 0-100, higher is better; starts at 70.
++## Shut-in life wears it down (dark covered rooms by day, hunger, exhaustion,
++## the dead at the door, a collapsing society, being alone, shocks), and it is
++## restored by films, warm meals, talk, daylight and fresh air. A low state of
++## mind costs sleep and steady hands. Housemates keep their own `mood`.
++
++const START := 70.0
++const REST_POINT := 60.0
++
++static func ensure(world) -> void:
++	if not world.s.has("mood"):
++		world.s.mood = START
++	for person in world.s.household_members:
++		if not person.has("mood"):
++			person.mood = START
++
++static func of(target: Dictionary) -> float:
++	return float(target.get("mood", START))
++
++static func change(target: Dictionary, delta: float) -> void:
++	target.mood = clampf(of(target) + delta, 0.0, 100.0)
++
++## A shock or a comfort shared by everyone at home (and the player).
++static func everyone(world, delta: float, include_player: bool = true) -> void:
++	ensure(world)
++	if include_player:
++		change(world.s, delta)
++	for person in world.s.household_members:
++		if float(person.health) > 0:
++			change(person, delta)
++
++static func word(value: float) -> String:
++	if value >= 70.0:
++		return "落ち着いている"
++	if value >= 45.0:
++		return "少し気が滅入っている"
++	if value >= 25.0:
++		return "気が滅入っている"
++	return "心が限界に近い"
++
++static func _walkers_at_door(world) -> bool:
++	var places: Dictionary = world.s.get("walkers", {}).get("places", {})
++	return int(places.get("建物前", 0)) > 0 or int(places.get("玄関", 0)) > 0
++
++## One hour of ordinary life for one person.
++static func _hour_delta(world, target: Dictionary, at_home: bool, asleep: bool, alone: bool) -> float:
++	var hour: float = world.hour_of_day()
++	var day := hour >= 6.0 and hour < 18.0
++	var d := 0.0
++	if day and not asleep:
++		if at_home and bool(world.s.get("blackout", false)):
++			d -= 0.4   # covered windows: a dim room all day
++	if float(target.get("hunger", 0.0)) >= 70.0 or float(target.get("thirst", 0.0)) >= 70.0:
++		d -= 0.6
++	if float(target.get("fatigue", 0.0)) >= 85.0:
++		d -= 0.4
++	match str(world.s.get("society", "normal")):
++		"disrupted": d -= 0.15
++		"emergency": d -= 0.3
++	if alone:
++		d -= 0.2
++	if at_home and _walkers_at_door(world):
++		d -= 1.0
++	if d == 0.0:
++		if day and not asleep and not at_home:
++			d = 0.4   # fresh air and daylight
++		elif day and not asleep and not bool(world.s.get("blackout", false)):
++			d = 0.3   # daylight through the window
++		elif of(target) < REST_POINT:
++			d = 0.2
++	return d
++
++static func hourly(world, sleeping: bool) -> void:
++	ensure(world)
++	var at_home: bool = bool(world.get_meta("player_at_home", true))
++	var living: Array = world.s.household_members.filter(func(p): return float(p.health) > 0)
++	if float(world.s.health) > 0:
++		change(world.s, _hour_delta(world, world.s, at_home, sleeping, living.is_empty()))
++	for person in living:
++		var home: bool = str(person.get("activity", "")) != "外出"
++		change(person, _hour_delta(world, person, home, str(person.get("activity", "")) == "睡眠", false))
++		# A housemate at the end of their tether says so, twice a day at most.
++		if of(person) < 15.0 and int(world.s.minute) - int(person.get("mood_said_at", -100000)) >= 720:
++			person.mood_said_at = int(world.s.minute)
++			if world.s.has("walkers"):
++				world.s.walkers.notices.append("%sが、暗い顔で黙り込んでいる。「……もう、こんな暮らしは耐えられない」" % person.name)
++
++## Talking lifts both a little, at most once every half hour per person.
++static func talked(world, person: Dictionary) -> void:
++	ensure(world)
++	if int(world.s.minute) - int(person.get("mood_talk_at", -100000)) < 30:
++		return
++	person.mood_talk_at = int(world.s.minute)
++	change(person, 1.5)
++	change(world.s, 1.0)
++
++## Sleep is shallow when the mind is near its limit.
++static func sleep_factor(state: Dictionary) -> float:
++	return 0.6 if of(state) < 25.0 else 1.0
++
++## Shaking hands: a penalty to escape and fighting chances.
++static func nerve_penalty(state: Dictionary) -> int:
++	var value := of(state)
++	if value < 15.0:
++		return 15
++	if value < 30.0:
++		return 8
++	return 0
+diff --git a/scripts/mood.gd.uid b/scripts/mood.gd.uid
+new file mode 100644
+index 0000000..1636e8e
+--- /dev/null
++++ b/scripts/mood.gd.uid
+@@ -0,0 +1 @@
++uid://dpo7wee0kn753
 diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
-index 5343fc9..134cb51 100644
+index 5343fc9..a96d93a 100644
 --- a/scripts/npc_mind.gd
 +++ b/scripts/npc_mind.gd
-@@ -323,6 +323,8 @@ static func errand_status(world, person: Dictionary) -> String:
+@@ -323,8 +323,14 @@ static func errand_status(world, person: Dictionary) -> String:
  	return "なし"
  
  static func _condition(person: Dictionary) -> String:
@@ -460,12 +661,41 @@ index 5343fc9..134cb51 100644
 +		return "噛まれて高い熱がある。もう助からないと分かっている" if float(person.health) < 60.0 else "噛まれた傷が痛み、熱が出始めている"
  	if float(person.health) < 70.0:
  		return "少し具合が悪い"
++	if float(person.get("mood", 70.0)) < 15.0:
++		return "心が限界に近い。閉じこもる暮らしに耐えられなくなりかけている"
++	if float(person.get("mood", 70.0)) < 35.0:
++		return "気が滅入っていて、元気がない"
  	if float(person.thirst) >= 35.0:
+ 		return "喉が渇いてきた"
+ 	if float(person.hunger) >= 35.0:
+diff --git a/scripts/ui_kit.gd b/scripts/ui_kit.gd
+index a2b3e56..fabb501 100644
+--- a/scripts/ui_kit.gd
++++ b/scripts/ui_kit.gd
+@@ -21,8 +21,8 @@ const WARN_TEXT := Color("#ffcfa8")
+ const OK_BG := Color("#13281f")
+ const OK_EDGE := Color("#2d5a42")
+ const OK_TEXT := Color("#9fe3b9")
+-const VITAL_COLORS := {"体力": Color("#7fd1a1"), "満腹度": Color("#ffb27a"), "水分状態": Color("#7cc0de"), "休息状態": Color("#b9a7f0")}
+-const VITAL_SHORT := {"体力": "体力", "満腹度": "満腹", "水分状態": "水分", "休息状態": "休息"}
++const VITAL_COLORS := {"体力": Color("#7fd1a1"), "満腹度": Color("#ffb27a"), "水分状態": Color("#7cc0de"), "休息状態": Color("#b9a7f0"), "心": Color("#e6a3c4")}
++const VITAL_SHORT := {"体力": "体力", "満腹度": "満腹", "水分状態": "水分", "休息状態": "休息", "心": "心"}
+ const SOCIETY := {"normal": ["平常", 0], "alert": ["警戒", 1], "disrupted": ["混乱", 2], "emergency": ["緊急", 3]}
+ const NOTICE_WORDS := ["危険", "警告", "防災", "死亡", "負傷", "襲", "噛", "避難", "緊急事態", "外出自粛", "通行止め"]
+ const FAIL_WORDS := ["何も実行していません", "解釈できませんでした", "解釈できません"]
 diff --git a/scripts/vitals.gd b/scripts/vitals.gd
-index b89279e..034a217 100644
+index b89279e..1696e7f 100644
 --- a/scripts/vitals.gd
 +++ b/scripts/vitals.gd
-@@ -9,6 +9,7 @@ static func description(value: float) -> String:
+@@ -1,6 +1,6 @@
+ extends RefCounted
+ static func values(state: Dictionary) -> Dictionary:
+-	return {"体力":clampf(float(state.health),0,100),"満腹度":100.0-clampf(float(state.hunger),0,100),"水分状態":100.0-clampf(float(state.thirst),0,100),"休息状態":100.0-clampf(float(state.fatigue),0,100)}
++	return {"体力":clampf(float(state.health),0,100),"満腹度":100.0-clampf(float(state.hunger),0,100),"水分状態":100.0-clampf(float(state.thirst),0,100),"休息状態":100.0-clampf(float(state.fatigue),0,100),"心":clampf(float(state.get("mood",70.0)),0,100)}
+ static func description(value: float) -> String:
+ 	if value <= 15.0: return "危険"
+ 	if value <= 40.0: return "不足"
+@@ -9,7 +9,9 @@ static func description(value: float) -> String:
  static func warning(state: Dictionary) -> String:
  	var lines: Array[String] = []
  	if float(state.health) <= 0: return "死亡しています。保存した記録を読み込めます。"
@@ -473,17 +703,20 @@ index b89279e..034a217 100644
  	if float(state.hunger) >= 85: lines.append("食事が必要です。満腹度が尽きると体力が減少します。")
  	if float(state.thirst) >= 85: lines.append("水分が不足しています。飲料水を飲んでください。")
  	if float(state.fatigue) >= 85: lines.append("休息が必要です。寝室で眠れます。")
++	if float(state.get("mood", 70.0)) < 30: lines.append("気が滅入っている。眠りが浅く、手元が狂いやすい。映画や温かい食事、会話、日の光で気持ちを立て直せる。")
+ 	return "\n".join(lines)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 new file mode 100644
-index 0000000..0e76487
+index 0000000..5a70602
 --- /dev/null
 +++ b/scripts/walkers.gd
-@@ -0,0 +1,418 @@
+@@ -0,0 +1,439 @@
 +extends RefCounted
 +## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
 +## Slow walkers; a bite infects and kills over days; fighting is possible but
 +## risky. All randomness goes through world.draw so results are reproducible.
 +const Navigation = preload("res://scripts/navigation.gd")
++const Mood = preload("res://scripts/mood.gd")
 +
 +const OUTDOOR := ["屋外", "商店通り", "住宅街", "駅前", "建物前"]
 +const BUILDINGS := ["コンビニ", "近所の空き家", "デパート", "食品店", "金物店", "薬局"]
@@ -618,6 +851,8 @@ index 0000000..0e76487
 +		out.append("light")
 +	if int(w.get("smell_until", -1)) >= minute:
 +		out.append("smell")
++	if int(w.get("sound_until", -1)) >= minute:
++		out.append("sound")
 +	for room in ["玄関", "居間", "台所", "寝室", "廊下"]:
 +		if int(w.noise.get(room, -1)) >= minute:
 +			out.append("noise")
@@ -627,7 +862,8 @@ index 0000000..0e76487
 +		out.append("followed")
 +	return out
 +
-+const REASON_TEXT := {"light": "窓から漏れる明かり", "noise": "家の中の物音", "smell": "料理のにおい", "followed": "さっき逃げてきた時に、後をつけられていた"}
++const STREET_REASONS := ["light", "noise"]
++const REASON_TEXT := {"light": "窓から漏れる明かり", "noise": "家の中の物音", "smell": "料理のにおい", "sound": "テレビや話し声", "followed": "さっき逃げてきた時に、後をつけられていた"}
 +
 +## Hourly, at the house. Every step is announced so the player can react:
 +## 1) a figure on the street turns toward the house (warning),
@@ -655,7 +891,9 @@ index 0000000..0e76487
 +		# A pursuer stays at the door for an hour before giving up.
 +		drawn.append("followed")
 +	var street := count(world, "屋外")
-+	var pulls := drawn.filter(func(r): return r != "followed")
++	# Only light and loud noise reach the street; ordinary sounds and smells
++	# carry just past the door, to anything already standing there.
++	var pulls := drawn.filter(func(r): return r in STREET_REASONS)
 +	if street > 0 and not pulls.is_empty():
 +		if int(w.get("drawn_at", -1)) >= 0 and minute - int(w.drawn_at) >= 60:
 +			w.erase("drawn_at")
@@ -663,9 +901,11 @@ index 0000000..0e76487
 +			_add(world, "建物前", 1)
 +			porch += 1
 +			w.notices.append("【危険】%sに引き寄せられたのか、人影が家の前まで来て立ち止まった。" % REASON_TEXT[pulls[0]])
++			Mood.everyone(world, -3.0)
 +		elif not w.has("drawn_at"):
 +			w.drawn_at = minute
 +			w.alarm = true
++			Mood.everyone(world, -2.0)
 +			w.notices.append("【警告】家の前の通りにいた人影が、こちらを向いて立ち止まった。%sに気づいたのかもしれない。" % REASON_TEXT[pulls[0]])
 +	elif w.has("drawn_at"):
 +		w.erase("drawn_at")
@@ -676,8 +916,11 @@ index 0000000..0e76487
 +		_add(world, "建物前", -1)
 +		_add(world, "玄関", 1)
 +		w.alarm = true
++		Mood.everyone(world, -8.0)
 +		w.notices.append("【危険】鍵のかかっていない玄関の扉が、きしみながら開いた。誰かが家の中に入ってきた。")
 +	elif not drawn.is_empty():
++		w.alarm = true
++		Mood.everyone(world, -2.0)
 +		if int(world.s.barricade) > 0:
 +			w.notices.append("【危険】玄関の補強板が、外から叩かれている。うめき声が聞こえる。板はまだ持ちこたえている。")
 +		else:
@@ -687,6 +930,12 @@ index 0000000..0e76487
 +		_add(world, "建物前", -1)
 +		_add(world, "屋外", 1)
 +		w.notices.append("家の前にいた足音が、ゆっくりと遠ざかっていった。")
++
++## Ordinary household sound (a film at normal volume, voices): heard only
++## by something already standing at the door.
++static func make_sound(world, minutes: int = 60) -> void:
++	var w := ensure(world)
++	w.sound_until = maxi(int(w.get("sound_until", -1)), int(world.s.minute) + minutes)
 +
 +## Cooking sends a smell out through the vent for a while.
 +static func make_smell(world, minutes: int = 60) -> void:
@@ -789,14 +1038,14 @@ index 0000000..0e76487
 +			enc.near = true if roll < 30 else near
 +			return {"text": describe(enc) + ("　気づかれた。" if not near and bool(enc.near) else ""), "bitten": false, "ended": false, "minutes": 3}
 +		"hide":
-+			var chance := (80 if not near else 45) - 6 * (n - 1)
++			var chance := (80 if not near else 45) - 6 * (n - 1) - Mood.nerve_penalty(world.s)
 +			if roll < chance:
 +				w.encounter = {}
 +				return {"text": "物陰に身を潜めて息を殺した。足音とうめき声が、やがて遠ざかっていった。", "bitten": false, "ended": true, "minutes": 20}
 +			enc.near = true
 +			return {"text": "隠れようとしたが、物音を立ててしまった。こちらに向かってくる。", "bitten": false, "ended": false, "minutes": 5}
 +		"flee":
-+			var chance := (95 if not near else 75) - 5 * (n - 1)
++			var chance := (95 if not near else 75) - 5 * (n - 1) - Mood.nerve_penalty(world.s)
 +			if roll < chance:
 +				w.encounter = {}
 +				if near:
@@ -807,7 +1056,7 @@ index 0000000..0e76487
 +			return _caught(world, enc, n, near, "逃げようとしたところで、腕をつかまれた。", present)
 +		"fight":
 +			make_noise(world, str(enc.place))
-+			var chance := clampi(30 + weapon + 15 * allies, 5, 90)
++			var chance := clampi(30 + weapon + 15 * allies - Mood.nerve_penalty(world.s), 5, 90)
 +			var text := ""
 +			if roll < chance:
 +				_add(world, str(enc.place), -1)
@@ -868,6 +1117,7 @@ index 0000000..0e76487
 +	var person: Dictionary = world.s.household_members[index]
 +	person.bitten = true
 +	person.bitten_at = int(world.s.minute)
++	Mood.everyone(world, -15.0)
 +
 +## Hourly course of a bitten housemate; returns lines for the chronicle.
 +static func housemates_hourly(world) -> Array:
@@ -883,6 +1133,7 @@ index 0000000..0e76487
 +			person.activity = "死亡"
 +			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + 60 * (1 + world.draw(int(world.s.minute), int(person.id), "mate-rise", 3)), "place": place, "name": str(person.name)})
 +			lines.append("%sが、静かに息を引き取った。" % person.name)
++			Mood.everyone(world, -25.0)
 +	for line in lines:
 +		w.notices.append(line)
 +	return lines
@@ -895,6 +1146,8 @@ index 0000000..0e76487
 +		world.s.exposure = minute
 +		world.s.symptoms_due = minute + (6 + world.draw(minute, 1, "bite-fever", 19)) * 60
 +	world.s.bitten = true
++	Mood.everyone(world, -15.0)
++	Mood.change(world.s, -10.0)
 +	ensure(world).encounter = {}
 +	return {"text": lead + "腕に鋭い痛みが走った。噛まれた。必死に振りほどいて、その場を離れた。", "bitten": true, "ended": true, "minutes": 5}
 diff --git a/scripts/walkers.gd.uid b/scripts/walkers.gd.uid
@@ -905,20 +1158,21 @@ index 0000000..a6ae833
 @@ -0,0 +1 @@
 +uid://b81f14dwsw6cu
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 4971378..b2d9da6 100644
+index 4971378..c91c464 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -4,6 +4,9 @@ const Events = preload("res://scripts/world_events.gd")
+@@ -4,6 +4,10 @@ const Events = preload("res://scripts/world_events.gd")
  const HouseholdSmalltalk = preload("res://scripts/household_smalltalk.gd")
  const HouseholdDialogue = preload("res://scripts/household_dialogue.gd")
  const HouseholdErrands = preload("res://scripts/household_errands.gd")
 +const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
 +# v149.24: the first local infection starts with this resident.
 +const PATIENT_ZERO := 7
  signal household_memory_event(id: int, minute: int, kind: String, subject: String, detail: String)
  
  const HOUSEHOLD_LEAVE := 9
-@@ -32,6 +35,13 @@ func configure(profile: Dictionary) -> bool:
+@@ -32,6 +36,13 @@ func configure(profile: Dictionary) -> bool:
  		var names: Array = profile.get("companion_names",[])
  		var name := str(names[i]).strip_edges() if i < names.size() else ""
  		s.household_members.append({"id":i,"name":name if not name.is_empty() else "同居人%d"%(i+1),"health":100.0,"hunger":0.0,"thirst":0.0,"fatigue":0.0,"location":"居間","activity":"在宅","food_used":0.0,"water_used":0.0,"tastes":HouseholdSmalltalk.roll_preferences(taste_rng)})
@@ -932,17 +1186,27 @@ index 4971378..b2d9da6 100644
  	return true
  
  static func valid_profile(profile: Dictionary) -> bool:
-@@ -57,6 +67,9 @@ func step(sleeping: bool) -> void:
+@@ -57,6 +68,10 @@ func step(sleeping: bool) -> void:
  	super.step(sleeping)
  	if int(s.minute)%60==0:
  		_household_hour()
 +		Walkers.hourly(self)
 +		Walkers.housemates_hourly(self)
 +		Walkers.home_events(self)
++		Mood.hourly(self, sleeping)
  		if not s.has("district"):
  			s.district = District.fresh()
  		District.tick(self)
-@@ -362,6 +375,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+@@ -189,7 +204,7 @@ func _household_hour() -> void:
+ 				if not past.is_empty():
+ 					household_memory_event.emit(int(person.id), int(s.minute), "activity", previous_activity, past)
+ 				person.location="寝室" if person.activity=="睡眠" else ("屋外" if person.activity=="外出" else "居間")
+-		person.fatigue=clampf(float(person.fatigue)+(-12.5 if person.activity=="睡眠" else 100.0/24.0),0,100)
++		person.fatigue=clampf(float(person.fatigue)+(-12.5*Mood.sleep_factor(person) if person.activity=="睡眠" else 100.0/24.0),0,100)
+ 		if person.activity!="外出":
+ 			# Cooking handles food consumption on completion; automatic hourly
+ 			# feeding here would charge twice for the same meal.
+@@ -362,6 +377,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
  func validate_state(data: Dictionary) -> bool:
  	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
  		return false
@@ -952,10 +1216,21 @@ index 4971378..b2d9da6 100644
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index ff31294..a4b8548 100644
+index ff31294..b60b74f 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
-@@ -111,7 +111,8 @@ func step(sleeping: bool) -> void:
+@@ -98,7 +98,9 @@ func step(sleeping: bool) -> void:
+ 		s.longplay.filter_condition = maxf(0.0,float(s.longplay.filter_condition)-0.0005)
+ 	s.hunger = minf(100.0, float(s.hunger) + 100.0/1440.0)
+ 	s.thirst = minf(100.0, float(s.thirst) + 100.0/1440.0)
+-	s.fatigue = clampf(s.fatigue + (-100.0/480.0 if sleeping else 100.0/1440.0),0.0,100.0)
++	# v149.24: sleep is shallow when the state of mind is near its limit.
++	var sleep_rate: float = 0.6 if float(s.get("mood", 70.0)) < 25.0 else 1.0
++	s.fatigue = clampf(s.fatigue + (-100.0/480.0*sleep_rate if sleeping else 100.0/1440.0),0.0,100.0)
+ 	
+ 	if float(s.fatigue) >= 95.0:
+ 		s.health = maxf(0.0,float(s.health)-0.004)
+@@ -111,7 +113,8 @@ func step(sleeping: bool) -> void:
  	if s.exposure >= 0 and s.minute>=int(s.symptoms_due):
  		s.symptomatic = true
  	if s.symptomatic:
@@ -965,7 +1240,7 @@ index ff31294..a4b8548 100644
  	var symptomatic_positions: Array[Vector2] = []
  	for actor in s.agents:
  		if not actor.dead and actor.kind == "symptomatic":
-@@ -131,7 +132,8 @@ func step(sleeping: bool) -> void:
+@@ -131,7 +134,8 @@ func step(sleeping: bool) -> void:
  			if a.exposure >= 0 and s.minute>=int(a.symptoms_due):
  				a.kind = "symptomatic"
  		else:
@@ -1013,11 +1288,15 @@ index ac961cd..b9c0800 100644
  	check(g.world.s.sim.next_event_id>0 and g.world.s.agents!=before.agents,"world and autonomous NPCs progress during routine")
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..3021890
+index 0000000..128f80e
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,377 @@
+@@ -0,0 +1,439 @@
 +extends SceneTree
++const Mood = preload("res://scripts/mood.gd")
++const Vitals = preload("res://scripts/vitals.gd")
++const NPCMind = preload("res://scripts/npc_mind.gd")
++const HouseholdActions = preload("res://scripts/household_actions.gd")
 +## v149.24: the dead rise and walk; the player sees them, can be noticed, and
 +## chooses to hide, flee, fight or look. A bite is fatal over days.
 +const Main = preload("res://main.tscn")
@@ -1345,9 +1624,19 @@ index 0000000..3021890
 +	check(not ("smell" in Walkers.home_reasons(cvw)), "the smell fades")
 +	cvw.s.walkers.places = {"屋外": 1}
 +	Walkers.make_smell(cvw, 80)
++	Walkers.make_sound(cvw, 120)
 +	cvw.s.walkers.notices = []
 +	Walkers.home_events(cvw)
-+	check(str(cvw.s.walkers.notices).contains("料理のにおい") and bool(cvw.s.walkers.alarm), "a smell draws a warning that also stops waiting")
++	check(cvw.s.walkers.notices.is_empty() and Walkers.count(cvw, "建物前") == 0, "ordinary sounds and smells do not reach the street")
++	cvw.s.walkers.places = {"建物前": 1}
++	Walkers.home_events(cvw)
++	check(str(cvw.s.walkers.notices).contains("叩く音") and bool(cvw.s.walkers.alarm) and Walkers.count(cvw, "建物前") == 1, "but one already at the door hears them and knocks, which stops waiting")
++	cvw.s.walkers.places = {"屋外": 1}
++	Walkers.make_noise(cvw, "玄関", 60)
++	cvw.s.walkers.notices = []
++	Walkers.home_events(cvw)
++	check(str(cvw.s.walkers.notices).contains("【警告】"), "loud noise reaches the street")
++	cvw.s.walkers.noise = {}
 +	cvw.s.walkers.alarm = false
 +	cvw.s.walkers.erase("drawn_at")
 +	cvw.s.walkers.erase("smell_until")
@@ -1360,6 +1649,54 @@ index 0000000..3021890
 +	cvw.s.walkers.noise = {}
 +	await cover._on_command("窓の目張りを外す")
 +	check(not bool(cvw.s.blackout), "the covers can be taken down")
++
++	# --- State of mind: worn down by shut-in life, lifted by films, meals, talk.
++	var mind = await new_game()
++	var mw = mind.world
++	mind.location = "居間"
++	check(mind.vitals_values.has("心") and mind.vitals_values["心"].text == "心 70", "the header shows the state of mind")
++	mw.s.minute = 2 * 60 + 1440   # 08:00 on day 2
++	mw.s.blackout = true
++	mw.s.household_members[0].activity = "在宅"
++	Mood.ensure(mw)
++	var m0: float = mw.s.mood
++	for i in 10:
++		mw.s.minute += 60
++		Mood.hourly(mw, false)
++	check(float(mw.s.mood) < m0 - 2.5, "a covered, dim house wears the mind down by day (%.1f -> %.1f)" % [m0, mw.s.mood])
++	mw.s.blackout = false
++	mw.s.minute = 2 * 60 + 2 * 1440
++	var m1: float = mw.s.mood
++	for i in 4:
++		mw.s.minute += 60
++		Mood.hourly(mw, false)
++	check(float(mw.s.mood) > m1, "daylight through the window lifts it again")
++	mw.s.mood = 20.0
++	check(Vitals.warning(mw.s).contains("気が滅入っている") and Mood.nerve_penalty(mw.s) > 0 and Mood.sleep_factor(mw.s) < 1.0, "a low state of mind costs sleep and steady hands")
++	var friend: Dictionary = mw.s.household_members[0]
++	friend.mood = 10.0
++	check(NPCMind._condition(friend).contains("限界"), "a housemate at the end of their tether says so in conversation")
++	mw.s.walkers.notices = []
++	Mood.hourly(mw, false)
++	check(str(mw.s.walkers.notices).contains("耐えられない"), "and the chronicle shows it")
++	friend.mood = 50.0
++	mw.s.mood = 50.0
++	mw.s.walkers.places = {"建物前": 1}
++	mw.s.walkers.sound_until = -1
++	var film := {"title": "テスト", "minutes": 30, "reaction": "", "quiet": true}
++	mw.s.minute = 14 * 60 + 1440
++	var said: String = await HouseholdActions.watch_movie(mind, friend, film)
++	check(said.contains("観終わった") and said.contains("物足りなかった") and absf(float(friend.mood) - 60.0) < 1.0 and int(mw.s.walkers.get("sound_until", -1)) < 0, "a film turned down is not heard outside and lifts a little less (+10)")
++	film.erase("quiet")
++	friend.mood = 50.0
++	mw.s.walkers.alarm = false
++	mw.s.walkers.places = {}
++	said = await HouseholdActions.watch_movie(mind, friend, film)
++	check(said.contains("観終わった") and absf(float(friend.mood) - 65.0) < 1.0 and "sound" in Walkers.home_reasons(mw), "a film at normal volume lifts more (+15) but is heard at the door")
++	friend.mood = 50.0
++	mind.dialogue.partner = 0
++	mind._finish_npc_reply(0, "最近どう？", "まあまあだよ。")
++	check(float(friend.mood) > 50.0, "talking lifts a housemate a little")
 +
 +	# --- Fleeing while seen: it follows the player home; losing it first does not.
 +	var chased3 = await new_game()
