@@ -1,0 +1,1678 @@
+diff --git a/UI_UPDATE_v149.21.md b/UI_UPDATE_v149.21.md
+new file mode 100644
+index 0000000..109f8fa
+--- /dev/null
++++ b/UI_UPDATE_v149.21.md
+@@ -0,0 +1,32 @@
++# v149.21 UIの作り直し（v149.20ベース）
++
++モックアップ（スマホ縦画面）の方向で、GodotのUIを作り直した。ゲームの規則は、外に出るときの鍵の自動解錠を除いて変えていない。
++
++## 変更
++
++| 内容 | ファイル |
++| --- | --- |
++| **上部の帯**：「N日目」、時刻、場所、日付・曜日・天気を表示する。体力・満腹・水分・休息の小さなバーと、街の段階（平常・警戒・混乱・緊急）を常に表示する。 | `scripts/main.gd` |
++| **写真**：高さを縦画面の幅の約36%（135〜200px）に縮め、場所の説明を写真の上に重ねた。「畳む」で1行の帯にでき、帯を押すと戻る。設定で、最初から畳む状態にできる。 | `scripts/main.gd` |
++| **記録の見た目を種類で分けた**：自分の入力は右寄せの吹き出し、同居人の台詞は名前つきの吹き出し、情景は本文、移動の要約・手順・操作のヒントは小さい灰色、ニュースは枠つき、警告はオレンジ、実行できなかった入力は「このままでは実行できません」のカードにした。記録は1件ずつ部品にして、増えた分だけ追加する（最大100件）。 | `scripts/ui_kit.gd`, `scripts/main.gd` |
++| **会話の帯**：同居人と会話中は「○○と会話中」の帯と「会話を終える」ボタンを出す。 | `scripts/main.gd` |
++| **入力の候補**：入力欄の上に、今の状況に合った候補を出す。会話中は返事の候補（買い物の品物を聞かれた時は「水を3本」など、数を聞かれた時は「3本」など）、それ以外は近くの人・行ける場所・「窓から外を見る」「物資を探索する」「家に帰る」など。押すと入力したのと同じように実行する。設定で隠せる。 | `scripts/main.gd` |
++| **外に出る時の鍵**：鍵を持っていれば、外に出る時に玄関の鍵を自動で開け、「（自動で行った手順：玄関の鍵を開けた）」と記録する。鍵を持っていなければ、従来どおり止まる。 | `scripts/main.gd` |
++| **メニューをタブ式にした**：状態・持ち物・拠点・仲間・地図・記録・設定。開いている間は時間が止まっていることを表示する。 | `scripts/main.gd` |
++| 状態：自分の体調、家の備蓄と人数あたりの目安日数、電気・水道・通信・玄関、街の段階、同居人と頼みごと、保存・読み込み。 | `scripts/main.gd` |
++| 持ち物：リュックの食料・水の量、持っている道具・資材だけを表示する（持っていない物は「○件を表示」で開く）、お金。 | `scripts/main.gd` |
++| 拠点・仲間：自宅と、作った拠点の状態。同居人ごとの居場所・体調・関係・頼みごと。 | `scripts/main.gd` |
++| **地図を図にした**：場所を線でつなぎ、現在地・拠点・営業中・閉店・購入制限・空き家を表示する。場所を押すと徒歩の目安時間と「ここへ行く」が出る。 | `scripts/main.gd` |
++| **設定**：文字の大きさ（小・中・大）、写真を畳む、候補の表示（端末に保存）。端末内AIの状態とモデルの置き場所。外部AIの設定は「開発者向け」にしまった。 | `scripts/main.gd` |
++| タイトルの版表記を v0.149.21 にした。バージョン 0.149.21（ビルド170）。 | `scripts/title_screen.gd`, `export_presets.cfg`, `build_scripts/build-ios-unsigned.sh` |
++
++## テスト
++
++- `tests/test_ui149_21.gd`（新規、31項目）：記録の種類分け、上部の帯、吹き出し、最新の記録が見えること、会話の帯と終了、候補の内容と実行、実行できなかった入力のカードと時間が進まないこと、写真の折りたたみ、外に出る時の自動解錠、メニューのタブ、地図の表示・選択・移動、文字の大きさの保存。
++- 既存テストのうち、仕様変更に合わせて更新したもの：
++  - 鍵のかかった玄関で止まることの確認（`test_district28`、`test_revision24`、`test_scene_description30`）は、鍵を持っていない状態で確認するように変更した。
++  - 会話中の表示（`test_household_dialogue31`）は、入力欄の文言ではなく会話の帯で確認する。
++  - 記録の部品（`test_main_runtime`、`test_audit22`、`test_portrait27`）は、文字の一枚表示から吹き出しの並びに合わせた。
++  - メニュー（`test_portrait27`、`test_revision21_ui`、`test_phone24`）は、タブの切り替え、地図タブでのスクロール、開発者向け設定を開いてからの入力に合わせた。
++- 全135テストに合格（Godot 4.6.3、Linux）。
++- 縦画面（390×844）と横画面（1280×720）の画面を撮影して確認した。iPhone実機での表示（セーフエリア、キーボード、文字の大きさ）は未確認。
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index d36b3e8..2ad6d92 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '169'
+-assert info['CFBundleShortVersionString'] == '0.149.20'
++assert str(info['CFBundleVersion']) == '170'
++assert info['CFBundleShortVersionString'] == '0.149.21'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.20-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.21-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.20-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.21-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index b5e9b51..772aec5 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.20"
+-application/version="169"
++application/short_version="0.149.21"
++application/version="170"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
+diff --git a/scripts/main.gd b/scripts/main.gd
+index ff0f059..e530d56 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -21,6 +21,42 @@ const NPCConversation = preload("res://scripts/household_conversation.gd")
+ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
+ const NPCMind = preload("res://scripts/npc_mind.gd")
+ const NPCRequests = preload("res://scripts/npc_requests.gd")
++const UI = preload("res://scripts/ui_kit.gd")
++const UI_SETTINGS_PATH := "user://ui_settings.cfg"
++const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
++# Map layout (mockup coordinates, 358 x 476): node -> [x, y, w, h].
++const MAP_NODES := {"自宅": [5, 330, 100, 60], "屋外": [125, 336, 100, 48], "金物店": [250, 330, 100, 60], "薬局": [5, 412, 100, 56], "食品店": [250, 412, 100, 56], "商店通り": [125, 206, 100, 48], "コンビニ": [250, 198, 100, 64], "住宅街": [5, 206, 100, 48], "近所の空き家": [5, 82, 100, 56], "駅前": [125, 72, 100, 56], "デパート": [250, 72, 100, 56]}
++const MAP_LINES := [[55, 359, 120, 2], [175, 359, 125, 2], [174, 360, 2, 80], [55, 439, 245, 2], [174, 230, 2, 130], [55, 229, 245, 2], [54, 110, 2, 120], [174, 100, 2, 130], [175, 99, 125, 2]]
++var header_panel: PanelContainer
++var day_label: Label
++var place_label: Label
++var subline_label: Label
++var danger_label: Label
++var scene_fold_button: Button
++var scene_folded_bar: Button
++var photo_folded := false
++var convo_bar: PanelContainer
++var convo_avatar: Label
++var convo_label: Label
++var convo_end_button: Button
++var chips_scroll: ScrollContainer
++var chips_row: HBoxContainer
++var log_box: VBoxContainer
++var log_bubbles: Array = []
++var drawer_info: Label
++var tab_buttons: Dictionary = {}
++var tab_content: VBoxContainer
++var current_tab := "status"
++var map_selected := ""
++var show_missing_items := false
++var dev_box: VBoxContainer
++var dev_toggle: Button
++var font_buttons: Dictionary = {}
++var fold_toggle: CheckButton
++var chips_toggle: CheckButton
++var ui_font_size := 17
++var ui_fold_photo := false
++var ui_show_chips := true
+ # About 1.0-1.3 Qwen tokens per Japanese character; leaves room for the
+ # system prompt and the reply in the 3072-token native context.
+ const PROMPT_CHAR_BUDGET := 1500
+@@ -93,7 +129,6 @@ var picture: TextureRect
+ var district_card: Label
+ var clock_label: Label
+ var status_label: Label
+-var story: RichTextLabel
+ var command_input: TextEdit
+ var backdrop: ColorRect
+ var scene_caption: Label
+@@ -106,7 +141,7 @@ var header_title: Label
+ var tools_button: Button
+ var hide_keyboard_button: Button
+ var legacy_tools: Array[Button] = []
+-var menu_box: VBoxContainer
++var menu_box: BoxContainer
+ var vitals_row: HBoxContainer
+ var scene_heading: Label
+ var log_heading: Label
+@@ -179,36 +214,73 @@ func _build_ui() -> void:
+ 	var theme_ui:=Theme.new()
+ 	theme_ui.default_font=load("res://assets/NotoSansCJKjp-Regular.otf") as Font
+ 	theme_ui.default_font_size=17
++	theme_ui.set_color("font_color", "Label", UI.TEXT)
++	theme_ui.set_color("font_color", "Button", UI.TEXT)
+ 	theme=theme_ui
+-	var bg:=ColorRect.new();bg.color=Color("#080e15");bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(bg)
++	_load_ui_settings()
++	var bg:=ColorRect.new();bg.color=UI.BG;bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(bg)
+ 	safe_margin=MarginContainer.new();safe_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(safe_margin)
+-	var base:=VBoxContainer.new();base.add_theme_constant_override("separation",10);safe_margin.add_child(base)
+-	header_row=HBoxContainer.new();header_row.add_theme_constant_override("separation",12);base.add_child(header_row)
++	var base:=VBoxContainer.new();base.add_theme_constant_override("separation",8);safe_margin.add_child(base)
++
++	# Header: day, time, place and weather; vitals and the city's stage always visible.
++	header_panel = PanelContainer.new()
++	header_panel.add_theme_stylebox_override("panel", UI.box(UI.HEADER, UI.LINE, 12, 12, 10))
++	base.add_child(header_panel)
++	var header := VBoxContainer.new()
++	header.add_theme_constant_override("separation", 8)
++	header_panel.add_child(header)
++	header_row=HBoxContainer.new();header_row.add_theme_constant_override("separation",10);header.add_child(header_row)
+ 	header_title = Label.new()
+-	header_title.text = "CHRONICLE  /  TEST v149.8"
+-	header_title.add_theme_font_size_override("font_size", 18)
++	header_title.text = "DEAD CITY JAPAN"
++	header_title.add_theme_font_size_override("font_size", 16)
++	header_title.add_theme_color_override("font_color", UI.MUTED)
+ 	header_row.add_child(header_title)
+-	clock_label=Label.new();clock_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;clock_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;clock_label.add_theme_font_size_override("font_size",18);header_row.add_child(clock_label)
+-	clock_label.clip_text = true
+-	clock_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
++	day_label = UI.label("1日目", 12, Color("#0b141d"), false)
++	day_label.add_theme_stylebox_override("normal", UI.box(UI.ACCENT, Color(0, 0, 0, 0), 6, 8, 2))
++	day_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	header_row.add_child(day_label)
++	clock_label = UI.label("08:00", 22, UI.TEXT, false)
++	clock_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	header_row.add_child(clock_label)
++	var place_box := VBoxContainer.new()
++	place_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	place_box.add_theme_constant_override("separation", 0)
++	header_row.add_child(place_box)
++	place_label = UI.label("寝室", 15, UI.TEXT, false)
++	place_label.clip_text = true
++	place_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
++	place_box.add_child(place_label)
++	subline_label = UI.label("", 12, UI.MUTED, false)
++	subline_label.clip_text = true
++	subline_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
++	place_box.add_child(subline_label)
+ 	for spec in TOOLS:
+ 		var button := _tool_button(header_row, "持ち物" if spec[1] == "inventory" else spec[0], spec[1])
+ 		legacy_tools.append(button)
+ 	tools_button = _tool_button(header_row, "メニュー", "menu")
+-	hide_keyboard_button = Button.new()
+-	hide_keyboard_button.text = "入力を閉じる"
+-	hide_keyboard_button.custom_minimum_size.y = 44
+-	hide_keyboard_button.add_theme_font_size_override("font_size", 14)
++	hide_keyboard_button = UI.button("入力を閉じる", false, 44, 14)
+ 	hide_keyboard_button.pressed.connect(_dismiss_command_keyboard)
+ 	header_row.add_child(hide_keyboard_button)
+-	main_layout=BoxContainer.new();main_layout.size_flags_vertical=Control.SIZE_EXPAND_FILL;main_layout.add_theme_constant_override("separation",12);base.add_child(main_layout)
+-	content_column=VBoxContainer.new();content_column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;content_column.size_flags_stretch_ratio=1.22;main_layout.add_child(content_column)
+-	var frame:=_panel(content_column,"現在地の情景")
+-	scene_heading = frame.get_child(0)
+-	scene_panel=frame.get_parent();scene_panel.size_flags_vertical=Control.SIZE_EXPAND_FILL
++	vitals_row=HBoxContainer.new();vitals_row.add_theme_constant_override("separation",8);header.add_child(vitals_row)
++	for key in ["体力","満腹度","水分状態","休息状態"]:
++		var column:=VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;column.add_theme_constant_override("separation",3);vitals_row.add_child(column)
++		var value:=UI.label(UI.VITAL_SHORT[key], 12, Color("#c8d4df"), false);column.add_child(value);vitals_values[key]=value
++		var bar:=UI.bar(100.0, UI.VITAL_COLORS[key], 5);column.add_child(bar);vitals_bars[key]=bar
++	danger_label = UI.tag("街：平常", true)
++	danger_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	vitals_row.add_child(danger_label)
++
++	main_layout=BoxContainer.new();main_layout.size_flags_vertical=Control.SIZE_EXPAND_FILL;main_layout.add_theme_constant_override("separation",8);base.add_child(main_layout)
++	content_column=VBoxContainer.new();content_column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;content_column.size_flags_stretch_ratio=1.22;content_column.add_theme_constant_override("separation",6);main_layout.add_child(content_column)
++	# Scene picture: small by default, can be folded into a one-line bar.
++	var frame := PanelContainer.new()
++	frame.add_theme_stylebox_override("panel", UI.box(UI.PANEL, UI.LINE, 12, 0, 0))
++	frame.clip_contents = true
++	content_column.add_child(frame)
++	scene_panel = frame
++	scene_panel.size_flags_vertical=Control.SIZE_EXPAND_FILL
+ 	picture=TextureRect.new();picture.size_flags_vertical=Control.SIZE_EXPAND_FILL;picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;picture.clip_contents=true;frame.add_child(picture)
+ 	scene_view=SceneView.new();scene_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);scene_view.mouse_filter=Control.MOUSE_FILTER_IGNORE;picture.add_child(scene_view)
+-	scene_caption=Label.new();scene_caption.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;scene_caption.add_theme_font_size_override("font_size",15);frame.add_child(scene_caption)
+ 	preview_button = Button.new()
+ 	preview_button.flat = true
+ 	preview_button.tooltip_text = "挿絵を拡大"
+@@ -226,56 +298,170 @@ func _build_ui() -> void:
+ 	district_card.add_theme_font_size_override("font_size", 19)
+ 	district_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 	picture.add_child(district_card)
+-	vitals_row=HBoxContainer.new();vitals_row.add_theme_constant_override("separation",10);content_column.add_child(vitals_row)
+-	for key in ["体力","満腹度","水分状態","休息状態"]:
+-		var column:=VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;vitals_row.add_child(column)
+-		var label:=Label.new();label.text=key;label.add_theme_font_size_override("font_size",16);column.add_child(label)
+-		var value:=Label.new();value.add_theme_font_size_override("font_size",15);column.add_child(value);vitals_values[key]=value
+-		var bar:=ProgressBar.new();bar.custom_minimum_size.y=9;bar.show_percentage=false;bar.step=0.0;column.add_child(bar);vitals_bars[key]=bar
+-	warning_label=Label.new();warning_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;warning_label.add_theme_font_size_override("font_size",16);warning_label.add_theme_color_override("font_color",Color("#ffb594"));content_column.add_child(warning_label)
++	var shade := PanelContainer.new()
++	shade.add_theme_stylebox_override("panel", UI.box(Color(0.03, 0.055, 0.08, 0.82), Color(0, 0, 0, 0), 0, 10, 6))
++	shade.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
++	shade.grow_vertical = Control.GROW_DIRECTION_BEGIN
++	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
++	picture.add_child(shade)
++	var shade_row := HBoxContainer.new()
++	shade_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
++	shade.add_child(shade_row)
++	scene_caption = UI.label("", 13, Color("#dfe7ee"))
++	scene_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	scene_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
++	shade_row.add_child(scene_caption)
++	scene_fold_button = UI.button("畳む", false, 30, 12)
++	scene_fold_button.pressed.connect(_set_photo_folded.bind(true))
++	shade_row.add_child(scene_fold_button)
++	scene_heading = scene_caption
++	scene_folded_bar = UI.button("", false, 40, 13)
++	scene_folded_bar.alignment = HORIZONTAL_ALIGNMENT_LEFT
++	scene_folded_bar.pressed.connect(_set_photo_folded.bind(false))
++	content_column.add_child(scene_folded_bar)
++	warning_label=UI.label("", 14, UI.WARN_TEXT);warning_label.add_theme_stylebox_override("normal", UI.box(UI.WARN_BG, UI.WARN_EDGE, 10, 10, 6));content_column.add_child(warning_label)
++
+ 	right_panel=VBoxContainer.new();right_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right_panel.size_flags_stretch_ratio=1.0;main_layout.add_child(right_panel)
+-	var story_body:=_panel(right_panel,"状況・行動記録")
+-	log_heading = story_body.get_child(0)
+-	log_panel=story_body.get_parent();log_panel.size_flags_vertical=Control.SIZE_EXPAND_FILL
+-	log_scroll=GestureScroll.new();log_scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;log_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;story_body.add_child(log_scroll)
+-	story=RichTextLabel.new();story.size_flags_horizontal=Control.SIZE_EXPAND_FILL;story.fit_content=true;story.scroll_active=false;story.bbcode_enabled=false;story.add_theme_font_size_override("normal_font_size",22);log_scroll.add_child(story)
++	log_panel = right_panel
++	log_heading = UI.label("記録", 13, UI.FAINT, false)
++	right_panel.add_child(log_heading)
++	log_scroll=GestureScroll.new();log_scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;log_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;right_panel.add_child(log_scroll)
++	log_box=VBoxContainer.new();log_box.size_flags_horizontal=Control.SIZE_EXPAND_FILL;log_box.add_theme_constant_override("separation",10);log_scroll.add_child(log_box)
++
++	# Conversation strip with an explicit way out.
++	convo_bar = PanelContainer.new()
++	convo_bar.add_theme_stylebox_override("panel", UI.box(Color("#0f1b27"), UI.LINE, 10, 10, 4))
++	convo_bar.visible = false
++	base.add_child(convo_bar)
++	var convo_row := HBoxContainer.new()
++	convo_row.add_theme_constant_override("separation", 10)
++	convo_bar.add_child(convo_row)
++	convo_avatar = UI.label("", 13, UI.TEXT, false)
++	convo_avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	convo_avatar.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
++	convo_avatar.custom_minimum_size = Vector2(28, 28)
++	convo_avatar.add_theme_stylebox_override("normal", UI.box(Color("#2c4c63"), Color(0, 0, 0, 0), 14, 0, 0))
++	convo_avatar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	convo_row.add_child(convo_avatar)
++	convo_label = UI.label("", 14, Color("#c8d4df"), false)
++	convo_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	convo_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	convo_row.add_child(convo_label)
++	convo_end_button = UI.button("会話を終える", false, 36, 13)
++	convo_end_button.pressed.connect(func(): _on_command("会話を終える"))
++	convo_row.add_child(convo_end_button)
++
++	# Suggestions for the current situation; free text stays the main input.
++	chips_scroll = ScrollContainer.new()
++	chips_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
++	chips_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
++	chips_scroll.custom_minimum_size.y = 42
++	base.add_child(chips_scroll)
++	chips_row = HBoxContainer.new()
++	chips_row.add_theme_constant_override("separation", 8)
++	chips_scroll.add_child(chips_row)
++
+ 	progress_row=HBoxContainer.new();progress_row.visible=false;base.add_child(progress_row)
+-	progress_label=Label.new();progress_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;progress_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;progress_label.add_theme_font_size_override("font_size",18);progress_row.add_child(progress_label)
+-	cancel_button=Button.new();cancel_button.text="中断";cancel_button.custom_minimum_size=Vector2(100,48);cancel_button.pressed.connect(_cancel_action);progress_row.add_child(cancel_button)
++	progress_label=UI.label("", 18, UI.ACCENT);progress_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;progress_row.add_child(progress_label)
++	cancel_button=UI.button("中断", false, 48, 15);cancel_button.custom_minimum_size.x=100;cancel_button.pressed.connect(_cancel_action);progress_row.add_child(cancel_button)
+ 	entry_row=HBoxContainer.new();entry_row.add_theme_constant_override("separation",10);base.add_child(entry_row)
+ 	command_input=TextEdit.new();command_input.placeholder_text="どうする？";command_input.wrap_mode=TextEdit.LINE_WRAPPING_BOUNDARY;command_input.size_flags_horizontal=Control.SIZE_EXPAND_FILL;command_input.custom_minimum_size.y=96;entry_row.add_child(command_input)
+-	send_button=Button.new();send_button.text="実行";send_button.custom_minimum_size=Vector2(96,96);send_button.pressed.connect(_submit_command);entry_row.add_child(send_button)
+-	send_button.add_theme_stylebox_override("normal", _style(Color("#244357"), Color("#557a90")))
+-	send_button.add_theme_stylebox_override("hover", _style(Color("#2a5067"), Color("#79a5ba")))
+-	send_button.add_theme_stylebox_override("pressed", _style(Color("#315d75"), Color("#8cb6cb")))
+-	input_mode_label=Label.new();input_mode_label.add_theme_font_size_override("font_size",14);input_mode_label.text="文章入力 / オフライン解析 · 長期待機は飲食・睡眠を含み、危険時に中断";base.add_child(input_mode_label)
+-	# On-demand information drawer; no action menu or movement buttons.
++	command_input.add_theme_stylebox_override("normal", UI.box(UI.PANEL, UI.EDGE, 12, 12, 8))
++	command_input.add_theme_stylebox_override("focus", UI.box(UI.PANEL, Color("#5b8aa5"), 12, 12, 8))
++	command_input.add_theme_font_size_override("font_size", 16)
++	send_button=UI.button("送信", true, 96, 16);send_button.custom_minimum_size.x=96;send_button.pressed.connect(_submit_command);entry_row.add_child(send_button)
++	input_mode_label=UI.label("文章入力 / オフライン解析 · 長期待機は飲食・睡眠を含み、危険時に中断", 13, UI.FAINT, false);base.add_child(input_mode_label)
++
++	_build_menu()
++	ai_planner=AIPlanner.new();add_child(ai_planner)
++	_refresh_input_mode()
++	_build_image_preview()
++	get_viewport().size_changed.connect(_update_layout)
++	_update_layout()
++	_set_photo_folded(ui_fold_photo)
++
++## Menu drawer: tabs for status, items, base, people, map, records, settings.
++func _build_menu() -> void:
+ 	drawer=Control.new();drawer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);drawer.visible=false;add_child(drawer)
+-	var shade:=ColorRect.new();shade.color=Color(0.01,0.025,0.04,0.95);shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);drawer.add_child(shade)
++	var shade:=ColorRect.new();shade.color=UI.BG;shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);drawer.add_child(shade)
+ 	drawer_margin=MarginContainer.new();drawer_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);drawer.add_child(drawer_margin)
+-	var column:=VBoxContainer.new();drawer_margin.add_child(column)
+-	var bar:=HBoxContainer.new();column.add_child(bar)
+-	drawer_title=Label.new();drawer_title.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;drawer_title.size_flags_horizontal=Control.SIZE_EXPAND_FILL;bar.add_child(drawer_title)
+-	drawer_cancel = Button.new()
+-	drawer_cancel.text = "生成を中断"
+-	drawer_cancel.custom_minimum_size.y = 48
++	var column:=VBoxContainer.new();column.add_theme_constant_override("separation",8);drawer_margin.add_child(column)
++	var bar:=HBoxContainer.new();bar.add_theme_constant_override("separation",10);column.add_child(bar)
++	drawer_title=UI.label("メニュー", 18, UI.TEXT, false);bar.add_child(drawer_title)
++	drawer_info=UI.label("", 12, UI.MUTED, false);drawer_info.size_flags_horizontal=Control.SIZE_EXPAND_FILL;drawer_info.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;drawer_info.size_flags_vertical=Control.SIZE_SHRINK_CENTER;bar.add_child(drawer_info)
++	drawer_cancel = UI.button("生成を中断", false, 44, 14)
+ 	drawer_cancel.hide()
+ 	drawer_cancel.pressed.connect(_cancel_action)
+ 	bar.add_child(drawer_cancel)
+-	var close:=Button.new();close.text="閉じる";close.custom_minimum_size=Vector2(72,48);close.pressed.connect(_close_drawer);bar.add_child(close)
++	var close:=UI.button("閉じる", false, 44, 14);close.custom_minimum_size.x=72;close.pressed.connect(_close_drawer);bar.add_child(close)
++	var tabs_scroll := ScrollContainer.new()
++	tabs_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
++	tabs_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
++	tabs_scroll.custom_minimum_size.y = 46
++	column.add_child(tabs_scroll)
++	menu_box = HBoxContainer.new()
++	menu_box.add_theme_constant_override("separation", 0)
++	menu_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	tabs_scroll.add_child(menu_box)
++	for spec in MENU_TABS:
++		var tab := Button.new()
++		tab.text = spec[0]
++		tab.custom_minimum_size = Vector2(0, 44)
++		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		tab.add_theme_font_size_override("font_size", 14)
++		tab.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
++		tab.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
++		tab.add_theme_stylebox_override("pressed", StyleBoxEmpty.new())
++		tab.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
++		tab.pressed.connect(_show_tab.bind(spec[1]))
++		menu_box.add_child(tab)
++		tab_buttons[spec[1]] = tab
++	var divider := ColorRect.new();divider.color=UI.LINE;divider.custom_minimum_size.y=1;column.add_child(divider)
+ 	left_scroll=GestureScroll.new();left_scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;left_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;left_scroll.follow_focus=true;column.add_child(left_scroll)
+-	left_panel=VBoxContainer.new();left_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;left_scroll.add_child(left_panel)
+-	inventory_status=Label.new();inventory_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;left_panel.add_child(inventory_status)
+-	world_status=Label.new();world_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;left_panel.add_child(world_status)
+-	menu_box = VBoxContainer.new()
+-	menu_box.add_theme_constant_override("separation", 8)
+-	left_panel.add_child(menu_box)
+-	for spec in TOOLS:
+-		_tool_button(menu_box, spec[0], spec[1])
+-	_tool_button(menu_box, "街の地図", "map")
+-	settings_box=VBoxContainer.new();left_panel.add_child(settings_box)
++	left_panel=VBoxContainer.new();left_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;left_panel.add_theme_constant_override("separation",12);left_scroll.add_child(left_panel)
++	tab_content=VBoxContainer.new();tab_content.add_theme_constant_override("separation",12);left_panel.add_child(tab_content)
++	inventory_status=UI.label("", 14, UI.BODY);left_panel.add_child(inventory_status)
++	world_status=UI.label("", 15, UI.BODY);left_panel.add_child(world_status)
++	settings_box=VBoxContainer.new();settings_box.add_theme_constant_override("separation",12);left_panel.add_child(settings_box)
++	_build_settings()
++
++func _build_settings() -> void:
++	var display := UI.card(settings_box, "表示")
++	display.add_child(UI.label("文字の大きさ", 15))
++	var sizes := HBoxContainer.new()
++	sizes.add_theme_constant_override("separation", 6)
++	display.add_child(sizes)
++	for spec in [["小", 15], ["中", 17], ["大", 19]]:
++		var b := UI.button(spec[0], false, 44, 15)
++		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		b.toggle_mode = true
++		b.pressed.connect(_set_log_font.bind(int(spec[1])))
++		sizes.add_child(b)
++		font_buttons[int(spec[1])] = b
++	fold_toggle = CheckButton.new()
++	fold_toggle.text = "写真を最初から畳む"
++	fold_toggle.custom_minimum_size.y = 44
++	fold_toggle.button_pressed = ui_fold_photo
++	fold_toggle.toggled.connect(func(on):
++		ui_fold_photo = on
++		_save_ui_settings()
++		_set_photo_folded(on)
++	)
++	display.add_child(fold_toggle)
++	chips_toggle = CheckButton.new()
++	chips_toggle.text = "入力の候補を表示"
++	chips_toggle.custom_minimum_size.y = 44
++	chips_toggle.button_pressed = ui_show_chips
++	chips_toggle.toggled.connect(func(on):
++		ui_show_chips = on
++		_save_ui_settings()
++		_refresh_suggestions()
++	)
++	display.add_child(chips_toggle)
++
++	var ai := UI.card(settings_box, "端末内AI（同居人との会話）")
+ 	local_model_toggle = CheckButton.new()
+-	local_model_toggle.text = "端末内AIで同居人と会話する"
++	local_model_toggle.text = "端末内AIを使う"
+ 	local_model_toggle.button_pressed = local_model.enabled
+ 	local_model_toggle.visible = OS.get_name() == "iOS"
+ 	local_model_toggle.custom_minimum_size.y = 48
+@@ -283,9 +469,9 @@ func _build_ui() -> void:
+ 		local_model.enabled = enabled
+ 		_refresh_input_mode()
+ 	)
+-	settings_box.add_child(local_model_toggle)
++	ai.add_child(local_model_toggle)
+ 	local_model_picker = OptionButton.new()
+-	for name in ["自動（4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M"]:
++	for name in ["自動（4Bを優先）", "Qwen3-4B Q4_K_M", "Qwen3-1.7B Q4_K_M（軽い）"]:
+ 		local_model_picker.add_item(name)
+ 	local_model_picker.visible = local_model_toggle.visible
+ 	local_model_picker.custom_minimum_size.y = 48
+@@ -294,31 +480,35 @@ func _build_ui() -> void:
+ 		_refresh_input_mode()
+ 		_refresh_local_ai_status()
+ 	)
+-	settings_box.add_child(local_model_picker)
+-	local_model_status = Label.new()
++	ai.add_child(local_model_picker)
++	local_model_status = UI.label("", 14, UI.BODY)
+ 	local_model_status.visible = local_model_toggle.visible
+-	local_model_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+-	settings_box.add_child(local_model_status)
++	ai.add_child(local_model_status)
++	ai.add_child(UI.label("モデルは「ファイル」アプリ → このiPhone内 → DeadCityJapan → Models に置きます。", 12, UI.FAINT))
+ 	local_model.status_changed.connect(_refresh_local_ai_status)
+ 	world.household_memory_event.connect(_record_npc_memory)
+-	var info:=Label.new();info.text="外部AIの接続設定\n有効にすると入力文・現在地・体調・備蓄・確認済み情報を接続先へ送ります。\nキーは今回の起動中のみ保持し、セーブやソースには保存しません。\n利用料金は接続先の契約に従います。未設定でもオフライン解析で遊べます。";info.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;info.add_theme_font_size_override("font_size",18);settings_box.add_child(info)
+-	ai_enabled=CheckButton.new();ai_enabled.text="外部AIを使用する";ai_enabled.custom_minimum_size.y=54;settings_box.add_child(ai_enabled)
++
++	dev_toggle = UI.button("開発者向け（外部AI）を表示", false, 48, 14)
++	dev_toggle.toggle_mode = true
++	settings_box.add_child(dev_toggle)
++	dev_box = UI.card(settings_box, "開発者向け：外部AI")
++	dev_box.get_parent().visible = false
++	dev_toggle.toggled.connect(func(on):
++		dev_box.get_parent().visible = on
++		dev_toggle.text = "開発者向けを隠す" if on else "開発者向け（外部AI）を表示"
++	)
++	var info:=UI.label("有効にすると入力文・現在地・体調・備蓄・確認済み情報を接続先へ送ります。キーは今回の起動中のみ保持し、セーブやソースには保存しません。利用料金は接続先の契約に従います。未設定でも遊べます。", 14, UI.MUTED);dev_box.add_child(info)
++	ai_enabled=CheckButton.new();ai_enabled.text="外部AIを使用する";ai_enabled.custom_minimum_size.y=48;dev_box.add_child(ai_enabled)
+ 	for spec in [["接続先（HTTPS / Chat Completions形式）","endpoint"],["モデル名","model"],["APIキー（この起動中のみ）","key"]]:
+-		var l:=Label.new();l.text=spec[0];l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;l.add_theme_font_size_override("font_size",18);settings_box.add_child(l)
+-		var edit:=LineEdit.new();edit.custom_minimum_size.y=58;edit.secret=spec[1]=="key";settings_box.add_child(edit);ai_fields[spec[1]]=edit
+-	var apply:=Button.new();apply.text="設定を適用";apply.custom_minimum_size.y=60;apply.pressed.connect(_apply_ai_settings);settings_box.add_child(apply)
+-	settings_message=Label.new();settings_message.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;settings_message.add_theme_font_size_override("font_size",18);settings_box.add_child(settings_message)
+-	ai_planner=AIPlanner.new();add_child(ai_planner)
+-	_refresh_input_mode()
+-	_build_image_preview()
+-	get_viewport().size_changed.connect(_update_layout)
+-	_update_layout()
++		dev_box.add_child(UI.label(spec[0], 14, UI.MUTED))
++		var edit:=LineEdit.new();edit.custom_minimum_size.y=48;edit.secret=spec[1]=="key";dev_box.add_child(edit);ai_fields[spec[1]]=edit
++	var apply:=UI.button("設定を適用", true, 48, 15);apply.pressed.connect(_apply_ai_settings);dev_box.add_child(apply)
++	settings_message=UI.label("", 14, UI.ACCENT);dev_box.add_child(settings_message)
++	_mark_font_buttons()
+ 
+ func _tool_button(parent: Node, label: String, key: String) -> Button:
+-	var button := Button.new()
+-	button.text = label
+-	button.custom_minimum_size = Vector2(64, 48)
+-	button.add_theme_font_size_override("font_size", 16)
++	var button := UI.button(label, false, 44, 14)
++	button.custom_minimum_size.x = 64
+ 	button.pressed.connect(_open_tool.bind(key))
+ 	parent.add_child(button)
+ 	return button
+@@ -345,18 +535,43 @@ func _open_tool(key: String) -> void:
+ 	command_input.release_focus()
+ 	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+ 		DisplayServer.virtual_keyboard_hide()
+-	drawer_title.text={"inventory":"体調・持ち物・備蓄","records":"確認した情報・記録","settings":"文章入力の設定","menu":"メニュー","map":"街の地図"}.get(key,"")
+-	menu_box.visible = key == "menu"
+-	inventory_status.visible=key=="inventory"
+-	world_status.visible=key in ["records", "map"]
+-	settings_box.visible=key=="settings"
+-	inventory_status.text=_inventory_text()+"\n\n"+_profile_text()+"\n"+_household_text()
+-	world_status.text = _district_map() if key == "map" else "確認した報道\n" + observed_news + "\n\n" + _execute_command("生存記録")
+-	if key=="settings":
+-		_refresh_input_mode()
+-		_refresh_local_ai_status()
+-		ai_fields.endpoint.text=ai_planner.endpoint;ai_fields.model.text=ai_planner.model;ai_fields.key.text=ai_planner.api_key;ai_enabled.button_pressed=ai_planner.enabled
+ 	drawer.show();log_scroll.interaction_enabled=false
++	_show_tab({"menu": "status"}.get(key, key))
++
++func _show_tab(key: String) -> void:
++	current_tab = key
++	for tab_key in tab_buttons:
++		var tab: Button = tab_buttons[tab_key]
++		var active: bool = tab_key == key
++		tab.add_theme_color_override("font_color", Color.WHITE if active else UI.MUTED)
++		var line := StyleBoxFlat.new()
++		line.bg_color = Color(0, 0, 0, 0)
++		line.border_color = Color("#7cc0de")
++		line.border_width_bottom = 3 if active else 0
++		line.content_margin_left = 3
++		line.content_margin_right = 3
++		tab.add_theme_stylebox_override("normal", line)
++		tab.add_theme_stylebox_override("hover", line)
++	drawer_info.text = "%d日目 %s · 時間は止まっています" % [_day_number(), world.clock().right(5)]
++	for child in tab_content.get_children():
++		tab_content.remove_child(child)
++		child.queue_free()
++	inventory_status.visible = key == "inventory"
++	world_status.visible = key == "records"
++	settings_box.visible = key == "settings"
++	match key:
++		"status": _build_status_tab()
++		"inventory": _build_items_tab()
++		"base": _build_base_tab()
++		"people": _build_people_tab()
++		"map": _build_map_tab()
++		"records":
++			world_status.text = "確認した報道\n" + observed_news + "\n\n" + _execute_command("生存記録")
++		"settings":
++			_refresh_input_mode()
++			_refresh_local_ai_status()
++			_mark_font_buttons()
++			ai_fields.endpoint.text=ai_planner.endpoint;ai_fields.model.text=ai_planner.model;ai_fields.key.text=ai_planner.api_key;ai_enabled.button_pressed=ai_planner.enabled
+ 	left_scroll.scroll_vertical=0
+ 
+ func _close_drawer() -> void:
+@@ -368,6 +583,280 @@ func _close_drawer() -> void:
+ 	drawer.hide()
+ 	log_scroll.interaction_enabled=true
+ 
++func _day_number() -> int:
++	return int(world.s.minute) / 1440 + 1
++
++func _people_at_home() -> int:
++	var count := 1
++	for person in world.s.household_members:
++		if float(person.health) > 0:
++			count += 1
++	return count
++
++func _build_status_tab() -> void:
++	var me := UI.card(tab_content, "%s（あなた）" % str(world.s.profile.name))
++	var grid := GridContainer.new()
++	grid.columns = 2
++	grid.add_theme_constant_override("h_separation", 16)
++	grid.add_theme_constant_override("v_separation", 10)
++	me.add_child(grid)
++	var values := Vitals.values(world.s)
++	for key in ["体力","満腹度","水分状態","休息状態"]:
++		var cell := VBoxContainer.new()
++		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		grid.add_child(cell)
++		cell.add_child(UI.label("%s  %d · %s" % [UI.VITAL_SHORT[key], int(values[key]), Vitals.description(values[key])], 13, Color("#c8d4df"), false))
++		cell.add_child(UI.bar(values[key], UI.VITAL_COLORS[key], 6))
++	var warning := Vitals.warning(world.s)
++	if not warning.is_empty():
++		me.add_child(UI.label(warning, 13, UI.WARN_TEXT))
++	var people := _people_at_home()
++	var stock := UI.card(tab_content, "家の備蓄（%d人）" % people)
++	var cells := HBoxContainer.new()
++	cells.add_theme_constant_override("separation", 8)
++	stock.add_child(cells)
++	for spec in [["食料", "%.1f 人日" % float(world.s.food), float(world.s.food) / people], ["飲み水", "%.1f L" % float(world.s.water), float(world.s.water) / (3.0 * people)]]:
++		var c := UI.card(cells, "", UI.PANEL_2, Color(0, 0, 0, 0))
++		c.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		c.add_child(UI.label(spec[0], 12, UI.MUTED, false))
++		c.add_child(UI.label(spec[1], 20, UI.TEXT, false))
++		c.add_child(UI.label("目安 あと約%d日" % int(floor(spec[2])), 12, Color("#c8d4df"), false))
++	var utilities := HFlowContainer.new()
++	utilities.add_theme_constant_override("h_separation", 6)
++	utilities.add_theme_constant_override("v_separation", 6)
++	stock.add_child(utilities)
++	utilities.add_child(UI.tag("電気 " + ("使える" if world.has_home_power() else "使えない"), world.has_home_power()))
++	utilities.add_child(UI.tag("水道 " + ("使える" if bool(world.s.water_online) else "止まっている"), bool(world.s.water_online)))
++	var connected: bool = float(world.s.sim.communications) >= 30 and float(world.s.sim.phone_charge) > 0
++	utilities.add_child(UI.tag("通信 " + ("つながる" if connected else "つながらない"), connected))
++	utilities.add_child(UI.tag("玄関 " + ("施錠中" if bool(world.s.door_locked) else "開いている"), bool(world.s.door_locked)))
++	var city := UI.card(tab_content, "街の状況（確認した情報）")
++	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
++	var steps := HBoxContainer.new()
++	steps.add_theme_constant_override("separation", 4)
++	city.add_child(steps)
++	for i in 4:
++		var seg := ColorRect.new()
++		seg.custom_minimum_size = Vector2(10, 6)
++		seg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		seg.color = (Color("#4e7f62") if i < int(stage[1]) else Color("#ffb27a")) if i <= int(stage[1]) else UI.LINE
++		steps.add_child(seg)
++	city.add_child(UI.label("平常 → 警戒 → 混乱 → 緊急　いま：%s" % stage[0], 12, UI.MUTED))
++	city.add_child(UI.label(observed_news.left(140), 13, UI.BODY))
++	for person in world.s.household_members:
++		var row := UI.card(tab_content)
++		row.add_child(UI.label("%s　%s · %s" % [person.name, person.location, HouseholdDialogue._condition(person)], 14, UI.TEXT))
++		var order: Dictionary = person.get("water_errand", {})
++		if str(order.get("phase", "")) in ["queued", "carrying"]:
++			row.add_child(UI.label("頼みごと：%s（%d時ごろの帰り道で）" % [HouseholdErrands.order_text(order), world.HOUSEHOLD_RETURN], 12, Color("#c8d4df")))
++	var files := HBoxContainer.new()
++	files.add_theme_constant_override("separation", 10)
++	tab_content.add_child(files)
++	for spec in [["保存", "save"], ["読み込み", "load"]]:
++		var b := UI.button(spec[0], false, 48, 15)
++		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++		b.pressed.connect(_open_tool.bind(spec[1]))
++		files.add_child(b)
++
++func _build_items_tab() -> void:
++	var bag: Dictionary = world.s.district.bag
++	var carry := UI.card(tab_content, "リュック（携行）")
++	for spec in [["食料", float(bag.food), District.FOOD_LIMIT, "人日"], ["水", float(bag.water), District.WATER_LIMIT, "L"]]:
++		carry.add_child(UI.label("%s  %.1f / %.0f %s" % [spec[0], spec[1], spec[2], spec[3]], 14, UI.TEXT, false))
++		carry.add_child(UI.bar(100.0 * spec[1] / spec[2], Color("#7cc0de"), 6))
++	var labels := {"wood":"木材","parts":"部品","seeds":"種","bandage":"包帯","planter":"未使用プランター","harvest":"累積収穫量"}
++	var gear := {"solar":"ソーラーパネル","battery":"蓄電池","camera":"カメラ","filter":"浄水器"}
++	var items := UI.card(tab_content, "道具・資材")
++	var missing: Array[String] = []
++	if bool(world.s.profile.has_key):
++		items.add_child(UI.label("玄関の鍵", 15, UI.TEXT, false))
++	for id in labels:
++		var amount := float(world.s.inventory.get(id, 0))
++		if amount > 0:
++			items.add_child(UI.label("%s　×%s" % [labels[id], str(world.s.inventory[id])], 15, UI.TEXT, false))
++		else:
++			missing.append(labels[id])
++	for id in gear:
++		if bool(world.s.equipment.get(id, false)):
++			items.add_child(UI.label("%s　（設置済み）" % gear[id], 15, UI.TEXT, false))
++		else:
++			missing.append(gear[id])
++	if world.s.plots.size() > 0:
++		items.add_child(UI.label("栽培中のプランター　%d鉢" % world.s.plots.size(), 15, UI.TEXT, false))
++	if not missing.is_empty():
++		var toggle := UI.button(("持っていない物を隠す" if show_missing_items else "持っていない物（%d件）を表示" % missing.size()), false, 44, 13)
++		toggle.pressed.connect(func():
++			show_missing_items = not show_missing_items
++			_show_tab("inventory")
++		)
++		tab_content.add_child(toggle)
++		if show_missing_items:
++			tab_content.add_child(UI.label("、".join(missing), 13, UI.FAINT))
++	inventory_status.text = "現金 %s円 / 銀行 %s円\n雨水 %.1f L · 住居の耐久 %.0f / 100" % [_yen(int(world.s.cash)), _yen(int(world.s.bank)), float(world.s.rain_water), float(world.s.longplay.shelter_integrity)]
++
++func _yen(value: int) -> String:
++	var digits := str(absi(value))
++	var out := ""
++	for i in digits.length():
++		if i > 0 and (digits.length() - i) % 3 == 0:
++			out += ","
++		out += digits[i]
++	return ("-" if value < 0 else "") + out
++
++func _build_base_tab() -> void:
++	var home := UI.card(tab_content, "自宅")
++	home.add_child(UI.label("住居の耐久 %.0f / 100 · 玄関の補強 %s · 玄関 %s" % [float(world.s.longplay.shelter_integrity), "あり" if int(world.s.barricade) > 0 else "なし", "施錠中" if bool(world.s.door_locked) else "開いている"], 14, UI.BODY))
++	home.add_child(UI.label("備蓄 食料 %.1f人日 · 水 %.1f L · 雨水 %.1f L" % [float(world.s.food), float(world.s.water), float(world.s.rain_water)], 14, UI.BODY))
++	var any_site := false
++	for place in District.SITES:
++		var site: Dictionary = world.s.district.sites[place]
++		if int(site.level) <= 0:
++			continue
++		any_site = true
++		var c := UI.card(tab_content, place)
++		c.add_child(UI.label("整備 %d · 置いた備蓄 食料 %.1f人日 / 水 %.1f L" % [int(site.level), float(site.cache.food), float(site.cache.water)], 14, UI.BODY))
++	if not any_site:
++		tab_content.add_child(UI.label("ほかの拠点はまだない。空き家や放棄された建物で「ここを拠点にする」と作れます。", 13, UI.FAINT))
++
++func _build_people_tab() -> void:
++	if world.s.household_members.is_empty():
++		tab_content.add_child(UI.label("同居人はいない。", 14, UI.FAINT))
++	for index in world.s.household_members.size():
++		var person: Dictionary = world.s.household_members[index]
++		var c := UI.card(tab_content, "")
++		c.add_child(UI.label(str(person.name), 17, UI.TEXT, false))
++		c.add_child(UI.label("%s · %s · %s" % [person.location, person.activity, HouseholdDialogue._condition(person)], 13, UI.MUTED))
++		c.add_child(UI.label(NPCMind.relationship(npc_memory, person, dialogue.recent(index).size()), 13, UI.BODY))
++		var order: Dictionary = person.get("water_errand", {})
++		if str(order.get("phase", "")) in ["quantity", "queued", "carrying", "returning"]:
++			c.add_child(UI.label("頼みごと：" + NPCMind.errand_status(world, person).get_slice("。", 0), 13, Color("#c8d4df")))
++	tab_content.add_child(UI.label("外で出会った生存者：まだいない", 13, UI.FAINT))
++
++func _map_node_for(place: String) -> String:
++	if Navigation.indoor(place) or place in ["共用廊下", "建物前"]:
++		return "自宅"
++	return place
++
++func _map_status(node: String) -> Array:
++	# [subtitle, good?]
++	if node == "自宅":
++		return ["拠点", true]
++	var shop_id: String = {"食品店":"grocer","金物店":"hardware","薬局":"pharmacy"}.get(node, "")
++	if not shop_id.is_empty():
++		if not world.can_trade(shop_id):
++			return ["閉まっている", false]
++		return ["購入制限", false] if bool(world.s.sim.rationing) else ["営業中", true]
++	if District.SITES.has(node):
++		var site: Dictionary = world.s.district.sites[node]
++		if int(site.level) > 0:
++			return ["拠点", true]
++		if bool(site.vacant):
++			return ["空き家", true]
++		return ["営業中", true] if District.can_enter(world, node) else ["営業時間外", false]
++	return ["", true]
++
++func _travel_minutes(target: String) -> int:
++	var destination := "玄関" if target == "自宅" else target
++	var path := Navigation.route(location, destination, str(world.s.profile.housing))
++	var total := 0
++	for i in range(1, path.size()):
++		total += Navigation.duration(path[i - 1], path[i])
++	return total
++
++func _build_map_tab() -> void:
++	var here := _map_node_for(location)
++	if map_selected.is_empty() or not MAP_NODES.has(map_selected):
++		map_selected = here
++	var width := minf(get_viewport_rect().size.x - 32.0, 520.0)
++	var k := width / 358.0
++	var area := Panel.new()
++	area.custom_minimum_size = Vector2(width, 476.0 * k)
++	area.add_theme_stylebox_override("panel", UI.box(Color("#0b141d"), UI.LINE, 12, 0, 0))
++	tab_content.add_child(area)
++	for line in MAP_LINES:
++		var r := ColorRect.new()
++		r.color = Color("#2f4b62")
++		r.position = Vector2(line[0], line[1]) * k
++		r.size = Vector2(maxf(2, line[2] * k), maxf(2, line[3] * k))
++		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		area.add_child(r)
++	for node in MAP_NODES:
++		var spec: Array = MAP_NODES[node]
++		var info := _map_status(node)
++		var title: String = "家の前の通り" if node == "屋外" else str(node)
++		var sub := " · ".join(["現在地" if node == here else "", str(info[0])].filter(func(x): return not str(x).is_empty()))
++		var b := Button.new()
++		b.text = title + ("\n" + sub if not sub.is_empty() else "")
++		b.position = Vector2(spec[0], spec[1]) * k
++		b.size = Vector2(spec[2], spec[3]) * k
++		b.add_theme_font_size_override("font_size", 13)
++		var edge := Color.WHITE if node == map_selected else (UI.ACCENT if node == here else Color("#2f4b62"))
++		var fill := Color("#1a3346") if node == map_selected else (Color("#16324a") if node == here else UI.PANEL_2)
++		b.add_theme_stylebox_override("normal", UI.box(fill, edge, 10, 4, 2))
++		b.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.06), edge, 10, 4, 2))
++		b.add_theme_stylebox_override("pressed", UI.box(fill.lightened(0.1), edge, 10, 4, 2))
++		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
++		b.add_theme_color_override("font_color", UI.TEXT if bool(info[1]) else UI.WARN_TEXT)
++		b.pressed.connect(func():
++			map_selected = node
++			_show_tab("map")
++		)
++		area.add_child(b)
++	var detail := UI.card(tab_content, "", UI.PANEL, UI.EDGE)
++	var name: String = "家の前の通り" if map_selected == "屋外" else map_selected
++	var minutes := _travel_minutes(map_selected)
++	detail.add_child(UI.label(name, 17, UI.TEXT, false))
++	var status := _map_status(map_selected)
++	var where := "いまここにいる" if map_selected == here else ("ここから徒歩 約%d分" % minutes if minutes > 0 else "")
++	detail.add_child(UI.label(" · ".join([where, str(status[0])].filter(func(x): return not str(x).is_empty())), 13, UI.MUTED))
++	if map_selected != here:
++		var go := UI.button("ここへ行く", true, 44, 15)
++		go.pressed.connect(func():
++			var target := map_selected
++			_close_drawer()
++			_on_command("家に帰る" if target == "自宅" else ("外に出る" if target == "屋外" else target + "へ行く"))
++		)
++		detail.add_child(go)
++
++func _load_ui_settings() -> void:
++	var config := ConfigFile.new()
++	if config.load(UI_SETTINGS_PATH) != OK:
++		return
++	ui_font_size = clampi(int(config.get_value("ui", "font_size", 17)), 15, 19)
++	ui_fold_photo = bool(config.get_value("ui", "fold_photo", false))
++	ui_show_chips = bool(config.get_value("ui", "show_chips", true))
++
++func _save_ui_settings() -> void:
++	var config := ConfigFile.new()
++	config.set_value("ui", "font_size", ui_font_size)
++	config.set_value("ui", "fold_photo", ui_fold_photo)
++	config.set_value("ui", "show_chips", ui_show_chips)
++	config.save(UI_SETTINGS_PATH)
++
++func _set_log_font(size: int) -> void:
++	ui_font_size = size
++	_save_ui_settings()
++	_mark_font_buttons()
++	_rebuild_log()
++
++func _mark_font_buttons() -> void:
++	for size in font_buttons:
++		var b: Button = font_buttons[size]
++		b.set_pressed_no_signal(size == ui_font_size)
++		b.add_theme_stylebox_override("normal", UI.box(Color("#16324a") if size == ui_font_size else UI.PANEL_2, UI.ACCENT if size == ui_font_size else UI.EDGE, 10, 12, 6))
++
++func _set_photo_folded(folded: bool) -> void:
++	photo_folded = folded
++	_update_scene_visibility()
++
++func _update_scene_visibility() -> void:
++	if scene_panel == null:
++		return
++	var compact: bool = layout_keyboard > 0
++	scene_panel.visible = not photo_folded and not compact
++	scene_folded_bar.visible = photo_folded and not compact and main_layout.vertical
++	scene_folded_bar.text = "  %s · 写真は畳んでいます　表示 ▾" % location
++
+ func _build_image_preview() -> void:
+ 	image_preview = ColorRect.new()
+ 	image_preview.color = Color("#070c13")
+@@ -522,39 +1011,36 @@ func _apply_responsive_layout(vp: Vector2, keyboard: int) -> void:
+ 	var available := vp.y - maxf(keyboard, safe_margin.get_theme_constant("margin_bottom")) - safe_margin.get_theme_constant("margin_top")
+ 	var compact := keyboard > 0 or available < (510 if portrait else 430)
+ 	main_layout.vertical = portrait
+-	scene_panel.visible = not compact
+ 	content_column.visible = not compact
+-	header_row.visible = available >= 250
++	header_panel.visible = available >= 250
++	vitals_row.visible = not compact
+ 	header_title.visible = not portrait
+-	clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if portrait else HORIZONTAL_ALIGNMENT_CENTER
+-	clock_label.add_theme_font_size_override("font_size", 16 if portrait else 18)
+-	tools_button.visible = portrait and not compact
++	tools_button.visible = portrait
+ 	hide_keyboard_button.visible = portrait and keyboard > 0
+ 	for button in legacy_tools:
+ 		button.visible = not portrait
+ 	input_mode_label.visible = not portrait and available >= 240
+ 	main_layout.visible = available >= 165
+-	scene_heading.visible = not portrait
++	chips_scroll.visible = ui_show_chips and chips_row.get_child_count() > 0 and available >= 300
+ 	_refresh_scene_caption()
+-	log_heading.visible = not compact
+-	vitals_row.visible = not portrait
++	log_heading.visible = not portrait and not compact
+ 	content_column.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
+ 	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+-	story.add_theme_font_size_override("normal_font_size", 17 if portrait else 22)
+-	story.add_theme_constant_override("line_separation", 5 if portrait else 3)
+-	picture.custom_minimum_size.y = clampf(vp.x * 0.47, 135, 255) if portrait else 60.0
++	picture.custom_minimum_size.y = clampf(vp.x * 0.36, 135, 200) if portrait else 60.0
+ 	log_scroll.custom_minimum_size.y = 44 if portrait else 50
+-	command_input.custom_minimum_size.y = (62 if compact else 72) if portrait else (64 if compact else 96)
+-	send_button.custom_minimum_size = Vector2(64, 48) if portrait else Vector2(96, 64 if compact else 96)
++	command_input.custom_minimum_size.y = (56 if compact else 60) if portrait else (64 if compact else 96)
++	send_button.custom_minimum_size = Vector2(64, 52) if portrait else Vector2(96, 64 if compact else 96)
+ 	send_button.size_flags_vertical = Control.SIZE_SHRINK_END if portrait else Control.SIZE_FILL
+ 	progress_label.add_theme_font_size_override("font_size", 15 if portrait else 18)
+ 	cancel_button.custom_minimum_size.x = 66 if portrait else 100
++	_update_scene_visibility()
+ 	_set_insets(drawer_margin, Vector4i(
+ 		safe_margin.get_theme_constant("margin_left") + 4,
+ 		safe_margin.get_theme_constant("margin_top") + 4,
+ 		safe_margin.get_theme_constant("margin_right") + 4,
+ 		safe_margin.get_theme_constant("margin_bottom") + 4
+ 	))
++	_fit_bubbles()
+ 
+ func _apply_font(node: Node, font: Font) -> void:
+ 	if node is Control:
+@@ -582,6 +1068,7 @@ func _start_new_game(profile: Dictionary) -> void:
+ 	title_screen = null
+ 	location = "寝室"
+ 	log_entries.clear()
++	_rebuild_log()
+ 	known_events.clear()
+ 	dialogue = HouseholdDialogue.new()
+ 	npc_memory = NPCMemory.new()
+@@ -739,18 +1226,115 @@ func _resume_from_intro() -> void:
+ func _append(line: String) -> void:
+ 	# Never produce a save that our own bounded loader will reject.
+ 	for offset in range(0,maxi(1,line.length()),2000):
+-		log_entries.append(line.substr(offset,2000))
++		var part := line.substr(offset,2000)
++		log_entries.append(part)
++		if log_box != null:
++			log_box.add_child(_make_entry(part))
+ 	while log_entries.size()>100:log_entries.pop_front()
+-	if story!=null:
+-		story.text="\n\n".join(log_entries)
++	if log_box != null:
++		while log_box.get_child_count() > log_entries.size():
++			var old := log_box.get_child(0)
++			log_box.remove_child(old)
++			old.queue_free()
+ 		call_deferred("_scroll_log_to_end")
++
++func _rebuild_log() -> void:
++	if log_box == null:
++		return
++	for child in log_box.get_children():
++		log_box.remove_child(child)
++		child.queue_free()
++	log_bubbles.clear()
++	for entry in log_entries:
++		log_box.add_child(_make_entry(entry))
++	call_deferred("_scroll_log_to_end")
++
++func _member_names() -> Array:
++	var names: Array = []
++	for person in world.s.household_members:
++		names.append(str(person.name))
++	return names
++
++## One chronicle entry, styled by what it is.
++func _make_entry(entry: String) -> Control:
++	var info := UI.kind(entry, _member_names())
++	var size := ui_font_size
++	match str(info.kind):
++		"player":
++			var row := HBoxContainer.new()
++			var spacer := Control.new()
++			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++			row.add_child(spacer)
++			var bubble := PanelContainer.new()
++			bubble.add_theme_stylebox_override("panel", UI.box(UI.PLAYER, Color(0, 0, 0, 0), 14, 12, 8))
++			row.add_child(bubble)
++			var text := UI.label(str(info.text), size, Color.WHITE)
++			bubble.add_child(text)
++			log_bubbles.append([text, str(info.text), 0.78])
++			_fit_bubble(text, str(info.text), 0.78)
++			return row
++		"npc":
++			var column := VBoxContainer.new()
++			column.add_theme_constant_override("separation", 3)
++			column.add_child(UI.label(str(info.name), 12, UI.ACCENT, false))
++			var line := HBoxContainer.new()
++			column.add_child(line)
++			var bubble := PanelContainer.new()
++			bubble.add_theme_stylebox_override("panel", UI.box(UI.NPC, Color("#22364a"), 14, 12, 8))
++			line.add_child(bubble)
++			var text := UI.label(str(info.text), size, UI.TEXT)
++			bubble.add_child(text)
++			log_bubbles.append([text, str(info.text), 0.86])
++			_fit_bubble(text, str(info.text), 0.86)
++			return column
++		"fail":
++			var panel := PanelContainer.new()
++			panel.add_theme_stylebox_override("panel", UI.box(Color("#111d29"), UI.EDGE, 12, 12, 10))
++			var body := VBoxContainer.new()
++			body.add_theme_constant_override("separation", 6)
++			panel.add_child(body)
++			body.add_child(UI.label("このままでは実行できません", 14, UI.TEXT))
++			body.add_child(UI.label(str(info.text), 13, UI.MUTED))
++			if ui_show_chips:
++				body.add_child(UI.label("下の候補からも選べます。", 12, UI.FAINT))
++			return panel
++		"news", "notice":
++			var note := UI.label(str(info.text), size - 2, UI.WARN_TEXT if str(info.kind) == "notice" else UI.BODY)
++			note.add_theme_stylebox_override("normal", UI.box(UI.WARN_BG if str(info.kind) == "notice" else Color("#111d29"), UI.WARN_EDGE if str(info.kind) == "notice" else UI.EDGE, 10, 10, 8))
++			return note
++	var block := VBoxContainer.new()
++	block.add_theme_constant_override("separation", 4)
++	var paragraph := ""
++	for line in str(info.text).split("\n"):
++		if UI.is_note(line.strip_edges()):
++			if not paragraph.is_empty():
++				block.add_child(UI.label(paragraph.strip_edges(), size, UI.BODY))
++				paragraph = ""
++			block.add_child(UI.label(line.strip_edges(), 12, UI.FAINT))
++		else:
++			paragraph += line + "\n"
++	if not paragraph.strip_edges().is_empty():
++		block.add_child(UI.label(paragraph.strip_edges(), size, UI.BODY))
++	return block
++
++func _fit_bubble(label: Label, text: String, share: float) -> void:
++	var width := log_scroll.size.x if log_scroll != null and log_scroll.size.x > 40 else get_viewport_rect().size.x - 40.0
++	var font: Font = get_theme_default_font()
++	label.custom_minimum_size.x = UI.bubble_width(text, font, ui_font_size, width * share) - 24.0
++
++func _fit_bubbles() -> void:
++	var alive: Array = []
++	for item in log_bubbles:
++		if is_instance_valid(item[0]):
++			_fit_bubble(item[0], item[1], item[2])
++			alive.append(item)
++	log_bubbles = alive
++
+ func _scroll_log_to_end() -> void:
+ 	if log_follow_queued or not is_inside_tree():return
+ 	log_follow_queued=true
+-	# Shape the text at its current width before updating the scroll bounds.
+ 	await get_tree().process_frame
+-	story.get_content_height()
+-	story.update_minimum_size()
++	_fit_bubbles()
+ 	await get_tree().process_frame
+ 	await get_tree().process_frame
+ 	if is_instance_valid(log_scroll):
+@@ -759,14 +1343,24 @@ func _scroll_log_to_end() -> void:
+ 
+ func _refresh() -> void:
+ 	_update_dialogue_input()
+-	clock_label.text = "%s  |  %s" % [world.clock(), location]
++	var stamp := world.clock()
++	day_label.text = "%d日目" % _day_number()
++	clock_label.text = stamp.right(5)
++	place_label.text = location
++	var date := Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_string(world.START_TIME)) + int(world.s.minute) * 60)
++	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
++	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
++	danger_label.text = "街：" + str(stage[0])
++	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
++	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
+ 	var normalized := Vitals.values(world.s)
+ 	for key in normalized:
+ 		var value: float = normalized[key]
+ 		vitals_bars[key].value = value
+-		vitals_values[key].text = "%.0f · %s" % [value,Vitals.description(value)]
++		vitals_values[key].text = "%s %d" % [UI.VITAL_SHORT[key], int(value)]
+ 		var style := StyleBoxFlat.new()
+-		style.bg_color = Color("#c87559") if value <= 15 else (Color("#bda05d") if value <= 40 else Color("#689b91"))
++		style.set_corner_radius_all(3)
++		style.bg_color = Color("#ff8a7a") if value <= 15 else (Color("#ffb27a") if value <= 40 else UI.VITAL_COLORS[key])
+ 		vitals_bars[key].add_theme_stylebox_override("fill",style)
+ 	warning_label.text = Vitals.warning(world.s)
+ 	warning_label.visible = not warning_label.text.is_empty()
+@@ -782,6 +1376,8 @@ func _refresh() -> void:
+ 	district_card.text = location + "\n" + str({"コンビニ":"棚の並ぶ店内","近所の空き家":"人のいない住宅","デパート":"広い売り場"}.get(location, ""))
+ 	preview_button.visible = picture.texture != null
+ 	_refresh_scene_caption()
++	_update_scene_visibility()
++	_refresh_suggestions()
+ 
+ func _refresh_scene_caption() -> void:
+ 	var caption := _scene_caption()
+@@ -852,9 +1448,63 @@ func _update_dialogue_input() -> void:
+ 		var person: Dictionary = world.s.household_members[dialogue.partner]
+ 		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
+ 			dialogue.partner = -1
+-	command_input.placeholder_text = "どうする？"
++	command_input.placeholder_text = "どうする？（例：居間へ行く／窓から外を見る）"
++	convo_bar.visible = dialogue.partner >= 0
++	if dialogue.partner >= 0:
++		var partner_name := str(world.s.household_members[dialogue.partner].name)
++		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % partner_name
++		convo_label.text = "%sと会話中" % partner_name
++		convo_avatar.text = partner_name.left(1)
++	_refresh_suggestions()
++
++## Context suggestions above the input: replies while talking, nearby places
++## and things to do otherwise. They send the text as if typed.
++func _suggestions() -> Array:
++	var out: Array = []
+ 	if dialogue.partner >= 0:
+-		command_input.placeholder_text = "%sと会話中%s" % [world.s.household_members[dialogue.partner].name, " · 会話を終える"]
++		var person: Dictionary = world.s.household_members[dialogue.partner]
++		var order: Dictionary = person.get("water_errand", {})
++		if bool(person.get("shopping_ask", false)):
++			return ["水を3本", "食料を2個", "水と食料を2つずつ", "やっぱりいい"]
++		if not person.get("errand_multi_pending", []).is_empty():
++			return ["2つずつ", "5つずつ", "やっぱりいい"]
++		if str(order.get("phase", "")) == "quantity":
++			var unit := HouseholdErrands.unit(str(order.item))
++			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
++		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
++	for person in world.s.household_members:
++		if str(person.location) == location and float(person.health) > 0:
++			out.append("%sに話しかける" % person.name)
++	var graph := Navigation.graph(str(world.s.profile.housing))
++	for place in graph.get(location, []):
++		if out.size() >= 4:
++			break
++		if place in ["共用廊下"]:
++			continue
++		out.append("%sへ行く" % place)
++	if Navigation.indoor(location):
++		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
++	else:
++		out.append("周囲を見る")
++		if District.SITES.has(location):
++			out.append("物資を探索する")
++		out.append("家に帰る")
++	return out.slice(0, 6)
++
++func _refresh_suggestions() -> void:
++	if chips_row == null:
++		return
++	for child in chips_row.get_children():
++		chips_row.remove_child(child)
++		child.queue_free()
++	if not ui_show_chips or world.s.health <= 0:
++		chips_scroll.visible = false
++		return
++	for text in _suggestions():
++		var chip := UI.chip(str(text))
++		chip.pressed.connect(func(): _on_command(str(text)))
++		chips_row.add_child(chip)
++	chips_scroll.visible = chips_row.get_child_count() > 0 and (header_panel == null or layout_keyboard <= 0)
+ 
+ func _talk_to(index: int, speech: String) -> void:
+ 	var person: Dictionary = world.s.household_members[index]
+@@ -1816,6 +2466,7 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 	var path := Navigation.route(location,destination,str(world.s.profile.housing))
+ 	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
+ 	if path.size()==1:return "すでに%sにいる。"%destination
++	var auto_steps: Array[String] = []
+ 	# Validate every door before moving. A failed journey never walks partway.
+ 	for index in range(1,path.size()):
+ 		var from_place: String=path[index-1]
+@@ -1823,9 +2474,15 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 		if District.SITES.has(to_place) and not District.can_enter(world, to_place):
+ 			return "%sは営業時間外。中には入れない。" % to_place
+ 		if ((from_place=="玄関" and not Navigation.indoor(to_place)) or (to_place=="玄関" and not Navigation.indoor(from_place))) and int(world.s.barricade)>0:return "玄関の補強が通路を塞いでいる。玄関のそばで「玄関の補強を外す」と通れる。"
+-		if from_place=="玄関" and not Navigation.indoor(to_place) and bool(world.s.door_locked):return "玄関には鍵がかかっている。まず鍵を開ける必要がある。"
++		if from_place=="玄関" and not Navigation.indoor(to_place) and bool(world.s.door_locked):
++			if not bool(world.s.profile.has_key):return "玄関には鍵がかかっている。鍵を持っていない。"
++			# v149.21: going out unlocks the door on the way, like a person would.
++			auto_steps.append("玄関の鍵を開けた")
+ 		if to_place=="玄関" and not Navigation.indoor(from_place) and bool(world.s.door_locked) and not bool(world.s.profile.has_key):return "玄関が施錠されており、鍵を持っていない。"
+ 	var started:=int(world.s.minute)
++	if not auto_steps.is_empty():
++		world.s.door_locked=false
++		world.advance_safe(1)
+ 	for index in range(1,path.size()):
+ 		var previous:=location
+ 		var next_place: String = path[index]
+@@ -1852,6 +2509,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 	selected_event.clear()
+ 	var reached := path.slice(0, path.find(location) + 1)
+ 	var result := "%sへ移動した（%d分 / %s）。" % [location, int(world.s.minute) - started, " → ".join(reached)]
++	if not auto_steps.is_empty():
++		result = "（自動で行った手順：%s）\n" % "、".join(auto_steps) + result
+ 	if location != destination and District.SITES.has(destination) and world.s.health > 0:
+ 		result += " 到着時には%sに入れなかった。" % destination
+ 	if world.s.health <= 0:
+@@ -2028,8 +2687,7 @@ func _load() -> String:
+ 	_sync_player_position()
+ 	event_visual = ""
+ 	log_entries = loaded_log.slice(maxi(0, loaded_log.size()-100))
+-	story.text = "\n\n".join(log_entries)
+-	call_deferred("_scroll_log_to_end")
++	_rebuild_log()
+ 	return "保存データを読み込んだ。"
+ 
+ func _utility(key: String) -> void:
+diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
+index 8152b60..c5d89fa 100644
+--- a/scripts/title_screen.gd
++++ b/scripts/title_screen.gd
+@@ -50,7 +50,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   TEST v149.8"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.21"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
+diff --git a/scripts/ui_kit.gd b/scripts/ui_kit.gd
+new file mode 100644
+index 0000000..a2b3e56
+--- /dev/null
++++ b/scripts/ui_kit.gd
+@@ -0,0 +1,151 @@
++extends RefCounted
++## v149.21 UI: shared colours, cards and the typed chronicle entries
++## (player bubble, NPC bubble, narration, notes, notices, failed input).
++
++const BG := Color("#080e15")
++const HEADER := Color("#0c1520")
++const PANEL := Color("#0f1924")
++const PANEL_2 := Color("#13212f")
++const LINE := Color("#1d2f42")
++const EDGE := Color("#2a4258")
++const TEXT := Color("#e6edf3")
++const BODY := Color("#d7e0e8")
++const MUTED := Color("#9fb0c0")
++const FAINT := Color("#8597a8")
++const ACCENT := Color("#9fd0e6")
++const PLAYER := Color("#244357")
++const NPC := Color("#142231")
++const WARN_BG := Color("#2a1a10")
++const WARN_EDGE := Color("#7a4a2a")
++const WARN_TEXT := Color("#ffcfa8")
++const OK_BG := Color("#13281f")
++const OK_EDGE := Color("#2d5a42")
++const OK_TEXT := Color("#9fe3b9")
++const VITAL_COLORS := {"体力": Color("#7fd1a1"), "満腹度": Color("#ffb27a"), "水分状態": Color("#7cc0de"), "休息状態": Color("#b9a7f0")}
++const VITAL_SHORT := {"体力": "体力", "満腹度": "満腹", "水分状態": "水分", "休息状態": "休息"}
++const SOCIETY := {"normal": ["平常", 0], "alert": ["警戒", 1], "disrupted": ["混乱", 2], "emergency": ["緊急", 3]}
++const NOTICE_WORDS := ["危険", "警告", "防災", "死亡", "負傷", "襲", "噛", "避難", "緊急事態", "外出自粛", "通行止め"]
++const FAIL_WORDS := ["何も実行していません", "解釈できませんでした", "解釈できません"]
++
++static func box(bg: Color, edge: Color = Color(0, 0, 0, 0), radius: int = 12, pad_x: int = 12, pad_y: int = 10) -> StyleBoxFlat:
++	var st := StyleBoxFlat.new()
++	st.bg_color = bg
++	st.border_color = edge
++	st.set_border_width_all(1 if edge.a > 0.0 else 0)
++	st.set_corner_radius_all(radius)
++	st.content_margin_left = pad_x
++	st.content_margin_right = pad_x
++	st.content_margin_top = pad_y
++	st.content_margin_bottom = pad_y
++	return st
++
++static func label(text: String, size: int = 15, color: Color = TEXT, wrap: bool = true) -> Label:
++	var l := Label.new()
++	l.text = text
++	l.add_theme_font_size_override("font_size", size)
++	l.add_theme_color_override("font_color", color)
++	if wrap:
++		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	return l
++
++static func card(parent: Node, title: String = "", bg: Color = PANEL, edge: Color = LINE) -> VBoxContainer:
++	var panel := PanelContainer.new()
++	panel.add_theme_stylebox_override("panel", box(bg, edge, 12, 14, 12))
++	parent.add_child(panel)
++	var body := VBoxContainer.new()
++	body.add_theme_constant_override("separation", 8)
++	panel.add_child(body)
++	if not title.is_empty():
++		body.add_child(label(title, 14, MUTED))
++	return body
++
++static func button(text: String, primary: bool = false, height: int = 44, size: int = 15) -> Button:
++	var b := Button.new()
++	b.text = text
++	b.custom_minimum_size.y = height
++	b.add_theme_font_size_override("font_size", size)
++	var bg := Color("#2d5a74") if primary else PANEL_2
++	var edge := Color("#5b8aa5") if primary else EDGE
++	b.add_theme_stylebox_override("normal", box(bg, edge, 10, 12, 6))
++	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), edge.lightened(0.15), 10, 12, 6))
++	b.add_theme_stylebox_override("pressed", box(bg.lightened(0.15), edge.lightened(0.25), 10, 12, 6))
++	b.add_theme_stylebox_override("disabled", box(bg.darkened(0.3), LINE, 10, 12, 6))
++	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
++	b.add_theme_color_override("font_color", TEXT)
++	return b
++
++static func chip(text: String, color: Color = TEXT, bg: Color = PANEL_2, edge: Color = Color("#2f4b62")) -> Button:
++	var b := Button.new()
++	b.text = text
++	b.custom_minimum_size.y = 38
++	b.add_theme_font_size_override("font_size", 14)
++	b.add_theme_stylebox_override("normal", box(bg, edge, 19, 14, 4))
++	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), edge.lightened(0.2), 19, 14, 4))
++	b.add_theme_stylebox_override("pressed", box(bg.lightened(0.15), edge.lightened(0.3), 19, 14, 4))
++	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
++	b.add_theme_color_override("font_color", color)
++	return b
++
++static func tag(text: String, good: bool) -> Label:
++	var l := label(text, 12, OK_TEXT if good else WARN_TEXT, false)
++	var st := box(OK_BG if good else WARN_BG, OK_EDGE if good else WARN_EDGE, 11, 10, 3)
++	l.add_theme_stylebox_override("normal", st)
++	return l
++
++static func bar(value: float, color: Color, height: int = 6) -> ProgressBar:
++	var b := ProgressBar.new()
++	b.show_percentage = false
++	b.custom_minimum_size.y = height
++	b.max_value = 100
++	b.step = 0.0
++	b.value = value
++	var back := StyleBoxFlat.new()
++	back.bg_color = LINE
++	back.set_corner_radius_all(3)
++	var fill := StyleBoxFlat.new()
++	fill.bg_color = color
++	fill.set_corner_radius_all(3)
++	b.add_theme_stylebox_override("background", back)
++	b.add_theme_stylebox_override("fill", fill)
++	return b
++
++## Kind of a chronicle line: player, npc, fail, notice, news, or text.
++static func kind(entry: String, names: Array) -> Dictionary:
++	if entry.begins_with("▶ "):
++		return {"kind": "player", "text": entry.substr(2)}
++	var said := RegEx.new()
++	said.compile("^([^「」\\n]{1,12})「([\\s\\S]*)」$")
++	var found := said.search(entry)
++	if found != null and found.get_string(1) in names:
++		return {"kind": "npc", "name": found.get_string(1), "text": found.get_string(2)}
++	for word in FAIL_WORDS:
++		if entry.contains(word):
++			return {"kind": "fail", "text": entry}
++	if entry.begins_with("情報源："):
++		return {"kind": "news", "text": entry}
++	for word in NOTICE_WORDS:
++		if entry.contains(word) and entry.length() <= 160:
++			return {"kind": "notice", "text": entry}
++	return {"kind": "text", "text": entry}
++
++## Movement summaries, waiting reports and how-to hints are secondary notes.
++static func is_note(line: String) -> bool:
++	var move := RegEx.new()
++	move.compile("^.+へ移動した（[0-9]+分")
++	if move.search(line) != null:
++		return true
++	for start in ["ここからは", "日常生活：", "自動で行った手順", "会話を終えた", "保存", "（"]:
++		if line.begins_with(start):
++			return true
++	var waited := RegEx.new()
++	waited.compile("^[0-9]+分が経過した")
++	if waited.search(line) != null:
++		return true
++	return line.contains("」と入力") or line.contains("」と入れる") or (line.begins_with("「") and (line.contains("できる") or line.contains("られる")))
++
++## Width a bubble needs for its text, capped so it wraps inside the log.
++static func bubble_width(text: String, font: Font, size: int, max_width: float) -> float:
++	var widest := 0.0
++	for line in text.split("\n"):
++		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x)
++	return clampf(widest + 26.0, 48.0, max_width)
+diff --git a/scripts/ui_kit.gd.uid b/scripts/ui_kit.gd.uid
+new file mode 100644
+index 0000000..cba8caa
+--- /dev/null
++++ b/scripts/ui_kit.gd.uid
+@@ -0,0 +1 @@
++uid://bpibjlaqi2v0x
+diff --git a/tests/test_audit22.gd b/tests/test_audit22.gd
+index 75225a5..c5fed45 100644
+--- a/tests/test_audit22.gd
++++ b/tests/test_audit22.gd
+@@ -72,13 +72,12 @@ func run()->void:
+ 		game._update_layout();await process_frame;await process_frame
+ 	for i in range(40):game._append("監査用の行動履歴 %d。左右のパネルと独立して、この長い記録を指で上下に読める。"%i)
+ 	await process_frame;await process_frame
+-	var scroll:Range=game.get("log_scroll").get_v_scroll_bar() if game.get("log_scroll")!=null else game.story.get_v_scroll_bar()
++	var scroll:Range=game.log_scroll.get_v_scroll_bar()
+ 	await process_frame;await process_frame
+ 	check(scroll.value>0 and scroll.value+scroll.page>=scroll.max_value-1,"LOG-FOLLOW new action history is automatically visible")
+ 	scroll.value=scroll.max_value;await process_frame
+ 	var before_scroll:float=scroll.value
+-	var pos:Vector2=game.story.get_global_rect().get_center()
+-	if game.get("log_scroll")!=null:pos=game.log_scroll.get_global_rect().get_center()
++	var pos:Vector2=game.log_scroll.get_global_rect().get_center()
+ 	var before_minute:int=game.world.s.minute
+ 	touch(8,true,pos);drag(8,pos+Vector2(0,60),Vector2(0,60));touch(8,false,pos+Vector2(0,60));await process_frame
+ 	check(scroll.value<before_scroll and game.world.s.minute==before_minute,"LOG-TOUCH central history responds to touch swipe")
+diff --git a/tests/test_district28.gd b/tests/test_district28.gd
+index 73b5a70..fbb2322 100644
+--- a/tests/test_district28.gd
++++ b/tests/test_district28.gd
+@@ -23,8 +23,12 @@ func run() -> void:
+ 
+ 	await game._on_command("街の地図を見る")
+ 	check(world.s.minute == 0 and game.log_entries[-1].contains("デパート"), "map is visible without advancing the world")
++	# v149.21 unlocks the door on the way out when the player has the key;
++	# without it the locked entrance still stops the walk.
++	world.s.profile.has_key = false
+ 	await game._on_command("街を歩く")
+ 	check(game.location == "寝室" and world.s.minute == 0, "walking respects the existing locked entrance")
++	world.s.profile.has_key = true
+ 	await game._on_command("物資を持っていく")
+ 	check(state.bag.food == 2.0 and state.bag.water == 4.0 and world.s.food == 3.0 and world.s.water == 2.0, "packing transfers finite household stock")
+ 	await game._on_command("玄関へ行く、鍵を開ける、外を歩く")
+diff --git a/tests/test_household_dialogue31.gd b/tests/test_household_dialogue31.gd
+index ed89ad4..17bb248 100644
+--- a/tests/test_household_dialogue31.gd
++++ b/tests/test_household_dialogue31.gd
+@@ -24,7 +24,7 @@ func run() -> void:
+ 
+ 	await game._on_command("美咲を呼ぶ")
+ 	check(world.s.household_members[0].location == "寝室" and world.s.household_members[1].location == "居間", "calling moves only the named awake household member")
+-	check(game.log_entries[-1].begins_with("美咲「") and game.command_input.placeholder_text.contains("美咲と会話中"), "the resident answers and opens a dialogue")
++	check(game.log_entries[-1].begins_with("美咲「") and game.convo_bar.visible and game.convo_label.text.contains("美咲と会話中"), "the resident answers and opens a dialogue")
+ 	var before_food := float(world.s.food)
+ 	await game._on_command("飲み水はどれくらいある？")
+ 	check(game.log_entries[-1].contains("6.0リットル"), "offline reply uses real household stock")
+@@ -41,7 +41,7 @@ func run() -> void:
+ 	await game._on_command("天気予報調べて")
+ 	check(game.log_entries[-1].contains("天気予報は確認できない"), "forecast request states the missing capability")
+ 	await game._on_command("会話を終える")
+-	check(game.dialogue.partner == -1 and game.command_input.placeholder_text == "どうする？", "conversation can be ended explicitly")
++	check(game.dialogue.partner == -1 and not game.convo_bar.visible and game.command_input.placeholder_text.begins_with("どうする？"), "conversation can be ended explicitly")
+ 
+ 	var history: Dictionary = game.dialogue.history.duplicate(true)
+ 	check(game._save() == "保存した。", "dialogue history saves")
+diff --git a/tests/test_main_runtime.gd b/tests/test_main_runtime.gd
+index e2221f4..5b20241 100644
+--- a/tests/test_main_runtime.gd
++++ b/tests/test_main_runtime.gd
+@@ -17,7 +17,7 @@ func run_tests() -> void:
+     root.add_child(game)
+     await process_frame
+     check(game.location == "寝室", "initial room")
+-    check(game.story != null and game.command_input != null, "UI constructed")
++    check(game.log_box != null and game.command_input != null, "UI constructed")
+     var before: int = int(game.world.s.minute)
+     game._interpret("未知の行動xyz")
+     check(int(game.world.s.minute) == before, "unsupported command does not advance time")
+diff --git a/tests/test_phone24.gd b/tests/test_phone24.gd
+index c002a92..1f13656 100644
+--- a/tests/test_phone24.gd
++++ b/tests/test_phone24.gd
+@@ -29,13 +29,15 @@ func run()->void:
+ 		p=point(g.log_scroll);touch(true,p);drag(p+Vector2(0,100),Vector2(0,100));touch(false,p+Vector2(0,100));await settle()
+ 		check(g.log_scroll.scroll_vertical<top_before and g.world.s.minute==before+1,"history swipe does not act "+str(geometry))
+ 		g.log_scroll.velocity=0
+-		g._open_tool("inventory");await settle()
++		g._open_tool("map");await settle()
+ 		g.left_scroll.scroll_vertical=0;p=point(g.left_scroll);touch(true,p);drag(p-Vector2(0,100),Vector2(0,-100));touch(false,p-Vector2(0,100));await settle()
+ 		check(g.left_scroll.scroll_vertical>0,"on-demand inventory swipes "+str(geometry))
+ 		g.left_scroll.notification(Node.NOTIFICATION_APPLICATION_PAUSED);check(g.left_scroll.pointer==-999,"pause resets drawer capture "+str(geometry));g._close_drawer();await settle()
+ 		check(g.command_input.get_global_rect().end.y<=g.get_viewport_rect().size.y and g.picture.size.y>100,"text and picture fit landscape "+str(geometry))
+ 	# Editable fields are not swallowed by the scroll handler.
+ 	g._open_tool("settings");await settle()
++	g.dev_toggle.button_pressed=true;await settle()
++	g.left_scroll.ensure_control_visible(g.ai_fields.model);await settle()
+ 	var p:=point(g.ai_fields.model);touch(true,p);touch(false,p);await settle()
+ 	check(g.ai_fields.model.has_focus(),"settings text field receives touch keyboard focus")
+ 	p=point(g.ai_enabled);touch(true,p);touch(false,p);await settle()
+diff --git a/tests/test_portrait27.gd b/tests/test_portrait27.gd
+index ef24538..d8ea90b 100644
+--- a/tests/test_portrait27.gd
++++ b/tests/test_portrait27.gd
+@@ -65,8 +65,9 @@ func run() -> void:
+ 
+ 	await tap(game.tools_button)
+ 	check(game.drawer.visible and game.menu_box.visible, "one tap opens portrait tools")
+-	await tap(game.menu_box.get_child(0))
+-	check(game.drawer.visible and game.inventory_status.visible and not game.menu_box.visible, "inventory and body status remain reachable")
++	# v149.21: menu tabs; the second tab is the inventory.
++	await tap(game.menu_box.get_child(1))
++	check(game.drawer.visible and game.inventory_status.visible and game.current_tab == "inventory", "inventory and body status remain reachable")
+ 	game._close_drawer()
+ 	await settle()
+ 	await tap(game.preview_button)
+@@ -95,7 +96,7 @@ func run() -> void:
+ 	check(game.last_plan.ok and game.location == "台所" and int(game.world.s.minute) > start and game.log_entries[-1].contains("情報源"), "portrait send executes the existing three-action plan")
+ 	check(not game.command_input.has_focus() and game.command_input.text.is_empty(), "send clears focus and draft")
+ 	var log_bar: VScrollBar = game.log_scroll.get_v_scroll_bar()
+-	check(log_bar.max_value >= game.story.get_content_height() and log_bar.value + log_bar.page >= log_bar.max_value - 1, "latest result is visible at the bottom after wrapping")
++	check(log_bar.max_value >= game.log_box.size.y and log_bar.value + log_bar.page >= log_bar.max_value - 1, "latest result is visible at the bottom after wrapping")
+ 	game.queue_free()
+ 	await settle()
+ 	quit(0 if failures == 0 else 1)
+diff --git a/tests/test_revision21_ui.gd b/tests/test_revision21_ui.gd
+index 591155f..d4c7886 100644
+--- a/tests/test_revision21_ui.gd
++++ b/tests/test_revision21_ui.gd
+@@ -60,10 +60,12 @@ func run() -> void:
+ 	check(game.main_layout.get_child_count()==2,"scene and chronicle columns replace action menu")
+ 	game._open_tool("inventory");await process_frame;await process_frame
+ 	check(game.drawer.visible and game.inventory_status.visible,"inventory opens on demand")
++	# v149.21: the map tab is the long one; the drawer still scrolls on its own.
++	game._show_tab("map");await process_frame;await process_frame
+ 	var left_pos:Vector2=game.left_scroll.get_global_rect().position+Vector2(90,180)
+ 	game.left_scroll.scroll_vertical=0;game.left_scroll.velocity=0
+ 	touch(2,true,left_pos);drag(2,left_pos-Vector2(0,100),Vector2(0,-100));touch(2,false,left_pos-Vector2(0,100));await process_frame
+-	check(game.left_scroll.scroll_vertical>0,"inventory drawer swipes independently")
++	check(game.left_scroll.scroll_vertical>0,"menu drawer swipes independently")
+ 	game._close_drawer()
+ 	# Journey and both door directions, plus existing save-compatible state.
+ 	game._interpret("玄関へ行く");game._interpret("鍵を開ける");game._interpret("共用廊下へ行く")
+diff --git a/tests/test_revision24.gd b/tests/test_revision24.gd
+index 9c75864..ac961cd 100644
+--- a/tests/test_revision24.gd
++++ b/tests/test_revision24.gd
+@@ -21,10 +21,13 @@ func run()->void:
+ 		await g._on_command(bad)
+ 		check(exact==var_to_bytes(g.world.s),"unsupported entire intention does not mutate: "+bad)
+ 	reset_game(g)
++	# Without the key the locked door still stops the plan (v149.21 unlocks it when the key is held).
++	g.world.s.profile.has_key=false
+ 	await g._on_command("外に出てニュースを見る")
+ 	check(g.world.s.minute==0 and g.location=="寝室","locked exit stops natural conjugation without partial news")
+ 	await g._on_command("玄関へ行く、外に出る、ニュースを見る")
+ 	check(g.location=="玄関" and g.world.s.minute==2 and not g.log_entries[-1].contains("情報源"),"blocked door stops subsequent plan actions")
++	g.world.s.profile.has_key=true
+ 	reset_game(g)
+ 	var before:Dictionary=g.world.s.duplicate(true)
+ 	await g._on_command("7日待つ")
+diff --git a/tests/test_scene_description30.gd b/tests/test_scene_description30.gd
+index 4a2b9a5..8e5f82c 100644
+--- a/tests/test_scene_description30.gd
++++ b/tests/test_scene_description30.gd
+@@ -34,8 +34,10 @@ func run() -> void:
+ 	await game._on_command("玄関へ行く")
+ 	check(game.log_entries[-1].contains("鍵がかかっている"), "arrival reflects a locked entrance")
+ 	var minute := int(world.s.minute)
++	world.s.profile.has_key = false
+ 	await game._on_command("外に出る")
+ 	check(world.s.minute == minute and not game.log_entries[-1].contains("家の並ぶ通り"), "a failed move never describes arrival")
++	world.s.profile.has_key = true
+ 
+ 	await game._on_command("鍵を開ける")
+ 	await game._on_command("コンビニへ行く")
+diff --git a/tests/test_ui149_21.gd b/tests/test_ui149_21.gd
+new file mode 100644
+index 0000000..837f962
+--- /dev/null
++++ b/tests/test_ui149_21.gd
+@@ -0,0 +1,146 @@
++extends SceneTree
++## v149.21 UI: header, typed chronicle entries, conversation strip, context
++## suggestions, foldable picture, menu tabs with a map, settings, and the door
++## being unlocked on the way out.
++const Main = preload("res://main.tscn")
++const UI = preload("res://scripts/ui_kit.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func settle() -> void:
++	for i in 4:
++		await process_frame
++
++func chip_texts(game) -> Array:
++	var out: Array = []
++	for child in game.chips_row.get_children():
++		if not child.is_queued_for_deletion():
++			out.append(child.text)
++	return out
++
++func run() -> void:
++	# --- Classification of chronicle lines.
++	var names := ["詩音"]
++	check(UI.kind("▶ 外に出る", names).kind == "player", "player line")
++	check(UI.kind("詩音「おはよう。」", names).kind == "npc" and UI.kind("詩音「おはよう。」", names).text == "おはよう。", "NPC line with its name")
++	check(UI.kind("誰か「こんにちは」", names).kind == "text", "unknown speakers are narration")
++	check(UI.kind("この部分を正確に解釈できませんでした：「x」。何も実行していません。", names).kind == "fail", "failed input")
++	check(UI.kind("情報源：テレビ\n新しい報道は確認できない。", names).kind == "news", "news report")
++	check(UI.is_note("居間へ移動した（1分 / 寝室 → 居間）。") and UI.is_note("ここからは寝室、台所の方へ向かえる。") and not UI.is_note("ソファと低いテーブルがある。"), "movement summaries and hints are notes")
++
++	root.size = Vector2i(390, 844)
++	var game = Main.instantiate()
++	root.add_child(game)
++	await settle()
++	var profile: Dictionary = game.world.DEFAULT_PROFILE.duplicate(true)
++	profile.cohabitants = 1
++	profile.companion_names = ["詩音"]
++	game._start_new_game(profile)
++	game._finish_intro()
++	game.local_model.enabled = false
++	await settle()
++
++	# --- Header.
++	check(game.day_label.text == "1日目" and game.clock_label.text == game.world.clock().right(5) and game.place_label.text == "寝室", "header shows day, time and place")
++	check(game.subline_label.text.contains("11月10日") and game.danger_label.text == "街：平常", "header shows date, weather and the city's stage")
++	check(game.vitals_row.is_visible_in_tree() and game.vitals_values["体力"].text.begins_with("体力"), "vitals are always on screen")
++
++	# --- Chronicle entries are styled by kind.
++	await game._on_command("居間へ行く")
++	var count: int = game.log_box.get_child_count()
++	check(count == game.log_entries.size(), "one control per chronicle entry")
++	var player_row = game.log_box.get_child(count - 2)
++	check(player_row is HBoxContainer and player_row.get_child(0).size_flags_horizontal == Control.SIZE_EXPAND_FILL, "the player's line is a right-aligned bubble")
++	await game._on_command("詩音、おはよう")
++	var npc_entry = game.log_box.get_child(game.log_box.get_child_count() - 1)
++	check(npc_entry is VBoxContainer and npc_entry.get_child(0).text == "詩音", "the NPC's line carries its name")
++	await settle()
++	var bar: VScrollBar = game.log_scroll.get_v_scroll_bar()
++	check(bar.value + bar.page >= bar.max_value - 1, "the newest entry is visible")
++
++	# --- Conversation strip and suggestions.
++	check(game.convo_bar.visible and game.convo_label.text == "詩音と会話中", "the conversation strip names the partner")
++	check("会話を終える" in chip_texts(game), "talking offers a way out among the suggestions")
++	game.world.s.household_members[0].shopping_ask = true
++	game._refresh_suggestions()
++	check("水を3本" in chip_texts(game), "suggestions answer the NPC's question")
++	game.world.s.household_members[0].erase("shopping_ask")
++	game.convo_end_button.pressed.emit()
++	await settle()
++	check(game.dialogue.partner == -1 and not game.convo_bar.visible, "the strip's button ends the conversation")
++	var texts := chip_texts(game)
++	check("詩音に話しかける" in texts and "寝室へ行く" in texts, "suggestions list people and places nearby: " + str(texts))
++	var before: String = game.location
++	for child in game.chips_row.get_children():
++		if child.text == "寝室へ行く":
++			child.pressed.emit()
++	await settle()
++	check(game.location == "寝室" and before == "居間", "a suggestion runs like typed text")
++
++	# --- Failed input is a card that says nothing happened.
++	var minute: int = game.world.s.minute
++	await game._on_command("包丁を持って外に出る")
++	var card = game.log_box.get_child(game.log_box.get_child_count() - 1)
++	check(card is PanelContainer and game.world.s.minute == minute, "unrecognised input becomes a card and time does not pass")
++
++	# --- Picture folds into a one-line bar.
++	game._set_photo_folded(true)
++	await settle()
++	check(not game.picture.is_visible_in_tree() and game.scene_folded_bar.visible and game.log_scroll.size.y > 300, "folding the picture gives the log more room")
++	game.scene_folded_bar.pressed.emit()
++	await settle()
++	check(game.picture.is_visible_in_tree() and game.picture.size.y >= 135, "the folded bar shows the picture again")
++
++	# --- Going out unlocks the door on the way.
++	check(bool(game.world.s.door_locked), "the door starts locked")
++	await game._on_command("外に出る")
++	check(game.location == "屋外" and not bool(game.world.s.door_locked) and game.log_entries[-1].contains("自動で行った手順：玄関の鍵を開けた"), "going out unlocks the door and says so")
++
++	# --- Menu tabs and map.
++	game._open_tool("menu")
++	await settle()
++	check(game.drawer.visible and game.current_tab == "status" and game.tab_content.get_child_count() >= 3, "the menu opens on the status tab")
++	game._show_tab("map")
++	await settle()
++	var area = game.tab_content.get_child(0)
++	var names_on_map: Array = []
++	for child in area.get_children():
++		if child is Button:
++			names_on_map.append(child.text.get_slice("\n", 0))
++	check("コンビニ" in names_on_map and "家の前の通り" in names_on_map and "自宅" in names_on_map, "the map draws the places")
++	for child in area.get_children():
++		if child is Button and child.text.begins_with("コンビニ"):
++			child.pressed.emit()
++	await settle()
++	check(game.map_selected == "コンビニ", "tapping a place selects it")
++	var detail = game.tab_content.get_child(1)
++	var go: Button = null
++	for node in detail.find_children("*", "Button", true, false):
++		go = node
++	check(go != null and go.text == "ここへ行く", "the selected place offers to go there")
++	go.pressed.emit()
++	await settle()
++	await settle()
++	check(not game.drawer.visible and game.location == "コンビニ", "going from the map walks there")
++
++	# --- Settings: text size rebuilds the chronicle and is remembered.
++	game._open_tool("settings")
++	await settle()
++	game._set_log_font(19)
++	await settle()
++	var config := ConfigFile.new()
++	check(config.load(game.UI_SETTINGS_PATH) == OK and int(config.get_value("ui", "font_size", 0)) == 19 and game.log_box.get_child_count() == game.log_entries.size(), "text size is saved and the chronicle is rebuilt")
++	check(not game.dev_box.get_parent().visible, "developer settings are hidden by default")
++	game._set_log_font(17)
++	game._close_drawer()
++
++	print("v149.21 UI checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_ui149_21.gd.uid b/tests/test_ui149_21.gd.uid
+new file mode 100644
+index 0000000..c29d9fe
+--- /dev/null
++++ b/tests/test_ui149_21.gd.uid
+@@ -0,0 +1 @@
++uid://dce471j3wqw2u
