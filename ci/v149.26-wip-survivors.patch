@@ -1,9 +1,179 @@
+diff --git a/qa/combo.gd b/qa/combo.gd
+new file mode 100644
+index 0000000..4c84dbc
+--- /dev/null
++++ b/qa/combo.gd
+@@ -0,0 +1,164 @@
++extends SceneTree
++## Rare combinations, one scenario each; prints OK/NG per scenario.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++const Mood = preload("res://scripts/mood.gd")
++
++var results: Array = []
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func fresh(cohab: int = 1, housing: String = "一戸建て", seed: int = 5):
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	p.housing = housing
++	p.cohabitants = cohab
++	p.companion_names = ["詩音", "蒼", "陸"].slice(0, cohab)
++	p.companion_genders = ["女性", "男性", "男性"].slice(0, cohab)
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	return g
++
++func run_cmds(g, cmds: Array) -> void:
++	for c in cmds:
++		await g._on_command(c)
++		var guard := 0
++		while g.advancing and guard < 30000:
++			await process_frame
++			guard += 1
++
++func verdict(name: String, g, extra: bool = true) -> void:
++	var ok: bool = g.world.validate_state(g.world.s) and extra and int(g.world.s.profile.cohabitants) == g.world.s.household_members.size()
++	results.append([name, ok])
++	print(("OK " if ok else "NG ") + name + " | last: " + str(g.log_entries[-1]).left(80).replace("\n", " / "))
++	g.queue_free()
++	await process_frame
++
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	# 1. The player dies while talking with a survivor; a housemate takes over.
++	var g = await fresh(1)
++	var w = g.world
++	w.s.society = "disrupted"
++	var sid: String = Survivors.ensure(w).people.keys()[0]
++	var sp: Dictionary = Survivors.person(w, sid)
++	g.location = sp.place
++	await run_cmds(g, ["%sに話しかける" % sp.label])
++	w.s.health = 0.0
++	g._refresh()
++	await process_frame
++	await run_cmds(g, ["周囲を見る", "水を渡す"])
++	await verdict("death mid-conversation → succession", g, g.survivor_partner == "" and float(w.s.health) > 0)
++	# 2. A horde passes while the door is battered down.
++	g = await fresh(1)
++	w = g.world
++	w.s.society = "emergency"
++	w.s.minute = 13 * 60 + 20 * 1440
++	w.s.walkers.risen = [7]
++	w.s.walkers.horde = {"place": "屋外", "step": 4, "size": 30}
++	w.s.door_hp = 10.0
++	g.location = "居間"
++	for i in 6:
++		w.s.minute += 60
++		Walkers.horde_hourly(w)
++		Walkers.home_events(w)
++		Walkers.make_sound(w, 120)
++	g._refresh()
++	await run_cmds(g, ["窓から外を見る", "玄関へ行く", "逃げる", "裏口から外に出る", "息をひそめる", "裏口から家に入る"])
++	await verdict("horde + broken door + back door", g)
++	# 3. A household of six.
++	g = await fresh(3)
++	w = g.world
++	w.s.society = "disrupted"
++	var joined := 0
++	for id in Survivors.ensure(w).people:
++		var p: Dictionary = Survivors.person(w, id)
++		if bool(p.joinable) and joined < 3:
++			p.trust = 90
++			p.join_trust = 60
++			Survivors.invite(w, id)
++			joined += 1
++	var names: Array = w.s.household_members.map(func(m): return str(m.name))
++	g.location = "居間"
++	for m in w.s.household_members:
++		m.location = "居間"
++		m.activity = "在宅"
++	await run_cmds(g, ["%s、おはよう" % names[-1], "%s、水を飲んで" % names[-1], "会話を終える", "%sの話を聞く" % names[4], "1日待つ"])
++	var saved: String = g._save()
++	var loaded: String = g._load()
++	await verdict("household of six (%d) talks, waits, saves" % w.s.household_members.size(), g, saved.begins_with("保存") and loaded == "保存データを読み込んだ。")
++	# 4. A flat: down the balcony ladder at night into walkers, and back.
++	g = await fresh(0, "集合住宅")
++	w = g.world
++	w.s.society = "emergency"
++	w.s.minute = 14 * 60 + 18 * 1440
++	w.s.walkers.risen = [7]
++	w.s.walkers.places = {"屋外": 3, "建物前": 2}
++	g.location = "居間"
++	await run_cmds(g, ["外に出る", "ベランダから外に出る", "隠れる", "逃げる", "ベランダから家に戻る", "窓から物を投げて気をそらす"])
++	await verdict("flat: ladder at night, walkers below", g)
++	# 5. A year on.
++	g = await fresh(1)
++	w = g.world
++	w.s.society = "emergency"
++	w.s.walkers.places = {"駅前": 20, "商店通り": 10, "屋外": 4}
++	w.s.minute = 400 * 1440
++	for i in 48:
++		w.s.minute += 60
++		w.step(false)
++	g._refresh()
++	await run_cmds(g, ["外に出る", "駅前へ行く", "デパートの前へ行く", "デパートに入る", "デパ地下へ行く", "家に帰る"])
++	await verdict("a year on: decay, overgrown photos", g, str(g.picture.texture.resource_path) != "")
++	# 6. Bitten and alone: leaving home with nobody to hand over to.
++	g = await fresh(0)
++	w = g.world
++	w.s.bitten = true
++	w.s.exposure = 10
++	g.location = "居間"
++	await run_cmds(g, ["みんなのために、一人で出ていく", "周囲を見る"])
++	await verdict("bitten and alone leaves", g)
++	# 7. A thief with nothing to steal.
++	g = await fresh(1)
++	w = g.world
++	var m0: Dictionary = w.s.household_members[0]
++	m0.honesty = 10
++	m0.leaving = true
++	m0.theft = true
++	w.s.food = 0.0
++	w.s.water = 0.0
++	g._refresh()
++	await verdict("thief with empty stores", g, w.s.household_members.is_empty() and float(w.s.food) >= 0.0)
++	# 8. A hidden bite surfaces during a horde.
++	g = await fresh(0)
++	w = g.world
++	w.s.society = "disrupted"
++	var hid: String = Survivors.ensure(w).people.keys()[1]
++	var hp: Dictionary = Survivors.person(w, hid)
++	hp.tag = "hidden_bite"
++	hp.secret = "誰にも言っていないが、肩を噛まれている。"
++	hp.joinable = true
++	hp.trust = 90
++	hp.join_trust = 60
++	Survivors.invite(w, hid)
++	w.s.household_members[0].hidden_bite_at = int(w.s.minute) + 60
++	w.s.walkers.horde = {"place": "屋外", "step": 4, "size": 20}
++	g.location = "居間"
++	await run_cmds(g, ["3時間待つ", "%sを寝室に隔離する" % hp.name, "息をひそめる", "1日待つ", "1日待つ", "1日待つ", "1日待つ"])
++	await verdict("hidden bite during a horde, isolated, dies and rises", g)
++	# 9. Survivor conversation then the shop: actions still work.
++	g = await fresh(0)
++	w = g.world
++	w.s.society = "disrupted"
++	w.s.minute = 4 * 60 + 12 * 1440
++	g.location = "コンビニ"
++	await run_cmds(g, ["タバコを買う", "店の在庫を見る", "食料を2個買う", "家に帰る"])
++	await verdict("konbini errands after the breakdown", g)
++	var ng := results.filter(func(r): return not r[1]).size()
++	print("COMBO %d / %d OK" % [results.size() - ng, results.size()])
++	quit()
 diff --git a/qa/crawl.gd b/qa/crawl.gd
 new file mode 100644
-index 0000000..694758c
+index 0000000..8533b78
 --- /dev/null
 +++ b/qa/crawl.gd
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,189 @@
 +extends SceneTree
 +## Bug crawler: plays worlds by pressing suggestions and typing common
 +## commands at random, checking the state after every step.
@@ -82,6 +252,27 @@ index 0000000..694758c
 +	if g.log_entries.is_empty():
 +		problem(seed, step, cmd, "empty log")
 +
++## Survivor play: go to someone, talk, give, trade, ask, invite.
++func survivor_move(g, w) -> String:
++	var alive: Array = []
++	var people: Dictionary = Survivors.ensure(w).people
++	for id in people:
++		if people[id].status == "alive":
++			alive.append(id)
++	if alive.is_empty():
++		return "1日待つ"
++	var id: String = alive[rng.randi_range(0, alive.size() - 1)]
++	var p: Dictionary = people[id]
++	w.s.district.bag.food = 4.0
++	w.s.district.bag.water = 8.0
++	w.s.inventory.bandage = maxi(int(w.s.inventory.bandage), 2)
++	if g.location != str(p.place):
++		return "%sへ行く" % p.place
++	var r := rng.randi_range(1, 7)
++	if r == 7:
++		p.trust = mini(100, int(p.trust) + 30)
++	return ["%sに話しかける" % p.label, "水を渡す", "食料を渡す", "包帯を渡す", "交換できるものを聞く", "%sと交換する" % "包帯", "一緒に来ないか誘う", "何か知っていることはないか聞く"][r - 1] if r < 7 else "一緒に来ないか誘う"
++
 +func Navigation_has(place: String, housing: String) -> bool:
 +	var graph: Dictionary = load("res://scripts/navigation.gd").graph(housing)
 +	return graph.has(place)
@@ -111,11 +302,23 @@ index 0000000..694758c
 +		g.local_model.enabled = false
 +		var w = g.world
 +		var deaths := 0
++		var mode := OS.get_environment("DCJ_MODE")
++		if mode == "survivors":
++			w.s.society = "disrupted"
++			w.s.regional_cases = 150
 +		for step in steps:
 +			var cmd := ""
 +			var roll := rng.randi_range(1, 100)
 +			var chips: Array = g._suggestions()
-+			if roll <= 45 and not chips.is_empty():
++			if mode == "long" and roll <= 55:
++				roll = 200   # mostly whole days
++			if mode == "survivors" and roll <= 30:
++				roll = 300
++			if roll == 200:
++				cmd = "1日待つ"
++			elif roll == 300:
++				cmd = survivor_move(g, w)
++			elif roll <= 45 and not chips.is_empty():
 +				cmd = str(chips[rng.randi_range(0, chips.size() - 1)])
 +			elif roll <= 78:
 +				cmd = TYPED[rng.randi_range(0, TYPED.size() - 1)]
@@ -146,6 +349,11 @@ index 0000000..694758c
 +			check_state(g, seed, step, cmd)
 +			if OS.get_environment("DCJ_TRACE") == "1":
 +				print("TRACE %d %s | 曝露%d 発症%s 噛%s 傷%d | 体%.1f 満%.0f 水%.0f 休%.0f | %s | %s" % [step, cmd, int(w.s.exposure), str(w.s.symptomatic), str(w.s.get("bitten", false)), int(w.s.injuries), float(w.s.health), 100 - float(w.s.hunger), 100 - float(w.s.thirst), 100 - float(w.s.fatigue), g.location, g.log_entries[-1].left(90).replace("\n", " / ")])
++			if mode == "survivors" and not str(w.s.society) in ["disrupted", "emergency"]:
++				w.s.society = "disrupted"
++				w.s.regional_cases = maxi(int(w.s.regional_cases), 150)
++			if mode == "long" and step % 25 == 0:
++				w.s.health = maxf(float(w.s.health), 60.0)
 +			if float(w.s.health) <= 0:
 +				deaths += 1
 +				print("seed %d: died at step %d (day %d)" % [seed, step, int(w.s.minute) / 1440])
@@ -183,6 +391,53 @@ index 0000000..ca84f0b
 +		print("CMD ", cmd, " → ", g.log_entries[-1].left(70).replace("\n", " / "))
 +	print("STATE valid=", w.validate_state(w.s), " mood=", w.s.get("mood"), " survivors=", w.s.survivors.people.size() if w.s.has("survivors") else -1)
 +	print("SAVE ", g._save(), " LOAD ", g._load())
++	quit()
+diff --git a/qa/longsim.gd b/qa/longsim.gd
+new file mode 100644
+index 0000000..6111d8f
+--- /dev/null
++++ b/qa/longsim.gd
+@@ -0,0 +1,41 @@
++extends SceneTree
++## 400 days of world time with a household kept alive; checks the state each day.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED")) if not OS.get_environment("DCJ_SEED").is_empty() else 4242
++	p.cohabitants = 2
++	p.companion_names = ["詩音", "蒼"]
++	p.companion_genders = ["女性", "男性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var bad := 0
++	for day in 400:
++		for h in 24:
++			w.s.food = maxf(float(w.s.food), 5.0)
++			w.s.water = maxf(float(w.s.water), 10.0)
++			w.s.health = maxf(float(w.s.health), 50.0)
++			for m in w.s.household_members:
++				m.health = maxf(float(m.health), 50.0)
++			w.advance_safe(60)
++		g._refresh()
++		if not w.validate_state(w.s):
++			bad += 1
++			print("BAD state day ", day)
++		if day % 50 == 0 or day in [59, 61, 365, 399]:
++			var horde: Dictionary = w.s.walkers.get("horde", {})
++			print("day %d %s walkers %d horde %s mood %.0f household %d survivors alive %d photo %s" % [day, w.s.society, Walkers.total(w), horde.get("place", "-"), float(w.s.get("mood", 70)), w.s.household_members.size(), Survivors.ensure(w).people.values().filter(func(x): return x.status == "alive").size(), str(g.picture.texture.resource_path).get_file() if g.picture.texture else "-"])
++		if day % 30 == 0:
++			for cmd in ["窓から外を見る", "ニュースを見る", "周囲を見る"]:
++				await g._on_command(cmd)
++	print("LONGSIM bad days: ", bad)
 +	quit()
 diff --git a/qa/survivor_eval.gd b/qa/survivor_eval.gd
 new file mode 100644
@@ -995,7 +1250,7 @@ index 0000000..d960cc9
 +}
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 new file mode 100644
-index 0000000..f663a6f
+index 0000000..a3f76d1
 --- /dev/null
 +++ b/scripts/survivors.gd
 @@ -0,0 +1,669 @@
@@ -1496,7 +1751,7 @@ index 0000000..f663a6f
 +		elif str(p.tag) == "hidden_bite" and day >= 22:
 +			cause = "turned"
 +		elif str(world.s.society) == "emergency":
-+			var risk := clampi(int(walkers_at.call(str(p.place))) * 4 - int(p.traits.courage) / 10, 0, 40)
++			var risk := clampi(int(walkers_at.call(str(p.place))) * 3 - int(p.traits.courage) / 10, 0, 30)
 +			if world.draw(minute, hash(id), "survivor-risk", 100) < risk:
 +				cause = "bitten"
 +		if cause.is_empty():
@@ -1735,6 +1990,19 @@ index 3109e97..634981c 100644
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
+diff --git a/scripts/world_events.gd b/scripts/world_events.gd
+index 4b4819d..51fdf9a 100644
+--- a/scripts/world_events.gd
++++ b/scripts/world_events.gd
+@@ -456,7 +456,7 @@ static func valid_data(data: Dictionary) -> bool:
+ 		for key in ["region","report_at"]:
+ 			if not (event.get(key) is int or event.get(key) is float) or not is_finite(float(event[key])):return false
+ 		if int(event.region)<0 or int(event.region)>7:return false
+-	if data.household_members.size()>3:return false
++	if data.household_members.size()>6:return false
+ 	for person in data.household_members:
+ 		if not person is Dictionary or not person.get("name") is String or not person.get("location") is String or not person.get("activity") is String:return false
+ 		for key in ["health","hunger","thirst","fatigue","food_used","water_used"]:
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
 index b60b74f..0090ac0 100644
 --- a/scripts/world_legacy.gd
@@ -1812,10 +2080,10 @@ index d5b3976..94cce56 100644
  	root.add_child(g2)
 diff --git a/tests/test_survivors149_26.gd b/tests/test_survivors149_26.gd
 new file mode 100644
-index 0000000..205b796
+index 0000000..2bf2b5f
 --- /dev/null
 +++ b/tests/test_survivors149_26.gd
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,225 @@
 +extends SceneTree
 +## v149.26: survivors made anew for every world from parts; met once the city
 +## breaks down; trust from gifts and talk; trade, information, joining; a
@@ -1926,6 +2194,17 @@ index 0000000..205b796
 +	var mate: Dictionary = w.s.household_members[-1]
 +	check(p.status == "joined" and mate.name == p.name and mate.has("background") and int(w.s.profile.cohabitants) == 1, "with trust they join the household")
 +	check(w.validate_state(w.s) and g.survivor_partner == "", "the household stays valid and the talk ends")
++	# --- More than three housemates stay valid and save.
++	for other in people:
++		if int(w.s.profile.cohabitants) >= 4:
++			break
++		var op: Dictionary = people[other]
++		if op.status == "alive" and bool(op.joinable):
++			op.trust = 90
++			op.join_trust = 60
++			Survivors.invite(w, other)
++	check(int(w.s.profile.cohabitants) >= 4 and w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "four or more housemates save and load (%d)" % int(g.world.s.profile.cohabitants))
++	w = g.world
 +	# --- A hidden bite surfaces after joining.
 +	var g2 = Main.instantiate()
 +	root.add_child(g2)
