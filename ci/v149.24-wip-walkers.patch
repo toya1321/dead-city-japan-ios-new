@@ -100,7 +100,7 @@ index 13e123e..45acede 100644
  		return "喉が渇いてきた"
  	if float(person.hunger) >= 35.0:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..05cf99e 100644
+index c54fcf5..65660da 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -22,6 +22,8 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
@@ -138,6 +138,15 @@ index c54fcf5..05cf99e 100644
  		var cell := VBoxContainer.new()
  		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  		grid.add_child(cell)
+@@ -707,7 +710,7 @@ func _yen(value: int) -> String:
+ 
+ func _build_base_tab() -> void:
+ 	var home := UI.card(tab_content, "自宅")
+-	home.add_child(UI.label("住居の耐久 %.0f / 100 · 玄関の補強 %s · 玄関 %s" % [float(world.s.longplay.shelter_integrity), "あり" if int(world.s.barricade) > 0 else "なし", "施錠中" if bool(world.s.door_locked) else "開いている"], 14, UI.BODY))
++	home.add_child(UI.label("住居の耐久 %.0f / 100 · 玄関の補強 %s · 玄関 %s · 扉 %s" % [float(world.s.longplay.shelter_integrity), ("%d段" % int(world.s.barricade)) if int(world.s.barricade) > 0 else "なし", "施錠中" if bool(world.s.door_locked) else "開いている", Walkers.door_text(world)], 14, UI.BODY))
+ 	home.add_child(UI.label("備蓄 食料 %.1f人日 · 水 %.1f L · 雨水 %.1f L" % [float(world.s.food), float(world.s.water), float(world.s.rain_water)], 14, UI.BODY))
+ 	var any_site := false
+ 	for place in District.SITES:
 @@ -1344,6 +1347,9 @@ func _scroll_log_to_end() -> void:
  	log_follow_queued=false
  
@@ -187,7 +196,7 @@ index c54fcf5..05cf99e 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1474,8 +1498,30 @@ func _suggestions() -> Array:
+@@ -1474,8 +1498,38 @@ func _suggestions() -> Array:
  			var unit := HouseholdErrands.unit(str(order.item))
  			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
  		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
@@ -201,6 +210,14 @@ index c54fcf5..05cf99e 100644
 +			out.append("玄関を補強")
 +		if horde_near:
 +			out.append("1時間待つ")
++	var flat_home := str(world.s.profile.housing) == "集合住宅"
++	var front_blocked := Walkers.count(world, "建物前") > 0 or int(world.s.barricade) > 0
++	if Navigation.indoor(location) and front_blocked and location == ("居間" if flat_home else "台所"):
++		out.append("ベランダから外に出る" if flat_home else "裏口から外に出る")
++	if location == "屋外" and front_blocked:
++		out.append("ベランダから家に戻る" if flat_home else "裏口から家に入る")
++	if location == "玄関" and (Walkers.door_hp(world) < 100.0 or bool(world.s.get("door_broken", false))) and Walkers.count(world, "玄関") == 0:
++		out.append("扉を直す")
 +	if Navigation.indoor(location) and not Walkers.ensure(world).risen.is_empty() and not bool(world.s.get("blackout", false)) and world.has_home_power():
 +		var hour: float = world.hour_of_day()
 +		if hour >= 16.0 or hour < 6.0:
@@ -219,7 +236,7 @@ index c54fcf5..05cf99e 100644
  			out.append("%sに話しかける" % person.name)
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -1747,6 +1793,7 @@ func _log_rejected_line(index: int, reason: String, line: String) -> void:
+@@ -1747,6 +1801,7 @@ func _log_rejected_line(index: int, reason: String, line: String) -> void:
  func _finish_npc_reply(index: int, speech: String, reply: String, source: String = "game_fact", reason: String = "") -> void:
  	var person: Dictionary = world.s.household_members[index]
  	_record_npc_reply_source(index, source, reason)
@@ -227,7 +244,7 @@ index c54fcf5..05cf99e 100644
  	NPCConversation.disclosure(npc_memory, person, int(world.s.minute), speech)
  	# Long-term conversation memory, retrieved later by relevance.
  	if speech.strip_edges().length() >= 4 and not reply.is_empty():
-@@ -2008,10 +2055,14 @@ func _execute_local_suggestion(proposal: Dictionary) -> void:
+@@ -2008,10 +2063,14 @@ func _execute_local_suggestion(proposal: Dictionary) -> void:
  	var request := str(LocalNPCModel.NPC_ACTIONS[proposal.key])
  	await _run_household_request(index, person, request, request)
  
@@ -242,7 +259,7 @@ index c54fcf5..05cf99e 100644
  		reply = await HouseholdActions.watch_movie(self, person, movie)
  		_set_busy(false)
  		if reply.begins_with("『%s』を一緒に観終わった" % movie.title):
-@@ -2088,6 +2139,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2088,6 +2147,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -252,7 +269,7 @@ index c54fcf5..05cf99e 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2152,250 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2160,303 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
@@ -345,6 +362,59 @@ index c54fcf5..05cf99e 100644
 +	_refresh()
 +	return true
 +
++const REPAIR_WORDS := ["扉を直", "扉を修理", "扉を修繕", "ドアを直", "ドアを修理", "玄関を直", "玄関を修理"]
++const BACK_OUT_WORDS := ["裏口から出", "勝手口から出", "裏口から外", "勝手口から外", "ベランダから出", "ベランダから外", "はしごで降り", "はしごで下り", "避難はしご"]
++const BACK_IN_WORDS := ["裏口から入", "勝手口から入", "裏口から家", "勝手口から家", "裏口から帰", "勝手口から帰", "裏口から戻", "勝手口から戻", "ベランダから戻", "ベランダから入", "ベランダから家", "はしごで戻", "はしごを登", "はしごで上"]
++
++func _door_command(cmd: String) -> bool:
++	if not NPCMemory._mentions(cmd, REPAIR_WORDS):
++		return false
++	if location != "玄関":
++		_append("扉の修理は玄関で行う。何も実行していません。")
++	else:
++		_append(Walkers.repair_door(world))
++	_refresh()
++	return true
++
++## The other way out: the kitchen door of a house, or the balcony's escape
++## ladder of a flat. It avoids whatever is waiting at the front door.
++func _back_exit(cmd: String) -> bool:
++	var flat := str(world.s.profile.housing) == "集合住宅"
++	var out := NPCMemory._mentions(cmd, BACK_OUT_WORDS)
++	var back_in := NPCMemory._mentions(cmd, BACK_IN_WORDS)
++	if not out and not back_in:
++		return false
++	var room := "居間" if flat else "台所"
++	var way := "ベランダの避難はしご" if flat else "台所の勝手口"
++	if out:
++		if not Navigation.indoor(location):
++			_append("今は家の外にいる。何も実行していません。")
++			_refresh()
++			return true
++		if location != room:
++			_append(_move_to(room))
++			if location != room:
++				_refresh()
++				return true
++		var previous := location
++		location = "屋外"
++		_sync_player_position()
++		world.advance_safe(6 if flat else 2)
++		_append(("ベランダの避難はしごのふたを開け、下の階へ降りて、建物の裏から通りへ出た（6分）。" if flat else "台所の勝手口をそっと開け、家の裏手を回って通りへ出た（2分）。勝手口の鍵は外から閉めた。") + ("玄関の前の連中には、気づかれていない。" if Walkers.count(world, "建物前") > 0 else ""))
++		_check_walkers(previous)
++		_refresh()
++		return true
++	if location != "屋外":
++		_append("%sは、家の前の通りから使う。何も実行していません。" % way)
++		_refresh()
++		return true
++	location = room
++	_sync_player_position()
++	world.advance_safe(6 if flat else 2)
++	_append("避難はしごを登って、ベランダから居間に戻った（6分）。" if flat else "家の裏手に回り、勝手口から台所に入った（2分）。")
++	_refresh()
++	return true
++
 +const BLACKOUT_WORDS := ["目張り", "遮光", "窓をふさ", "窓を塞", "窓を覆", "窓をおお", "窓に段ボール", "窓に毛布"]
 +const UNBLACKOUT_WORDS := ["目張りを外", "目張りをはが", "目張りを剥が", "遮光を外", "遮光をやめ", "窓のふさぎを外", "段ボールを外", "毛布を外"]
 +
@@ -401,7 +471,7 @@ index c54fcf5..05cf99e 100644
 +
 +## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
 +func _care_command(cmd: String) -> bool:
-+	if _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd):
++	if _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd):
 +		return true
 +	for index in world.s.household_members.size():
 +		var person: Dictionary = world.s.household_members[index]
@@ -503,7 +573,7 @@ index c54fcf5..05cf99e 100644
  func _report_household_errands() -> void:
  	if not Navigation.indoor(location) or float(world.s.health) <= 0:
  		return
-@@ -2299,6 +2597,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2299,6 +2658,8 @@ func _execute_command(cmd: String) -> String:
  		if location != "玄関": return "玄関で作業する必要がある。"
  		var response := world.action("fortify")
  		if response.begins_with("玄関を補強"):
@@ -512,7 +582,7 @@ index c54fcf5..05cf99e 100644
  			event_visual = "shelter"
  			visual_focus = "event"
  		return response
-@@ -2325,7 +2625,11 @@ func _execute_command(cmd: String) -> String:
+@@ -2325,7 +2686,11 @@ func _execute_command(cmd: String) -> String:
  		return world.longplay_action("rest")
  	if cmd.contains("住居を修繕") or cmd.contains("家を修理"):
  		if location != "玄関" and location != "台所": return "住居の修繕は玄関か台所から行う。"
@@ -525,7 +595,7 @@ index c54fcf5..05cf99e 100644
  	if cmd.contains("浄水"):
  		if location != "台所": return "台所で浄水設備を操作する。"
  		return world.longplay_action("purify")
-@@ -2395,6 +2699,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2395,10 +2760,13 @@ func _execute_command(cmd: String) -> String:
  		world.advance_safe(2)
  		visual_focus="window" if Navigation.indoor(location) else ""
  		var observed:=_observe("sight")
@@ -534,6 +604,39 @@ index c54fcf5..05cf99e 100644
  		return "通りを観察した。天候：%s。\n%s"%[_weather_text(),observed]
  
  	if cmd.contains("鍵を閉") or cmd.contains("施錠"):
+ 		if location != "玄関": return "玄関にいない。"
++		if bool(world.s.get("door_broken", false)): return "扉が壊れていて、鍵がかからない。「扉を直す」で直せる（木材1・部品1、60分、音が出る）。"
+ 		world.s.door_locked = true
+ 		world.s.door_open = false
+ 		world.advance(1)
+@@ -2476,6 +2844,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 		if District.SITES.has(to_place) and not District.can_enter(world, to_place):
+ 			return "%sは営業時間外。中には入れない。" % to_place
+ 		if ((from_place=="玄関" and not Navigation.indoor(to_place)) or (to_place=="玄関" and not Navigation.indoor(from_place))) and int(world.s.barricade)>0:return "玄関の補強が通路を塞いでいる。玄関のそばで「玄関の補強を外す」と通れる。"
++		if from_place=="玄関" and not Navigation.indoor(to_place) and Walkers.count(world, "建物前") > 0:
++			return "のぞき穴から見ると、玄関のすぐ外に%s立っている。正面からは出られない。%sから出るか、去るのを待とう。" % [Walkers.vague(Walkers.count(world, "建物前")), "ベランダの避難はしご" if str(world.s.profile.housing) == "集合住宅" else "台所の勝手口"]
+ 		if from_place=="玄関" and not Navigation.indoor(to_place) and bool(world.s.door_locked):
+ 			if not bool(world.s.profile.has_key):return "玄関には鍵がかかっている。鍵を持っていない。"
+ 			# v149.21: going out unlocks the door on the way, like a person would.
+@@ -2506,6 +2876,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 		if not companion.is_empty() and (companion.location != location or float(companion.health) <= 0):
+ 			break
+ 		if elapsed<=0 or world.s.health<=0:break
++		# v149.24: the dead on the way stop the walk there.
++		if location != path[-1] and Walkers.count(world, location) > 0:
++			auto_steps.append("%sで感染者を見かけて足を止めた" % location)
++			break
+ 	visual_focus=""
+ 	event_visual=""
+ 	selected_event.clear()
+@@ -2526,6 +2900,7 @@ func _door_action(command: String) -> String:
+ 		world.advance_safe(1)
+ 		return "玄関の扉を閉めた。"
+ 	if command.contains("閉め") or command=="施錠する":
++		if bool(world.s.get("door_broken", false)):return "扉が壊れていて、鍵がかからない。「扉を直す」で直せる（木材1・部品1、60分、音が出る）。"
+ 		if location!="玄関" and not world.s.profile.has_key:return "玄関の鍵を持っていない。"
+ 		world.s.door_open=false
+ 		world.s.door_locked=true
 diff --git a/scripts/mood.gd b/scripts/mood.gd
 new file mode 100644
 index 0000000..201b700
@@ -720,10 +823,10 @@ index b89279e..1696e7f 100644
  	return "\n".join(lines)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 new file mode 100644
-index 0000000..a1b65cf
+index 0000000..ff65d00
 --- /dev/null
 +++ b/scripts/walkers.gd
-@@ -0,0 +1,526 @@
+@@ -0,0 +1,597 @@
 +extends RefCounted
 +## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
 +## Slow walkers; a bite infects and kills over days; fighting is possible but
@@ -953,28 +1056,99 @@ index 0000000..a1b65cf
 +	if porch <= 0:
 +		w.erase("knocking")
 +		return
-+	var open_door: bool = not bool(world.s.door_locked) and int(world.s.barricade) <= 0
++	var broken: bool = bool(world.s.get("door_broken", false)) and int(world.s.barricade) <= 0
++	var open_door: bool = (not bool(world.s.door_locked) and int(world.s.barricade) <= 0) or broken
 +	if open_door:
-+		_add(world, "建物前", -1)
-+		_add(world, "玄関", 1)
++		var come := mini(porch, 2 if broken else 1)
++		_add(world, "建物前", -come)
++		_add(world, "玄関", come)
 +		w.alarm = true
 +		Mood.everyone(world, -8.0)
-+		w.notices.append("【危険】鍵のかかっていない玄関の扉が、きしみながら開いた。誰かが家の中に入ってきた。")
++		w.notices.append("【危険】壊れた玄関から、感染者がなだれ込んできた。" if broken else "【危険】鍵のかかっていない玄関の扉が、きしみながら開いた。誰かが家の中に入ってきた。")
 +	elif not drawn.is_empty():
 +		w.alarm = true
-+		if not w.has("knocking"):
++		var first := not w.has("knocking")
++		if first:
 +			w.knocking = true
 +			Mood.everyone(world, -3.0)
-+		if int(world.s.barricade) > 0:
-+			w.notices.append("【危険】玄関の補強板が、外から叩かれている。うめき声が聞こえる。板はまだ持ちこたえている。")
-+		else:
-+			world.s.longplay.shelter_integrity = maxf(0.0, float(world.s.longplay.shelter_integrity) - 1.0)
-+			w.notices.append("【危険】玄関の扉を、どん、どんと叩く音がする。鍵はかかっている。" + ("静かにしていれば、そのうち離れていくかもしれない。" if drawn[0] == "followed" else "%sがある限り、離れそうにない。" % REASON_TEXT[drawn[0]]))
++			if int(world.s.barricade) > 0:
++				w.notices.append("【危険】玄関の補強板が、外から叩かれている。うめき声が聞こえる。")
++			else:
++				w.notices.append("【危険】玄関の扉を、どん、どんと叩く音がする。鍵はかかっている。" + ("静かにしていれば、そのうち離れていくかもしれない。" if drawn[0] == "followed" else "%sがある限り、離れそうにない。" % REASON_TEXT[drawn[0]]))
++		var damage_note := batter_door(world, 1.5 * porch)
++		if not damage_note.is_empty():
++			w.notices.append(damage_note)
 +	else:
 +		w.erase("knocking")
 +		_add(world, "建物前", -1)
 +		_add(world, "屋外", 1)
 +		w.notices.append("家の前にいた足音が、ゆっくりと遠ざかっていった。")
++
++## The front door: `door_hp` 0-100 behind `barricade` layers of boards, each
++## worth BOARD_HP (`board_damage` on the outermost). Knocking wears the boards
++## first, then the door; at 0 the door is broken and no longer locks.
++const BOARD_HP := 50.0
++
++static func door_hp(world) -> float:
++	return float(world.s.get("door_hp", 100.0))
++
++static func batter_door(world, damage: float) -> String:
++	if int(world.s.barricade) > 0:
++		world.s.board_damage = float(world.s.get("board_damage", 0.0)) + damage
++		if float(world.s.board_damage) >= BOARD_HP:
++			world.s.board_damage = 0.0
++			world.s.barricade = int(world.s.barricade) - 1
++			Mood.everyone(world, -3.0)
++			if int(world.s.barricade) > 0:
++				return "【危険】めりめりと音がして、補強の板が一枚はがれ落ちた。残りは%d段。" % int(world.s.barricade)
++			return "【危険】最後の補強板がはがれ落ちた。あとは扉だけだ。"
++		return ""
++	if bool(world.s.get("door_broken", false)):
++		return ""
++	var before := door_hp(world)
++	var after := maxf(0.0, before - damage)
++	world.s.door_hp = after
++	world.s.longplay.shelter_integrity = maxf(0.0, float(world.s.longplay.shelter_integrity) - damage * 0.2)
++	if after <= 0.0:
++		world.s.door_broken = true
++		world.s.door_locked = false
++		Mood.everyone(world, -10.0)
++		return "【危険】大きな音を立てて、玄関の扉が破られた！　鍵はもう役に立たない。"
++	for mark in [[20.0, "【危険】扉の板が割れ、隙間から腕が差し込まれてくる。もう長くはもたない。"], [50.0, "【危険】蝶番がゆるみ、扉が叩かれるたびに大きく揺れる。"], [75.0, "【警告】叩かれ続けて、扉がきしみ始めた。"]]:
++		if before > float(mark[0]) and after <= float(mark[0]):
++			return str(mark[1])
++	return ""
++
++## Mending the door: wood and parts, an hour, and loud hammering.
++static func repair_door(world) -> String:
++	if door_hp(world) >= 100.0 and not bool(world.s.get("door_broken", false)):
++		return "玄関の扉は傷んでいない。"
++	if int(world.s.inventory.wood) < 1 or int(world.s.inventory.parts) < 1:
++		return "扉の修理には木材1と部品1が必要。"
++	if count(world, "玄関") > 0:
++		return "玄関に感染者がいる。今は修理できない。"
++	world.s.inventory.wood = int(world.s.inventory.wood) - 1
++	world.s.inventory.parts = int(world.s.inventory.parts) - 1
++	world.advance_safe(60)
++	world.s.door_hp = 100.0
++	world.s.door_broken = false
++	make_noise(world, "玄関", 60)
++	return "60分かけて、玄関の扉を板と金具で直した。また鍵がかかる。金づちの音が外に響いた。"
++
++## What the door looks like from the inside.
++static func door_text(world) -> String:
++	if bool(world.s.get("door_broken", false)):
++		return "壊れている（鍵がかからない）"
++	var hp := door_hp(world)
++	if hp >= 100.0:
++		return "無傷"
++	if hp > 75.0:
++		return "少し傷んでいる"
++	if hp > 50.0:
++		return "きしんでいる"
++	if hp > 20.0:
++		return "蝶番がゆるんでいる"
++	return "今にも破られそう"
 +
 +const HORDE_ROUTE := ["駅前", "駅前", "住宅街", "住宅街", "屋外", "屋外", "屋外", "商店通り", "商店通り"]
 +
@@ -1389,10 +1563,10 @@ index ac961cd..b9c0800 100644
  	check(g.world.s.sim.next_event_id>0 and g.world.s.agents!=before.agents,"world and autonomous NPCs progress during routine")
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..dec4bee
+index 0000000..22715f9
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,555 @@
 +extends SceneTree
 +const Mood = preload("res://scripts/mood.gd")
 +const Vitals = preload("res://scripts/vitals.gd")
@@ -1668,10 +1842,11 @@ index 0000000..dec4bee
 +	hw2.s.minute += 60
 +	Walkers.home_events(hw2)
 +	check(Walkers.count(hw2, "建物前") == 1 and str(hw2.s.walkers.notices).contains("窓から漏れる明かり"), "left on, the light brings it to the door and says why")
++	check(str(hw2.s.walkers.notices).contains("叩く音"), "it knocks on the locked door")
 +	hw2.s.walkers.notices = []
 +	hw2.s.minute += 60
 +	Walkers.home_events(hw2)
-+	check(str(hw2.s.walkers.notices).contains("叩く音") and Walkers.count(hw2, "玄関") == 0, "a locked door is knocked on but holds")
++	check(Walkers.door_hp(hw2) < 100.0 and Walkers.count(hw2, "玄関") == 0 and not str(hw2.s.walkers.notices).contains("叩く音"), "a locked door holds for now, wearing a little each hour, without repeating the knock line")
 +	hw2.s.lights_off = true
 +	hw2.s.walkers.places = {"建物前": 1}
 +	hw2.s.minute += 60
@@ -1850,6 +2025,69 @@ index 0000000..dec4bee
 +	hdw.s.walkers.encounter = {}
 +	hdw.s.walkers.erase("horde")
 +	hdw.s.walkers.places = {}
++
++	# --- Under siege: boards then the door give way; the back way out.
++	var sg = await new_game()
++	var sw = sg.world
++	sg.location = "居間"
++	sw.s.minute = 12 * 60 + 5 * 1440
++	sw.s.lights_off = false
++	sw.s.barricade = 1
++	sw.s.walkers.places = {"建物前": 4}
++	var notes: Array = []
++	var hours := 0
++	while not bool(sw.s.get("door_broken", false)) and hours < 60:
++		sw.s.minute += 60
++		sw.s.walkers.notices = []
++		Walkers.home_events(sw)
++		notes.append_array(sw.s.walkers.notices)
++		sw.s.walkers.places = {"建物前": 4}
++		Walkers.make_sound(sw, 120)
++		hours += 1
++	check(str(notes).contains("最後の補強板がはがれ落ちた") and int(sw.s.barricade) == 0, "the boards give way first")
++	check(str(notes).contains("きしみ始めた") and str(notes).contains("蝶番") and str(notes).contains("腕が差し込まれて"), "the door's state is told as it weakens")
++	check(bool(sw.s.door_broken) and hours >= 20 and hours <= 30, "four at the door break a boarded door in about a day (%d hours)" % hours)
++	sw.s.walkers.notices = []
++	Walkers.home_events(sw)
++	check(Walkers.count(sw, "玄関") == 2 and str(sw.s.walkers.notices).contains("なだれ込んで"), "then they pour in, two an hour")
++	sw.s.walkers.places = {}
++	sg.location = "玄関"
++	await sg._on_command("鍵を閉める")
++	check(str(sg.log_entries.slice(-3)).contains("鍵がかからない"), "a broken door cannot be locked")
++	sw.s.inventory.wood = 1
++	sw.s.inventory.parts = 1
++	await sg._on_command("扉を直す")
++	check(not bool(sw.s.door_broken) and is_equal_approx(Walkers.door_hp(sw), 100.0) and "noise" in Walkers.home_reasons(sw), "the door can be mended, loudly")
++	sw.s.walkers.noise = {}
++	sw.s.lights_off = true
++	sw.s.door_locked = true
++	sw.s.walkers.places = {"建物前": 2}
++	sw.s.walkers.encounter = {}
++	sg.location = "玄関"
++	var before_out: String = sg.location
++	await sg._on_command("外に出る")
++	check(sg.location == before_out and sg.log_entries[-1].contains("正面からは出られない") and sg.log_entries[-1].contains("勝手口"), "the front door is blocked while they wait outside it")
++	sg.location = "台所"
++	sg._refresh()
++	check("裏口から外に出る" in sg._suggestions(), "the back way is suggested")
++	await sg._on_command("裏口から外に出る")
++	check(sg.location == "屋外" and str(sg.log_entries.slice(-3)).contains("気づかれていない"), "the kitchen door leads out unseen")
++	check("裏口から家に入る" in sg._suggestions(), "and back in")
++	await sg._on_command("裏口から家に入る")
++	check(sg.location == "台所", "the kitchen door leads back in")
++	var flat = await new_game()
++	flat.world.s.profile.housing = "集合住宅"
++	flat.location = "居間"
++	await flat._on_command("ベランダから外に出る")
++	check(flat.location == "屋外" and str(flat.log_entries.slice(-3)).contains("避難はしご"), "a flat has the balcony's escape ladder")
++	await flat._on_command("ベランダから家に戻る")
++	check(flat.location == "居間", "and the ladder back up")
++	# Walking home past the dead at the door stops in front of them.
++	var walk = await new_game()
++	walk.location = "屋外"
++	walk.world.s.walkers.places = {"建物前": 1}
++	await walk._on_command("家に帰る")
++	check(walk.location == "建物前" and not walk.world.s.walkers.encounter.is_empty(), "walking home stops where the dead stand")
 +
 +	# --- Fleeing while seen: it follows the player home; losing it first does not.
 +	var chased3 = await new_game()
