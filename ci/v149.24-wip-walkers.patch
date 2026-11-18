@@ -100,7 +100,7 @@ index 13e123e..45acede 100644
  		return "喉が渇いてきた"
  	if float(person.hunger) >= 35.0:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index c54fcf5..4d8f5bb 100644
+index c54fcf5..05cf99e 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -22,6 +22,8 @@ const LocalNPCModel = preload("res://scripts/local_npc_model.gd")
@@ -148,18 +148,22 @@ index c54fcf5..4d8f5bb 100644
  	_update_dialogue_input()
  	var stamp := world.clock()
  	day_label.text = "%d日目" % _day_number()
-@@ -1353,6 +1359,10 @@ func _refresh() -> void:
+@@ -1353,6 +1359,14 @@ func _refresh() -> void:
  	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
  	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
  	danger_label.text = "街：" + str(stage[0])
 +	var here := Walkers.count(world, location)
++	var horde: Dictionary = Walkers.ensure(world).get("horde", {})
 +	if here > 0:
-+		danger_label.text = "感染者 %d" % here
++		danger_label.text = "感染者 %d" % here if here < 10 else "群れ"
++		stage = ["", 3]
++	elif not horde.is_empty() and Navigation.indoor(location) and str(horde.place) in ["住宅街", "屋外"]:
++		danger_label.text = "群れが通過中" if str(horde.place) == "屋外" else "群れ接近"
 +		stage = ["", 3]
  	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
  	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
  	var normalized := Vitals.values(world.s)
-@@ -1398,6 +1408,14 @@ func _on_command(raw: String) -> void:
+@@ -1398,6 +1412,14 @@ func _on_command(raw: String) -> void:
  	cancel_requested=false
  	var suggested := pending_local_action.duplicate()
  	pending_local_action.clear()
@@ -174,7 +178,7 @@ index c54fcf5..4d8f5bb 100644
  	if NPCConversation.normalize(cmd) == "提案を実行":
  		await _execute_local_suggestion(suggested)
  		return
-@@ -1463,6 +1481,8 @@ func _update_dialogue_input() -> void:
+@@ -1463,6 +1485,8 @@ func _update_dialogue_input() -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -183,17 +187,20 @@ index c54fcf5..4d8f5bb 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1474,8 +1494,27 @@ func _suggestions() -> Array:
+@@ -1474,8 +1498,30 @@ func _suggestions() -> Array:
  			var unit := HouseholdErrands.unit(str(order.item))
  			return ["3" + unit, "6" + unit, "12" + unit, "やっぱりやめて"]
  		return ["今日の予定は？", "買い物お願いできる？", "最近どう？", "会話を終える"]
-+	if Navigation.indoor(location) and (Walkers.count(world, "建物前") > 0 or Walkers.count(world, "玄関") > 0 or Walkers.ensure(world).has("drawn_at")):
++	var horde_near: bool = not Walkers.ensure(world).get("horde", {}).is_empty()
++	if Navigation.indoor(location) and (horde_near or Walkers.count(world, "建物前") > 0 or Walkers.count(world, "玄関") > 0 or Walkers.ensure(world).has("drawn_at")):
 +		if not bool(world.s.door_locked) and location == "玄関":
 +			out.append("鍵を閉める")
 +		if world.has_home_power() and not bool(world.s.get("lights_off", false)):
 +			out.append("明かりを消す")
-+		if location == "玄関" and int(world.s.barricade) <= 0:
++		if location == "玄関" and int(world.s.barricade) <= 0 and not horde_near:
 +			out.append("玄関を補強")
++		if horde_near:
++			out.append("1時間待つ")
 +	if Navigation.indoor(location) and not Walkers.ensure(world).risen.is_empty() and not bool(world.s.get("blackout", false)) and world.has_home_power():
 +		var hour: float = world.hour_of_day()
 +		if hour >= 16.0 or hour < 6.0:
@@ -212,7 +219,7 @@ index c54fcf5..4d8f5bb 100644
  			out.append("%sに話しかける" % person.name)
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -1747,6 +1786,7 @@ func _log_rejected_line(index: int, reason: String, line: String) -> void:
+@@ -1747,6 +1793,7 @@ func _log_rejected_line(index: int, reason: String, line: String) -> void:
  func _finish_npc_reply(index: int, speech: String, reply: String, source: String = "game_fact", reason: String = "") -> void:
  	var person: Dictionary = world.s.household_members[index]
  	_record_npc_reply_source(index, source, reason)
@@ -220,7 +227,7 @@ index c54fcf5..4d8f5bb 100644
  	NPCConversation.disclosure(npc_memory, person, int(world.s.minute), speech)
  	# Long-term conversation memory, retrieved later by relevance.
  	if speech.strip_edges().length() >= 4 and not reply.is_empty():
-@@ -2008,10 +2048,14 @@ func _execute_local_suggestion(proposal: Dictionary) -> void:
+@@ -2008,10 +2055,14 @@ func _execute_local_suggestion(proposal: Dictionary) -> void:
  	var request := str(LocalNPCModel.NPC_ACTIONS[proposal.key])
  	await _run_household_request(index, person, request, request)
  
@@ -235,7 +242,7 @@ index c54fcf5..4d8f5bb 100644
  		reply = await HouseholdActions.watch_movie(self, person, movie)
  		_set_busy(false)
  		if reply.begins_with("『%s』を一緒に観終わった" % movie.title):
-@@ -2088,6 +2132,9 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2088,6 +2139,9 @@ func _run_plan(plan: Dictionary) -> void:
  			var already_there: bool = world.s.health > 0 and destination == old_location
  			var result:=_interpret(command)
  			_append(("%d. "%index if validated.actions.size()>1 else "")+result)
@@ -245,7 +252,7 @@ index c54fcf5..4d8f5bb 100644
  			var unchanged:=before==var_to_bytes(world.s) and location==old_location
  			var missed_destination := not destination.is_empty() and destination != location
  			if missed_destination or (unchanged and not already_there and command not in Plan.QUERIES and command not in ["保存","読込"]):
-@@ -2098,6 +2145,250 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2098,6 +2152,250 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
@@ -496,7 +503,7 @@ index c54fcf5..4d8f5bb 100644
  func _report_household_errands() -> void:
  	if not Navigation.indoor(location) or float(world.s.health) <= 0:
  		return
-@@ -2299,6 +2590,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2299,6 +2597,8 @@ func _execute_command(cmd: String) -> String:
  		if location != "玄関": return "玄関で作業する必要がある。"
  		var response := world.action("fortify")
  		if response.begins_with("玄関を補強"):
@@ -505,7 +512,7 @@ index c54fcf5..4d8f5bb 100644
  			event_visual = "shelter"
  			visual_focus = "event"
  		return response
-@@ -2325,7 +2618,11 @@ func _execute_command(cmd: String) -> String:
+@@ -2325,7 +2625,11 @@ func _execute_command(cmd: String) -> String:
  		return world.longplay_action("rest")
  	if cmd.contains("住居を修繕") or cmd.contains("家を修理"):
  		if location != "玄関" and location != "台所": return "住居の修繕は玄関か台所から行う。"
@@ -518,7 +525,7 @@ index c54fcf5..4d8f5bb 100644
  	if cmd.contains("浄水"):
  		if location != "台所": return "台所で浄水設備を操作する。"
  		return world.longplay_action("purify")
-@@ -2395,6 +2692,8 @@ func _execute_command(cmd: String) -> String:
+@@ -2395,6 +2699,8 @@ func _execute_command(cmd: String) -> String:
  		world.advance_safe(2)
  		visual_focus="window" if Navigation.indoor(location) else ""
  		var observed:=_observe("sight")
@@ -529,10 +536,10 @@ index c54fcf5..4d8f5bb 100644
  	if cmd.contains("鍵を閉") or cmd.contains("施錠"):
 diff --git a/scripts/mood.gd b/scripts/mood.gd
 new file mode 100644
-index 0000000..a255bb4
+index 0000000..201b700
 --- /dev/null
 +++ b/scripts/mood.gd
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,115 @@
 +extends RefCounted
 +## v149.24: state of mind (心). 0-100, higher is better; starts at 70.
 +## Shut-in life wears it down (dark covered rooms by day, hunger, exhaustion,
@@ -590,21 +597,27 @@ index 0000000..a255bb4
 +		d -= 0.6
 +	if float(target.get("fatigue", 0.0)) >= 85.0:
 +		d -= 0.4
-+	match str(world.s.get("society", "normal")):
-+		"disrupted": d -= 0.15
-+		"emergency": d -= 0.3
 +	if alone:
-+		d -= 0.2
++		d -= 0.1
 +	if at_home and _walkers_at_door(world):
-+		d -= 1.0
-+	if d == 0.0:
-+		if day and not asleep and not at_home:
-+			d = 0.4   # fresh air and daylight
-+		elif day and not asleep and not bool(world.s.get("blackout", false)):
-+			d = 0.3   # daylight through the window
-+		elif of(target) < REST_POINT:
-+			d = 0.2
++		d -= 0.5
++	# Comforts add up alongside the strains, up to a contented 75.
++	if of(target) < 75.0 and day and not asleep:
++		if not at_home:
++			d += 0.4   # fresh air and daylight
++		elif not bool(world.s.get("blackout", false)):
++			d += 0.3   # daylight through the window
++	# The mind drifts toward where it settles; lower as society falls apart.
++	# The further from it, the stronger the pull (people adapt, slowly).
++	d += 0.02 * (rest_point(world) - of(target))
 +	return d
++
++## Where an untroubled mind settles: lower as society falls apart.
++static func rest_point(world) -> float:
++	match str(world.s.get("society", "normal")):
++		"disrupted": return 50.0
++		"emergency": return 40.0
++	return REST_POINT
 +
 +static func hourly(world, sleeping: bool) -> void:
 +	ensure(world)
@@ -707,10 +720,10 @@ index b89279e..1696e7f 100644
  	return "\n".join(lines)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 new file mode 100644
-index 0000000..5a70602
+index 0000000..a1b65cf
 --- /dev/null
 +++ b/scripts/walkers.gd
-@@ -0,0 +1,439 @@
+@@ -0,0 +1,526 @@
 +extends RefCounted
 +## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
 +## Slow walkers; a bite infects and kills over days; fighting is possible but
@@ -752,11 +765,24 @@ index 0000000..5a70602
 +	return true
 +
 +static func count(world, place: String) -> int:
-+	return int(ensure(world).places.get(place, 0))
++	var w := ensure(world)
++	return int(w.places.get(place, 0)) + horde_at(world, place)
++
++## Size of a passing horde at a place (0 when none is there).
++static func horde_at(world, place: String) -> int:
++	var horde: Dictionary = ensure(world).get("horde", {})
++	if horde.is_empty() or str(horde.place) != place:
++		return 0
++	return int(horde.size)
 +
 +static func _add(world, place: String, amount: int) -> void:
 +	var w := ensure(world)
-+	w.places[place] = maxi(0, int(w.places.get(place, 0)) + amount)
++	var base := int(w.places.get(place, 0))
++	if amount < 0 and base + amount < 0 and horde_at(world, place) > 0:
++		# Taken from the passing horde (one breaks off, or is killed).
++		w.horde.size = maxi(0, int(w.horde.size) + base + amount)
++		amount = -base
++	w.places[place] = maxi(0, base + amount)
 +	if int(w.places[place]) == 0:
 +		w.places.erase(place)
 +
@@ -817,7 +843,8 @@ index 0000000..5a70602
 +				continue
 +			var options: Array = []
 +			for next in graph.get(place, []):
-+				if next in OUTDOOR or next in BUILDINGS:
++				# The house's doorstep is reached only for a reason (home_events).
++				if (next in OUTDOOR or next in BUILDINGS) and next != "建物前":
 +					options.append(next)
 +			if options.is_empty():
 +				continue
@@ -894,6 +921,20 @@ index 0000000..5a70602
 +	# Only light and loud noise reach the street; ordinary sounds and smells
 +	# carry just past the door, to anything already standing there.
 +	var pulls := drawn.filter(func(r): return r in STREET_REASONS)
++	var passing := horde_at(world, "屋外")
++	if passing > 0:
++		# The horde shuffles right past the door: any sound, smell or light is noticed.
++		pulls = drawn.filter(func(r): return r != "followed")
++		if not pulls.is_empty():
++			var come: int = mini(passing, 3 + world.draw(minute, passing, "horde-pull", 4))
++			_add(world, "屋外", -come)
++			_add(world, "建物前", come)
++			porch += come
++			w.erase("drawn_at")
++			w.alarm = true
++			Mood.everyone(world, -5.0)
++			w.notices.append("【危険】群れの一部が、%sに気づいた。%d体ほどが、家の前に押し寄せてきた。" % [REASON_TEXT[pulls[0]], come])
++			pulls = []
 +	if street > 0 and not pulls.is_empty():
 +		if int(w.get("drawn_at", -1)) >= 0 and minute - int(w.drawn_at) >= 60:
 +			w.erase("drawn_at")
@@ -910,6 +951,7 @@ index 0000000..5a70602
 +	elif w.has("drawn_at"):
 +		w.erase("drawn_at")
 +	if porch <= 0:
++		w.erase("knocking")
 +		return
 +	var open_door: bool = not bool(world.s.door_locked) and int(world.s.barricade) <= 0
 +	if open_door:
@@ -920,16 +962,70 @@ index 0000000..5a70602
 +		w.notices.append("【危険】鍵のかかっていない玄関の扉が、きしみながら開いた。誰かが家の中に入ってきた。")
 +	elif not drawn.is_empty():
 +		w.alarm = true
-+		Mood.everyone(world, -2.0)
++		if not w.has("knocking"):
++			w.knocking = true
++			Mood.everyone(world, -3.0)
 +		if int(world.s.barricade) > 0:
 +			w.notices.append("【危険】玄関の補強板が、外から叩かれている。うめき声が聞こえる。板はまだ持ちこたえている。")
 +		else:
 +			world.s.longplay.shelter_integrity = maxf(0.0, float(world.s.longplay.shelter_integrity) - 1.0)
 +			w.notices.append("【危険】玄関の扉を、どん、どんと叩く音がする。鍵はかかっている。" + ("静かにしていれば、そのうち離れていくかもしれない。" if drawn[0] == "followed" else "%sがある限り、離れそうにない。" % REASON_TEXT[drawn[0]]))
 +	else:
++		w.erase("knocking")
 +		_add(world, "建物前", -1)
 +		_add(world, "屋外", 1)
 +		w.notices.append("家の前にいた足音が、ゆっくりと遠ざかっていった。")
++
++const HORDE_ROUTE := ["駅前", "駅前", "住宅街", "住宅街", "屋外", "屋外", "屋外", "商店通り", "商店通り"]
++
++static func total(world) -> int:
++	var n := 0
++	for place in ensure(world).places:
++		n += int(ensure(world).places[place])
++	return n
++
++## Hourly: once the town is overrun, a horde forms every week or so at the
++## station and walks past the house. The town's emergency radio announces it
++## hours ahead; its noise is heard an hour before it reaches the street.
++static func horde_hourly(world) -> void:
++	var w := ensure(world)
++	var minute := int(world.s.minute)
++	var horde: Dictionary = w.get("horde", {})
++	if horde.is_empty():
++		if not w.has("horde_next"):
++			if total(world) >= 12:
++				w.horde_next = minute + (36 + world.draw(minute, 11, "horde-first", 72)) * 60
++			return
++		if minute < int(w.horde_next):
++			return
++		# A horde is made of the town's dead: it grows as the town empties.
++		var size: int = clampi(total(world) / 2 + 8 + world.draw(minute, 12, "horde-size", 8), 12, 60)
++		w.horde = {"place": HORDE_ROUTE[0], "step": 0, "size": size}
++		w.horde_next = minute + (5 * 24 + world.draw(minute, 13, "horde-gap", 4 * 24)) * 60
++		if minute < 60 * 1440:
++			w.notices.append("【防災無線】こちらは、防災無線です。駅前付近に多数の感染者が集まり、住宅街の方向へ移動しています。付近の方は外出を控え、屋内で明かりを消し、物音を立てずに過ごしてください。")
++		else:
++			w.notices.append("【警告】駅の方角から、風に乗って、大勢のうめき声がかすかに聞こえる。")
++		Mood.everyone(world, -2.0)
++		return
++	var step := int(horde.step) + 1
++	if step >= HORDE_ROUTE.size():
++		# It breaks up: a few stay behind on the shopping street.
++		_add(world, "商店通り", int(horde.size) / 3)
++		w.erase("horde")
++		if bool(world.get_meta("player_at_home", true)):
++			w.notices.append("群れの足音が遠ざかり、やがて聞こえなくなった。張りつめていた息を、ようやく吐いた。")
++			Mood.everyone(world, 3.0)
++		return
++	horde.step = step
++	horde.place = HORDE_ROUTE[step]
++	if step + 1 < HORDE_ROUTE.size() and HORDE_ROUTE[step + 1] == "屋外" and str(horde.place) != "屋外":
++		w.alarm = true
++		Mood.everyone(world, -3.0)
++		w.notices.append("【危険】遠くから、大勢の引きずるような足音とうめき声が近づいてくる。群れが、もうすぐこの通りに来る。")
++	elif str(horde.place) == "屋外" and HORDE_ROUTE[step - 1] != "屋外":
++		Mood.everyone(world, -5.0)
++		w.notices.append("【危険】家の前の通りを、感染者の群れがぞろぞろと通り過ぎていく。数えきれない。物音ひとつ立てられない。")
 +
 +## Ordinary household sound (a film at normal volume, voices): heard only
 +## by something already standing at the door.
@@ -960,7 +1056,9 @@ index 0000000..5a70602
 +	if street <= 0 and porch <= 0:
 +		return "家の前の通りに、ふらついて歩く人影は見当たらない。"
 +	var parts: Array = []
-+	if street > 0:
++	if horde_at(world, "屋外") > 0:
++		parts.append("家の前の通りを、感染者の群れが列をなして、のろのろと通り過ぎていく。数えきれない。")
++	elif street > 0:
 +		parts.append("家の前の通りに%s見える。ゆっくりと、ふらつくように歩いている。" % vague(street))
 +		if w.has("drawn_at"):
 +			parts.append("そのうちの一つが、こちらの家の方を向いて立ち止まっている。")
@@ -998,6 +1096,8 @@ index 0000000..5a70602
 +static func describe(enc: Dictionary) -> String:
 +	var n := int(enc.count)
 +	var who := "様子のおかしい人" if n == 1 else "様子のおかしい人たち（%d人）" % n
++	if n >= 10:
++		who = "数えきれないほどの感染者の群れ"
 +	if bool(enc.near):
 +		return "%sが、ふらつきながらこちらへ近づいてくる。目が濁り、うめき声が聞こえる。" % who
 +	return "少し先に%sがいる。ゆっくりと歩き回っている。まだこちらには気づいていないようだ。" % who
@@ -1038,14 +1138,14 @@ index 0000000..5a70602
 +			enc.near = true if roll < 30 else near
 +			return {"text": describe(enc) + ("　気づかれた。" if not near and bool(enc.near) else ""), "bitten": false, "ended": false, "minutes": 3}
 +		"hide":
-+			var chance := (80 if not near else 45) - 6 * (n - 1) - Mood.nerve_penalty(world.s)
++			var chance := (80 if not near else 45) - 6 * (mini(n, 6) - 1) - Mood.nerve_penalty(world.s)
 +			if roll < chance:
 +				w.encounter = {}
 +				return {"text": "物陰に身を潜めて息を殺した。足音とうめき声が、やがて遠ざかっていった。", "bitten": false, "ended": true, "minutes": 20}
 +			enc.near = true
 +			return {"text": "隠れようとしたが、物音を立ててしまった。こちらに向かってくる。", "bitten": false, "ended": false, "minutes": 5}
 +		"flee":
-+			var chance := (95 if not near else 75) - 5 * (n - 1) - Mood.nerve_penalty(world.s)
++			var chance := (95 if not near else 75) - 5 * (mini(n, 6) - 1) - Mood.nerve_penalty(world.s)
 +			if roll < chance:
 +				w.encounter = {}
 +				if near:
@@ -1158,7 +1258,7 @@ index 0000000..a6ae833
 @@ -0,0 +1 @@
 +uid://b81f14dwsw6cu
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 4971378..c91c464 100644
+index 4971378..88cc890 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -4,6 +4,10 @@ const Events = preload("res://scripts/world_events.gd")
@@ -1186,18 +1286,19 @@ index 4971378..c91c464 100644
  	return true
  
  static func valid_profile(profile: Dictionary) -> bool:
-@@ -57,6 +68,10 @@ func step(sleeping: bool) -> void:
+@@ -57,6 +68,11 @@ func step(sleeping: bool) -> void:
  	super.step(sleeping)
  	if int(s.minute)%60==0:
  		_household_hour()
 +		Walkers.hourly(self)
++		Walkers.horde_hourly(self)
 +		Walkers.housemates_hourly(self)
 +		Walkers.home_events(self)
 +		Mood.hourly(self, sleeping)
  		if not s.has("district"):
  			s.district = District.fresh()
  		District.tick(self)
-@@ -189,7 +204,7 @@ func _household_hour() -> void:
+@@ -189,7 +205,7 @@ func _household_hour() -> void:
  				if not past.is_empty():
  					household_memory_event.emit(int(person.id), int(s.minute), "activity", previous_activity, past)
  				person.location="寝室" if person.activity=="睡眠" else ("屋外" if person.activity=="外出" else "居間")
@@ -1206,7 +1307,7 @@ index 4971378..c91c464 100644
  		if person.activity!="外出":
  			# Cooking handles food consumption on completion; automatic hourly
  			# feeding here would charge twice for the same meal.
-@@ -362,6 +377,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+@@ -362,6 +378,8 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
  func validate_state(data: Dictionary) -> bool:
  	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
  		return false
@@ -1288,10 +1389,10 @@ index ac961cd..b9c0800 100644
  	check(g.world.s.sim.next_event_id>0 and g.world.s.agents!=before.agents,"world and autonomous NPCs progress during routine")
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 new file mode 100644
-index 0000000..128f80e
+index 0000000..dec4bee
 --- /dev/null
 +++ b/tests/test_walkers149_24.gd
-@@ -0,0 +1,439 @@
+@@ -0,0 +1,491 @@
 +extends SceneTree
 +const Mood = preload("res://scripts/mood.gd")
 +const Vitals = preload("res://scripts/vitals.gd")
@@ -1697,6 +1798,58 @@ index 0000000..128f80e
 +	mind.dialogue.partner = 0
 +	mind._finish_npc_reply(0, "最近どう？", "まあまあだよ。")
 +	check(float(friend.mood) > 50.0, "talking lifts a housemate a little")
++
++	# --- A horde passes the house: announced, hz_heard, survived by keeping still.
++	var hd = await new_game()
++	var hdw = hd.world
++	hd.location = "居間"
++	hdw.s.minute = 12 * 60 + 9 * 1440   # 20:00 on day 10
++	hdw.s.walkers.places = {"駅前": 12}
++	Walkers.horde_hourly(hdw)
++	check(hdw.s.walkers.has("horde_next") and hdw.s.walkers.get("horde", {}).is_empty(), "an overrun town schedules a horde for later")
++	hdw.s.minute = int(hdw.s.walkers.horde_next)
++	hdw.s.walkers.notices = []
++	Walkers.horde_hourly(hdw)
++	var hz_size := int(hdw.s.walkers.horde.size)
++	check(hz_size >= 12 and str(hdw.s.walkers.notices).contains("【防災無線】") and str(hdw.s.walkers.notices).contains("明かりを消し"), "the emergency radio announces it with advice")
++	check(Walkers.count(hdw, "駅前") == 12 + hz_size, "the horde counts where it is")
++	hdw.s.blackout = true
++	hdw.s.walkers.notices = []
++	hdw.s.walkers.alarm = false
++	var hz_heard := false
++	var hz_passed_quietly := true
++	var hz_steps := 0
++	while not hdw.s.walkers.get("horde", {}).is_empty() and hz_steps < 20:
++		hdw.s.minute += 60
++		Walkers.horde_hourly(hdw)
++		if bool(hdw.s.walkers.alarm) and str(hdw.s.walkers.notices).contains("近づいてくる"):
++			hz_heard = true
++		if hz_steps == 3:
++			hd._refresh()
++			check(hd.danger_label.text in ["群れが通過中", "群れ接近"] and "1時間待つ" in hd._suggestions(), "the header and suggestions follow the horde: " + hd.danger_label.text)
++			pass
++		Walkers.home_events(hdw)
++		hz_passed_quietly = hz_passed_quietly and Walkers.count(hdw, "建物前") == 0
++		hz_steps += 1
++	check(hz_heard, "it is hz_heard an hour before it reaches the street, which stops waiting")
++	check(hz_passed_quietly and hdw.s.walkers.get("horde", {}).is_empty(), "a dark, silent house is passed by")
++	check(Walkers.count(hdw, "商店通り") > 0, "a few stay behind on the shopping street")
++	# The same horde with a film at normal volume.
++	hdw.s.walkers.places = {}
++	hdw.s.walkers.horde = {"place": "屋外", "step": 4, "size": 20}
++	Walkers.make_sound(hdw, 120)
++	hdw.s.walkers.notices = []
++	Walkers.home_events(hdw)
++	check(Walkers.count(hdw, "建物前") >= 3 and str(hdw.s.walkers.notices).contains("押し寄せて") and str(hdw.s.walkers.notices).contains("テレビ"), "while it passes, even the television is noticed")
++	await hd._on_command("窓から外を見る")
++	check(str(hd.log_entries.slice(-3)).contains("列をなして"), "the window shows the horde")
++	# Outside when it comes: an encounter with the whole horde.
++	hd.location = "屋外"
++	hdw.s.walkers.encounter = {}
++	check(hd._check_walkers("建物前") and Walkers.describe(hdw.s.walkers.encounter).contains("群れ"), "meeting it in the street is an encounter with the horde")
++	hdw.s.walkers.encounter = {}
++	hdw.s.walkers.erase("horde")
++	hdw.s.walkers.places = {}
 +
 +	# --- Fleeing while seen: it follows the player home; losing it first does not.
 +	var chased3 = await new_game()
