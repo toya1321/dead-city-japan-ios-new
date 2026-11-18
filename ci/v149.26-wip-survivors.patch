@@ -1,3 +1,189 @@
+diff --git a/qa/crawl.gd b/qa/crawl.gd
+new file mode 100644
+index 0000000..694758c
+--- /dev/null
++++ b/qa/crawl.gd
+@@ -0,0 +1,151 @@
++extends SceneTree
++## Bug crawler: plays worlds by pressing suggestions and typing common
++## commands at random, checking the state after every step.
++## DCJ_SEEDS=1,2,3  DCJ_STEPS=400
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++
++const TYPED := ["周囲を見る", "窓から外を見る", "ニュースを見る", "外に出る", "家に帰る", "寝る", "食事する", "水を飲む", "1時間待つ", "3時間待つ", "1日待つ",
++	"商店通りへ行く", "駅前へ行く", "住宅街へ行く", "デパートへ行く", "デパ地下へ行く", "薬局へ行く", "コンビニへ行く", "近所の空き家へ行く", "金物店へ行く", "食品店へ行く",
++	"食料を3個買う", "飲料水を3本買う", "包帯を2個買う", "木材を3個買う", "部品を2個買う", "タバコを買う", "カセットボンベを買う", "物資を持っていく", "物資を置く", "物資を探索する", "ここを拠点にする",
++	"明かりを消す", "明かりをつける", "窓を目張りする", "窓の目張りを外す", "鍵を閉める", "鍵を開ける", "玄関を補強", "玄関の補強を外す", "扉を直す",
++	"浴槽に水をためる", "浴槽の水を汲む", "温かい料理を作る", "映画を観る", "タバコを吸う", "本を読む", "通りが空くまで待つ", "息をひそめる",
++	"裏口から外に出る", "裏口から家に入る", "窓から物を投げて気をそらす", "隠れる", "逃げる", "戦う", "様子を見る", "物を投げて気をそらす",
++	"持ち物", "状態", "会話を終える", "水を渡す", "食料を渡す", "包帯を渡す", "交換できるものを聞く", "一緒に来ないか誘う", "何か知っていることはないか聞く",
++	"大丈夫ですか？", "家族は無事なの？", "その傷、どうしたの？", "名前、聞いてもいい？", "みんなのために、一人で出ていく"]
++
++var problems: Array = []
++var rng := RandomNumberGenerator.new()
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func problem(seed: int, step: int, cmd: String, what: String) -> void:
++	problems.append([seed, step, cmd, what])
++	print("PROBLEM seed=%d step=%d cmd=%s :: %s" % [seed, step, cmd, what])
++
++func check_state(g, seed: int, step: int, cmd: String) -> void:
++	var w = g.world
++	var s: Dictionary = w.s
++	if not w.validate_state(s):
++		problem(seed, step, cmd, "validate_state failed")
++	for key in ["health", "hunger", "thirst", "fatigue"]:
++		var v := float(s[key])
++		if is_nan(v) or v < -0.001 or v > 100.001:
++			problem(seed, step, cmd, "%s out of range: %f" % [key, v])
++	if s.has("mood") and (float(s.mood) < 0 or float(s.mood) > 100):
++		problem(seed, step, cmd, "mood out of range")
++	for key in ["food", "water"]:
++		if float(s[key]) < -0.001 or is_nan(float(s[key])):
++			problem(seed, step, cmd, "%s negative: %f" % [key, float(s[key])])
++	if float(s.district.bag.food) < -0.001 or float(s.district.bag.water) < -0.001:
++		problem(seed, step, cmd, "bag negative")
++	for item in s.inventory:
++		if float(s.inventory[item]) < 0:
++			problem(seed, step, cmd, "inventory %s negative" % item)
++	if int(s.profile.cohabitants) != s.household_members.size():
++		problem(seed, step, cmd, "cohabitants %d != members %d" % [int(s.profile.cohabitants), s.household_members.size()])
++	if s.profile.companion_names.size() != s.household_members.size():
++		problem(seed, step, cmd, "companion_names size mismatch")
++	for i in s.household_members.size():
++		var m: Dictionary = s.household_members[i]
++		if int(m.id) != i:
++			problem(seed, step, cmd, "member id %d at index %d" % [int(m.id), i])
++		if s.profile.companion_names.size() > i and str(s.profile.companion_names[i]) != str(m.name):
++			problem(seed, step, cmd, "companion name mismatch at %d" % i)
++		for key in ["health", "hunger", "thirst", "fatigue"]:
++			if float(m.get(key, 0)) < -0.001 or float(m.get(key, 0)) > 100.001:
++				problem(seed, step, cmd, "member %s %s out of range" % [m.name, key])
++	for place in s.walkers.places:
++		if int(s.walkers.places[place]) < 0:
++			problem(seed, step, cmd, "walkers negative at %s" % place)
++	var horde: Dictionary = s.walkers.get("horde", {})
++	if not horde.is_empty() and int(horde.size) < 0:
++		problem(seed, step, cmd, "horde size negative")
++	if not s.walkers.encounter.is_empty() and str(s.walkers.encounter.place) != g.location and float(s.health) > 0:
++		pass   # cleared on the next command by design
++	if g.dialogue.partner >= s.household_members.size():
++		problem(seed, step, cmd, "dialogue partner out of range")
++	if not g.survivor_partner.is_empty() and Survivors.person(w, g.survivor_partner).is_empty():
++		problem(seed, step, cmd, "survivor partner unknown")
++	if not Navigation_has(g.location, str(s.profile.housing)):
++		problem(seed, step, cmd, "unknown location " + g.location)
++	if g.advancing:
++		problem(seed, step, cmd, "still advancing after the command")
++	if g.log_entries.is_empty():
++		problem(seed, step, cmd, "empty log")
++
++func Navigation_has(place: String, housing: String) -> bool:
++	var graph: Dictionary = load("res://scripts/navigation.gd").graph(housing)
++	return graph.has(place)
++
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var seeds: Array = []
++	for part in OS.get_environment("DCJ_SEEDS").split(","):
++		if not part.is_empty():
++			seeds.append(int(part))
++	if seeds.is_empty():
++		seeds = [11, 22, 33]
++	var steps := int(OS.get_environment("DCJ_STEPS")) if not OS.get_environment("DCJ_STEPS").is_empty() else 300
++	for seed in seeds:
++		rng.seed = seed
++		var g = Main.instantiate()
++		root.add_child(g)
++		for i in 3: await process_frame
++		var profile: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++		profile.seed = seed
++		profile.cohabitants = [0, 1, 2][seed % 3]
++		profile.housing = ["一戸建て", "集合住宅"][rng.randi_range(0, 1)]
++		profile.companion_names = ["詩音", "蒼"].slice(0, profile.cohabitants)
++		profile.companion_genders = ["女性", "男性"].slice(0, profile.cohabitants)
++		g._start_new_game(profile)
++		g._finish_intro()
++		g.local_model.enabled = false
++		var w = g.world
++		var deaths := 0
++		for step in steps:
++			var cmd := ""
++			var roll := rng.randi_range(1, 100)
++			var chips: Array = g._suggestions()
++			if roll <= 45 and not chips.is_empty():
++				cmd = str(chips[rng.randi_range(0, chips.size() - 1)])
++			elif roll <= 78:
++				cmd = TYPED[rng.randi_range(0, TYPED.size() - 1)]
++			elif roll <= 95:
++				cmd = "%d時間待つ" % rng.randi_range(4, 23)
++			else:
++				cmd = "(save/load)"
++			# Keep the household fed so the run goes deep into the outbreak.
++			if step % 20 == 0:
++				w.s.food = maxf(float(w.s.food), 6.0)
++				w.s.water = maxf(float(w.s.water), 10.0)
++				w.s.cash = maxi(int(w.s.cash), 20000)
++			if cmd == "(save/load)":
++				var saved: String = g._save()
++				var bytes := var_to_bytes(w.s)
++				var loaded: String = g._load()
++				if not saved.begins_with("保存") or loaded != "保存データを読み込んだ。":
++					problem(seed, step, cmd, "save/load failed: %s / %s" % [saved, loaded])
++				elif var_to_bytes(g.world.s) != bytes:
++					problem(seed, step, cmd, "state changed across save/load")
++				w = g.world
++			else:
++				await g._on_command(cmd)
++				var guard := 0
++				while g.advancing and guard < 20000:
++					await process_frame
++					guard += 1
++			check_state(g, seed, step, cmd)
++			if OS.get_environment("DCJ_TRACE") == "1":
++				print("TRACE %d %s | 曝露%d 発症%s 噛%s 傷%d | 体%.1f 満%.0f 水%.0f 休%.0f | %s | %s" % [step, cmd, int(w.s.exposure), str(w.s.symptomatic), str(w.s.get("bitten", false)), int(w.s.injuries), float(w.s.health), 100 - float(w.s.hunger), 100 - float(w.s.thirst), 100 - float(w.s.fatigue), g.location, g.log_entries[-1].left(90).replace("\n", " / ")])
++			if float(w.s.health) <= 0:
++				deaths += 1
++				print("seed %d: died at step %d (day %d)" % [seed, step, int(w.s.minute) / 1440])
++				break
++		print("seed %d done: day %d society %s walkers %d household %d survivors joined %d" % [seed, int(w.s.minute) / 1440, w.s.society, Walkers.total(w), w.s.household_members.size(), Survivors.ensure(w).people.values().filter(func(p): return p.status == "joined").size()])
++		g.queue_free()
++		await process_frame
++	print("CRAWL problems: %d" % problems.size())
++	quit()
+diff --git a/qa/load_old.gd b/qa/load_old.gd
+new file mode 100644
+index 0000000..ca84f0b
+--- /dev/null
++++ b/qa/load_old.gd
+@@ -0,0 +1,23 @@
++extends SceneTree
++## Loads a save from an older version and plays a little.
++const Main = preload("res://main.tscn")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	g._continue_from_title()
++	for i in 3: await process_frame
++	print("LOAD ", g.log_entries[-1] if not g.log_entries.is_empty() else "(none)")
++	g.local_model.enabled = false
++	var w = g.world
++	print("STATE valid=", w.validate_state(w.s), " loc=", g.location, " members=", w.s.household_members.size(), " mood=", w.s.get("mood"), " walkers=", w.s.has("walkers"), " survivors=", w.s.has("survivors"))
++	for cmd in ["周囲を見る", "詩音、おはよう", "窓から外を見る", "1日待つ", "外に出る", "駅前へ行く", "デパートの前へ行く", "家に帰る", "寝る"]:
++		await g._on_command(cmd)
++		while g.advancing:
++			await process_frame
++		print("CMD ", cmd, " → ", g.log_entries[-1].left(70).replace("\n", " / "))
++	print("STATE valid=", w.validate_state(w.s), " mood=", w.s.get("mood"), " survivors=", w.s.survivors.people.size() if w.s.has("survivors") else -1)
++	print("SAVE ", g._save(), " LOAD ", g._load())
++	quit()
 diff --git a/qa/survivor_eval.gd b/qa/survivor_eval.gd
 new file mode 100644
 index 0000000..813b93f
@@ -132,8 +318,22 @@ index 0000000..c70014a
 +			print("    性格: ", p.trait, " ", p.traits)
 +			print("    出会い: ", p.intro)
 +	quit()
+diff --git a/scripts/home_life.gd b/scripts/home_life.gd
+index ee24b3d..f5fb1da 100644
+--- a/scripts/home_life.gd
++++ b/scripts/home_life.gd
+@@ -164,6 +164,9 @@ static func _cook(game, cmd: String) -> bool:
+ 			game._refresh()
+ 			return true
+ 	world.advance_safe(30)
++	# Time passed on the way and at the stove; the household may have eaten.
++	if float(world.s.food) < 0.25 * portions:
++		return _done(game, "料理をしている間に、食料が足りなくなってしまった。何も作れなかった。")
+ 	if heat == "cassette":
+ 		world.s.gas_cans = maxf(0.0, float(world.s.get("gas_cans", 0.0)) - 0.25)
+ 	world.s.food = float(world.s.food) - 0.25 * portions
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 82aa64f..4f76497 100644
+index 82aa64f..5daed3f 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -26,6 +26,9 @@ const Walkers = preload("res://scripts/walkers.gd")
@@ -221,7 +421,15 @@ index 82aa64f..4f76497 100644
  	character["プレイヤーとの関係"] = NPCMind.relationship(npc_memory, person, all_turns.size())
  	var turns: Array = []
  	var recent_players: Array = []
-@@ -2428,6 +2460,105 @@ func _leave_home(cmd: String) -> bool:
+@@ -2260,6 +2292,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
+ 	world.s.household_members.remove_at(heir)
+ 	for i in world.s.household_members.size():
+ 		world.s.household_members[i].id = i
++	_shift_memory(heir)
+ 	dialogue = HouseholdDialogue.new()
+ 	_sync_player_position()
+ 	_append("ここからは%sとして生きていく。%sが残した家と物資は、そのまま引き継がれる。" % [person.name, previous])
+@@ -2428,6 +2461,114 @@ func _leave_home(cmd: String) -> bool:
  	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
  	return true
  
@@ -231,6 +439,10 @@ index 82aa64f..4f76497 100644
 +func _survivor_command(cmd: String) -> bool:
 +	if not survivor_partner.is_empty() and Survivors.here(world, location).find(survivor_partner) < 0:
 +		survivor_partner = ""
++	# A housemate addressed by name is not a survivor.
++	for mate in world.s.household_members:
++		if cmd.contains(str(mate.name)):
++			return false
 +	var id := survivor_partner
 +	if id.is_empty():
 +		id = Survivors.addressed(world, location, cmd)
@@ -274,6 +486,11 @@ index 82aa64f..4f76497 100644
 +		Survivors.talked(world, id)
 +		world.advance_safe(1)
 +		result = "%s「%s」" % [Survivors.call_name(world, id), Survivors.offline_reply(world, id)]
++	elif Plan.local(self, text).ok:
++		# An ordinary action (walking, waiting, buying...) ends the talk and runs.
++		survivor_partner = ""
++		_update_dialogue_input()
++		return false
 +	elif not Survivors.topic_reply(world, id, text).is_empty():
 +		# Common questions: the game answers from the person's facts, in
 +		# lines written for their voice.
@@ -327,7 +544,27 @@ index 82aa64f..4f76497 100644
  ## A housemate leaves the household for good (seen off, or left on their own).
  func _remove_housemate(index: int) -> void:
  	world.s.household_members.remove_at(index)
-@@ -2447,6 +2578,15 @@ func _process_leavers() -> void:
+@@ -2439,14 +2580,35 @@ func _remove_housemate(index: int) -> void:
+ 		world.s.profile[key] = values
+ 	for i in world.s.household_members.size():
+ 		world.s.household_members[i].id = i
++	_shift_memory(index)
+ 	dialogue = HouseholdDialogue.new()
+ 
++## Long-term memories are filed by housemate id; when one leaves, the others
++## move down one place. Without this a save after a departure would not load.
++func _shift_memory(index: int) -> void:
++	var shifted := {}
++	for key in npc_memory.entries:
++		var k := int(key)
++		if k == index:
++			continue
++		shifted[str(k - 1 if k > index else k)] = npc_memory.entries[key]
++	npc_memory.entries = shifted
++
+ ## v149.25: a housemate at the end of their tether leaves a note and goes.
+ func _process_leavers() -> void:
+ 	for i in range(world.s.household_members.size() - 1, -1, -1):
  		var person: Dictionary = world.s.household_members[i]
  		if not bool(person.get("leaving", false)) or float(person.health) <= 0:
  			continue
@@ -343,7 +580,7 @@ index 82aa64f..4f76497 100644
  		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
-@@ -2523,6 +2663,8 @@ func _check_walkers(previous: String) -> bool:
+@@ -2523,6 +2685,8 @@ func _check_walkers(previous: String) -> bool:
  	world.set_meta("player_at_home", Navigation.indoor(location))
  	if not w.encounter.is_empty():
  		return true
@@ -373,6 +610,19 @@ index 59e1b64..7e4c0fa 100644
  	if low >= LEAVE_WARN_HOURS and not person.has("leave_warned_at"):
  		person.leave_warned_at = minute
  		notices.append("%s「……ねえ。避難所に行けば、ここよりはましなのかな。ここにいると、息が詰まりそう」" % person.name)
+diff --git a/scripts/navigation.gd b/scripts/navigation.gd
+index 2ecdf23..a8e41ef 100644
+--- a/scripts/navigation.gd
++++ b/scripts/navigation.gd
+@@ -5,7 +5,7 @@ const DEPARTMENT = ["デパート正面","デパート地下"]
+ const NODES = ["寝室","居間","台所","廊下","玄関","共用廊下","建物前","屋外","食品店","金物店","薬局"]
+ const ALIASES = {"寝室":"寝室","自室":"寝室","リビング":"居間","居間":"居間","台所":"台所","キッチン":"台所","廊下":"廊下","室内":"廊下","玄関":"玄関","共用部分":"共用廊下","共用廊下":"共用廊下","建物の共用部分":"共用廊下","建物前":"建物前","建物の外":"建物前","街路":"屋外","外":"屋外","屋外":"屋外","食品店":"食品店","スーパー":"食品店","金物店":"金物店","薬局":"薬局","家":"玄関","自宅":"玄関","商店通り":"商店通り","住宅街":"住宅街","駅前":"駅前","コンビニ":"コンビニ","近所の空き家":"近所の空き家","空き家":"近所の空き家","近所の家":"近所の空き家","他の家":"近所の空き家","デパート":"デパート","百貨店":"デパート","デパート1階":"デパート","デパートの1階":"デパート","デパート正面":"デパート正面","デパートの前":"デパート正面","デパートの正面":"デパート正面","デパートの入口":"デパート正面","デパート入口":"デパート正面","デパート地下":"デパート地下","デパ地下":"デパート地下","デパートの地下":"デパート地下","地下食品売場":"デパート地下","地下の食品売場":"デパート地下","食品売場":"デパート地下","デパートの食品売場":"デパート地下"}
+ static func all_nodes() -> Array:
+-	return NODES + STREETS + District.SITES.keys()
++	return NODES + STREETS + DEPARTMENT + District.SITES.keys()
+ 
+ static func graph(housing: String) -> Dictionary:
+ 	var g := {"寝室":["居間","廊下"],"居間":["寝室","台所","廊下","玄関"],"台所":["居間","廊下"],"廊下":["寝室","居間","台所","玄関"],"玄関":["居間","廊下"],"共用廊下":["玄関","建物前"],"建物前":["屋外"],"屋外":["建物前","食品店","金物店","薬局"],"食品店":["屋外"],"金物店":["屋外"],"薬局":["屋外"]}
 diff --git a/scripts/player_intents.gd b/scripts/player_intents.gd
 index 67c6e86..549ec31 100644
 --- a/scripts/player_intents.gd
@@ -1485,8 +1735,38 @@ index 3109e97..634981c 100644
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
+diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
+index b60b74f..0090ac0 100644
+--- a/scripts/world_legacy.gd
++++ b/scripts/world_legacy.gd
+@@ -193,13 +193,21 @@ func step(sleeping: bool) -> void:
+ 		_resident_arrived(a, day)
+ 		if pos.distance_to(target)<1.0 and not stimulus and a.kind == "symptomatic":
+ 			a.route = (int(a.route) + (1 if draw(s.minute,a.id,"direction",2)==0 else ROUTE.size()-1))%ROUTE.size()
+-		if a.kind == "symptomatic" and reachable and float(s.player_pos[1])<2.0 and contact_clear(pos,pp) and pos.distance_to(pp)<1.4 and s.minute-int(a.attack_at)>=3:
++		if a.kind == "symptomatic" and reachable and float(s.player_pos[1])<2.0 and contact_clear(pos,pp) and pos.distance_to(pp)<1.4 and s.minute-int(a.attack_at)>=60:
++			# v149.26: a sick resident lunging at the player is told, at most
++			# once an hour each, and follows the walker rules: mostly a scratch,
++			# rarely a bite (which is fatal and starts the bite course).
+ 			a.attack_at = s.minute
+-			s.health = maxf(0.0,s.health-7.0)
++			s.health = maxf(0.0,s.health-5.0)
+ 			s.injuries += 1
+-			if s.exposure < 0 and draw(s.minute,a.id,"contact")<4200:
++			var bitten: bool = s.exposure < 0 and draw(s.minute,a.id,"contact")<1500
++			if bitten:
+ 				s.exposure = s.minute
+-				s.symptoms_due = s.minute + incubation(a.id)
++				s.symptoms_due = s.minute + (6 + draw(s.minute, a.id, "contact-fever", 19)) * 60
++				s.bitten = true
++			if s.has("walkers"):
++				s.walkers.alarm = true
++				s.walkers.notices.append("【危険】顔色の悪い人が、ふらつきながらつかみかかってきた！　振りほどいたが、%s" % ("腕に歯が食い込んでいた。噛まれた。" if bitten else "腕を引っかかれた。"))
+ 		if a.kind == "symptomatic":
+ 			for b in s.agents:
+ 				if b.kind == "survivor" and not b.dead and Vector2(b.x,b.z).distance_to(pos)<1.0:
 diff --git a/tests/test_dept149_25.gd b/tests/test_dept149_25.gd
-index f27eeae..4b62e2a 100644
+index f27eeae..88e244a 100644
 --- a/tests/test_dept149_25.gd
 +++ b/tests/test_dept149_25.gd
 @@ -54,7 +54,7 @@ func run() -> void:
@@ -1498,12 +1778,44 @@ index f27eeae..4b62e2a 100644
  	g.location = "デパート地下"
  	g._refresh()
  	check("物資を探索する" in g._suggestions(), "the food hall offers a search")
+@@ -72,6 +72,11 @@ func run() -> void:
+ 	check(not w.s.walkers.encounter.is_empty() and str(w.s.walkers.encounter.place) == "デパート地下", "walkers in the food hall are met there")
+ 	w.s.walkers.encounter = {}
+ 	w.s.walkers.places = {}
++	# Saving in the food hall or at the front loads again.
++	for spot in ["デパート地下", "デパート正面"]:
++		g.location = spot
++		check(g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。" and g.location == spot, "a save at %s loads" % spot)
++	g.location = "デパート"
+ 	# Home from the basement goes back up and out.
+ 	await g._on_command("家に帰る")
+ 	check(g.location == "玄関", "the way home goes up and out")
+diff --git a/tests/test_strain149_25.gd b/tests/test_strain149_25.gd
+index d5b3976..94cce56 100644
+--- a/tests/test_strain149_25.gd
++++ b/tests/test_strain149_25.gd
+@@ -62,6 +62,7 @@ func run() -> void:
+ 	var m1: float = shion.mood
+ 	await g._on_command("詩音を励ます")
+ 	check(float(shion.mood) - m1 < 5.0, "again so soon, it helps less")
++	g.npc_memory.record(0, int(w.s.minute), "talk", "元気？", "うん")
+ 	# --- At the limit: a warning, then a note.
+ 	g.location = "台所"
+ 	var warned := false
+@@ -78,6 +79,7 @@ func run() -> void:
+ 	g._refresh()
+ 	check(w.s.household_members.is_empty() and str(g.log_entries.slice(-3)).contains("書き置き") and int(w.s.profile.cohabitants) == 0, "they leave a note and are gone")
+ 	check(w.validate_state(w.s), "the household stays valid")
++	check(g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "a save after someone left still loads")
+ 	# --- Comfort in time stops it.
+ 	var g2 = Main.instantiate()
+ 	root.add_child(g2)
 diff --git a/tests/test_survivors149_26.gd b/tests/test_survivors149_26.gd
 new file mode 100644
-index 0000000..1b31737
+index 0000000..205b796
 --- /dev/null
 +++ b/tests/test_survivors149_26.gd
-@@ -0,0 +1,211 @@
+@@ -0,0 +1,214 @@
 +extends SceneTree
 +## v149.26: survivors made anew for every world from parts; met once the city
 +## breaks down; trust from gifts and talk; trade, information, joining; a
@@ -1607,6 +1919,9 @@ index 0000000..1b31737
 +	check(g.log_entries[-1].contains(p.info.left(6)), "with trust, they share what they know")
 +	p.trust = 70
 +	p.join_trust = 60
++	await g._on_command("周囲を見る")
++	check(g.survivor_partner == "" and not g.log_entries[-1].begins_with(p.name + "「"), "an ordinary action ends the talk and runs")
++	await g._on_command("%sに話しかける" % p.name)
 +	await g._on_command("一緒に来ないか誘う")
 +	var mate: Dictionary = w.s.household_members[-1]
 +	check(p.status == "joined" and mate.name == p.name and mate.has("background") and int(w.s.profile.cohabitants) == 1, "with trust they join the household")
