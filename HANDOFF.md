@@ -6,7 +6,7 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip-freetext`（作業中：自由文の行動。`player_intents.gd`。ビルド時に版を0.149.25/174に上げる）
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip`（作業中：自由文の行動 `player_intents.gd`、デパートの中の移動。ビルド時に版を0.149.25/174に上げる）
 - 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.24 / ビルド173（ワークフロー `ios-native-v14924.yml`）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
@@ -19,7 +19,7 @@ for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialo
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
-- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在139/139、約13分）。
+- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在141/141、約13分）。
 - 画面の撮影：`xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 390x844 --script res://qa/<撮影スクリプト>.gd`（Xvfbはコンテナにある）。
 
 ## 実モデル（Qwen3-4B）での会話テスト
@@ -93,6 +93,14 @@ UIのモックアップ：https://claude.ai/artifact/Q1ZFHfhgNSeXFaJm3MxBpk（6�
 - 決まった言葉で拾えない行動は、ローカルAIに「行動の名前」だけを答えさせる（遭遇中は hide/flee/distract/fight/look、それ以外は明かり・目張り・待つ・息をひそめる・浴槽・料理・映画・タバコ・読書・裏口・窓から投げる・鍵・扉の修理・タバコ/ボンベを買う・寝る・水・食事・ニュース・窓）。ゲームは否定文（〜ない・やめ・いいや）を除き、行動ごとの関連語が文にある時だけ、決まったコマンドとして実行し「（「〜」として行動）」と表示。ネイティブの文法がkindを chat/query/npc/player/clarify に限るので "player" を使う（ネイティブは変更なし）。
 - 実モデル（Qwen3-4B、Linux CPU、1回5〜8秒）での言い方テスト：`qa/freetext_check.gd`（`DCJ_SET=1|2|3`、`DCJ_LLAMA_PROBE`・`DCJ_GGUF`）。調整後 60/60・43/44・32/32（否定文はすべて何もしない）。調整前の初見の結果は 2組目 38/44（キーワードのみ14/44）、3組目 26/32。
 - テスト `test_freetext149_24`（14項目、台本のモデル）。全140テスト合格。
+
+## デパートの中（v149.25-wip）
+
+- 場所：駅前 → `デパート正面`（屋外扱い）→ `デパート`（1階、店の在庫・営業時間・拠点はこの場所のまま）→ `デパート地下`（食品売場）。移動は1分、地下へは2分。別名「デパ地下」「食品売場」「デパートの前」など。
+- 食料・水の購入と物資の探索は地下（`main._site()` で地下を「デパート」の在庫として扱う）。1階で買おうとすると地下へ案内。電気が止まると地下は真っ暗（説明文が変わり、感染者に気づくのが遅れる＝気づかれやすさ+15%）。
+- 写真：`department_front_*`（1440×810）と `department_food_*`（1536×1024）の4段階。ユーザー作成（ChatGPT）。
+- 残り：2階衣料・3階生活用品・屋上・搬入口・警備室（画像があれば同じ形で足せる）。
+- テスト `test_dept149_25`（15項目）。全141テスト合格。
 
 ## ユーザーについて
 
