@@ -6,7 +6,7 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-life`（自由文の行動 `player_intents.gd`、デパートの中の移動、同居人の心の限界）
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-life`（自由文の行動 `player_intents.gd`、デパートの中の移動、同居人の心の限界） 14. `v149.26-wip-survivors`（作業中：外の生存者 `survivors.gd`。昼12時の自動ビルドは v149.25 まで）
 - 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.25 / ビルド174（ワークフロー `ios-native-v14925.yml`）。v149.24 は単独ではビルドされていない（macOSランナー待ちでキャンセル）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
@@ -19,7 +19,7 @@ for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialo
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
-- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在142/142、約13分）。
+- 全テスト：`GODOT=<godot> python3 tests/run_all.py build/test-results`（現在143/143、約13分）。
 - 画面の撮影：`xvfb-run -a godot --path . --rendering-driver opengl3 --resolution 390x844 --script res://qa/<撮影スクリプト>.gd`（Xvfbはコンテナにある）。
 
 ## 実モデル（Qwen3-4B）での会話テスト
@@ -109,6 +109,16 @@ UIのモックアップ：https://claude.ai/artifact/Q1ZFHfhgNSeXFaJm3MxBpk（6�
 - 心15未満が48時間：「避難所に行けば、ここよりはましなのかな」と警告（会話の様子にも出る）。さらに24時間たち、合計72時間：書き置きを残して出ていく（`leaving` → `main._process_leavers`、自分の心−15）。心20以上に戻ると数え直し。
 - 「詩音の話を聞く」「励ます」「慰める」など：30分、相手+10（6時間以内は+3）、自分+2、こもりを解く、限界の時間を24時間戻す。相手のいる部屋まで歩く。心30未満の同居人がいると候補に出る。
 - 同居人を外す処理は `main._remove_housemate`（見送ると共通）。テスト `test_strain149_25`（12項目）。全142テスト合格。
+
+## 外の生存者（v149.26-wip、`survivors.gd`）
+
+- 6人：佐伯（デパート1階・警備員、水が欲しい、懐中電灯・ラジオ）、森下（コンビニ・アルバイト、食料、タバコ）、大川（住宅街・78歳、包帯、米。家を離れない）、戸田（駅前・会社員、疑い深い、食料、群れの情報）、中村（薬局・薬剤師、水、包帯3つ）、陽太（近所の空き家・10歳の迷子、食料と水）。街が「混乱」以降に、その場所へ行くと【出会い】。
+- 信頼0〜100（初期10〜45）：欲しい物を渡す+20、ほかの物+8、交換+6、会話+3（1時間に1回）。25以上で名乗り、交換に応じる。50以上で知っていることを話す。60以上で「一緒に来ないか誘う」と同居人になる（`household_members` に追加、経歴・性格つき、同居人は最大6人）。大川は加わらない。
+- 渡す物は携行の食料・水（「物資を持っていく」で持ち出す）と包帯。もらう物：懐中電灯（`equipment.flashlight`）、ラジオ（`s.radio`）、タバコ、米（携行食料+2）、包帯3、群れの次の時刻。
+- 危険（毎日0時、緊急の段階）：その場所の感染者数×4%（最大40%）で死亡し、感染者になる。大川は26日目までに包帯がないと死ぬ。陽太は24日目までに何ももらわないと死ぬ。後で行くと、残された跡が記録に出る。
+- 会話：`survivor_partner`。話しかけた最初の一言は信頼の段階に合わせた決まった台詞。そのあとはローカルAI（`Survivors.INSTRUCTIONS`、人物・事実・直近3往復）で返す。前と同じ文や使えない返事は1回作り直し、だめなら「少し考え込んで、何も答えなかった」。実モデル（Qwen3-4B）で1回8〜11秒。まだ時々不自然な文が出る（陽太の「見つけられん」など）。
+- テスト `test_survivors149_26`（23項目）。全143テスト合格。実モデルの会話確認は `qa/survivor_talk.gd`。
+- 次：裏切り（戸田が夜に食料を持ち逃げ）、出ていった同居人と避難所での再会、役割（見張り・料理・修理・探索）、略奪者。
 
 ## ユーザーについて
 
