@@ -6,8 +6,8 @@
 
 - ゲーム本体はリポジトリに直接置いていない。`ci/v149.10-source/part-*`（30分割のzip、sha256 `36a2f709…9158`）を元に、`ci/` のパッチを順に当てて作る。
 - 適用順（すべて `git apply --directory=game`）：
-  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-wip`（作業中：自由文の行動 `player_intents.gd`、デパートの中の移動、同居人の心の限界。ビルド時に版を0.149.25/174に上げる）
-- 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.24 / ビルド173（ワークフロー `ios-native-v14924.yml`）。
+  1. `v149.10-ios-build` 2. `v149.11-local-ai` 3. `v149.11-comparison` 4. `v149.16-npc-dialogue` 5. `v149.17-npc-retry` 6. `v149.18-npc-requests` 7. `v149.19-npc-shopping` 8. `v149.20-npc-reasons` 9. `v149.21-ui` 10. `v149.22-chips-scroll` 11. `v149.23-photos`（写真。バイナリを含むので `git diff --binary` で作る） 12. `v149.24-zombies`（ゾンビ・心の状態・報道・家の暮らし。`walkers.gd`・`mood.gd`・`outbreak_news.gd`・`home_life.gd`） 13. `v149.25-life`（自由文の行動 `player_intents.gd`、デパートの中の移動、同居人の心の限界）
+- 新しい版は「直前の版を当てた状態」との差分を `ci/v149.NN-<名前>.patch` として追加する。版番号は `export_presets.cfg`（short_version / version）と `build_scripts/build-ios-unsigned.sh`（アサートとIPA名）、`scripts/title_screen.gd` の表記を上げる。現在 0.149.25 / ビルド174（ワークフロー `ios-native-v14925.yml`）。v149.24 は単独ではビルドされていない（macOSランナー待ちでキャンセル）。
 - 各版の説明はパッチ内の `NPC_UPDATE_v149.*.md`、`UI_UPDATE_v149.*.md`、`verification/V149_18_REAL_MODEL.md`。
 
 ## 作業環境の作り方（Linux）
@@ -15,7 +15,7 @@
 ```bash
 cat ci/v149.10-source/part-* > game.zip && unzip -q game.zip -d game
 cd game && git init -q && git add -A && git commit -qm base   # 差分作成用
-for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping v149.20-npc-reasons v149.21-ui v149.22-chips-scroll v149.23-photos v149.24-zombies; do git apply ../ci/$p.patch; done
+for p in v149.10-ios-build v149.11-local-ai v149.11-comparison v149.16-npc-dialogue v149.17-npc-retry v149.18-npc-requests v149.19-npc-shopping v149.20-npc-reasons v149.21-ui v149.22-chips-scroll v149.23-photos v149.24-zombies v149.25-life; do git apply ../ci/$p.patch; done
 ```
 
 - Godot 4.6.3（`Godot_v4.6.3-stable_linux.x86_64`、GitHub releases から取得可）。`mkdir -p build && touch build/.gdignore` → `godot --headless --path . --import --quit`。
