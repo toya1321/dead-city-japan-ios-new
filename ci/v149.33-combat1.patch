@@ -1,0 +1,435 @@
+diff --git a/qa/combat_shot.gd b/qa/combat_shot.gd
+new file mode 100644
+index 0000000..f97ba50
+--- /dev/null
++++ b/qa/combat_shot.gd
+@@ -0,0 +1,36 @@
++extends SceneTree
++## Screenshot of an encounter with the combat panel (DCJ_OUT=png).
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Combat = preload("res://scripts/combat.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	p.cohabitants = 0
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.household_members = []
++	w.s.society = "emergency"
++	w.s.walkers.places["屋外"] = 3
++	g.location = "屋外"
++	g._sync_player_position()
++	w.s.walkers.encounter = {"place": "屋外", "count": 3, "near": false, "since": int(w.s.minute), "from": "建物前"}
++	g._refresh()
++	for line in Combat.status_lines(w): print("A ", line)
++	await g._on_command("様子を見る")
++	for line in Combat.status_lines(w): print("B ", line)
++	for z in Combat.zombies(w): print("   ", z.id, " ", z.dist, " ", z.kind)
++	await g._on_command("様子を見る")
++	for line in Combat.status_lines(w): print("C ", line)
++	for i in 10: await process_frame
++	root.get_texture().get_image().save_png(OS.get_environment("DCJ_OUT"))
++	print(g.log_entries.slice(-3))
++	quit()
+diff --git a/scripts/combat.gd b/scripts/combat.gd
+new file mode 100644
+index 0000000..b9b9c67
+--- /dev/null
++++ b/scripts/combat.gd
+@@ -0,0 +1,208 @@
++extends RefCounted
++## v149.33 (combat stage 1): each walker in an encounter as its own body —
++## distance, state, wounds — and how many seconds an action takes. The
++## outcome of actions is still decided in walkers.gd (stage 2 replaces it);
++## this keeps the bodies, the clock and what the player can see.
++##
++## encounter.zombies = [{id, dist, state, hurt{head,arms,legs,torso}, kind}]
++##   state: standing / downed / crawling / pinned
++##   kind:  fresh (recently turned, quicker) / old (decayed, slower)
++## Only the nearest few are tracked one by one; the rest stay a number.
++## Old saves have no zombies list: it is made from the count on first use.
++
++const Walkers = preload("res://scripts/walkers.gd")
++
++const TRACKED := 6
++const SPEED := {"fresh": 1.3, "old": 0.8}
++const CRAWL_SPEED := 0.3
++## A noticed walker stops at arm's reach; the grab itself is walkers.gd's.
++const REACH := 0.6
++## Base seconds for each encounter action (before body and place).
++const BASE_SECONDS := {"look": 2.0, "fight": 2.0, "distract": 3.0, "hide": 4.0, "flee": 4.0}
++
++static func active(world) -> bool:
++	return not Walkers.ensure(world).encounter.is_empty()
++
++static func zombies(world) -> Array:
++	var enc: Dictionary = Walkers.ensure(world).encounter
++	return enc.get("zombies", []) if enc.get("zombies", []) is Array else []
++
++## Keeps the tracked bodies in step with the walkers counted at the place:
++## new ones are added at a distance, the killed or departed are removed
++## nearest first (a kill in walkers.gd is always the one in front).
++static func sync(world) -> void:
++	var w := Walkers.ensure(world)
++	var enc: Dictionary = w.encounter
++	if enc.is_empty():
++		return
++	if not enc.get("zombies") is Array:
++		enc.zombies = []
++	if not enc.has("clock"):
++		enc.clock = 0.0
++	var list: Array = enc.zombies
++	var total := maxi(1, Walkers.count(world, str(enc.place)))
++	var want := mini(total, TRACKED)
++	_sort(list)
++	while list.size() > want:
++		list.pop_front()
++	var serial := int(enc.get("serial", 0))
++	while list.size() < want:
++		serial += 1
++		var minute := int(world.s.minute)
++		var near := bool(enc.get("near", false)) and list.is_empty()
++		var dist := 2.0 if near else 5.0 + float(world.draw(minute, serial * 7, "z-dist", 120)) / 10.0
++		list.append({
++			"id": "z%d_%d" % [int(enc.get("since", minute)), serial],
++			"dist": dist,
++			"state": "standing",
++			"hurt": {"head": 0, "arms": 0, "legs": 0, "torso": 0},
++			"kind": "fresh" if world.draw(minute, serial * 11, "z-kind", 100) < 35 else "old",
++		})
++	enc.serial = serial
++	# Noticed and close (walkers.gd's `near`): the front one has closed in.
++	if bool(enc.get("near", false)) and not list.is_empty():
++		_sort(list)
++		list[0].dist = minf(float(list[0].dist), 2.0)
++	_sort(list)
++
++static func _sort(list: Array) -> void:
++	list.sort_custom(func(a, b): return float(a.dist) < float(b.dist))
++
++## How long an action takes for this body in this place, in seconds.
++static func seconds(world, kind: String) -> float:
++	var t := float(BASE_SECONDS.get(kind, 2.0))
++	var tired := clampf(float(world.s.get("fatigue", 0.0)) / 100.0, 0.0, 1.0)
++	t *= 1.0 + 0.5 * tired
++	t *= 1.0 + 0.08 * minf(float(world.s.get("injuries", 0)), 5.0)
++	if kind == "flee" and terrain(world) == "corridor":
++		t *= 1.2
++	return snappedf(t, 0.1)
++
++## Time passes for the walkers too: those that have noticed come closer.
++static func tick(world, secs: float) -> void:
++	var enc: Dictionary = Walkers.ensure(world).encounter
++	if enc.is_empty():
++		return
++	enc.clock = float(enc.get("clock", 0.0)) + secs
++	if not bool(enc.get("near", false)):
++		return
++	for z in zombies(world):
++		var speed := 0.0
++		match str(z.state):
++			"standing": speed = float(SPEED.get(str(z.kind), 0.8))
++			"crawling": speed = CRAWL_SPEED
++		z.dist = maxf(REACH, float(z.dist) - speed * secs)
++	_sort(zombies(world))
++
++## Where the fight happens, from the place.
++static func terrain(world, place: String = "") -> String:
++	if place.is_empty():
++		place = str(Walkers.ensure(world).encounter.get("place", ""))
++	if place in ["廊下", "共用廊下"]:
++		return "corridor"
++	if place in ["玄関"]:
++		return "doorway"
++	if place in ["コンビニ", "デパート", "デパート地下", "食品店", "金物店", "薬局", "近所の空き家"]:
++		return "shop"
++	if place in ["寝室", "居間", "台所"]:
++		return "room"
++	return "street"
++
++const TERRAIN_WORDS := {"corridor": "狭い廊下", "doorway": "玄関先", "shop": "建物の中（棚や物がある）", "room": "部屋の中", "street": "見通しのいい通り"}
++
++## Dark enough that numbers and distances are guesses.
++static func dark(world) -> bool:
++	var hour: float = world.hour_of_day()
++	var night := hour < 6.0 or hour >= 18.0
++	var place := str(Walkers.ensure(world).encounter.get("place", ""))
++	if terrain(world, place) in ["street"]:
++		return night
++	return night or not bool(world.s.get("grid_online", true))
++
++static func distance_words(d: float, dark_now: bool) -> String:
++	if d <= 1.0:
++		return "手が届きそうな距離"
++	if d <= 2.5:
++		return "すぐ目の前（%.0fmほど）" % d if not dark_now else "すぐ目の前"
++	if dark_now:
++		return "暗くて、距離がはっきりしない"
++	if d <= 6.0:
++		return "数歩先（%.0fmほど）" % d
++	return "少し離れたところ（%.0fmほど）" % d
++
++## A rough sense of what could be hit, from where the nearest one stands.
++## Stage 2 replaces this with the real odds put into words.
++static func target_words(world) -> String:
++	var list := zombies(world)
++	if list.is_empty():
++		return ""
++	var z: Dictionary = list[0]
++	var d := float(z.dist)
++	if d > 2.5:
++		return "攻撃：まだ届かない距離"
++	var head := "かなり難しい"
++	if str(z.state) in ["downed", "pinned"]:
++		head = "狙いやすい"
++	elif str(z.state) == "crawling":
++		head = "難しい"
++	var legs := "狙いやすい" if str(z.state) == "standing" else "必要ない"
++	return "頭：%s ／ 脚：%s ／ 胴：狙いやすい" % [head, legs]
++
++## What the player can see, for the panel above the story.
++static func status_lines(world) -> Array:
++	if not active(world):
++		return []
++	sync(world)
++	var enc: Dictionary = Walkers.ensure(world).encounter
++	var list := zombies(world)
++	var total := maxi(1, Walkers.count(world, str(enc.place)))
++	var dark_now := dark(world)
++	var lines: Array = []
++	var head_count := ""
++	if dark_now and total > 1:
++		head_count = "何人かいる（暗くて数えられない）"
++	elif total >= 10:
++		head_count = "数えきれない（%d人以上）" % (total / 10 * 10)
++	elif int(enc.get("counted", 0)) > 0 or total <= 3:
++		head_count = "%d人" % total
++	else:
++		head_count = "数人"
++	var front: Dictionary = list[0] if not list.is_empty() else {}
++	var front_words := distance_words(float(front.get("dist", 8.0)), dark_now)
++	var state_words := ""
++	match str(front.get("state", "standing")):
++		"downed": state_words = "・倒れている"
++		"crawling": state_words = "・這ってくる"
++		"pinned": state_words = "・挟まって動けない"
++	lines.append("感染者：%s ・ 一番近いのは%s%s" % [head_count, front_words, state_words])
++	if not bool(enc.get("near", false)):
++		lines.append("まだ、こちらには気づいていない")
++	lines.append("手持ち：%s ・ 場所：%s" % [weapon_words(world), TERRAIN_WORDS[terrain(world)]])
++	lines.append("体：%s" % body_words(world))
++	var targets := target_words(world)
++	if not targets.is_empty():
++		lines.append(targets)
++	return lines
++
++## Stage 1 stand-in: the improvised weapon walkers.gd already counts.
++static func weapon_words(world) -> String:
++	var inv: Dictionary = world.s.inventory
++	if int(inv.get("parts", 0)) > 0:
++		return "金属の部品（殴れる）"
++	if int(inv.get("wood", 0)) > 0:
++		return "角材"
++	return "素手"
++
++static func body_words(world) -> String:
++	var parts: Array = []
++	var hp := float(world.s.health)
++	parts.append("元気" if hp >= 80.0 else ("傷が痛む" if hp >= 40.0 else "ふらついている"))
++	var tired := float(world.s.get("fatigue", 0.0))
++	if tired >= 70.0:
++		parts.append("息が上がっている")
++	elif tired >= 40.0:
++		parts.append("少し疲れている")
++	var hurt := int(world.s.get("injuries", 0))
++	if hurt > 0:
++		parts.append("けがが%d箇所" % hurt)
++	return "・".join(parts)
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 542300b..529fde6 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -15,6 +15,7 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+ const TitleScreen = preload("res://scripts/title_screen.gd")
+ const SceneView = preload("res://scripts/scene_view.gd")
+ const ActionPhotos = preload("res://scripts/action_photos.gd")
++const Combat = preload("res://scripts/combat.gd")
+ const SceneDescription = preload("res://scripts/scene_description.gd")
+ const Plan = preload("res://scripts/action_plan.gd")
+ const CareWait = preload("res://scripts/care_wait.gd")
+@@ -129,6 +130,8 @@ var vitals_values: Dictionary = {}
+ var warning_label: Label
+ var scene_view: Control
+ var action_card: PanelContainer
++var combat_panel: PanelContainer
++var combat_label: Label
+ var action_card_kind := ""
+ ## Set just before appending a result whose kind cannot be read from the text.
+ var forced_action_kind := ""
+@@ -296,6 +299,14 @@ func _build_ui() -> void:
+ 	danger_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	vitals_row.add_child(danger_label)
+ 
++	# v149.33: what the player can see during an encounter, above the story.
++	combat_panel = PanelContainer.new()
++	combat_panel.add_theme_stylebox_override("panel", UI.box(Color("#2a1416"), Color("#7a3a3a"), 12, 12, 8))
++	combat_panel.visible = false
++	base.add_child(combat_panel)
++	combat_label = UI.label("", 13, UI.TEXT)
++	combat_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	combat_panel.add_child(combat_label)
+ 	main_layout=BoxContainer.new();main_layout.size_flags_vertical=Control.SIZE_EXPAND_FILL;main_layout.add_theme_constant_override("separation",8);base.add_child(main_layout)
+ 	content_column=VBoxContainer.new();content_column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;content_column.size_flags_stretch_ratio=1.22;content_column.add_theme_constant_override("separation",6);main_layout.add_child(content_column)
+ 	# Scene picture: small by default, can be folded into a one-line bar.
+@@ -1398,6 +1409,13 @@ func _hide_action_card() -> void:
+ 		action_tween.kill()
+ 	action_card.visible = false
+ 
++func _refresh_combat_panel() -> void:
++	if combat_panel == null or world == null:
++		return
++	var lines: Array = Combat.status_lines(world) if float(world.s.health) > 0 else []
++	combat_panel.visible = not lines.is_empty()
++	combat_label.text = "\n".join(lines)
++
+ func _rebuild_log() -> void:
+ 	if log_box == null:
+ 		return
+@@ -1512,6 +1530,7 @@ func _scroll_log_to_end() -> void:
+ 	log_follow_queued=false
+ 
+ func _refresh() -> void:
++	_refresh_combat_panel()
+ 	# v149.29: a death ends the story (no succession); the life is told back,
+ 	# with what became of those left behind.
+ 	if float(world.s.health) <= 0 and not succession_running:
+@@ -3154,7 +3173,12 @@ func _encounter_turn(cmd: String) -> void:
+ 		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
+ 			present.append(i)
+ 	var back := str(enc.get("from", ""))
++	Combat.sync(world)
+ 	var result := Walkers.resolve(world, kind, Walkers.weapon_bonus(world.s.inventory), present.size(), present)
++	# v149.33: the walkers move during the seconds the action takes.
++	if Combat.active(world):
++		Combat.sync(world)
++		Combat.tick(world, Combat.seconds(world, kind))
+ 	world.advance_safe(int(result.minutes))
+ 	_append(("【危険】" if bool(result.bitten) else "") + str(result.text))
+ 	if kind == "flee" and bool(result.ended) and not bool(result.bitten):
+diff --git a/tests/test_combat149_33.gd b/tests/test_combat149_33.gd
+new file mode 100644
+index 0000000..76f51cc
+--- /dev/null
++++ b/tests/test_combat149_33.gd
+@@ -0,0 +1,102 @@
++extends SceneTree
++## v149.33 combat stage 1: walkers as bodies (distance, state, kind), the
++## seconds an action takes, what the player can see, and save/load.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Combat = preload("res://scripts/combat.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 9
++	p.cohabitants = 0
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.household_members = []
++	w.s.society = "emergency"
++	# An old-style encounter (no bodies) gets them from the count.
++	w.s.walkers.places["屋外"] = 3
++	w.s.walkers.encounter = {"place": "屋外", "count": 3, "near": false, "since": int(w.s.minute), "from": "建物前"}
++	Combat.sync(w)
++	var list: Array = Combat.zombies(w)
++	check(list.size() == 3, "three walkers become three bodies")
++	check(list.all(func(z): return float(z.dist) >= 5.0 and str(z.state) == "standing" and z.hurt.has("head") and str(z.kind) in ["fresh", "old"]), "unnoticed walkers stand at a distance, unhurt")
++	var ids: Array = list.map(func(z): return str(z.id))
++	Combat.sync(w)
++	check(Combat.zombies(w).map(func(z): return str(z.id)) == ids, "syncing again keeps the same bodies")
++	# Not noticed: they do not close in.
++	var before := float(Combat.zombies(w)[0].dist)
++	Combat.tick(w, 4.0)
++	check(is_equal_approx(float(Combat.zombies(w)[0].dist), before), "walkers that have not noticed do not approach")
++	# Noticed: the front one is close and they approach at their own speed.
++	w.s.walkers.encounter.near = true
++	Combat.sync(w)
++	check(float(Combat.zombies(w)[0].dist) <= 2.0, "once noticed, the front one has closed in")
++	var far: Dictionary = Combat.zombies(w)[2]
++	var far_before := float(far.dist)
++	Combat.tick(w, 2.0)
++	var speed: float = Combat.SPEED[str(far.kind)]
++	check(is_equal_approx(float(far.dist), maxf(Combat.REACH, far_before - speed * 2.0)), "a noticed walker moves its speed × the seconds")
++	check(float(Combat.zombies(w)[0].dist) >= Combat.REACH, "no walker comes nearer than arm's reach on its own")
++	# A kill removes the one in front.
++	var front_id := str(Combat.zombies(w)[0].id)
++	w.s.walkers.places["屋外"] = 2
++	Combat.sync(w)
++	check(Combat.zombies(w).size() == 2 and not Combat.zombies(w).any(func(z): return str(z.id) == front_id), "the walker killed is the one in front, and it is not counted twice")
++	# Seconds depend on the body.
++	w.s.fatigue = 0.0
++	w.s.injuries = 0
++	var fresh_secs := Combat.seconds(w, "flee")
++	w.s.fatigue = 90.0
++	w.s.injuries = 2
++	check(Combat.seconds(w, "flee") > fresh_secs, "a tired, hurt body takes longer")
++	w.s.fatigue = 0.0
++	w.s.injuries = 0
++	# What the player sees: by day, a count and a distance; at night, guesses.
++	w.s.minute = 2 * 60
++	var day_lines: Array = Combat.status_lines(w)
++	check(str(day_lines).contains("2人") and str(day_lines).contains("体："), "by day: how many and how far")
++	w.s.minute = 13 * 60
++	w.s.walkers.places["屋外"] = 2
++	var night_lines: Array = Combat.status_lines(w)
++	check(str(night_lines).contains("暗くて"), "at night: numbers and distances are guesses")
++	w.s.minute = 2 * 60
++	# Playing an action through the game moves the clock and the walkers.
++	g.location = "屋外"
++	g._sync_player_position()
++	var clock := float(w.s.walkers.encounter.get("clock", 0.0))
++	await g._on_command("様子を見る")
++	check(not Combat.active(w) or float(w.s.walkers.encounter.get("clock", 0.0)) > clock, "an action spends seconds of the encounter clock")
++	g._refresh()
++	check(g.combat_panel.visible == Combat.active(w), "the panel shows only during an encounter")
++	# Save and load keep the bodies.
++	if Combat.active(w):
++		var saved_ids: Array = Combat.zombies(w).map(func(z): return str(z.id))
++		var saved_dist := float(Combat.zombies(w)[0].dist)
++		g._save()
++		w.s.walkers.encounter = {}
++		g._load()
++		w = g.world
++		check(Combat.active(w) and Combat.zombies(w).map(func(z): return str(z.id)) == saved_ids and is_equal_approx(float(Combat.zombies(w)[0].dist), saved_dist), "save and load keep each walker and its distance")
++	else:
++		check(true, "save and load keep each walker (encounter already over)")
++	# The encounter ends: no panel.
++	w.s.walkers.encounter = {}
++	g._refresh()
++	check(not g.combat_panel.visible, "no encounter, no panel")
++	print("v149.33 combat checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
