@@ -170,10 +170,10 @@ index 0000000..4c84dbc
 +	quit()
 diff --git a/qa/crawl.gd b/qa/crawl.gd
 new file mode 100644
-index 0000000..8533b78
+index 0000000..9098754
 --- /dev/null
 +++ b/qa/crawl.gd
-@@ -0,0 +1,189 @@
+@@ -0,0 +1,190 @@
 +extends SceneTree
 +## Bug crawler: plays worlds by pressing suggestions and typing common
 +## commands at random, checking the state after every step.
@@ -189,6 +189,7 @@ index 0000000..8533b78
 +	"浴槽に水をためる", "浴槽の水を汲む", "温かい料理を作る", "映画を観る", "タバコを吸う", "本を読む", "通りが空くまで待つ", "息をひそめる",
 +	"裏口から外に出る", "裏口から家に入る", "窓から物を投げて気をそらす", "隠れる", "逃げる", "戦う", "様子を見る", "物を投げて気をそらす",
 +	"持ち物", "状態", "会話を終える", "水を渡す", "食料を渡す", "包帯を渡す", "交換できるものを聞く", "一緒に来ないか誘う", "何か知っていることはないか聞く",
++	"詩音に見張りを頼む", "蒼に探索を頼む", "詩音を料理担当にする", "蒼に修理を任せる", "詩音を手当て担当にする", "詩音の役割を外す", "役割を決める",
 +	"大丈夫ですか？", "家族は無事なの？", "その傷、どうしたの？", "名前、聞いてもいい？", "みんなのために、一人で出ていく"]
 +
 +var problems: Array = []
@@ -613,20 +614,21 @@ index ee24b3d..f5fb1da 100644
  		world.s.gas_cans = maxf(0.0, float(world.s.get("gas_cans", 0.0)) - 0.25)
  	world.s.food = float(world.s.food) - 0.25 * portions
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 82aa64f..5daed3f 100644
+index 82aa64f..507fe4e 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -26,6 +26,9 @@ const Walkers = preload("res://scripts/walkers.gd")
+@@ -26,6 +26,10 @@ const Walkers = preload("res://scripts/walkers.gd")
  const Mood = preload("res://scripts/mood.gd")
  const HomeLife = preload("res://scripts/home_life.gd")
  const PlayerIntents = preload("res://scripts/player_intents.gd")
 +const Survivors = preload("res://scripts/survivors.gd")
++const Roles = preload("res://scripts/roles.gd")
 +var survivor_partner := ""
 +var survivor_rejects: Array = []   # rejected model lines, for QA
  const OutbreakNews = preload("res://scripts/outbreak_news.gd")
  const UI_SETTINGS_PATH := "user://ui_settings.cfg"
  const MENU_TABS := [["状態", "status"], ["持ち物", "inventory"], ["拠点", "base"], ["仲間", "people"], ["地図", "map"], ["記録", "records"], ["設定", "settings"]]
-@@ -1262,6 +1265,8 @@ func _member_names() -> Array:
+@@ -1262,6 +1266,8 @@ func _member_names() -> Array:
  	var names: Array = []
  	for person in world.s.household_members:
  		names.append(str(person.name))
@@ -635,7 +637,7 @@ index 82aa64f..5daed3f 100644
  	return names
  
  ## One chronicle entry, styled by what it is.
-@@ -1425,6 +1430,8 @@ func _on_command(raw: String) -> void:
+@@ -1425,6 +1431,8 @@ func _on_command(raw: String) -> void:
  	elif not encounter.is_empty():
  		await _encounter_turn(cmd)
  		return
@@ -644,7 +646,7 @@ index 82aa64f..5daed3f 100644
  	if _care_command(cmd):
  		return
  	if NPCConversation.normalize(cmd) == "提案を実行":
-@@ -1498,8 +1505,15 @@ func _update_dialogue_input() -> void:
+@@ -1498,8 +1506,15 @@ func _update_dialogue_input() -> void:
  		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
  			dialogue.partner = -1
  	command_input.placeholder_text = "どうする？（例：居間へ行く／窓から外を見る）"
@@ -662,7 +664,7 @@ index 82aa64f..5daed3f 100644
  		var partner_name := str(world.s.household_members[dialogue.partner].name)
  		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % partner_name
  		convo_label.text = "%sと会話中" % partner_name
-@@ -1512,6 +1526,18 @@ func _suggestions() -> Array:
+@@ -1512,6 +1527,18 @@ func _suggestions() -> Array:
  	var out: Array = []
  	if not Walkers.ensure(world).encounter.is_empty():
  		return ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"]
@@ -681,7 +683,18 @@ index 82aa64f..5daed3f 100644
  	if dialogue.partner >= 0:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		var order: Dictionary = person.get("water_errand", {})
-@@ -1588,6 +1614,9 @@ func _suggestions() -> Array:
+@@ -1527,6 +1554,10 @@ func _suggestions() -> Array:
+ 		for person in world.s.household_members:
+ 			if float(person.health) > 0 and not bool(person.get("bitten", false)) and Mood.of(person) < 30.0 and Navigation.indoor(str(person.location)):
+ 				out.append("%sの話を聞く" % person.name)
++		# v149.27: once things go wrong, suggest sharing out the work.
++		var living: Array = world.s.household_members.filter(func(m): return float(m.health) > 0)
++		if not living.is_empty() and str(world.s.society) != "normal" and living.filter(func(m): return not Roles.role_of(m).is_empty()).is_empty():
++			out.append("役割を決める")
+ 	var horde_near: bool = not Walkers.ensure(world).get("horde", {}).is_empty()
+ 	if Navigation.indoor(location) and (horde_near or Walkers.count(world, "建物前") > 0 or Walkers.count(world, "玄関") > 0 or Walkers.ensure(world).has("drawn_at")):
+ 		if not bool(world.s.door_locked) and location == "玄関":
+@@ -1588,6 +1619,9 @@ func _suggestions() -> Array:
  	for person in world.s.household_members:
  		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
@@ -691,7 +704,7 @@ index 82aa64f..5daed3f 100644
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
  		if out.size() >= 4:
-@@ -1877,6 +1906,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+@@ -1877,6 +1911,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
  	var all_turns: Array = dialogue.recent(index)
  	var character := {"名前": str(person.name), "一人称": style.first_person, "話し方": style.description}
  	character.merge(NPCMind.profile(world, index))
@@ -701,7 +714,7 @@ index 82aa64f..5daed3f 100644
  	character["プレイヤーとの関係"] = NPCMind.relationship(npc_memory, person, all_turns.size())
  	var turns: Array = []
  	var recent_players: Array = []
-@@ -2260,6 +2292,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
+@@ -2260,6 +2297,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
  	world.s.household_members.remove_at(heir)
  	for i in world.s.household_members.size():
  		world.s.household_members[i].id = i
@@ -709,7 +722,7 @@ index 82aa64f..5daed3f 100644
  	dialogue = HouseholdDialogue.new()
  	_sync_player_position()
  	_append("ここからは%sとして生きていく。%sが残した家と物資は、そのまま引き継がれる。" % [person.name, previous])
-@@ -2428,6 +2461,114 @@ func _leave_home(cmd: String) -> bool:
+@@ -2428,6 +2466,114 @@ func _leave_home(cmd: String) -> bool:
  	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
  	return true
  
@@ -824,7 +837,7 @@ index 82aa64f..5daed3f 100644
  ## A housemate leaves the household for good (seen off, or left on their own).
  func _remove_housemate(index: int) -> void:
  	world.s.household_members.remove_at(index)
-@@ -2439,14 +2580,35 @@ func _remove_housemate(index: int) -> void:
+@@ -2439,18 +2585,65 @@ func _remove_housemate(index: int) -> void:
  		world.s.profile[key] = values
  	for i in world.s.household_members.size():
  		world.s.household_members[i].id = i
@@ -860,7 +873,46 @@ index 82aa64f..5daed3f 100644
  		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
-@@ -2523,6 +2685,8 @@ func _check_walkers(previous: String) -> bool:
+ 
++## v149.27: "詩音に見張りを頼む" / "詩音の役割を外す" / "役割を確認".
++func _role_command(cmd: String) -> bool:
++	if NPCMemory._mentions(cmd, ["役割を確認", "役割を見る", "役割は", "役割一覧", "誰が何を"]) or cmd.strip_edges() in ["役割", "役割を決める"]:
++		_append(Roles.summary(world))
++		_refresh()
++		return true
++	for person in world.s.household_members:
++		if not cmd.contains(str(person.name)):
++			continue
++		if NPCMemory._mentions(cmd, Roles.CLEAR_WORDS):
++			_append(Roles.clear(person))
++			_refresh()
++			return true
++		var role := Roles.parse(cmd)
++		if role.is_empty() or PlayerIntents.negated(cmd):
++			return false
++		if not Navigation.indoor(location) or not Navigation.indoor(str(person.location)):
++			_append("役割は、家で本人と話して決める。何も実行していません。")
++			_refresh()
++			return true
++		world.advance_safe(2)
++		_append(Roles.assign(world, person, role))
++		_refresh()
++		return true
++	return false
++
+ const COMFORT_WORDS := ["話を聞", "励ま", "慰め", "なぐさめ", "抱きしめ", "寄り添", "そばにい", "元気づけ", "声をかけ", "気持ちを聞", "相談に乗"]
+ 
+ ## "詩音の話を聞く" / "詩音を励ます": sit down with a worn-down housemate.
+@@ -2478,7 +2671,7 @@ func _comfort_command(cmd: String) -> bool:
+ 
+ ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
+ func _care_command(cmd: String) -> bool:
+-	if _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
++	if _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
+ 		return true
+ 	for index in world.s.household_members.size():
+ 		var person: Dictionary = world.s.household_members[index]
+@@ -2523,6 +2716,8 @@ func _check_walkers(previous: String) -> bool:
  	world.set_meta("player_at_home", Navigation.indoor(location))
  	if not w.encounter.is_empty():
  		return true
@@ -869,6 +921,16 @@ index 82aa64f..5daed3f 100644
  	var enc := Walkers.check(world, location, false, previous if previous != location else "")
  	if enc.is_empty():
  		return false
+@@ -3067,7 +3262,8 @@ func _household_text() -> String:
+ 		var doing := str(person.activity)
+ 		if float(person.health) > 0 and doing == "在宅":
+ 			doing = "在宅（%s）" % NPCMind.now_doing(world, npc_memory, index)
+-		lines.append("%s：%s / %s"%[name,person.location,"応答がない" if float(person.health)<=0 else doing])
++		var role := Roles.role_of(person)
++		lines.append("%s：%s / %s%s"%[name,person.location,"応答がない" if float(person.health)<=0 else doing, ("（%s）" % Roles.ROLES[role].label) if not role.is_empty() else ""])
+ 	return "\n".join(lines)
+ func _observe(channel: String) -> String:
+ 	var found: Array=world.Events.observe(world,channel,location)
 diff --git a/scripts/mood.gd b/scripts/mood.gd
 index 59e1b64..7e4c0fa 100644
 --- a/scripts/mood.gd
@@ -916,6 +978,234 @@ index 67c6e86..549ec31 100644
  
  ## True when the line declines rather than asks: 「吸わない」「観なくていい」.
  static func negated(text: String) -> bool:
+diff --git a/scripts/roles.gd b/scripts/roles.gd
+new file mode 100644
+index 0000000..dacf8ee
+--- /dev/null
++++ b/scripts/roles.gd
+@@ -0,0 +1,222 @@
++extends RefCounted
++## v149.27: what a housemate is trusted to do. One role each:
++## - watch: notices figures in the street and the horde's approach, puts the
++##   lights out and says so; night watches are tiring
++## - cook: a warm meal for everyone in the evening (lifts everyone, smells)
++## - repair: mends the front door by day (hammering is heard outside)
++## - scout: after the breakdown, goes out for four hours by day to empty
++##   buildings and brings back food and water; can be hurt or bitten
++## - medic: dresses the household's wounds with bandages
++## A matching occupation does it better. Children are not sent out or set to
++## hammering; someone at the end of their tether refuses.
++
++const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
++const WorldTraits = preload("res://scripts/world_traits.gd")
++
++const ROLES := {
++	"watch": {"label": "見張り", "words": ["見張り", "見張って", "見張る", "警戒"], "jobs": ["元自衛官", "警備員"]},
++	"cook": {"label": "料理", "words": ["料理", "ご飯", "食事の支度", "炊事"], "jobs": ["居酒屋の店主", "主婦"]},
++	"repair": {"label": "修理", "words": ["修理", "直して", "修繕", "大工仕事"], "jobs": ["大工"]},
++	"scout": {"label": "探索", "words": ["探索", "物資を探", "調達", "物資集め"], "jobs": ["元自衛官"]},
++	"medic": {"label": "手当て", "words": ["手当て", "治療", "看護", "けがの世話"], "jobs": ["看護師", "薬剤師"]},
++}
++## Words that make a line about a standing job, not a one-off request
++## ("詩音、料理して" stays a request to cook now).
++const ASSIGN_WORDS := ["担当", "係", "役割", "役目", "任せ", "毎日の", "毎晩の"]
++const ASK_WORDS := ["頼む", "頼んだ", "お願い"]
++const CLEAR_WORDS := ["役割を外", "役割をやめ", "役目を外", "仕事を外", "もうしなくていい", "休ませ"]
++
++static func role_of(person: Dictionary) -> String:
++	return str(person.get("role", ""))
++
++static func skilled(person: Dictionary, role: String) -> bool:
++	return str(person.get("job", "")) in ROLES[role].jobs
++
++## "詩音に見張りを頼む" → the role id, "" if the line is not about roles.
++static func parse(text: String) -> String:
++	for id in ROLES:
++		if not _has(text, ROLES[id].words):
++			continue
++		if _has(text, ASSIGN_WORDS) or (id in ["watch", "scout"] and _has(text, ASK_WORDS)):
++			return id
++	return ""
++
++static func _has(text: String, words: Array) -> bool:
++	for word in words:
++		if text.contains(word):
++			return true
++	return false
++
++static func assign(world, person: Dictionary, role: String) -> String:
++	var name := str(person.name)
++	if float(person.health) <= 0:
++		return "%sは、もう何もできない。" % name
++	if bool(person.get("bitten", false)):
++		return "%sは熱で起き上がれない。役割を任せられる状態ではない。" % name
++	if int(person.get("age", 30)) < 13 and role in ["scout", "repair"]:
++		return "%sはまだ子どもだ。%sは任せられない。" % [name, ROLES[role].label]
++	if Mood.of(person) < 20.0:
++		return "%s「……ごめん。今は、何も引き受けられない」" % name
++	person.role = role
++	person.erase("role_done_day")
++	var bonus := "（%sの経験が生きる）" % str(person.job) if skilled(person, role) else ""
++	var lines := {
++		"watch": "%s「分かった。外の様子は、私が見ておく」%s" % [name, bonus],
++		"cook": "%s「任せて。夜は温かいものを作るよ」%s" % [name, bonus],
++		"repair": "%s「扉は昼のうちに、少しずつ直しておく」%s" % [name, bonus],
++		"scout": "%s「昼のうちに、空いた建物を回ってみる。無理はしない」%s" % [name, bonus],
++		"medic": "%s「けがをしたら、すぐ言って。手当てする」%s" % [name, bonus],
++	}
++	return str(lines[role])
++
++static func clear(person: Dictionary) -> String:
++	if role_of(person).is_empty():
++		return "%sには、今は役割を任せていない。" % person.name
++	var label: String = ROLES[role_of(person)].label
++	person.erase("role")
++	return "%sの%sの役割を外した。" % [person.name, label]
++
++static func summary(world) -> String:
++	var lines: Array = []
++	for person in world.s.household_members:
++		var role := role_of(person)
++		lines.append("%s：%s" % [person.name, ROLES[role].label if not role.is_empty() else "なし"])
++	if lines.is_empty():
++		return "同居人はいない。"
++	return "役割　" + "、".join(lines) + "\n（例：「%sに見張りを頼む」「%sを料理担当にする」。見張り・料理・修理・探索・手当て）" % [world.s.household_members[0].name, world.s.household_members[0].name]
++
++static func _able(world, person: Dictionary) -> bool:
++	return float(person.health) > 0 and not bool(person.get("bitten", false)) and Mood.of(person) >= 20.0 and str(person.get("isolated", "")).is_empty()
++
++static func _home(person: Dictionary) -> bool:
++	return str(person.get("activity", "")) != "外出" and not person.has("scouting")
++
++## Hourly, after the walkers have moved.
++static func hourly(world) -> void:
++	var minute := int(world.s.minute)
++	var hour := int(world.hour_of_day())
++	var day := minute / 1440
++	var night := hour < 6 or hour >= 18
++	var notices: Array = world.s.walkers.notices if world.s.has("walkers") else []
++	var w: Dictionary = world.s.get("walkers", {})
++	for person in world.s.household_members:
++		var role := role_of(person)
++		# A scout out of the house comes back on time, whatever their state.
++		if person.has("scouting") and minute >= int(person.scouting.until):
++			notices.append(_return(world, person))
++			continue
++		if role.is_empty() or not _able(world, person):
++			continue
++		var good := skilled(person, role)
++		match role:
++			"watch":
++				if not _home(person):
++					continue
++				if night:
++					person.fatigue = minf(100.0, float(person.fatigue) + (1.0 if good else 2.0))
++					if str(person.get("activity", "")) == "睡眠":
++						person.activity = "在宅"
++						person.location = "居間"
++				var horde: Dictionary = w.get("horde", {})
++				var horde_near: bool = not horde.is_empty() and str(horde.place) in ["住宅街", "屋外", "商店通り"]
++				var trouble: bool = w.has("drawn_at") or Walkers.count(world, "建物前") > 0 or horde_near
++				if trouble and night and world.has_home_power() and not bool(world.s.get("lights_off", false)) and not bool(world.s.get("blackout", false)):
++					world.s.lights_off = true
++					w.erase("drawn_at")
++					notices.append("%s「通りに人影が見える。明かりを消したよ」" % person.name)
++				elif horde_near and int(person.get("warned_horde_at", -1)) != int(horde.get("step", -1)) and int(horde.step) <= 1:
++					person.warned_horde_at = int(horde.step)
++					notices.append("%s「群れが動き出した。こっちに来るかもしれない。静かにしていよう」" % person.name)
++			"cook":
++				if hour == 18 and _home(person) and int(person.get("role_done_day", -1)) != day:
++					person.role_done_day = day
++					var heat: String = load("res://scripts/home_life.gd").heat_source(world)
++					var eaters: int = 1 + world.s.household_members.filter(func(m): return float(m.health) > 0 and _home(m)).size()
++					if heat.is_empty() or float(world.s.food) < 0.25:
++						notices.append("%s「今日は火も食材も足りなくて、温かいものは作れなかった。ごめん」" % person.name)
++						continue
++					if heat == "cassette":
++						world.s.gas_cans = maxf(0.0, float(world.s.get("gas_cans", 0.0)) - 0.25)
++					var lift := 6.0 if good else 4.0
++					Mood.change(world.s, lift)
++					for m in world.s.household_members:
++						if float(m.health) > 0 and _home(m):
++							Mood.change(m, lift)
++					Walkers.make_smell(world, 60)
++					notices.append("%sが夕食を作った。湯気の立つ鍋を、%d人で囲んだ。換気扇から、においが外に流れていく。" % [person.name, eaters])
++			"repair":
++				if hour >= 9 and hour <= 16 and _home(person) and int(person.get("role_done_day", -1)) != day:
++					var hp := float(world.s.get("door_hp", 100.0))
++					if hp >= 100.0 and not bool(world.s.get("door_broken", false)):
++						continue
++					person.role_done_day = day
++					if bool(world.s.get("door_broken", false)):
++						if int(world.s.inventory.wood) < 1 or int(world.s.inventory.parts) < 1:
++							notices.append("%s「扉を直したいけど、木材と部品が足りない」" % person.name)
++							continue
++						world.s.inventory.wood = int(world.s.inventory.wood) - 1
++						world.s.inventory.parts = int(world.s.inventory.parts) - 1
++						world.s.door_broken = false
++						world.s.door_hp = 60.0 if good else 40.0
++					else:
++						world.s.door_hp = minf(100.0, hp + (35.0 if good else 20.0))
++					Walkers.make_noise(world, "玄関", 60)
++					person.fatigue = minf(100.0, float(person.fatigue) + 8.0)
++					notices.append("%sが玄関の扉を直した。金づちの音が、外に響いた。" % person.name)
++			"scout":
++				if hour == 10 and _home(person) and int(person.get("role_done_day", -1)) != day and float(person.health) >= 60.0 and str(person.get("activity", "")) != "睡眠":
++					person.role_done_day = day
++					if not WorldTraits.reached(world, "disrupted"):
++						continue
++					person.scouting = {"until": minute + 4 * 60}
++					person.activity = "外出"
++					person.location = "屋外"
++					notices.append("%sが、空いた建物を探しに出かけていった。「暗くなる前には戻る」" % person.name)
++			"medic":
++				if int(person.get("role_done_day", -1)) == day or not _home(person) or int(world.s.inventory.get("bandage", 0)) < 1:
++					continue
++				if float(world.s.get("injuries", 0)) > 0:
++					person.role_done_day = day
++					world.s.inventory.bandage = int(world.s.inventory.bandage) - 1
++					world.s.injuries = maxf(0.0, float(world.s.injuries) - (3.0 if good else 2.0))
++					notices.append("%sが、あなたの傷を手当てしてくれた。（包帯1つ）" % person.name)
++
++## A scout comes home: supplies, an injury, or a bite.
++static func _return(world, person: Dictionary) -> String:
++	person.erase("scouting")
++	person.activity = "在宅"
++	person.location = "居間"
++	person.fatigue = minf(100.0, float(person.fatigue) + 20.0)
++	var minute := int(world.s.minute)
++	var good := skilled(person, "scout")
++	var risk := clampi(Walkers.total(world) / 4 - (8 if good else 0), 3, 35)
++	var roll: int = world.draw(minute, int(person.id), "scout", 100)
++	if roll < risk / 3:
++		var index: int = world.s.household_members.find(person)
++		Walkers.bite_housemate(world, index)
++		return "【危険】%sが、青い顔で戻ってきた。袖の下から血がにじんでいる。「……つかまった。噛まれたかもしれない」" % person.name
++	if roll < risk:
++		person.health = maxf(1.0, float(person.health) - 20.0)
++		return "%sが、足を引きずって戻ってきた。「感染者に追われて、転んだ。……何も持ってこられなかった」" % person.name
++	# What empty buildings still hold.
++	var found_food := 0.0
++	var found_water := 0.0
++	for site in world.s.district.sites:
++		var s: Dictionary = world.s.district.sites[site]
++		if not bool(s.vacant):
++			continue
++		var take_food := minf(float(s.food), 2.0 - found_food)
++		var take_water := minf(float(s.water), 4.0 - found_water)
++		s.food = float(s.food) - take_food
++		s.water = float(s.water) - take_water
++		found_food += take_food
++		found_water += take_water
++		if found_food >= 2.0 and found_water >= 4.0:
++			break
++	if found_food <= 0.0 and found_water <= 0.0:
++		return "%sが戻ってきた。「空いた建物は、どこももう空っぽだった」" % person.name
++	world.s.food = float(world.s.food) + found_food
++	world.s.water = float(world.s.water) + found_water
++	Mood.change(person, 3.0)
++	return "%sが無事に戻ってきた。食料%.1f人日分と、水%.0fLを持ち帰った。" % [person.name, found_food, found_water]
 diff --git a/scripts/survivor_parts.gd b/scripts/survivor_parts.gd
 new file mode 100644
 index 0000000..d960cc9
@@ -1275,7 +1565,7 @@ index 0000000..d960cc9
 +}
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 new file mode 100644
-index 0000000..a3f76d1
+index 0000000..7fb5ef4
 --- /dev/null
 +++ b/scripts/survivors.gd
 @@ -0,0 +1,669 @@
@@ -1736,7 +2026,7 @@ index 0000000..a3f76d1
 +	var mate := {"id": index, "name": str(p.name), "health": 100.0, "hunger": 20.0, "thirst": 20.0, "fatigue": 40.0,
 +		"location": "居間", "activity": "在宅", "food_used": 0.0, "water_used": 0.0, "tastes": world.HouseholdSmalltalk.roll_preferences(rng),
 +		"mood": 55.0, "background": str(p.background).replace(str(p.secret), ""), "trait": str(p.trait), "survivor": id,
-+		"honesty": int(p.traits.honesty), "job": str(p.job)}
++		"honesty": int(p.traits.honesty), "job": str(p.job), "age": int(p.age)}
 +	if str(p.tag) == "hidden_bite":
 +		# The bite they hid surfaces a day or two later.
 +		mate.hidden_bite_at = int(world.s.minute) + rng.randi_range(18, 40) * 60
@@ -2046,19 +2336,20 @@ index 13013bf..feff6d9 100644
  ## Ordinary household sound (a film at normal volume, voices): heard only
  ## by something already standing at the door.
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 3109e97..54acbe9 100644
+index 3109e97..a1fd56f 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -7,6 +7,8 @@ const HouseholdErrands = preload("res://scripts/household_errands.gd")
+@@ -7,6 +7,9 @@ const HouseholdErrands = preload("res://scripts/household_errands.gd")
  const Walkers = preload("res://scripts/walkers.gd")
  const Mood = preload("res://scripts/mood.gd")
  const OutbreakNews = preload("res://scripts/outbreak_news.gd")
 +const Survivors = preload("res://scripts/survivors.gd")
 +const WorldTraits = preload("res://scripts/world_traits.gd")
++const Roles = preload("res://scripts/roles.gd")
  # v149.24: the first local infection starts with this resident.
  const PATIENT_ZERO := 7
  signal household_memory_event(id: int, minute: int, kind: String, subject: String, detail: String)
-@@ -38,12 +40,18 @@ func configure(profile: Dictionary) -> bool:
+@@ -38,12 +41,18 @@ func configure(profile: Dictionary) -> bool:
  		var name := str(names[i]).strip_edges() if i < names.size() else ""
  		s.household_members.append({"id":i,"name":name if not name.is_empty() else "同居人%d"%(i+1),"health":100.0,"hunger":0.0,"thirst":0.0,"fatigue":0.0,"location":"居間","activity":"在宅","food_used":0.0,"water_used":0.0,"tastes":HouseholdSmalltalk.roll_preferences(taste_rng)})
  	s.walkers = Walkers.fresh()
@@ -2079,7 +2370,7 @@ index 3109e97..54acbe9 100644
  	return true
  
  static func valid_profile(profile: Dictionary) -> bool:
-@@ -54,9 +62,9 @@ static func valid_profile(profile: Dictionary) -> bool:
+@@ -54,9 +63,9 @@ static func valid_profile(profile: Dictionary) -> bool:
  	for key in ["age","seed","cohabitants"]:
  		if not (profile.get(key) is int or profile.get(key) is float): return false
  		if not is_finite(float(profile[key])) or float(profile[key]) != floor(float(profile[key])): return false
@@ -2091,9 +2382,11 @@ index 3109e97..54acbe9 100644
  	for name_value in profile.companion_names:
  		if not name_value is String or str(name_value).length()>24: return false
  	var genders = profile.get("companion_genders", [])
-@@ -75,6 +83,14 @@ func step(sleeping: bool) -> void:
+@@ -74,7 +83,16 @@ func step(sleeping: bool) -> void:
+ 		Walkers.housemates_hourly(self)
  		Walkers.home_events(self)
  		Mood.hourly(self, sleeping)
++		Roles.hourly(self)
  		OutbreakNews.hourly(self)
 +		WorldTraits.hourly(self)
 +		WorldTraits.restore(self)
@@ -2106,7 +2399,16 @@ index 3109e97..54acbe9 100644
  		if not s.has("district"):
  			s.district = District.fresh()
  		District.tick(self)
-@@ -382,6 +398,10 @@ func validate_state(data: Dictionary) -> bool:
+@@ -198,7 +216,7 @@ func _household_hour() -> void:
+ 		person.thirst=minf(100,float(person.thirst)+100.0/24.0)
+ 		# A requested cooking action owns the NPC until it finishes or is cancelled.
+ 		# Do not teleport the cook on an hourly schedule boundary.
+-		var cooking_now: bool = str(person.get("activity", "")) == "料理" or bool(person.get("watching", false))
++		var cooking_now: bool = str(person.get("activity", "")) == "料理" or bool(person.get("watching", false)) or person.has("scouting")
+ 		var previous_activity: String = person.activity
+ 		if not cooking_now:
+ 			person.activity = scheduled
+@@ -382,6 +400,10 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("walkers") and not Walkers.valid(data.walkers):
  		return false
@@ -2404,6 +2706,138 @@ index fbb2322..e8b29c7 100644
  	var world = game.world
  	var state: Dictionary = world.s.district
  
+diff --git a/tests/test_roles149_27.gd b/tests/test_roles149_27.gd
+new file mode 100644
+index 0000000..0fe246e
+--- /dev/null
++++ b/tests/test_roles149_27.gd
+@@ -0,0 +1,126 @@
++extends SceneTree
++## v149.27: housemates' roles: watch, cook, repair, scout, medic.
++const Main = preload("res://main.tscn")
++const Roles = preload("res://scripts/roles.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 3
++	p.companion_names = ["詩音", "蒼", "陸"]
++	p.companion_genders = ["女性", "男性", "男性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var shion: Dictionary = w.s.household_members[0]
++	var ao: Dictionary = w.s.household_members[1]
++	var riku: Dictionary = w.s.household_members[2]
++	g.location = "居間"
++	for m in w.s.household_members:
++		m.location = "居間"
++		m.activity = "在宅"
++	w.s.society = "disrupted"
++	g._refresh()
++	check("役割を決める" in g._suggestions(), "sharing out the work is suggested once things go wrong")
++	await g._on_command("役割を決める")
++	check(g.log_entries[-1].contains("見張り") and g.log_entries[-1].contains("なし"), "the roles are listed")
++	# --- Parsing: a standing job vs a one-off request.
++	check(Roles.parse("詩音に見張りを頼む") == "watch" and Roles.parse("蒼を料理担当にする") == "cook" and Roles.parse("詩音、料理して") == "", "a role is a standing job; a request to cook now is not")
++	await g._on_command("詩音に見張りを頼む")
++	await g._on_command("蒼を料理担当にする")
++	await g._on_command("陸に修理を任せる")
++	check(Roles.role_of(shion) == "watch" and Roles.role_of(ao) == "cook" and Roles.role_of(riku) == "repair", "roles are given")
++	check(g._household_text().contains("（見張り）"), "the household panel shows roles")
++	# --- Watch: puts the lights out when someone in the street turns toward the house.
++	w.s.minute = 13 * 60 + 5 * 1440   # 21:00
++	w.s.lights_off = false
++	w.s.walkers.places = {"屋外": 2}
++	w.s.walkers.notices = []
++	Walkers.home_events(w)
++	Roles.hourly(w)
++	check(bool(w.s.lights_off) and str(w.s.walkers.notices).contains("明かりを消した"), "the watch puts the lights out at the first sign")
++	w.s.minute += 60
++	Walkers.home_events(w)
++	check(Walkers.count(w, "建物前") == 0, "so nobody comes to the door")
++	# --- Cook: a warm dinner lifts everyone and smells.
++	w.s.minute = 10 * 60 + 6 * 1440   # 18:00
++	w.s.food = 5.0
++	w.s.grid_online = true
++	var m0: float = Mood.of(w.s)
++	ao.activity = "在宅"
++	w.s.walkers.notices = []
++	Roles.hourly(w)
++	check(Mood.of(w.s) > m0 + 3.0 and str(w.s.walkers.notices).contains("夕食") and "smell" in Walkers.home_reasons(w), "the cook's dinner lifts everyone, and smells")
++	# --- Repair: mends the door by day, loudly.
++	w.s.door_hp = 50.0
++	w.s.minute = 3 * 60 + 7 * 1440   # 11:00
++	riku.activity = "在宅"
++	Roles.hourly(w)
++	check(float(w.s.door_hp) > 60.0 and "noise" in Walkers.home_reasons(w), "the door is mended by day, with hammering")
++	# --- Scout: out for four hours, back with supplies from empty buildings.
++	await g._on_command("陸に探索を頼む")
++	w.s.district.sites["コンビニ"].vacant = true
++	w.s.walkers.places = {}
++	w.s.minute = 2 * 60 + 8 * 1440   # 10:00
++	riku.activity = "在宅"
++	riku.health = 100.0
++	w.s.walkers.notices = []
++	Roles.hourly(w)
++	check(riku.has("scouting") and riku.activity == "外出", "the scout sets out at ten")
++	var food0: float = w.s.food
++	w.s.minute += 4 * 60
++	w.s.walkers.notices = []
++	Roles.hourly(w)
++	check(not riku.has("scouting") and riku.activity == "在宅" and (float(w.s.food) > food0 or str(w.s.walkers.notices).contains("戻って")), "and comes back: " + str(w.s.walkers.notices))
++	# Many dead about: scouting can go wrong.
++	var hurt := 0
++	for i in 30:
++		riku.health = 100.0
++		riku.erase("bitten")
++		riku.scouting = {"until": int(w.s.minute)}
++		w.s.walkers.places = {"駅前": 60, "商店通り": 40}
++		w.s.minute += 97
++		w.s.walkers.notices = []
++		Roles.hourly(w)
++		if str(w.s.walkers.notices).contains("足を引きずって") or bool(riku.get("bitten", false)):
++			hurt += 1
++	check(hurt > 0 and hurt < 30, "with the town full of the dead, scouting is dangerous (%d of 30)" % hurt)
++	riku.erase("bitten")
++	riku.health = 100.0
++	# --- Medic: dresses wounds with bandages.
++	await g._on_command("詩音を手当て担当にする")
++	w.s.injuries = 3.0
++	w.s.inventory.bandage = 1
++	shion.activity = "在宅"
++	shion.erase("role_done_day")
++	w.s.minute += 1440
++	Roles.hourly(w)
++	check(float(w.s.injuries) < 3.0 and int(w.s.inventory.bandage) == 0, "the medic dresses wounds")
++	# --- Refusals and clearing.
++	shion.mood = 10.0
++	await g._on_command("詩音に見張りを頼む")
++	check(str(g.log_entries.slice(-3)).contains("引き受けられない"), "someone at the end of their tether refuses")
++	riku.age = 9
++	await g._on_command("陸に探索を頼む")
++	check(str(g.log_entries.slice(-3)).contains("子ども"), "a child is not sent out")
++	await g._on_command("蒼の役割を外す")
++	check(Roles.role_of(ao) == "", "a role can be cleared")
++	check(w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "roles save and load")
++	print("v149.27 role checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_scene_description30.gd b/tests/test_scene_description30.gd
 index 8e5f82c..867619a 100644
 --- a/tests/test_scene_description30.gd
