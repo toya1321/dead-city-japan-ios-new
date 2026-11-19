@@ -35234,7 +35234,7 @@ index 0000000..4007639
 @@ -0,0 +1 @@
 +uid://lephoc60a7eu
 diff --git a/scripts/scene_view.gd b/scripts/scene_view.gd
-index 3bbb38c..2088136 100644
+index 3bbb38c..c95188d 100644
 --- a/scripts/scene_view.gd
 +++ b/scripts/scene_view.gd
 @@ -37,7 +37,7 @@ func location_texture(location: String, override_name: String = "", phase: Strin
@@ -35246,6 +35246,18 @@ index 3bbb38c..2088136 100644
  	if not cache.has(file):cache[file]=load("res://assets/photos/"+file+".jpg")
  	return cache[file]
  func update_view(next_place:String,next_hour:float,next_weather:String,next_power:bool,next_shop_open:bool,visible_people:int,next_context:String)->void:
+@@ -48,8 +48,8 @@ func _draw()->void:
+ 	var outdoor:bool=place in ["建物前","屋外","共用廊下","食品店","金物店","薬局","商店通り","住宅街","駅前"]
+ 	var night:bool=hour<6 or hour>=18
+ 	if night or (not outdoor and not power):draw_rect(Rect2(Vector2.ZERO,size),Color(0.02,0.04,0.09,0.64 if outdoor or (not power and not dark_photo) else (0.12 if dark_photo else 0.18)))
+-	if outdoor and weather in ["rain","snow"]:
++	# v149.29: snow is shown by the winter photos, not dots drawn on top.
++	if outdoor and weather == "rain":
+ 		for i in range(35):
+ 			var p:=Vector2(fmod(float(i)*53.0,maxf(size.x,1)),fmod(float(i)*37.0,maxf(size.y,1)))
+-			if weather=="rain":draw_line(p,p+Vector2(-5,15),Color(0.65,0.8,0.9,0.5),1)
+-			else:draw_circle(p,2,Color("#dbe4ed"))
++			draw_line(p,p+Vector2(-5,15),Color(0.65,0.8,0.9,0.5),1)
 diff --git a/tests/test_arrivals149_29.gd.uid b/tests/test_arrivals149_29.gd.uid
 new file mode 100644
 index 0000000..bab7e04
