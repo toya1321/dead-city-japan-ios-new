@@ -11527,6 +11527,20 @@ index 0000000..e1e0620
 +++ b/scripts/action_photos.gd.uid
 @@ -0,0 +1 @@
 +uid://b6p0omfgg0rmb
+diff --git a/scripts/cold.gd b/scripts/cold.gd
+index b24af4d..5b0d45e 100644
+--- a/scripts/cold.gd
++++ b/scripts/cold.gd
+@@ -146,4 +146,8 @@ static func find_blankets(world, place: String) -> String:
+ 	state(world).found = found
+ 	state(world).blankets = blankets(world) + take
+ 	world.advance_safe(10)
+-	return "押し入れの奥から、毛布を%d枚見つけた。（毛布 %d枚）" % [take, blankets(world)] if place != "デパート" else "寝具売り場の棚から、毛布を%d枚持ち出した。（毛布 %d枚）" % [take, blankets(world)]
++	if place == "避難所":
++		return "誰もいなくなった体育館で、床に残された毛布を%d枚拾い集めた。（毛布 %d枚）" % [take, blankets(world)]
++	if place == "デパート":
++		return "寝具売り場の棚から、毛布を%d枚持ち出した。（毛布 %d枚）" % [take, blankets(world)]
++	return "押し入れの奥から、毛布を%d枚見つけた。（毛布 %d枚）" % [take, blankets(world)]
 diff --git a/scripts/main.gd b/scripts/main.gd
 index 57243c7..180e44b 100644
 --- a/scripts/main.gd
