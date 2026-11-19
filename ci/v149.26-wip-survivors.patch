@@ -1453,10 +1453,10 @@ index 25aaff9..9c81825 100644
  		if ResourceLoader.exists("res://assets/photos/"+file+"_"+PHASES[stage]+".jpg"):
 diff --git a/scripts/shelter.gd b/scripts/shelter.gd
 new file mode 100644
-index 0000000..e6c0178
+index 0000000..a857be8
 --- /dev/null
 +++ b/scripts/shelter.gd
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,111 @@
 +extends RefCounted
 +## v149.27: the district's elementary school as an evacuation shelter.
 +## Opens when life breaks down, hands out a small ration once a day, takes in
@@ -1474,7 +1474,7 @@ index 0000000..e6c0178
 +	return world.s.shelter
 +
 +static func is_open(world) -> bool:
-+	return str(state(world).status) == "open"
++	return status(world) == "open"
 +
 +static func valid(value: Variant) -> bool:
 +	return value is Dictionary and str(value.get("status", "")) in ["school", "open", "overrun"]
@@ -1558,8 +1558,11 @@ index 0000000..e6c0178
 +		lines += "その中に、" + "、".join(names) + "という紙もあった。"
 +	return lines
 +
++static func status(world) -> String:
++	return str(world.s.shelter.get("status", "school")) if world.s.get("shelter") is Dictionary else "school"
++
 +static func describe(world) -> String:
-+	match str(state(world).status):
++	match status(world):
 +		"school":
 +			return "区立小学校。授業は休みで、校門は閉まっている。"
 +		"open":
