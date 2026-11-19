@@ -166652,7 +166652,7 @@ index f9f8cfd..1176e82 100644
  	var word := str(READINGS.get(text, text))
  	if word.length() < 2 or word.length() > 16:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 5275bcb..b5e5d44 100644
+index 5275bcb..73aae62 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -3,6 +3,7 @@ extends Control
@@ -166811,7 +166811,18 @@ index 5275bcb..b5e5d44 100644
  			var line := HBoxContainer.new()
  			column.add_child(line)
  			var bubble := PanelContainer.new()
-@@ -1519,13 +1580,20 @@ func _update_dialogue_input() -> void:
+@@ -1405,7 +1466,9 @@ func _refresh() -> void:
+ 	var visible_count := 0
+ 	if not Navigation.indoor(location) or visual_focus == "window": visible_count = world.visible_residents().size()
+ 	scene_view.update_view(location,world.hour_of_day(),str(world.s.weather),world.has_home_power() if Navigation.indoor(location) else bool(world.s.grid_online),world.can_trade(shop_id) if not shop_id.is_empty() else true,visible_count,visual_focus)
+-	picture.texture = scene_view.location_texture(location,"apartment" if world.s.profile.housing=="集合住宅" and location=="建物前" else "", _visual_phase())
++	picture.texture = _base_texture()
++	if picture.texture == null:
++		picture.texture = scene_view.location_texture(location,"apartment" if world.s.profile.housing=="集合住宅" and location=="建物前" else "", _visual_phase())
+ 	district_card.visible = District.SITES.has(location) and picture.texture == null
+ 	district_card.text = location + "\n" + str({"コンビニ":"棚の並ぶ店内","近所の空き家":"人のいない住宅","デパート":"広い売り場"}.get(location, ""))
+ 	preview_button.visible = picture.texture != null
+@@ -1519,13 +1582,20 @@ func _update_dialogue_input() -> void:
  		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % who
  		convo_label.text = "%sと会話中" % who
  		convo_avatar.text = who.left(1)
@@ -166832,9 +166843,25 @@ index 5275bcb..b5e5d44 100644
  ## Context suggestions above the input: replies while talking, nearby places
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
-@@ -3187,6 +3255,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3186,7 +3256,30 @@ func _execute_command(cmd: String) -> String:
+ 
  # Illustration choice is a pure function of current location, observation and
  # independently simulated world state. Viewing never changes the outbreak.
++## v149.28: a place made into a base looks the way the player keeps it:
++## "<photo>_base.jpg" once it is a place to sleep, "<photo>_base_fortified.jpg"
++## once reinforced (falling back to the first). Nil when there is no picture.
++func _base_texture() -> Texture2D:
++	if not District.SITES.has(location):
++		return null
++	var level := int(world.s.district.sites[location].level)
++	var photo := str(SceneView.PHOTO_NAMES.get(location, ""))
++	if level < 1 or photo.is_empty():
++		return null
++	for name in ([photo + "_base_fortified", photo + "_base"] if level >= 2 else [photo + "_base"]):
++		if ResourceLoader.exists("res://assets/photos/%s.jpg" % name):
++			return scene_view.location_texture(location, name, "")
++	return null
++
  func _visual_phase() -> String:
 +	# v149.28: the shelter looks the way it is, not the way the city is.
 +	if location == "避難所":
