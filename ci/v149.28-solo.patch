@@ -208652,6 +208652,45 @@ index 0000000..bc4fec9
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index ff3a3ac..dc5881b 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '176'
+-assert info['CFBundleShortVersionString'] == '0.149.27'
++assert str(info['CFBundleVersion']) == '177'
++assert info['CFBundleShortVersionString'] == '0.149.28'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.27-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.28-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.27-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.28-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 679aaed..c905e2c 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.27"
+-application/version="176"
++application/short_version="0.149.28"
++application/version="177"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/project.godot b/project.godot
 index 20e4cec..f56dcfd 100644
 --- a/project.godot
@@ -210717,7 +210756,7 @@ index ae3a4a6..19de623 100644
  	var t := ["警戒", "様子見", "打ち解けた", "信頼"].find(tier(int(p.trust)))
  	return str(Parts.VOICES[str(p.voice)].lines[t])
 diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
-index 0cf4d0c..d4e03f2 100644
+index 0cf4d0c..d3dda74 100644
 --- a/scripts/title_screen.gd
 +++ b/scripts/title_screen.gd
 @@ -7,15 +7,6 @@ var continue_button: Button
@@ -210736,6 +210775,15 @@ index 0cf4d0c..d4e03f2 100644
  var form_scroll: ScrollContainer
  var heading_label: Label
  var subtitle_label: Label
+@@ -50,7 +41,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.27"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.28"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
 @@ -84,39 +75,16 @@ func _ready() -> void:
  	form.visible = false
  	name_input = _text_field("名前", "トウヤ")
