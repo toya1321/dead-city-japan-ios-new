@@ -15,14 +15,14 @@ index 0000000..a90b165
 +  同じ年代の2人目以降の顔は person_f_young_2.jpg … _4.jpg（名前で選ばれる）
 diff --git a/assets/items/README.md b/assets/items/README.md
 new file mode 100644
-index 0000000..d3504b8
+index 0000000..ca4a796
 --- /dev/null
 +++ b/assets/items/README.md
 @@ -0,0 +1,5 @@
 +アイテムの画像（正方形、512×512 前後、背景は透明か無地の png）。置くだけで「持ち物」に表示される。
 +
 +food 食料 / water 水 / wood 木材 / parts 部品 / seeds 種 / bandage 包帯 / planter プランター /
-+solar ソーラーパネル / battery 蓄電池 / camera カメラ / filter 浄水器 /
++harvest 収穫した野菜 / solar ソーラーパネル / battery 蓄電池 / camera カメラ / filter 浄水器 /
 +key 玄関の鍵 / cigarettes タバコ / gas_cans カセットボンベ
 diff --git a/qa/real_npc_scenarios.gd b/qa/real_npc_scenarios.gd
 index a9b0013..aabb7d5 100644
