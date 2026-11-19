@@ -846,6 +846,45 @@ index 4dbc6f9..bd816fd 100644
  compress/uastc_level=0
  compress/rdo_quality_loss=0.0
  compress/hdr_compression=1
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index a3511c3..ff3a3ac 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '175'
+-assert info['CFBundleShortVersionString'] == '0.149.26'
++assert str(info['CFBundleVersion']) == '176'
++assert info['CFBundleShortVersionString'] == '0.149.27'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.26-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.27-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.26-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.27-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 85eab3a..679aaed 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.26"
+-application/version="175"
++application/short_version="0.149.27"
++application/version="176"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/combo.gd.uid b/qa/combo.gd.uid
 new file mode 100644
 index 0000000..2974b5a
@@ -944,6 +983,19 @@ index 0000000..d21221b
 +++ b/scripts/survivors.gd.uid
 @@ -0,0 +1 @@
 +uid://bwrft7fxyg1jn
+diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
+index d3212bc..0cf4d0c 100644
+--- a/scripts/title_screen.gd
++++ b/scripts/title_screen.gd
+@@ -50,7 +50,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.26"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.27"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
 diff --git a/scripts/world_traits.gd.uid b/scripts/world_traits.gd.uid
 new file mode 100644
 index 0000000..885e386
