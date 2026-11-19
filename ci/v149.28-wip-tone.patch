@@ -1,3 +1,29 @@
+diff --git a/assets/faces/README.md b/assets/faces/README.md
+new file mode 100644
+index 0000000..a90b165
+--- /dev/null
++++ b/assets/faces/README.md
+@@ -0,0 +1,9 @@
++顔の画像（正方形、512×512 前後、jpg か png）。置くだけで使われる。無い人は頭文字の丸のまま。
++
++- job_<職業>_<f|m>.jpg … 外の生存者の職業ごと（f=女性、m=男性）
++  guard 警備員 / clerk コンビニの店員 / pharmacist 薬剤師 / nurse 看護師 / office 会社員 /
++  student 高校生 / child 小学生 / teacher 小学校の先生 / soldier 元自衛官 / homemaker 主婦 /
++  retiree 年金暮らし / carpenter 大工 / izakaya 居酒屋の店主 / traveler 旅行者
++- person_<f|m>_<年代>.jpg … だれにでも使う顔（同居人、職業の顔が無い人）
++  年代：child（12歳まで）/ teen（19まで）/ young（39まで）/ middle（59まで）/ senior
++  同じ年代の2人目以降の顔は person_f_young_2.jpg … _4.jpg（名前で選ばれる）
+diff --git a/assets/items/README.md b/assets/items/README.md
+new file mode 100644
+index 0000000..d3504b8
+--- /dev/null
++++ b/assets/items/README.md
+@@ -0,0 +1,5 @@
++アイテムの画像（正方形、512×512 前後、背景は透明か無地の png）。置くだけで「持ち物」に表示される。
++
++food 食料 / water 水 / wood 木材 / parts 部品 / seeds 種 / bandage 包帯 / planter プランター /
++solar ソーラーパネル / battery 蓄電池 / camera カメラ / filter 浄水器 /
++key 玄関の鍵 / cigarettes タバコ / gas_cans カセットボンベ
 diff --git a/qa/real_npc_scenarios.gd b/qa/real_npc_scenarios.gd
 index a9b0013..aabb7d5 100644
 --- a/qa/real_npc_scenarios.gd
@@ -11,6 +37,71 @@ index a9b0013..aabb7d5 100644
  	["chat", ["おはよう", "今日の予定は？", "今日は何するの？", "最近どう？", "好きな映画ある？", "それってどんな話？", "疲れてない？", "ありがとう、助かるよ"]],
  	["shopping_vague", ["買い物行ってきてくれない？", "水", "3本で", "ありがとう"]],
  	["shopping_direct", ["帰りに水を3本買ってきてもらえる？", "やっぱり買わなくていいよ"]],
+diff --git a/qa/shots149_28.gd b/qa/shots149_28.gd
+new file mode 100644
+index 0000000..7f7557b
+--- /dev/null
++++ b/qa/shots149_28.gd
+@@ -0,0 +1,52 @@
++extends SceneTree
++## Screenshots of faces and item pictures (v149.28).
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const OUT := "/tmp/claude-0/w/shots28/"
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func shot(g, name: String) -> void:
++	g._refresh()
++	for i in 8: await process_frame
++	var bar: VScrollBar = g.log_scroll.get_v_scroll_bar()
++	bar.value = bar.max_value
++	for i in 4: await process_frame
++	root.get_viewport().get_texture().get_image().save_png(OUT + name + ".png")
++
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 1
++	p.companion_names = ["詩音"]
++	p.companion_genders = ["女性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	await g._on_command("詩音に話しかける")
++	await g._on_command("しりとりしよう")
++	await g._on_command("りんご")
++	await shot(g, "1_talk")
++	# Met survivors: a nurse and a guard.
++	var people: Dictionary = Survivors.ensure(g.world).people
++	var n := 0
++	for id in people:
++		var q: Dictionary = people[id]
++		if n == 0:
++			q.job = "看護師"; q.gender = "女性"
++		elif n == 1:
++			q.job = "警備員"; q.gender = "男性"
++		q.met = true
++		n += 1
++		if n >= 3: break
++	g._open_tool("people")
++	await shot(g, "2_people")
++	g.world.s.district.bag.food = 2.0
++	g.world.s.district.bag.water = 4.0
++	g._open_tool("inventory")
++	await shot(g, "3_items")
++	quit()
+diff --git a/qa/shots149_28.gd.uid b/qa/shots149_28.gd.uid
+new file mode 100644
+index 0000000..cd5c7c1
+--- /dev/null
++++ b/qa/shots149_28.gd.uid
+@@ -0,0 +1 @@
++uid://budcrk43ekvnn
 diff --git a/scripts/household_dialogue.gd b/scripts/household_dialogue.gd
 index 205ba41..3023d21 100644
 --- a/scripts/household_dialogue.gd
@@ -56,10 +147,26 @@ index f9f8cfd..1176e82 100644
  	var word := str(READINGS.get(text, text))
  	if word.length() < 2 or word.length() > 16:
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 5275bcb..9a01521 100644
+index 5275bcb..555a8bf 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -80,6 +80,7 @@ const RETRYABLE_REJECTIONS := {
+@@ -3,6 +3,7 @@ extends Control
+ const WorldScript = preload("res://scripts/world.gd")
+ const IntroScript = preload("res://scripts/intro.gd")
+ const District = preload("res://scripts/district.gd")
++const Portraits = preload("res://scripts/portraits.gd")
+ const Navigation = preload("res://scripts/navigation.gd")
+ const Vitals = preload("res://scripts/vitals.gd")
+ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+@@ -48,6 +49,7 @@ var scene_folded_bar: Button
+ var photo_folded := false
+ var convo_bar: PanelContainer
+ var convo_avatar: Label
++var convo_face: TextureRect
+ var convo_label: Label
+ var convo_end_button: Button
+ var chips_scroll
+@@ -80,6 +82,7 @@ const RETRYABLE_REJECTIONS := {
  	"filtered_invented_promise": "存在しない約束",
  	"filtered_completion_claim": "まだしていない行動を済ませたと言っている",
  	"filtered_invented_experience": "記録にない過去の出来事",
@@ -67,6 +174,159 @@ index 5275bcb..9a01521 100644
  	"filtered_broken_text": "文が途中で崩れている。自然な日本語の文で言い直す",
  	"filtered_unsupported_title": "資料にない作品名。好きな作品は「人物」に書かれたものだけを言う",
  	"filtered_negated_request": "相手は頼んでいない（しなくていい・やめてと言っている）。行動は選ばずchatで返事する",
+@@ -355,6 +358,10 @@ func _build_ui() -> void:
+ 	convo_avatar.add_theme_stylebox_override("normal", UI.box(Color("#2c4c63"), Color(0, 0, 0, 0), 14, 0, 0))
+ 	convo_avatar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	convo_row.add_child(convo_avatar)
++	# v149.28: the partner's face, when there is a picture for them.
++	convo_face = Portraits.avatar(ImageTexture.new(), "", 28, Color.BLACK, Color.WHITE) as TextureRect
++	convo_face.visible = false
++	convo_row.add_child(convo_face)
+ 	convo_label = UI.label("", 14, Color("#c8d4df"), false)
+ 	convo_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 	convo_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+@@ -676,28 +683,32 @@ func _build_status_tab() -> void:
+ func _build_items_tab() -> void:
+ 	var bag: Dictionary = world.s.district.bag
+ 	var carry := UI.card(tab_content, "リュック（携行）")
+-	for spec in [["食料", float(bag.food), District.FOOD_LIMIT, "人日"], ["水", float(bag.water), District.WATER_LIMIT, "L"]]:
+-		carry.add_child(UI.label("%s  %.1f / %.0f %s" % [spec[0], spec[1], spec[2], spec[3]], 14, UI.TEXT, false))
++	for spec in [["食料", float(bag.food), District.FOOD_LIMIT, "人日", "food"], ["水", float(bag.water), District.WATER_LIMIT, "L", "water"]]:
++		_item_row(carry, spec[4], "%s  %.1f / %.0f %s" % [spec[0], spec[1], spec[2], spec[3]], 14)
+ 		carry.add_child(UI.bar(100.0 * spec[1] / spec[2], Color("#7cc0de"), 6))
+ 	var labels := {"wood":"木材","parts":"部品","seeds":"種","bandage":"包帯","planter":"未使用プランター","harvest":"累積収穫量"}
+ 	var gear := {"solar":"ソーラーパネル","battery":"蓄電池","camera":"カメラ","filter":"浄水器"}
+ 	var items := UI.card(tab_content, "道具・資材")
+ 	var missing: Array[String] = []
+ 	if bool(world.s.profile.has_key):
+-		items.add_child(UI.label("玄関の鍵", 15, UI.TEXT, false))
++		_item_row(items, "key", "玄関の鍵")
+ 	for id in labels:
+ 		var amount := float(world.s.inventory.get(id, 0))
+ 		if amount > 0:
+-			items.add_child(UI.label("%s　×%s" % [labels[id], str(world.s.inventory[id])], 15, UI.TEXT, false))
++			_item_row(items, id, "%s　×%s" % [labels[id], str(world.s.inventory[id])])
+ 		else:
+ 			missing.append(labels[id])
+ 	for id in gear:
+ 		if bool(world.s.equipment.get(id, false)):
+-			items.add_child(UI.label("%s　（設置済み）" % gear[id], 15, UI.TEXT, false))
++			_item_row(items, id, "%s　（設置済み）" % gear[id])
+ 		else:
+ 			missing.append(gear[id])
++	if int(world.s.get("cigarettes", 0)) > 0:
++		_item_row(items, "cigarettes", "タバコ　%d本" % int(world.s.cigarettes))
++	if float(world.s.get("gas_cans", 3.0)) > 0.0:
++		_item_row(items, "gas_cans", "カセットボンベ　%.2f本" % float(world.s.get("gas_cans", 3.0)))
+ 	if world.s.plots.size() > 0:
+-		items.add_child(UI.label("栽培中のプランター　%d鉢" % world.s.plots.size(), 15, UI.TEXT, false))
++		_item_row(items, "planter", "栽培中のプランター　%d鉢" % world.s.plots.size())
+ 	if not missing.is_empty():
+ 		var toggle := UI.button(("持っていない物を隠す" if show_missing_items else "持っていない物（%d件）を表示" % missing.size()), false, 44, 13)
+ 		toggle.pressed.connect(func():
+@@ -709,6 +720,20 @@ func _build_items_tab() -> void:
+ 			tab_content.add_child(UI.label("、".join(missing), 13, UI.FAINT))
+ 	inventory_status.text = "現金 %s円 / 銀行 %s円\n雨水 %.1f L · 住居の耐久 %.0f / 100" % [_yen(int(world.s.cash)), _yen(int(world.s.bank)), float(world.s.rain_water), float(world.s.longplay.shelter_integrity)]
+ 
++## v149.28: one line of the items tab, with its picture when there is one.
++func _item_row(parent: Control, id: String, text: String, font_size: int = 15) -> void:
++	var icon := Portraits.item_icon(id, 36)
++	var label := UI.label(text, font_size, UI.TEXT, false)
++	if icon == null:
++		parent.add_child(label)
++		return
++	var row := HBoxContainer.new()
++	row.add_theme_constant_override("separation", 10)
++	row.add_child(icon)
++	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	row.add_child(label)
++	parent.add_child(row)
++
+ func _yen(value: int) -> String:
+ 	var digits := str(absi(value))
+ 	var out := ""
+@@ -739,13 +764,41 @@ func _build_people_tab() -> void:
+ 	for index in world.s.household_members.size():
+ 		var person: Dictionary = world.s.household_members[index]
+ 		var c := UI.card(tab_content, "")
+-		c.add_child(UI.label(str(person.name), 17, UI.TEXT, false))
++		var head := HBoxContainer.new()
++		head.add_theme_constant_override("separation", 10)
++		head.add_child(Portraits.avatar(Portraits.housemate_face(world, index), str(person.name), 44, Color("#2c4c63"), UI.TEXT))
++		var name_label := UI.label(str(person.name), 17, UI.TEXT, false)
++		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++		head.add_child(name_label)
++		c.add_child(head)
+ 		c.add_child(UI.label("%s · %s · %s" % [person.location, person.activity, HouseholdDialogue._condition(person)], 13, UI.MUTED))
+ 		c.add_child(UI.label(NPCMind.relationship(npc_memory, person, dialogue.recent(index).size()), 13, UI.BODY))
+ 		var order: Dictionary = person.get("water_errand", {})
+ 		if str(order.get("phase", "")) in ["quantity", "queued", "carrying", "returning"]:
+ 			c.add_child(UI.label("頼みごと：" + NPCMind.errand_status(world, person).get_slice("。", 0), 13, Color("#c8d4df")))
+-	tab_content.add_child(UI.label("外で出会った生存者：まだいない", 13, UI.FAINT))
++	# v149.28: survivors met outside, with their faces.
++	var met: Array = []
++	var people: Dictionary = world.s.get("survivors", {}).get("people", {}) if world.s.get("survivors") is Dictionary else {}
++	for id in people:
++		if bool(people[id].get("met", false)):
++			met.append(id)
++	if met.is_empty():
++		tab_content.add_child(UI.label("外で出会った生存者：まだいない", 13, UI.FAINT))
++		return
++	tab_content.add_child(UI.label("外で出会った生存者", 14, UI.MUTED, false))
++	for id in met:
++		var p: Dictionary = people[id]
++		var c := UI.card(tab_content, "")
++		var head := HBoxContainer.new()
++		head.add_theme_constant_override("separation", 10)
++		var shown_name := Survivors.call_name(world, id)
++		head.add_child(Portraits.avatar(Portraits.survivor_face(p), shown_name, 44, Color("#2c4c63"), UI.TEXT))
++		var name_label := UI.label(shown_name, 16, UI.TEXT, false)
++		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++		head.add_child(name_label)
++		c.add_child(head)
++		var state := "亡くなった" if str(p.status) == "dead" else ("行方が分からない" if str(p.status) != "alive" else "%sにいる" % p.place)
++		c.add_child(UI.label("%s · 信頼 %s" % [state, ["低い", "ふつう", "高い"][clampi(int(p.trust) / 34, 0, 2)]], 13, UI.MUTED))
+ 
+ func _map_node_for(place: String) -> String:
+ 	if Navigation.indoor(place) or place in ["共用廊下", "建物前"]:
+@@ -1293,7 +1346,15 @@ func _make_entry(entry: String) -> Control:
+ 		"npc":
+ 			var column := VBoxContainer.new()
+ 			column.add_theme_constant_override("separation", 3)
+-			column.add_child(UI.label(str(info.name), 12, UI.ACCENT, false))
++			var face := Portraits.face_for_name(world, str(info.name))
++			if face == null:
++				column.add_child(UI.label(str(info.name), 12, UI.ACCENT, false))
++			else:
++				var head := HBoxContainer.new()
++				head.add_theme_constant_override("separation", 6)
++				head.add_child(Portraits.avatar(face, str(info.name), 22, Color.BLACK, Color.WHITE))
++				head.add_child(UI.label(str(info.name), 12, UI.ACCENT, false))
++				column.add_child(head)
+ 			var line := HBoxContainer.new()
+ 			column.add_child(line)
+ 			var bubble := PanelContainer.new()
+@@ -1519,13 +1580,20 @@ func _update_dialogue_input() -> void:
+ 		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % who
+ 		convo_label.text = "%sと会話中" % who
+ 		convo_avatar.text = who.left(1)
++		_show_convo_face(Portraits.survivor_face(Survivors.person(world, survivor_partner)))
+ 	elif dialogue.partner >= 0:
+ 		var partner_name := str(world.s.household_members[dialogue.partner].name)
+ 		command_input.placeholder_text = "%sに話しかける · 行動も書けます" % partner_name
+ 		convo_label.text = "%sと会話中" % partner_name
+ 		convo_avatar.text = partner_name.left(1)
++		_show_convo_face(Portraits.housemate_face(world, dialogue.partner))
+ 	_refresh_suggestions()
+ 
++func _show_convo_face(texture: Texture2D) -> void:
++	convo_face.texture = texture
++	convo_face.visible = texture != null
++	convo_avatar.visible = texture == null
++
+ ## Context suggestions above the input: replies while talking, nearby places
+ ## and things to do otherwise. They send the text as if typed.
+ func _suggestions() -> Array:
 diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
 index c81c405..6e82e4c 100644
 --- a/scripts/npc_mind.gd
@@ -97,6 +357,166 @@ index c81c405..6e82e4c 100644
  	# Sampling glitches from small models: "食料1ってるよ" (a number running into
  	# a small kana or ん) never occurs in a well-formed line.
  	var broken := RegEx.new()
+diff --git a/scripts/portraits.gd b/scripts/portraits.gd
+new file mode 100644
+index 0000000..04248a1
+--- /dev/null
++++ b/scripts/portraits.gd
+@@ -0,0 +1,147 @@
++extends RefCounted
++## v149.28: faces and item pictures. Every picture is optional: with no file
++## the UI keeps the initial in a circle, or plain text for items, so the art
++## can arrive a few files at a time.
++##
++## Faces (assets/faces/, square jpg or png):
++## - job_<job>_<f|m>.jpg        a survivor's occupation (JOBS below)
++## - person_<f|m>_<age>.jpg     anyone by gender and age group (AGE_GROUPS);
++##   person_<f|m>_<age>_2.jpg … _4 are variants, picked by name
++## Items (assets/items/, square png, transparent or plain background):
++##   <id>.png for each id in ITEMS.
++
++const FACES := "res://assets/faces/"
++const ITEMS_DIR := "res://assets/items/"
++const JOBS := {
++	"警備員": "guard", "コンビニの店員": "clerk", "薬剤師": "pharmacist", "看護師": "nurse",
++	"会社員": "office", "高校生": "student", "小学生": "child", "小学校の先生": "teacher",
++	"元自衛官": "soldier", "主婦": "homemaker", "年金暮らし": "retiree", "大工": "carpenter",
++	"居酒屋の店主": "izakaya", "旅行者": "traveler",
++}
++## [id, upper bound of the age]
++const AGE_GROUPS := [["child", 12], ["teen", 19], ["young", 39], ["middle", 59], ["senior", 200]]
++const ITEMS := {
++	"food": "食料", "water": "水", "wood": "木材", "parts": "部品", "seeds": "種", "bandage": "包帯",
++	"planter": "プランター", "harvest": "収穫した野菜", "solar": "ソーラーパネル", "battery": "蓄電池",
++	"camera": "カメラ", "filter": "浄水器", "key": "玄関の鍵", "cash": "現金", "cigarettes": "タバコ",
++	"gas_cans": "カセットボンベ", "backpack": "リュック",
++}
++
++static var _cache := {}
++static var _mask: Shader
++
++static func age_group(age: int) -> String:
++	for group in AGE_GROUPS:
++		if age <= int(group[1]):
++			return str(group[0])
++	return "senior"
++
++static func _sex(gender: String) -> String:
++	return "m" if gender == "男性" else ("f" if gender == "女性" else "")
++
++static func _find(base: String) -> String:
++	for ext in [".jpg", ".png", ".webp"]:
++		if ResourceLoader.exists(base + ext):
++			return base + ext
++	return ""
++
++## The face file for a person, or "" if none has been made yet.
++static func face_path(name: String, gender: String, age: int, job: String = "") -> String:
++	var sex := _sex(gender)
++	if sex.is_empty():
++		return ""
++	if JOBS.has(job):
++		var path := _find(FACES + "job_%s_%s" % [JOBS[job], sex])
++		if not path.is_empty():
++			return path
++	var base := FACES + "person_%s_%s" % [sex, age_group(age)]
++	var variants: Array = []
++	for n in range(1, 5):
++		var path := _find(base if n == 1 else "%s_%d" % [base, n])
++		if not path.is_empty():
++			variants.append(path)
++	if variants.is_empty():
++		return ""
++	return str(variants[absi(hash(name)) % variants.size()])
++
++static func _texture(path: String) -> Texture2D:
++	if path.is_empty():
++		return null
++	if not _cache.has(path):
++		_cache[path] = load(path)
++	return _cache[path]
++
++## A housemate: their own age if they have one (people who joined from
++## outside), otherwise about the player's age.
++static func housemate_face(world, index: int) -> Texture2D:
++	var person: Dictionary = world.s.household_members[index]
++	var gender := str(person.get("gender", ""))
++	if gender.is_empty():
++		var genders: Array = world.s.profile.get("companion_genders", [])
++		gender = str(genders[index]) if index < genders.size() else ""
++	var age := int(person.get("age", int(world.s.profile.get("age", 30))))
++	return _texture(face_path(str(person.name), gender, age, str(person.get("job", ""))))
++
++static func survivor_face(person: Dictionary) -> Texture2D:
++	return _texture(face_path(str(person.get("name", "")), str(person.get("gender", "")), int(person.get("age", 30)), str(person.get("job", ""))))
++
++## The face of whoever has this name: a housemate or a survivor met outside.
++static func face_for_name(world, name: String) -> Texture2D:
++	for i in world.s.household_members.size():
++		if str(world.s.household_members[i].name) == name:
++			return housemate_face(world, i)
++	var people: Dictionary = world.s.get("survivors", {}).get("people", {}) if world.s.get("survivors") is Dictionary else {}
++	for id in people:
++		var p: Dictionary = people[id]
++		if str(p.get("name", "")) == name or str(p.get("label", "")) == name:
++			return survivor_face(p)
++	return null
++
++static func item(id: String) -> Texture2D:
++	return _texture(_find(ITEMS_DIR + id))
++
++## A round face, or the initial in a circle when there is no picture.
++static func avatar(texture: Texture2D, initial: String, size: int, fill: Color, text_color: Color) -> Control:
++	if texture == null:
++		var label := Label.new()
++		label.text = initial.left(1)
++		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
++		label.custom_minimum_size = Vector2(size, size)
++		label.add_theme_color_override("font_color", text_color)
++		label.add_theme_font_size_override("font_size", int(size * 0.46))
++		var box := StyleBoxFlat.new()
++		box.bg_color = fill
++		box.set_corner_radius_all(size / 2)
++		label.add_theme_stylebox_override("normal", box)
++		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++		return label
++	var rect := TextureRect.new()
++	rect.texture = texture
++	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
++	rect.custom_minimum_size = Vector2(size, size)
++	rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	rect.material = _circle()
++	return rect
++
++static func _circle() -> ShaderMaterial:
++	if _mask == null:
++		_mask = Shader.new()
++		_mask.code = "shader_type canvas_item;\nvoid fragment() {\n\tvec4 c = texture(TEXTURE, UV);\n\tfloat d = distance(UV, vec2(0.5));\n\tc.a *= 1.0 - smoothstep(0.47, 0.5, d);\n\tCOLOR = c;\n}\n"
++	var m := ShaderMaterial.new()
++	m.shader = _mask
++	return m
++
++## A small square item picture, or nothing.
++static func item_icon(id: String, size: int) -> Control:
++	var texture := item(id)
++	if texture == null:
++		return null
++	var rect := TextureRect.new()
++	rect.texture = texture
++	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
++	rect.custom_minimum_size = Vector2(size, size)
++	rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++	return rect
+diff --git a/scripts/portraits.gd.uid b/scripts/portraits.gd.uid
+new file mode 100644
+index 0000000..6a835c5
+--- /dev/null
++++ b/scripts/portraits.gd.uid
+@@ -0,0 +1 @@
++uid://c5j2ig6iouyti
 diff --git a/tests/test_household_smalltalk.gd b/tests/test_household_smalltalk.gd
 index 34ab8c8..48c9d60 100644
 --- a/tests/test_household_smalltalk.gd
