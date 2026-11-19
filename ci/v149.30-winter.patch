@@ -35168,6 +35168,45 @@ index 0000000..f3a4644
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index e67bb67..7d9a5b1 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '178'
+-assert info['CFBundleShortVersionString'] == '0.149.29'
++assert str(info['CFBundleVersion']) == '179'
++assert info['CFBundleShortVersionString'] == '0.149.30'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.29-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.30-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.29-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.30-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index da320e4..8889a5b 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.29"
+-application/version="178"
++application/short_version="0.149.30"
++application/version="179"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/play.gd b/qa/play.gd
 index 7d83ad0..cca3a70 100644
 --- a/qa/play.gd
