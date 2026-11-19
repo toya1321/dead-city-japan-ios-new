@@ -1,3 +1,42 @@
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index 6aa4e86..a3511c3 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '174'
+-assert info['CFBundleShortVersionString'] == '0.149.25'
++assert str(info['CFBundleVersion']) == '175'
++assert info['CFBundleShortVersionString'] == '0.149.26'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.25-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.26-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.25-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.26-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 3ebf04e..85eab3a 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.25"
+-application/version="174"
++application/short_version="0.149.26"
++application/version="175"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/combo.gd b/qa/combo.gd
 new file mode 100644
 index 0000000..4c84dbc
@@ -2968,9 +3007,18 @@ index 0000000..ae3a4a6
 +	var t := ["警戒", "様子見", "打ち解けた", "信頼"].find(tier(int(p.trust)))
 +	return str(Parts.VOICES[str(p.voice)].lines[t])
 diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
-index 1c39054..0ae078b 100644
+index 1c39054..d3212bc 100644
 --- a/scripts/title_screen.gd
 +++ b/scripts/title_screen.gd
+@@ -50,7 +50,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.25"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.26"
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
 @@ -112,6 +112,8 @@ func _ready() -> void:
  	people_input.value_changed.connect(_show_companion_rows)
  	_show_companion_rows(people_input.value)
