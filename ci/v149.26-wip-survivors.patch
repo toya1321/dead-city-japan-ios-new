@@ -170,7 +170,7 @@ index 0000000..4c84dbc
 +	quit()
 diff --git a/qa/crawl.gd b/qa/crawl.gd
 new file mode 100644
-index 0000000..e7c170a
+index 0000000..f80708b
 --- /dev/null
 +++ b/qa/crawl.gd
 @@ -0,0 +1,190 @@
@@ -182,7 +182,7 @@ index 0000000..e7c170a
 +const Walkers = preload("res://scripts/walkers.gd")
 +const Survivors = preload("res://scripts/survivors.gd")
 +
-+const TYPED := ["周囲を見る", "避難所へ行く", "配給を受け取る", "掲示板を見る", "大声で追い払う", "食料を渡して帰ってもらう", "窓から外を見る", "ニュースを見る", "外に出る", "家に帰る", "寝る", "食事する", "水を飲む", "1時間待つ", "3時間待つ", "1日待つ",
++const TYPED := ["周囲を見る", "避難所へ行く", "配給を受け取る", "掲示板を見る", "見張りを手伝う", "物資探しを手伝う", "避難所で寝る", "避難所の様子を聞く", "大声で追い払う", "食料を渡して帰ってもらう", "窓から外を見る", "ニュースを見る", "外に出る", "家に帰る", "寝る", "食事する", "水を飲む", "1時間待つ", "3時間待つ", "1日待つ",
 +	"商店通りへ行く", "駅前へ行く", "住宅街へ行く", "デパートへ行く", "デパ地下へ行く", "薬局へ行く", "コンビニへ行く", "近所の空き家へ行く", "金物店へ行く", "食品店へ行く",
 +	"食料を3個買う", "飲料水を3本買う", "包帯を2個買う", "木材を3個買う", "部品を2個買う", "タバコを買う", "カセットボンベを買う", "物資を持っていく", "物資を置く", "物資を探索する", "ここを拠点にする",
 +	"明かりを消す", "明かりをつける", "窓を目張りする", "窓の目張りを外す", "鍵を閉める", "鍵を開ける", "玄関を補強", "玄関の補強を外す", "扉を直す",
@@ -440,6 +440,58 @@ index 0000000..6111d8f
 +				await g._on_command(cmd)
 +	print("LONGSIM bad days: ", bad)
 +	quit()
+diff --git a/qa/shelter_life.gd b/qa/shelter_life.gd
+new file mode 100644
+index 0000000..a429c41
+--- /dev/null
++++ b/qa/shelter_life.gd
+@@ -0,0 +1,46 @@
++extends SceneTree
++## How long the shelter lasts in untouched worlds, and why it ends.
++const Main = preload("res://main.tscn")
++const Shelter = preload("res://scripts/shelter.gd")
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func run() -> void:
++	for helping in ([true] if OS.get_environment("DCJ_TRACE") == "1" else [false, true]):
++		await _pass(helping)
++	quit()
++
++func _pass(helping: bool) -> void:
++	print("--- player helping: %s" % helping)
++	for seed in ([13] if OS.get_environment("DCJ_TRACE") == "1" else [11, 12, 13, 14, 15, 16, 17, 18]):
++		var g = Main.instantiate()
++		root.add_child(g)
++		for i in 3: await process_frame
++		var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++		p.seed = seed
++		g._start_new_game(p)
++		g._finish_intro()
++		var w = g.world
++		var opened := -1
++		var line := ""
++		for h in 24 * 150:
++			w.s.health = 100.0; w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0
++			w.advance(60)
++			var st: Dictionary = Shelter.state(w)
++			if helping and str(st.status) == "open" and int(w.hour_of_day()) == 9:
++				st.watch_day = Shelter._day(w)
++				st.order = minf(90.0, float(st.order) + 4.0)
++				st.gate = minf(100.0, float(st.gate) + 5.0 + (30.0 if (h / 24) % 3 == 0 else 0.0))
++				if (h / 24) % 2 == 0:
++					st.stock = float(st.stock) + 15.0
++			if opened < 0 and str(st.status) == "open":
++				opened = h / 24
++			if OS.get_environment("DCJ_TRACE") == "1" and int(w.hour_of_day()) == 7 and str(st.status) == "open":
++				print("  d%d pop %d stock %.0f order %.0f garden %.0f town %d sick %d hungry %d" % [h / 24, st.pop, st.stock, st.order, st.get("garden", 0.0), load("res://scripts/walkers.gd").total(w), st.sick, st.hungry_days])
++			if str(st.status) in ["overrun", "abandoned"]:
++				line = "%s(%s) day %d" % [st.status, st.get("cause", ""), h / 24]
++				break
++		var st2: Dictionary = Shelter.state(w)
++		print("seed %d society %s opened day %d -> %s pop %d stock %.0f order %.0f gate %.0f outside %d sick %d supplied %s" % [seed, w.s.society, opened, line if line != "" else "still open", st2.pop, st2.stock, st2.order, st2.gate, st2.outside, st2.sick, st2.supplied])
++		g.queue_free()
 diff --git a/qa/survivor_eval.gd b/qa/survivor_eval.gd
 new file mode 100644
 index 0000000..813b93f
@@ -614,7 +666,7 @@ index ee24b3d..f5fb1da 100644
  		world.s.gas_cans = maxf(0.0, float(world.s.get("gas_cans", 0.0)) - 0.25)
  	world.s.food = float(world.s.food) - 0.25 * portions
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 82aa64f..79d2bf6 100644
+index 82aa64f..5275bcb 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -26,6 +26,12 @@ const Walkers = preload("res://scripts/walkers.gd")
@@ -711,17 +763,27 @@ index 82aa64f..79d2bf6 100644
  	var horde_near: bool = not Walkers.ensure(world).get("horde", {}).is_empty()
  	if Navigation.indoor(location) and (horde_near or Walkers.count(world, "建物前") > 0 or Walkers.count(world, "玄関") > 0 or Walkers.ensure(world).has("drawn_at")):
  		if not bool(world.s.door_locked) and location == "玄関":
-@@ -1555,6 +1596,9 @@ func _suggestions() -> Array:
+@@ -1555,6 +1596,19 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
 +	if location == "避難所" and Shelter.is_open(world):
 +		out.append("配給を受け取る")
++		out.append("避難所の様子を聞く")
++		out.append("見張りを手伝う")
++		if world.hour_of_day() >= 7.0 and world.hour_of_day() < 15.0:
++			out.append("物資探しを手伝う")
++		if float(world.s.district.bag.food) >= 0.5:
++			out.append("物資を寄付する")
++		if int(world.s.inventory.get("wood", 0)) >= 1:
++			out.append("門を補強する")
 +		out.append("掲示板を見る")
++		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
++			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
  		out.append("タバコを買う")
  	if location in ["コンビニ", "金物店"] and str(world.s.society) != "normal" and (location == "金物店" or not bool(world.s.district.sites["コンビニ"].vacant)):
-@@ -1588,6 +1632,9 @@ func _suggestions() -> Array:
+@@ -1588,6 +1642,9 @@ func _suggestions() -> Array:
  	for person in world.s.household_members:
  		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
@@ -731,7 +793,7 @@ index 82aa64f..79d2bf6 100644
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
  		if out.size() >= 4:
-@@ -1877,6 +1924,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
+@@ -1877,6 +1934,9 @@ func _local_npc_context(index: int, speech: String) -> Dictionary:
  	var all_turns: Array = dialogue.recent(index)
  	var character := {"名前": str(person.name), "一人称": style.first_person, "話し方": style.description}
  	character.merge(NPCMind.profile(world, index))
@@ -741,7 +803,7 @@ index 82aa64f..79d2bf6 100644
  	character["プレイヤーとの関係"] = NPCMind.relationship(npc_memory, person, all_turns.size())
  	var turns: Array = []
  	var recent_players: Array = []
-@@ -2260,6 +2310,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
+@@ -2260,6 +2320,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
  	world.s.household_members.remove_at(heir)
  	for i in world.s.household_members.size():
  		world.s.household_members[i].id = i
@@ -749,7 +811,15 @@ index 82aa64f..79d2bf6 100644
  	dialogue = HouseholdDialogue.new()
  	_sync_player_position()
  	_append("ここからは%sとして生きていく。%sが残した家と物資は、そのまま引き継がれる。" % [person.name, previous])
-@@ -2428,6 +2479,114 @@ func _leave_home(cmd: String) -> bool:
+@@ -2272,6 +2333,7 @@ func _drain_walker_notices() -> void:
+ 	if world == null:
+ 		return
+ 	world.set_meta("player_at_home", Navigation.indoor(location))
++	world.set_meta("player_place", location)
+ 	if log_box == null:
+ 		return
+ 	var w := Walkers.ensure(world)
+@@ -2428,6 +2490,114 @@ func _leave_home(cmd: String) -> bool:
  	_succeed_to_housemate("【記録】%sは、熱で震える手で荷物をまとめた。「もう、ここにはいられない。%sを危ない目にあわせたくないから」。止める声を背に、%sは一人で家を出ていった。" % [world.s.profile.name, heir.name, world.s.profile.name])
  	return true
  
@@ -864,7 +934,7 @@ index 82aa64f..79d2bf6 100644
  ## A housemate leaves the household for good (seen off, or left on their own).
  func _remove_housemate(index: int) -> void:
  	world.s.household_members.remove_at(index)
-@@ -2439,18 +2598,100 @@ func _remove_housemate(index: int) -> void:
+@@ -2439,18 +2609,119 @@ func _remove_housemate(index: int) -> void:
  		world.s.profile[key] = values
  	for i in world.s.household_members.size():
  		world.s.household_members[i].id = i
@@ -934,7 +1004,26 @@ index 82aa64f..79d2bf6 100644
 +		_append(Shelter.board(world))
 +		_refresh()
 +		return true
-+	return false
++	if PlayerIntents.negated(cmd):
++		return false
++	var line := ""
++	if NPCMemory._mentions(cmd, ["見張りを手伝", "見張りに立", "見張りをする", "受付を手伝", "門番"]):
++		line = Shelter.keep_watch(world)
++	elif NPCMemory._mentions(cmd, ["門を補強", "門を直", "校門を補強", "校門を直", "フェンスを直", "フェンスを補強"]):
++		line = Shelter.mend_gate(world)
++	elif NPCMemory._mentions(cmd, ["物資探し", "物資を探しに", "物資集め", "調達を手伝", "探索を手伝", "班に加わ", "班と"]):
++		line = Shelter.supply_run(world)
++	elif NPCMemory._mentions(cmd, ["寄付", "食料を渡す", "食料を分ける", "物資を渡す"]):
++		line = Shelter.donate(world)
++	elif NPCMemory._mentions(cmd, ["様子を聞", "様子を見", "避難所の様子", "見て回"]) and Shelter.status(world) == "open":
++		line = Shelter.report(world)
++	elif (cmd.contains("寝る") or cmd.contains("眠る") or cmd.contains("泊ま") or cmd.contains("睡眠")) and Shelter.is_open(world):
++		line = Shelter.sleep_night(world)
++	if line.is_empty():
++		return false
++	_append(line)
++	_refresh()
++	return true
 +
 +## v149.27: "詩音に見張りを頼む" / "詩音の役割を外す" / "役割を確認".
 +func _role_command(cmd: String) -> bool:
@@ -965,7 +1054,7 @@ index 82aa64f..79d2bf6 100644
  const COMFORT_WORDS := ["話を聞", "励ま", "慰め", "なぐさめ", "抱きしめ", "寄り添", "そばにい", "元気づけ", "声をかけ", "気持ちを聞", "相談に乗"]
  
  ## "詩音の話を聞く" / "詩音を励ます": sit down with a worn-down housemate.
-@@ -2478,7 +2719,7 @@ func _comfort_command(cmd: String) -> bool:
+@@ -2478,7 +2749,7 @@ func _comfort_command(cmd: String) -> bool:
  
  ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
  func _care_command(cmd: String) -> bool:
@@ -974,8 +1063,11 @@ index 82aa64f..79d2bf6 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -2523,6 +2764,8 @@ func _check_walkers(previous: String) -> bool:
+@@ -2521,8 +2792,11 @@ func _check_walkers(previous: String) -> bool:
+ 		return false
+ 	var w := Walkers.ensure(world)
  	world.set_meta("player_at_home", Navigation.indoor(location))
++	world.set_meta("player_place", location)
  	if not w.encounter.is_empty():
  		return true
 +	for line in Survivors.remains(world, location) + Survivors.meet(world, location):
@@ -983,7 +1075,7 @@ index 82aa64f..79d2bf6 100644
  	var enc := Walkers.check(world, location, false, previous if previous != location else "")
  	if enc.is_empty():
  		return false
-@@ -3067,7 +3310,8 @@ func _household_text() -> String:
+@@ -3067,7 +3341,8 @@ func _household_text() -> String:
  		var doing := str(person.activity)
  		if float(person.health) > 0 and doing == "在宅":
  			doing = "在宅（%s）" % NPCMind.now_doing(world, npc_memory, index)
@@ -1407,7 +1499,7 @@ index 0000000..70b2d19
 +	Mood.change(person, 3.0)
 +	return "%sが無事に戻ってきた。食料%.1f人日分と、水%.0fLを持ち帰った。" % [person.name, found_food, found_water]
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
-index bd86df6..7d454d8 100644
+index bd86df6..9cf04f1 100644
 --- a/scripts/scene_description.gd
 +++ b/scripts/scene_description.gd
 @@ -35,6 +35,8 @@ static func describe(world, place: String) -> String:
@@ -1423,7 +1515,7 @@ index bd86df6..7d454d8 100644
  		"住宅街": return "空き家の中が気になるなら「近所の空き家へ行く」と入力できる。"
  		"駅前": return "「デパートへ行く」で建物に向かえる。営業時間外は中に入れないことがある。"
  		"デパート正面": return "「デパートに入る」で1階の売り場へ。営業時間外は中に入れない。"
-+		"避難所": return "「配給を受け取る」「掲示板を見る」ができる。" if str(world.s.get("shelter", {}).get("status", "")) == "open" else ""
++		"避難所": return "「配給を受け取る」「見張りを手伝う」「避難所で寝る」などができる。" if str(world.s.get("shelter", {}).get("status", "")) == "open" else ""
  		"デパート": return "食料と飲み水は地下1階の食品売場にある。「デパ地下へ行く」と降りられる。"
  		"デパート地下": return "ここで食料や水を買える。人がいなくなった後なら「物資を探索する」。電気が止まると、窓のない地下は真っ暗になる。"
  	return ""
@@ -1453,99 +1545,263 @@ index 25aaff9..9c81825 100644
  		if ResourceLoader.exists("res://assets/photos/"+file+"_"+PHASES[stage]+".jpg"):
 diff --git a/scripts/shelter.gd b/scripts/shelter.gd
 new file mode 100644
-index 0000000..a857be8
+index 0000000..d985161
 --- /dev/null
 +++ b/scripts/shelter.gd
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,384 @@
 +extends RefCounted
 +## v149.27: the district's elementary school as an evacuation shelter.
-+## Opens when life breaks down, hands out a small ration once a day, takes in
-+## housemates who left, and is overrun some days into the emergency (or
-+## earlier, if this world's "shelter_closed" event comes). Anyone still there
-+## then does not survive. State: `s.shelter = {"status", "close_at", "ration_day"}`.
++## It opens when life breaks down. Whether it lasts is not decided in advance;
++## like the house, it falls only for reasons:
++## - infection inside: newcomers hide bites; one turns at night. The watch
++##   holds them down if order is good (and better if the player keeps watch)
++## - the gate: walkers drawn by the crowd gather at the fence and wear the
++##   gate down; volunteers mend it while order holds, and the player can too
++## - hunger: the city's supplies stop some time into the emergency (at once
++##   if this world's "shelter_closed" event comes); with the store empty,
++##   order breaks and people leave, until the shelter is abandoned
++## The player can live there: queue for the daily ration, sleep among the
++## others (company, but noise and theft when order is poor), keep watch,
++## mend the gate, donate food. State: `s.shelter` (see `state`).
 +
 +const Survivors = preload("res://scripts/survivors.gd")
 +const WorldTraits = preload("res://scripts/world_traits.gd")
++const Mood = preload("res://scripts/mood.gd")
++const Walkers = preload("res://scripts/walkers.gd")
 +const PLACE := "避難所"
++const CAPACITY := 180
++const STATUSES := ["school", "open", "overrun", "abandoned"]
 +
 +static func state(world) -> Dictionary:
 +	if not world.s.has("shelter") or not world.s.shelter is Dictionary:
-+		world.s.shelter = {"status": "school", "close_at": -1, "ration_day": -1}
-+	return world.s.shelter
++		world.s.shelter = {}
++	var st: Dictionary = world.s.shelter
++	var defaults := {"status": "school", "ration_day": -1, "pop": 0, "stock": 0.0, "order": 70.0, "gate": 60.0,
++			"outside": 0, "sick": 0, "supplied": true, "supply_end": -1, "hungry_days": 0, "watch_day": -1, "tick_day": -1, "garden": 0.0}
++	for key in defaults:
++		if not st.has(key):
++			st[key] = defaults[key]
++	return st
++
++static func status(world) -> String:
++	return str(world.s.shelter.get("status", "school")) if world.s.get("shelter") is Dictionary else "school"
 +
 +static func is_open(world) -> bool:
 +	return status(world) == "open"
 +
 +static func valid(value: Variant) -> bool:
-+	return value is Dictionary and str(value.get("status", "")) in ["school", "open", "overrun"]
++	return value is Dictionary and str(value.get("status", "school")) in STATUSES
++
++## The calendar day (it turns at midnight, not at the start time).
++static func _day(world) -> int:
++	return (int(float(world.s.get("start_hour", 0)) * 60.0) + int(world.s.minute)) / 1440
++
++static func _notice(world, text: String) -> void:
++	if world.s.has("walkers"):
++		world.s.walkers.notices.append(text)
++
++static func _player_here(world) -> bool:
++	return world.has_meta("player_place") and str(world.get_meta("player_place")) == PLACE
 +
 +static func hourly(world) -> void:
 +	var st := state(world)
 +	var minute := int(world.s.minute)
-+	match str(st.status):
-+		"school":
-+			if WorldTraits.reached(world, "disrupted"):
-+				st.status = "open"
-+		"open":
-+			var traits: Dictionary = WorldTraits.of(world)
-+			var closed_event: bool = "shelter_closed" in traits.get("done_events", [])
-+			if int(st.close_at) < 0 and WorldTraits.reached(world, "emergency"):
-+				st.close_at = minute + (3 + world.draw(minute, 21, "shelter-fall", 6)) * 1440
-+			if closed_event or (int(st.close_at) >= 0 and minute >= int(st.close_at)):
-+				_overrun(world)
++	var hour := int(world.hour_of_day())
++	var day := _day(world)
++	if str(st.status) == "school":
++		if WorldTraits.reached(world, "disrupted"):
++			st.status = "open"
++			st.pop = 60 + world.draw(minute, 20, "shelter-pop", 40)
++			st.stock = float(st.pop) * 4.0
++			st.tick_day = day
++		return
++	if str(st.status) != "open":
++		return
++	var traits: Dictionary = WorldTraits.of(world)
++	if bool(st.supplied) and "shelter_closed" in traits.get("done_events", []):
++		st.supplied = false
++		st.order = float(st.order) - 25.0
++		_notice(world, "【記録】区の職員が避難所から引き上げたらしい。これからは、物資の補給がない。")
++	if bool(st.supplied) and int(st.supply_end) < 0 and WorldTraits.reached(world, "emergency"):
++		st.supply_end = minute + (2 + world.draw(minute, 21, "shelter-supply", 8)) * 1440
++	if bool(st.supplied) and int(st.supply_end) >= 0 and minute >= int(st.supply_end):
++		st.supplied = false
++		_notice(world, "【記録】避難所への物資のトラックが、来なくなったらしい。")
++	if hour == 6 and int(st.tick_day) != day:
++		st.tick_day = day
++		_daily(world, st, minute)
++	elif hour == 2 and int(st.sick) > 0:
++		_night(world, st, minute)
 +
-+static func _overrun(world) -> void:
++static func _daily(world, st: Dictionary, minute: int) -> void:
++	if str(st.status) != "open":
++		return
++	var society := str(world.s.society)
++	var arrivals := 0
++	var bite := 0
++	match society:
++		"disrupted":
++			arrivals = 3 + world.draw(minute, 22, "shelter-in", 10); bite = 2
++		"emergency":
++			arrivals = 8 + world.draw(minute, 22, "shelter-in", 20); bite = 6
++		_:
++			arrivals = world.draw(minute, 22, "shelter-in", 5); bite = 10
++	var watched := int(st.watch_day) >= _day(world) - 1
++	var hidden := 0
++	for i in arrivals:
++		var chance := bite * (3 if watched or float(st.order) >= 70.0 else 10)
++		if world.draw(minute, 230 + i, "shelter-bite", 1000) < chance:
++			hidden += 1
++	# The gym holds so many; the rest are turned away at the gate.
++	arrivals = mini(arrivals, maxi(0, CAPACITY - int(st.pop)))
++	# Word gets round when there is no food: nobody new comes.
++	if float(st.stock) < float(st.pop):
++		arrivals = 0
++	st.pop = int(st.pop) + arrivals
++	st.sick = int(st.sick) + mini(hidden, arrivals)
++	# Food: the city's trucks until they stop; then what volunteers bring
++	# back from empty houses (less as the town fills with the dead), and gifts.
++	if bool(st.supplied):
++		st.stock = float(st.stock) + float(st.pop) * 0.6
++	else:
++		var town := Walkers.total(world) if world.s.has("walkers") else 0
++		var scarce := clampf(1.0 - float(town) / 80.0, 0.3, 1.0)
++		# Volunteers go out (more hands, but the same empty houses), and the
++		# schoolyard beds, dug once things settle, feed a few more each week.
++		st.stock = float(st.stock) + (8.0 + float(st.pop) * 0.15) * float(st.order) / 100.0 * scarce
++		if float(st.order) >= 30.0:
++			st.garden = minf(20.0, float(st.get("garden", 0.0)) + 1.0)
++		st.stock = float(st.stock) + float(st.get("garden", 0.0))
++	st.stock = float(st.stock) - float(st.pop) * 0.5
++	if float(st.stock) <= 0.0:
++		st.stock = 0.0
++		st.hungry_days = int(st.hungry_days) + 1
++		st.order = float(st.order) - 5.0
++		st.pop = int(int(st.pop) * 0.8)   # people leave to try their luck
++	else:
++		st.hungry_days = 0
++		if float(st.stock) >= float(st.pop) * 2.0:
++			st.order = float(st.order) + 3.0
++		elif float(st.stock) < float(st.pop):
++			st.pop = int(int(st.pop) * 0.95)
++	if int(st.pop) > 150:
++		st.order = float(st.order) - 2.0
++	elif int(st.pop) < 80 and float(st.order) < 60.0:
++		st.order = float(st.order) + 2.0   # fewer mouths, calmer nights
++	st.order = clampf(float(st.order), 0.0, 90.0)
++	# The crowd's noise and lights draw walkers to the fence.
++	var drawn := 0
++	if world.s.has("walkers"):
++		drawn = world.draw(minute, 24, "shelter-fence", maxi(2, int((2.0 + float(Walkers.total(world)) / 15.0) * float(st.pop) / 100.0) + 1))
++	st.outside = mini(40, int(st.outside) + drawn - int(st.outside) / 5)
++	st.gate = float(st.gate) - maxf(0.0, float(st.outside) - 6.0) * 0.8
++	if float(st.order) >= 40.0:
++		st.gate = float(st.gate) + float(st.order) / 8.0
++	st.gate = clampf(float(st.gate), 0.0, 100.0)
++	if float(st.gate) <= 0.0 and int(st.outside) >= 8:
++		_fall(world, "gate")
++	elif (int(st.hungry_days) >= 8 and float(st.order) < 30.0) or int(st.pop) < 10:
++		_abandon(world)
++
++## A hidden bite turns at night.
++static func _night(world, st: Dictionary, minute: int) -> void:
++	st.sick = int(st.sick) - 1
++	var hold := 30 + int(float(st.order)) + (25 if int(st.watch_day) >= _day(world) - 1 else 0)
++	if world.draw(minute, 25, "shelter-turn", 100) < hold:
++		var hurt: int = 1 + world.draw(minute, 26, "shelter-hurt", 3)
++		st.pop = maxi(0, int(st.pop) - hurt)
++		st.sick = int(st.sick) + world.draw(minute, 27, "shelter-spread", 2)
++		st.order = maxf(0.0, float(st.order) - 8.0)
++		var text := "夜中、体育館で悲鳴が上がった。発症した人が暴れ出し、見張りの人たちが取り押さえた。%d人が噛まれ、校舎の外へ連れ出されていった。" % hurt
++		if _player_here(world):
++			Mood.change(world.s, -6.0)
++			_notice(world, "【危険】" + text)
++		else:
++			_notice(world, "【記録】避難所で、夜中に発症した人が出たらしい。")
++		return
++	_fall(world, "inside")
++
++## Overrun: the dead are inside. Many do not get out.
++static func _fall(world, cause: String) -> void:
 +	var st := state(world)
 +	st.status = "overrun"
++	st.cause = cause
 +	if world.s.has("walkers"):
 +		world.s.walkers.places[PLACE] = int(world.s.walkers.places.get(PLACE, 0)) + 12
 +	var lost: Array = []
 +	var people: Dictionary = Survivors.ensure(world).people
 +	for id in people:
 +		var p: Dictionary = people[id]
++		if str(p.place) != PLACE or str(p.status) != "alive":
++			continue
++		if world.draw(int(world.s.minute), absi(hash(id)) % 1000, "shelter-flee", 100) < 35:
++			p.place = "住宅街"
++			continue
++		p.status = "dead"
++		p.cause = "shelter"
++		p.died = int(world.s.minute)
++		if bool(p.met) or bool(p.get("former", false)):
++			lost.append(str(p.name))
++	var how := "門が破られ、感染者がなだれ込んだ" if cause == "gate" else "体育館の中で発症した人を止められず、感染が広がった"
++	if _player_here(world):
++		world.s.walkers.alarm = true
++		world.s.health = maxf(1.0, float(world.s.health) - 10.0)
++		Mood.change(world.s, -15.0)
++		_notice(world, "【危険】%s。悲鳴と足音の中、人を押しのけて逃げ道を探す。……すぐにここを出なければ。" % how)
++	else:
++		_notice(world, "【記録】避難所の小学校で、%sらしい。多くの人が逃げ遅れた。%s" % [how, (("……%sも、あそこにいたはずだ。" % "、".join(lost)) if not lost.is_empty() else "")])
++
++## Hunger and distrust empty the shelter without the dead.
++static func _abandon(world) -> void:
++	var st := state(world)
++	st.status = "abandoned"
++	st.pop = 0
++	var people: Dictionary = Survivors.ensure(world).people
++	for id in people:
++		var p: Dictionary = people[id]
 +		if str(p.place) == PLACE and str(p.status) == "alive":
-+			p.status = "dead"
-+			p.cause = "shelter"
-+			p.died = int(world.s.minute)
-+			if bool(p.met) or bool(p.get("former", false)):
-+				lost.append(str(p.name))
-+	if world.s.has("walkers"):
-+		world.s.walkers.notices.append("【記録】避難所の小学校で感染が広がり、多くの人が逃げ遅れたらしい。%s" % (("……%sも、あそこにいたはずだ。" % "、".join(lost)) if not lost.is_empty() else ""))
++			p.place = "住宅街"
++	_notice(world, "【記録】避難所の食料が尽き、人々は散り散りに出ていったらしい。小学校は、もう空っぽだ。")
 +
 +## A housemate who left with a note goes to the shelter, where they can be
-+## found again and brought home.
++## found again and brought home. If it is not open, they go elsewhere.
 +static func admit(world, mate: Dictionary) -> void:
 +	var people: Dictionary = Survivors.ensure(world).people
 +	var id := "former_%s" % str(mate.name)
 +	var male := str(mate.get("gender", "")) == "男性"
++	var here := is_open(world)
 +	people[id] = {
 +		"id": id, "name": str(mate.name), "label": str(mate.name), "age": int(mate.get("age", 25)), "gender": "男性" if male else "女性",
-+		"role": "former", "job": str(mate.get("job", "")), "situation": "", "tag": "", "place": PLACE,
-+		"background": "以前、あなたの家で一緒に暮らしていた。限界になって、書き置きを残して避難所に来た。", "secret": "",
++		"role": "former", "job": str(mate.get("job", "")), "situation": "", "tag": "", "place": PLACE if here else "住宅街",
++		"background": "以前、あなたの家で一緒に暮らしていた。限界になって、書き置きを残して出ていった。", "secret": "",
 +		"trait": str(mate.get("trait", "人に気をつかう")), "traits": {"honesty": int(mate.get("honesty", 60)), "courage": 40, "temper": 30, "loyalty": 70, "suspicion": 20},
 +		"voice": "young", "style": "丁寧だが少し早口な話し方", "first_person": "俺" if male else "私",
-+		"needs": [], "offers": [], "info": "体育館は人でいっぱいで、毎晩けんかが起きてる。食べ物も、もう少ない。",
-+		"joinable": true, "join_trust": 60, "intro": "体育館の隅に、%sがいた。こちらに気づくと、気まずそうに目をそらした。「……来てくれたんだ」" % str(mate.name),
++		"needs": [], "offers": [], "info": "体育館は人でいっぱいで、毎晩けんかが起きてる。食べ物も、もう少ない。" if here else "避難所は開いてなかった。空き家を転々としてる。",
++		"joinable": true, "join_trust": 60, "intro": ("体育館の隅に、%sがいた。" if here else "路地の陰に、%sがいた。") % str(mate.name) + "こちらに気づくと、気まずそうに目をそらした。「……来てくれたんだ」",
 +		"status": "alive", "met": false, "trust": 70, "known_name": true, "given": 0, "talks": 0, "talk_at": -100000, "traded": [],
 +		"former": true, "left_at": int(world.s.minute), "detail": "", "likes": "",
 +	}
 +
-+## Once a day, a little water and food for whoever queues.
++## Once a day, a little water and food for whoever queues, while it lasts.
 +static func ration(world) -> String:
 +	var st := state(world)
 +	if not is_open(world):
 +		return "避難所は開いていない。" if str(st.status) == "school" else "もう配給をする人はいない。"
-+	var day := int(world.s.minute) / 1440
++	var day := _day(world)
 +	if int(st.ration_day) == day:
 +		return "今日の配給は、もう受け取った。"
++	if float(st.stock) < 1.0:
++		return "配給の列はあるが、配るものが残っていない。係の人が頭を下げ続けている。"
 +	world.advance_safe(60)
 +	st.ration_day = day
 +	var bag: Dictionary = world.s.district.bag
-+	var water := minf(2.0, 8.0 - float(bag.water))
-+	var food := minf(1.0, 4.0 - float(bag.food))
++	var lean := not bool(st.supplied)
++	var water := minf(1.0 if lean else 2.0, 8.0 - float(bag.water))
++	var food := minf(0.5 if lean else 1.0, 4.0 - float(bag.food))
 +	bag.water = float(bag.water) + water
 +	bag.food = float(bag.food) + food
-+	return "体育館の長い列に1時間並び、配給を受け取った（水%.0fL、食料%.1f人日分）。係の人の顔にも、疲れがにじんでいる。" % [water, food]
++	st.stock = maxf(0.0, float(st.stock) - food)
++	return "体育館の長い列に1時間並び、配給を受け取った（水%.0fL、食料%.1f人日分）。%s" % [water, food, "量が、前より減っている。" if lean else "係の人の顔にも、疲れがにじんでいる。"]
 +
 +static func board(world) -> String:
 +	var names: Array = []
@@ -1558,8 +1814,115 @@ index 0000000..a857be8
 +		lines += "その中に、" + "、".join(names) + "という紙もあった。"
 +	return lines
 +
-+static func status(world) -> String:
-+	return str(world.s.shelter.get("status", "school")) if world.s.get("shelter") is Dictionary else "school"
++## What a person can see and hear here: crowd, food, mood, the gate.
++static func report(world) -> String:
++	var st := state(world)
++	if not is_open(world):
++		return describe(world)
++	world.advance_safe(10)
++	var pop := int(st.pop)
++	var crowd := "体育館は人であふれ、廊下にまで毛布が敷かれている" if pop > 150 else ("体育館は人でいっぱいだ" if pop > 80 else "体育館には、まだ少し隙間がある")
++	var days := float(st.stock) / maxf(1.0, float(pop) * 0.5)
++	var food := "倉庫の段ボールは山積みだ" if bool(st.supplied) and days >= 4 else ("食料は、あと数日分だと係の人がこぼしていた" if days >= 2 else "食料は、ほとんど残っていないらしい")
++	var mood := "係の人たちが落ち着いて仕切っている" if float(st.order) >= 60 else ("あちこちで言い争いが起きている" if float(st.order) >= 30 else "誰も係の人の言うことを聞いていない。物の取り合いが起きている")
++	var gate := "門は頑丈に閉ざされている" if float(st.gate) >= 60 else ("門のあちこちが歪んでいる" if float(st.gate) >= 25 else "門は今にも外れそうだ")
++	var fence := "" if int(st.outside) <= 0 else ("フェンスの外に、感染者が%sいる。" % ("何体か" if int(st.outside) < 8 else "大勢"))
++	var cough := "毛布をかぶって咳き込んでいる人が、何人か目につく。" if int(st.sick) > 0 and float(st.order) < 60 else ""
++	return "%s。%s。%s。%s。%s%s" % [crowd, food, mood, gate, fence, cough]
++
++## Four hours at the gate and the entrance: newcomers are checked, the gate
++## is looked after, and the watch is stronger tonight.
++static func keep_watch(world) -> String:
++	var st := state(world)
++	if not is_open(world):
++		return "見張る相手が、もういない。"
++	var minute := int(world.s.minute)
++	world.advance_safe(240)
++	st.watch_day = _day(world)
++	st.order = minf(90.0, float(st.order) + 4.0)
++	st.gate = minf(100.0, float(st.gate) + 5.0)
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 12.0)
++	Mood.change(world.s, 2.0)
++	var found := ""
++	if int(st.sick) > 0 and world.draw(minute, 28, "shelter-spot", 100) < 40:
++		st.sick = int(st.sick) - 1
++		found = "受付で、袖を押さえて顔色の悪い人がいた。腕を見せてもらうと、噛み傷があった。係の人が、黙って別の教室へ連れていった。"
++	return "4時間、校門と受付の見張りに立った。%s係の人に「助かったよ」と声をかけられた。" % found
++
++## Mending the gate with wood from the house.
++static func mend_gate(world) -> String:
++	var st := state(world)
++	if not is_open(world):
++		return "直しても、守る人がもういない。"
++	if int(world.s.inventory.get("wood", 0)) < 1:
++		return "門を補強する木材がない（木材1が必要）。"
++	world.s.inventory.wood = int(world.s.inventory.wood) - 1
++	world.advance_safe(60)
++	st.gate = minf(100.0, float(st.gate) + 30.0)
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 6.0)
++	return "木材を打ちつけて、校門の歪みを補強した。金づちの音に、フェンスの外の感染者が顔を上げた。"
++
++## Half a day out with the shelter's volunteers, through empty houses.
++static func supply_run(world) -> String:
++	var st := state(world)
++	if not is_open(world):
++		return "一緒に行く人が、もういない。"
++	var minute := int(world.s.minute)
++	var hour: float = world.hour_of_day()
++	if hour < 7.0 or hour >= 15.0:
++		return "物資探しの班は、朝のうちに出発する（7〜15時）。"
++	if float(world.s.health) < 50.0:
++		return "係の人に止められた。「その体じゃ無理だ。休んでて」"
++	world.advance_safe(300)
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 20.0)
++	var town := Walkers.total(world) if world.s.has("walkers") else 0
++	var roll: int = world.draw(minute, 30, "shelter-run", 100)
++	if roll < clampi(town / 4, 3, 30):
++		world.s.health = maxf(1.0, float(world.s.health) - 20.0)
++		world.s.injuries = float(world.s.injuries) + 1.0
++		return "【危険】班で住宅を回っている途中、感染者の群れに出くわした。逃げる途中で転び、腕をすりむいた。何も持ち帰れなかった。"
++	var found := float(12 + world.draw(minute, 31, "shelter-found", 18)) * clampf(1.0 - float(town) / 80.0, 0.2, 1.0)
++	st.stock = float(st.stock) + found
++	st.order = minf(90.0, float(st.order) + 3.0)
++	Mood.change(world.s, 3.0)
++	return "避難所の班と5時間、空き家を回った。缶詰や米を集め、およそ%d人日分の食料を倉庫に運び込んだ。" % int(found)
++
++static func donate(world) -> String:
++	var st := state(world)
++	if not is_open(world):
++		return "受け取る人がいない。"
++	var bag: Dictionary = world.s.district.bag
++	var food := minf(2.0, float(bag.food))
++	if food < 0.5:
++		return "寄付できる食料を持っていない（持ち出し袋の食料を渡す）。"
++	bag.food = float(bag.food) - food
++	world.advance_safe(5)
++	st.stock = float(st.stock) + food
++	st.order = minf(90.0, float(st.order) + 2.0)
++	Mood.change(world.s, 2.0)
++	return "持ち出し袋の食料%.1f人日分を、倉庫の係に渡した。「ありがとう、子どもたちに回すよ」" % food
++
++## A night on a blanket in the gym: not alone, but never quiet; and when
++## order is poor, things go missing.
++static func sleep_night(world) -> String:
++	var st := state(world)
++	var minute := int(world.s.minute)
++	var elapsed: int = world.advance_safe(480, true)
++	var lines := "%d分、体育館の毛布の上で眠った。" % elapsed
++	if not is_open(world):
++		return lines
++	Mood.change(world.s, 3.0 if float(st.order) >= 50 else -2.0)
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 8.0)   # never deep sleep in a crowd
++	lines += "まわりの寝息と、誰かのすすり泣きが一晩中聞こえていた。"
++	if float(st.order) < 40.0 and world.draw(minute, 29, "shelter-theft", 100) < 50:
++		var bag: Dictionary = world.s.district.bag
++		var food := minf(1.0, float(bag.food))
++		var water := minf(2.0, float(bag.water))
++		bag.food = float(bag.food) - food
++		bag.water = float(bag.water) - water
++		if food + water > 0.0:
++			lines += "朝、持ち出し袋が開けられていた。食料%.1f人日分と水%.0fLがなくなっている。" % [food, water]
++	return lines
 +
 +static func describe(world) -> String:
 +	match status(world):
@@ -1567,6 +1930,8 @@ index 0000000..a857be8
 +			return "区立小学校。授業は休みで、校門は閉まっている。"
 +		"open":
 +			return "区立小学校の避難所。体育館に毛布が並び、疲れた顔の人々が身を寄せ合っている。入口で配給の列ができている。"
++		"abandoned":
++			return "避難所だった小学校。体育館には毛布と段ボールが散らばったまま、誰もいない。"
 +	return "避難所だった小学校。校門は倒れ、体育館の窓は割れている。中から、うめき声が聞こえる。"
 diff --git a/scripts/survivor_parts.gd b/scripts/survivor_parts.gd
 new file mode 100644
@@ -2616,7 +2981,7 @@ index 1c39054..0ae078b 100644
  	randomize.pressed.connect(func(): seed_input.value = randi_range(1,999999999))
  	var begin := _button("この設定で始める",form)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
-index 13013bf..ae46529 100644
+index 13013bf..b576797 100644
 --- a/scripts/walkers.gd
 +++ b/scripts/walkers.gd
 @@ -4,9 +4,10 @@ extends RefCounted
@@ -2636,7 +3001,7 @@ index 13013bf..ae46529 100644
  				if next in BUILDINGS and not str(world.s.get("society", "normal")) in ["disrupted", "emergency"]:
  					continue
 +				# The shelter is guarded until it falls.
-+				if next == "避難所" and str(world.s.get("shelter", {}).get("status", "")) != "overrun":
++				if next == "避難所" and str(world.s.get("shelter", {}).get("status", "")) not in ["overrun", "abandoned"]:
 +					continue
  				if (next in OUTDOOR or next in BUILDINGS) and next != "建物前":
  					options.append(next)
@@ -3240,10 +3605,10 @@ index 8e5f82c..867619a 100644
  	await game._on_command("台所へ行く")
 diff --git a/tests/test_shelter_raid149_27.gd b/tests/test_shelter_raid149_27.gd
 new file mode 100644
-index 0000000..7167f07
+index 0000000..7dd14f2
 --- /dev/null
 +++ b/tests/test_shelter_raid149_27.gd
-@@ -0,0 +1,147 @@
+@@ -0,0 +1,235 @@
 +extends SceneTree
 +## v149.27: the shelter (opening, ration, notice board, housemates who left,
 +## falling) and looters (a reason to come, an hour to answer, rob or threaten).
@@ -3263,6 +3628,12 @@ index 0000000..7167f07
 +	print(("PASS " if condition else "FAIL ") + label)
 +	if not condition:
 +		failures += 1
++
++## Forward to the next time the clock reads `hour`:00.
++func next_hour(world, hour: int) -> void:
++	world.s.minute = int(world.s.minute) / 60 * 60 + 60
++	while int(world.hour_of_day()) != hour:
++		world.s.minute += 60
 +
 +func fresh(cohab: int):
 +	var g = Main.instantiate()
@@ -3313,19 +3684,101 @@ index 0000000..7167f07
 +	await g._on_command("詩音に話しかける")
 +	await g._on_command("一緒に帰ろう、来ないか")
 +	check(w.s.household_members.size() == 1 and str(w.s.household_members[0].name) == "詩音" and w.validate_state(w.s), "and can come home")
-+	# --- The shelter falls.
++	# --- Living there: with food, order and no hidden bites it lasts.
 +	var g2 = await fresh(0)
 +	var w2 = g2.world
 +	w2.s.society = "emergency"
 +	Shelter.hourly(w2)
++	var st: Dictionary = Shelter.state(w2)
++	check(Shelter.is_open(w2) and int(st.pop) >= 60, "the shelter opens with people in it")
++	g2.location = "避難所"
++	for day in 20:
++		st.supplied = true
++		st.supply_end = -1
++		st.sick = 0
++		st.outside = 0
++		w2.s.health = 100.0
++		w2.s.hunger = 0.0
++		w2.s.thirst = 0.0
++		await g2._on_command("配給を受け取る")
++		await g2._on_command("見張りを手伝う")
++		await g2._on_command("避難所で寝る")
++	check(Shelter.is_open(w2), "a player can live there for weeks; nothing is fixed to fall")
++	check(str(g2.log_entries.slice(-3)).contains("体育館の毛布の上で眠った"), "sleeping among the others")
++	await g2._on_command("避難所の様子を聞く")
++	check(g2.log_entries[-1].contains("体育館") and g2.log_entries[-1].contains("門"), "the place can be read: crowd, food, mood, gate")
++	# The supply trucks stop some days into the emergency.
++	st.supply_end = int(w2.s.minute) - 1
 +	Shelter.hourly(w2)
++	check(not bool(st.supplied), "the city's supplies stop")
++	# Theft when order is poor.
++	st.order = 20.0
++	w2.s.district.bag.food = 2.0
++	var robbed := false
++	for i in 8:
++		w2.s.district.bag.food = 2.0
++		w2.s.minute += 1440
++		await g2._on_command("避難所で寝る")
++		robbed = robbed or g2.log_entries[-1].contains("持ち出し袋が開けられていた")
++		st.order = 20.0
++	check(robbed, "with order gone, things go missing at night")
++	# A bite turns at night: held down when order holds, the shelter falls when it does not.
++	st.order = 90.0
++	st.sick = 1
++	st.status = "open"
++	next_hour(w2, 2)
++	Shelter.hourly(w2)
++	check(Shelter.is_open(w2), "a turning held down by a good watch")
++	# Hunger: people leave, the shelter is abandoned, nobody dies.
 +	var people: Dictionary = Survivors.ensure(w2).people
-+	var at_shelter: Array = people.keys().filter(func(k): return people[k].place == "避難所")
-+	w2.s.minute = int(Shelter.state(w2).close_at) + 1
-+	w2.s.walkers.notices = []
-+	Shelter.hourly(w2)
-+	check(str(Shelter.state(w2).status) == "overrun" and Walkers.count(w2, "避難所") >= 12 and str(w2.s.walkers.notices).contains("避難所"), "some days into the emergency it is overrun")
-+	check(at_shelter.filter(func(k): return people[k].status == "alive").is_empty(), "nobody left there survives")
++	var shelter_ids: Array = people.keys().filter(func(k): return people[k].place == "避難所" and people[k].status == "alive")
++	st.supplied = false
++	st.stock = 0.0
++	st.order = 25.0
++	st.garden = 0.0
++	st.sick = 0
++	g2.location = "住宅街"
++	for day in 12:
++		next_hour(w2, 6)
++		Shelter.hourly(w2)
++	check(Shelter.status(w2) == "abandoned", "with no food left the shelter empties")
++	check(shelter_ids.filter(func(k): return people[k].status == "alive" and people[k].place == "住宅街").size() == shelter_ids.size(), "and the people in it scatter alive")
++	# The gate: walkers at the fence wear it down.
++	var g4 = await fresh(0)
++	var w4 = g4.world
++	w4.s.society = "emergency"
++	Shelter.hourly(w4)
++	var st4: Dictionary = Shelter.state(w4)
++	st4.outside = 20
++	st4.gate = 3.0
++	st4.order = 30.0
++	g4.location = "避難所"
++	w4.set_meta("player_place", "避難所")
++	w4.s.walkers.notices = []
++	next_hour(w4, 6)
++	Shelter.hourly(w4)
++	check(Shelter.status(w4) == "overrun" and Walkers.count(w4, "避難所") >= 12, "a broken gate with many at the fence lets them in")
++	check(str(w4.s.walkers.notices).contains("すぐにここを出なければ") and bool(w4.s.walkers.alarm), "a player inside is woken to run")
++	# A turning with no order inside.
++	var g5 = await fresh(0)
++	var w5 = g5.world
++	w5.s.society = "emergency"
++	Shelter.hourly(w5)
++	var st5: Dictionary = Shelter.state(w5)
++	st5.order = 0.0
++	st5.sick = 1
++	next_hour(w5, 2)
++	Shelter.hourly(w5)
++	check(Shelter.status(w5) == "overrun" and str(w5.s.walkers.notices).contains("発症した人を止められず"), "with no order, one turning is enough")
++	# This world's "shelter_closed" event stops supplies instead of ending it.
++	var g6 = await fresh(0)
++	var w6 = g6.world
++	w6.s.society = "disrupted"
++	Shelter.hourly(w6)
++	load("res://scripts/world_traits.gd").of(w6)["done_events"] = ["shelter_closed"]
++	Shelter.hourly(w6)
++	check(Shelter.is_open(w6) and not bool(Shelter.state(w6).supplied), "the officials leaving stops supplies; the shelter goes on")
++	check(w6.validate_state(w6.s) and g6._save().begins_with("保存") and g6._load() == "保存データを読み込んだ。", "a save at the shelter loads")
 +	# --- Looters.
 +	var g3 = await fresh(1)
 +	var w3 = g3.world
