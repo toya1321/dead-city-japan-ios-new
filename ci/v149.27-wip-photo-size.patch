@@ -1,0 +1,995 @@
+diff --git a/assets/photos/apartment.jpg.import b/assets/photos/apartment.jpg.import
+index 71187c7..a198093 100644
+--- a/assets/photos/apartment.jpg.import
++++ b/assets/photos/apartment.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/apartment.jpg-a9b028e7f37483255a20df03e5f2343
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/bedroom.jpg.import b/assets/photos/bedroom.jpg.import
+index 0aa46f8..09d4605 100644
+--- a/assets/photos/bedroom.jpg.import
++++ b/assets/photos/bedroom.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/bedroom.jpg-f437dc669bbc52a9de192d51d2b68dd1.
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/building.jpg.import b/assets/photos/building.jpg.import
+index 2509408..8ea54b4 100644
+--- a/assets/photos/building.jpg.import
++++ b/assets/photos/building.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/building.jpg-570ccc504416809460b5db3760ceb627
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/corridor.jpg.import b/assets/photos/corridor.jpg.import
+index 7145f2f..69d522d 100644
+--- a/assets/photos/corridor.jpg.import
++++ b/assets/photos/corridor.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/corridor.jpg-ed251babc171061dbe60e500547021af
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_food.jpg.import b/assets/photos/department_food.jpg.import
+index b8e9f92..9da9125 100644
+--- a/assets/photos/department_food.jpg.import
++++ b/assets/photos/department_food.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_food.jpg-92afc43af2efe2a3014d22d66
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_food_alert.jpg.import b/assets/photos/department_food_alert.jpg.import
+index 808cf22..de3c596 100644
+--- a/assets/photos/department_food_alert.jpg.import
++++ b/assets/photos/department_food_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_food_alert.jpg-0d5cfc228281d924def
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_food_collapse.jpg.import b/assets/photos/department_food_collapse.jpg.import
+index 89712ae..2aefd25 100644
+--- a/assets/photos/department_food_collapse.jpg.import
++++ b/assets/photos/department_food_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_food_collapse.jpg-5d2c4b572b5f2032
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_food_overgrown.jpg.import b/assets/photos/department_food_overgrown.jpg.import
+index f7a77f2..88ecfa7 100644
+--- a/assets/photos/department_food_overgrown.jpg.import
++++ b/assets/photos/department_food_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_food_overgrown.jpg-b9409152b71c268
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_front.jpg.import b/assets/photos/department_front.jpg.import
+index 5f70189..47301ec 100644
+--- a/assets/photos/department_front.jpg.import
++++ b/assets/photos/department_front.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_front.jpg-5915da406fe8a6483c0ba9c2
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_front_alert.jpg.import b/assets/photos/department_front_alert.jpg.import
+index 7d7b33e..c333c51 100644
+--- a/assets/photos/department_front_alert.jpg.import
++++ b/assets/photos/department_front_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_front_alert.jpg-8522cbde07643267e2
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_front_collapse.jpg.import b/assets/photos/department_front_collapse.jpg.import
+index a6c76a8..fad77ff 100644
+--- a/assets/photos/department_front_collapse.jpg.import
++++ b/assets/photos/department_front_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_front_collapse.jpg-d834b04ccdd0bf6
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_front_overgrown.jpg.import b/assets/photos/department_front_overgrown.jpg.import
+index aeb3e34..4b287da 100644
+--- a/assets/photos/department_front_overgrown.jpg.import
++++ b/assets/photos/department_front_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_front_overgrown.jpg-66d149b76c7761
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_store.jpg.import b/assets/photos/department_store.jpg.import
+index 67097c5..118b0cf 100644
+--- a/assets/photos/department_store.jpg.import
++++ b/assets/photos/department_store.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_store.jpg-997b7985cf443fa99c64535b
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_store_alert.jpg.import b/assets/photos/department_store_alert.jpg.import
+index 9e825b2..08e1d82 100644
+--- a/assets/photos/department_store_alert.jpg.import
++++ b/assets/photos/department_store_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_store_alert.jpg-356d570d3108aeac87
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_store_collapse.jpg.import b/assets/photos/department_store_collapse.jpg.import
+index 99df688..90998d5 100644
+--- a/assets/photos/department_store_collapse.jpg.import
++++ b/assets/photos/department_store_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_store_collapse.jpg-1633844aaa1b397
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/department_store_overgrown.jpg.import b/assets/photos/department_store_overgrown.jpg.import
+index 02e1dc4..6abadc8 100644
+--- a/assets/photos/department_store_overgrown.jpg.import
++++ b/assets/photos/department_store_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/department_store_overgrown.jpg-28c31f8b2c7849
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/entrance.jpg.import b/assets/photos/entrance.jpg.import
+index 378ab47..a41f3e9 100644
+--- a/assets/photos/entrance.jpg.import
++++ b/assets/photos/entrance.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/entrance.jpg-7127659151aa332241b368463889ac32
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/grocer.jpg.import b/assets/photos/grocer.jpg.import
+index ccac5bd..dbf86f9 100644
+--- a/assets/photos/grocer.jpg.import
++++ b/assets/photos/grocer.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/grocer.jpg-6571cd2ee0f8e8ad143c193fc55c5096.c
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/grocer_alert.jpg.import b/assets/photos/grocer_alert.jpg.import
+index 6221ae0..3b9861b 100644
+--- a/assets/photos/grocer_alert.jpg.import
++++ b/assets/photos/grocer_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/grocer_alert.jpg-e461b04a02eaa3490aebb454b5c6
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/grocer_collapse.jpg.import b/assets/photos/grocer_collapse.jpg.import
+index 552e236..963c804 100644
+--- a/assets/photos/grocer_collapse.jpg.import
++++ b/assets/photos/grocer_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/grocer_collapse.jpg-7895ab49034512d9a5e2113de
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/grocer_overgrown.jpg.import b/assets/photos/grocer_overgrown.jpg.import
+index 7e4ce67..9e82080 100644
+--- a/assets/photos/grocer_overgrown.jpg.import
++++ b/assets/photos/grocer_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/grocer_overgrown.jpg-20ff5f135d98df631ecc7709
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/hall.jpg.import b/assets/photos/hall.jpg.import
+index 7175622..3c27f36 100644
+--- a/assets/photos/hall.jpg.import
++++ b/assets/photos/hall.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/hall.jpg-55a99e8917bbde16908c48542a4a6ba8.cte
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/hardware.jpg.import b/assets/photos/hardware.jpg.import
+index d721935..945e250 100644
+--- a/assets/photos/hardware.jpg.import
++++ b/assets/photos/hardware.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/hardware.jpg-558218859472ef83ce64bb1ce0b90b86
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/hardware_alert.jpg.import b/assets/photos/hardware_alert.jpg.import
+index 70e8aa0..06e8c5a 100644
+--- a/assets/photos/hardware_alert.jpg.import
++++ b/assets/photos/hardware_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/hardware_alert.jpg-278f8b8fe1e462d5e838d179ab
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/hardware_collapse.jpg.import b/assets/photos/hardware_collapse.jpg.import
+index 82b4e53..9c968c6 100644
+--- a/assets/photos/hardware_collapse.jpg.import
++++ b/assets/photos/hardware_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/hardware_collapse.jpg-135ff4248ba8b4f7bcaa27d
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/hardware_overgrown.jpg.import b/assets/photos/hardware_overgrown.jpg.import
+index 9baf5d5..22d99aa 100644
+--- a/assets/photos/hardware_overgrown.jpg.import
++++ b/assets/photos/hardware_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/hardware_overgrown.jpg-1dc884de8567240c7cb723
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/kitchen.jpg.import b/assets/photos/kitchen.jpg.import
+index bc13538..de6ff25 100644
+--- a/assets/photos/kitchen.jpg.import
++++ b/assets/photos/kitchen.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/kitchen.jpg-ff5c2bd314c4b19f3682768c56e78796.
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/konbini.jpg.import b/assets/photos/konbini.jpg.import
+index fd62b4f..d490925 100644
+--- a/assets/photos/konbini.jpg.import
++++ b/assets/photos/konbini.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/konbini.jpg-d6b94f34ea87f6a36a73c7a94d72a964.
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/konbini_alert.jpg.import b/assets/photos/konbini_alert.jpg.import
+index 0fa9c1c..4010f27 100644
+--- a/assets/photos/konbini_alert.jpg.import
++++ b/assets/photos/konbini_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/konbini_alert.jpg-7521eecfefa1367e9a2512df495
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/konbini_collapse.jpg.import b/assets/photos/konbini_collapse.jpg.import
+index b6b36b9..4ed630e 100644
+--- a/assets/photos/konbini_collapse.jpg.import
++++ b/assets/photos/konbini_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/konbini_collapse.jpg-7d9fc95cd5648abf91d8b3ce
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/konbini_overgrown.jpg.import b/assets/photos/konbini_overgrown.jpg.import
+index c286773..1495603 100644
+--- a/assets/photos/konbini_overgrown.jpg.import
++++ b/assets/photos/konbini_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/konbini_overgrown.jpg-b2fce2a47f608830e8ca652
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/living.jpg.import b/assets/photos/living.jpg.import
+index a1776dc..3a24c2e 100644
+--- a/assets/photos/living.jpg.import
++++ b/assets/photos/living.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/living.jpg-61f20268db6f9c40e18f9d541e96a8ef.c
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/pharmacy.jpg.import b/assets/photos/pharmacy.jpg.import
+index 0326d1f..7f154a3 100644
+--- a/assets/photos/pharmacy.jpg.import
++++ b/assets/photos/pharmacy.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/pharmacy.jpg-356162ade66e466ef0846097c4481eda
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/pharmacy_alert.jpg.import b/assets/photos/pharmacy_alert.jpg.import
+index 1dc5e15..8b8be0c 100644
+--- a/assets/photos/pharmacy_alert.jpg.import
++++ b/assets/photos/pharmacy_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/pharmacy_alert.jpg-062141fe0c205096f3734cecd9
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/pharmacy_collapse.jpg.import b/assets/photos/pharmacy_collapse.jpg.import
+index 9693b89..c6dcbfb 100644
+--- a/assets/photos/pharmacy_collapse.jpg.import
++++ b/assets/photos/pharmacy_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/pharmacy_collapse.jpg-56ab46884d60cdd6273b7f9
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/pharmacy_overgrown.jpg.import b/assets/photos/pharmacy_overgrown.jpg.import
+index 79cd314..abded15 100644
+--- a/assets/photos/pharmacy_overgrown.jpg.import
++++ b/assets/photos/pharmacy_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/pharmacy_overgrown.jpg-d85cbb0ff074cc68b4906f
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/residential.jpg.import b/assets/photos/residential.jpg.import
+index 85ace6a..8664694 100644
+--- a/assets/photos/residential.jpg.import
++++ b/assets/photos/residential.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/residential.jpg-53f8b7a19b101129f5685929a24fa
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/residential_alert.jpg.import b/assets/photos/residential_alert.jpg.import
+index 54d187c..a2a9f06 100644
+--- a/assets/photos/residential_alert.jpg.import
++++ b/assets/photos/residential_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/residential_alert.jpg-e707682230779062c2c9b7a
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/residential_collapse.jpg.import b/assets/photos/residential_collapse.jpg.import
+index 6b1f289..4ce07b3 100644
+--- a/assets/photos/residential_collapse.jpg.import
++++ b/assets/photos/residential_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/residential_collapse.jpg-54753c4426fc34164ff3
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/residential_overgrown.jpg.import b/assets/photos/residential_overgrown.jpg.import
+index 374eda9..79c847a 100644
+--- a/assets/photos/residential_overgrown.jpg.import
++++ b/assets/photos/residential_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/residential_overgrown.jpg-cc2a1091bea7951dfba
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/shopping_street.jpg.import b/assets/photos/shopping_street.jpg.import
+index c0cce87..8a13b54 100644
+--- a/assets/photos/shopping_street.jpg.import
++++ b/assets/photos/shopping_street.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/shopping_street.jpg-40f6f784f670111304481a088
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/shopping_street_alert.jpg.import b/assets/photos/shopping_street_alert.jpg.import
+index 1581820..54e1d10 100644
+--- a/assets/photos/shopping_street_alert.jpg.import
++++ b/assets/photos/shopping_street_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/shopping_street_alert.jpg-e322e5ca27dae6999ba
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/shopping_street_collapse.jpg.import b/assets/photos/shopping_street_collapse.jpg.import
+index 005f5e5..ae84b15 100644
+--- a/assets/photos/shopping_street_collapse.jpg.import
++++ b/assets/photos/shopping_street_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/shopping_street_collapse.jpg-b463596d46552616
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/shopping_street_overgrown.jpg.import b/assets/photos/shopping_street_overgrown.jpg.import
+index a1f6215..b09cd9f 100644
+--- a/assets/photos/shopping_street_overgrown.jpg.import
++++ b/assets/photos/shopping_street_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/shopping_street_overgrown.jpg-ece9a5b6ee75782
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/station_front.jpg.import b/assets/photos/station_front.jpg.import
+index 19b1217..547e9dd 100644
+--- a/assets/photos/station_front.jpg.import
++++ b/assets/photos/station_front.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/station_front.jpg-b10964d2c12cd8c52ab4cf87578
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/station_front_alert.jpg.import b/assets/photos/station_front_alert.jpg.import
+index 1b423fc..2a4711b 100644
+--- a/assets/photos/station_front_alert.jpg.import
++++ b/assets/photos/station_front_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/station_front_alert.jpg-0505dbb77ba97181a481b
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/station_front_collapse.jpg.import b/assets/photos/station_front_collapse.jpg.import
+index 52373a0..8af9fae 100644
+--- a/assets/photos/station_front_collapse.jpg.import
++++ b/assets/photos/station_front_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/station_front_collapse.jpg-3e6cf36ccc8310a173
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/station_front_overgrown.jpg.import b/assets/photos/station_front_overgrown.jpg.import
+index c589438..9fd2806 100644
+--- a/assets/photos/station_front_overgrown.jpg.import
++++ b/assets/photos/station_front_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/station_front_overgrown.jpg-a35bf7f09027bd294
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/street.jpg.import b/assets/photos/street.jpg.import
+index 9af7391..4f100de 100644
+--- a/assets/photos/street.jpg.import
++++ b/assets/photos/street.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/street.jpg-406f8fc0e12bb3f51424fc761a2d389e.c
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/street_alert.jpg.import b/assets/photos/street_alert.jpg.import
+index a72cc62..d157c2a 100644
+--- a/assets/photos/street_alert.jpg.import
++++ b/assets/photos/street_alert.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/street_alert.jpg-3d0e026466d163485cb25d6a891b
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/street_collapse.jpg.import b/assets/photos/street_collapse.jpg.import
+index 1b1dfeb..e38c31c 100644
+--- a/assets/photos/street_collapse.jpg.import
++++ b/assets/photos/street_collapse.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/street_collapse.jpg-21b533cba07fd52016c23297b
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/street_overgrown.jpg.import b/assets/photos/street_overgrown.jpg.import
+index 14510d6..9c1dace 100644
+--- a/assets/photos/street_overgrown.jpg.import
++++ b/assets/photos/street_overgrown.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/street_overgrown.jpg-97cb1414f5e00065ce547574
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/assets/photos/vacant_house.jpg.import b/assets/photos/vacant_house.jpg.import
+index 4dbc6f9..bd816fd 100644
+--- a/assets/photos/vacant_house.jpg.import
++++ b/assets/photos/vacant_house.jpg.import
+@@ -15,9 +15,9 @@ dest_files=["res://.godot/imported/vacant_house.jpg-92e1e98c5c507736dc89d0266721
+ 
+ [params]
+ 
+-compress/mode=0
++compress/mode=1
+ compress/high_quality=false
+-compress/lossy_quality=0.7
++compress/lossy_quality=0.8
+ compress/uastc_level=0
+ compress/rdo_quality_loss=0.0
+ compress/hdr_compression=1
+diff --git a/qa/combo.gd.uid b/qa/combo.gd.uid
+new file mode 100644
+index 0000000..2974b5a
+--- /dev/null
++++ b/qa/combo.gd.uid
+@@ -0,0 +1 @@
++uid://bjeds5c6hoen1
+diff --git a/qa/crawl.gd.uid b/qa/crawl.gd.uid
+new file mode 100644
+index 0000000..ed81707
+--- /dev/null
++++ b/qa/crawl.gd.uid
+@@ -0,0 +1 @@
++uid://bkjedvcajyjc1
+diff --git a/qa/load_old.gd.uid b/qa/load_old.gd.uid
+new file mode 100644
+index 0000000..53b8223
+--- /dev/null
++++ b/qa/load_old.gd.uid
+@@ -0,0 +1 @@
++uid://ijdgxcpp32lf
+diff --git a/qa/longsim.gd.uid b/qa/longsim.gd.uid
+new file mode 100644
+index 0000000..a2311e5
+--- /dev/null
++++ b/qa/longsim.gd.uid
+@@ -0,0 +1 @@
++uid://bye22xyokkyfn
+diff --git a/qa/shelter_life.gd.uid b/qa/shelter_life.gd.uid
+new file mode 100644
+index 0000000..8bc50c8
+--- /dev/null
++++ b/qa/shelter_life.gd.uid
+@@ -0,0 +1 @@
++uid://dmgfvwl8in6p
+diff --git a/qa/shots149_25.gd.uid b/qa/shots149_25.gd.uid
+new file mode 100644
+index 0000000..32df26d
+--- /dev/null
++++ b/qa/shots149_25.gd.uid
+@@ -0,0 +1 @@
++uid://cm2xw2jcadxyo
+diff --git a/qa/survivor_eval.gd.uid b/qa/survivor_eval.gd.uid
+new file mode 100644
+index 0000000..b8831f8
+--- /dev/null
++++ b/qa/survivor_eval.gd.uid
+@@ -0,0 +1 @@
++uid://b6nxp50r7y7hl
+diff --git a/qa/survivor_talk.gd.uid b/qa/survivor_talk.gd.uid
+new file mode 100644
+index 0000000..416c332
+--- /dev/null
++++ b/qa/survivor_talk.gd.uid
+@@ -0,0 +1 @@
++uid://cw7qu80axkuha
+diff --git a/qa/survivor_worlds.gd.uid b/qa/survivor_worlds.gd.uid
+new file mode 100644
+index 0000000..f22d91d
+--- /dev/null
++++ b/qa/survivor_worlds.gd.uid
+@@ -0,0 +1 @@
++uid://cwqyxy3qsy1pb
+diff --git a/scripts/raiders.gd.uid b/scripts/raiders.gd.uid
+new file mode 100644
+index 0000000..ad38dd0
+--- /dev/null
++++ b/scripts/raiders.gd.uid
+@@ -0,0 +1 @@
++uid://betkntfil8ir8
+diff --git a/scripts/roles.gd.uid b/scripts/roles.gd.uid
+new file mode 100644
+index 0000000..4e955f2
+--- /dev/null
++++ b/scripts/roles.gd.uid
+@@ -0,0 +1 @@
++uid://b3b43tc8eo44s
+diff --git a/scripts/shelter.gd.uid b/scripts/shelter.gd.uid
+new file mode 100644
+index 0000000..26f3f1a
+--- /dev/null
++++ b/scripts/shelter.gd.uid
+@@ -0,0 +1 @@
++uid://cll5cddvugoj8
+diff --git a/scripts/survivor_parts.gd.uid b/scripts/survivor_parts.gd.uid
+new file mode 100644
+index 0000000..c72ef8a
+--- /dev/null
++++ b/scripts/survivor_parts.gd.uid
+@@ -0,0 +1 @@
++uid://cedgg2vsayh3o
+diff --git a/scripts/survivors.gd.uid b/scripts/survivors.gd.uid
+new file mode 100644
+index 0000000..d21221b
+--- /dev/null
++++ b/scripts/survivors.gd.uid
+@@ -0,0 +1 @@
++uid://bwrft7fxyg1jn
+diff --git a/scripts/world_traits.gd.uid b/scripts/world_traits.gd.uid
+new file mode 100644
+index 0000000..885e386
+--- /dev/null
++++ b/scripts/world_traits.gd.uid
+@@ -0,0 +1 @@
++uid://d3rx2t5xfykk6
+diff --git a/tests/test_dept149_25.gd.uid b/tests/test_dept149_25.gd.uid
+new file mode 100644
+index 0000000..68bea8b
+--- /dev/null
++++ b/tests/test_dept149_25.gd.uid
+@@ -0,0 +1 @@
++uid://b0xdj854jwryq
+diff --git a/tests/test_roles149_27.gd.uid b/tests/test_roles149_27.gd.uid
+new file mode 100644
+index 0000000..92c7c75
+--- /dev/null
++++ b/tests/test_roles149_27.gd.uid
+@@ -0,0 +1 @@
++uid://bwyb0k07ueu8x
+diff --git a/tests/test_shelter_raid149_27.gd.uid b/tests/test_shelter_raid149_27.gd.uid
+new file mode 100644
+index 0000000..d9d8c98
+--- /dev/null
++++ b/tests/test_shelter_raid149_27.gd.uid
+@@ -0,0 +1 @@
++uid://b130xkd0krviv
+diff --git a/tests/test_strain149_25.gd.uid b/tests/test_strain149_25.gd.uid
+new file mode 100644
+index 0000000..ab78552
+--- /dev/null
++++ b/tests/test_strain149_25.gd.uid
+@@ -0,0 +1 @@
++uid://cdkw76uiva504
+diff --git a/tests/test_survivors149_26.gd.uid b/tests/test_survivors149_26.gd.uid
+new file mode 100644
+index 0000000..c625128
+--- /dev/null
++++ b/tests/test_survivors149_26.gd.uid
+@@ -0,0 +1 @@
++uid://ds7ld8q5q383s
+diff --git a/tests/test_world_traits149_27.gd.uid b/tests/test_world_traits149_27.gd.uid
+new file mode 100644
+index 0000000..d1d015e
+--- /dev/null
++++ b/tests/test_world_traits149_27.gd.uid
+@@ -0,0 +1 @@
++uid://c3ew5b55mmajw
