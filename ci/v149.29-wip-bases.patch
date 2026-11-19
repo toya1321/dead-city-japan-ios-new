@@ -87673,6 +87673,141 @@ index 0000000..c2ec084
 +++ b/scripts/chronicle.gd.uid
 @@ -0,0 +1 @@
 +uid://b7pitd7ccyw4h
+diff --git a/scripts/cold.gd b/scripts/cold.gd
+new file mode 100644
+index 0000000..bfa213d
+--- /dev/null
++++ b/scripts/cold.gd
+@@ -0,0 +1,129 @@
++extends RefCounted
++## v149.29: the season. Tokyo's temperature follows the calendar and the hour
++## (the game starts on 10 November, so winter comes within weeks). Inside
++## the house it is warmer than outside, warmer still with heating: the air
++## conditioner while there is power, otherwise a cassette gas heater (burns
++## gas cans). Blankets help, one per person. Cold rooms wear on the mind and
++## on sleep; a freezing room without blankets wears on health. Each hour.
++## State: `s.cold = {"heater_until", "warned", "blankets", "found"}`.
++
++const Mood = preload("res://scripts/mood.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++
++## Average daily temperature by month (Tokyo, rounded).
++const MONTH_TEMP := {1: 5.5, 2: 6.5, 3: 9.5, 4: 15.0, 5: 19.0, 6: 22.0, 7: 26.0, 8: 27.0, 9: 23.5, 10: 18.0, 11: 12.5, 12: 8.0}
++
++static func state(world) -> Dictionary:
++	if not world.s.has("cold") or not world.s.cold is Dictionary:
++		world.s.cold = {"heater_until": -1, "warned": 0}
++	return world.s.cold
++
++## Reading without creating (describing must not change the world).
++static func peek(world) -> Dictionary:
++	return world.s.cold if world.s.get("cold") is Dictionary else {}
++
++static func valid(value: Variant) -> bool:
++	return value is Dictionary
++
++static func _date(world) -> Dictionary:
++	return Time.get_datetime_dict_from_unix_time(int(Time.get_unix_time_from_datetime_string(world.START_TIME)) + int(world.s.minute) * 60)
++
++## Outdoor temperature now (°C).
++static func outdoor(world) -> float:
++	var d := _date(world)
++	var month := int(d.month)
++	var next := month % 12 + 1
++	var t := lerpf(float(MONTH_TEMP[month]), float(MONTH_TEMP[next]), float(int(d.day) - 1) / 30.0)
++	var hour: float = world.hour_of_day()
++	t += 4.0 * cos((hour - 14.0) / 24.0 * TAU)   # coldest before dawn, warmest at 2pm
++	if str(world.s.weather) == "snow":
++		t -= 3.0
++	elif str(world.s.weather) == "rain":
++		t -= 1.5
++	return t
++
++static func heater_on(world) -> bool:
++	return int(peek(world).get("heater_until", -1)) > int(world.s.minute)
++
++static func heated(world) -> bool:
++	return world.has_home_power() or heater_on(world)
++
++## Inside the house (°C).
++static func indoor(world) -> float:
++	var t := outdoor(world) + 5.0
++	if bool(world.s.get("door_broken", false)):
++		t -= 3.0
++	if heated(world):
++		t = maxf(t, 18.0)
++	return t
++
++static func word(t: float) -> String:
++	if t < 3.0: return "凍えるほど寒い"
++	if t < 8.0: return "冷え込んでいる"
++	if t < 13.0: return "肌寒い"
++	if t < 26.0: return "過ごしやすい"
++	return "蒸し暑い"
++
++## Kept in s.cold (not s.inventory: older saves must still load).
++static func blankets(world) -> int:
++	return int(peek(world).get("blankets", 0))
++
++## Hourly: the cold in the house, for the player at home and the household.
++static func hourly(world) -> void:
++	var st := state(world)
++	var t := indoor(world)
++	var notices: Array = world.s.walkers.notices if world.s.has("walkers") else []
++	var at_home: bool = world.has_meta("player_at_home") and bool(world.get_meta("player_at_home"))
++	var people: Array = world.s.household_members.filter(func(m): return float(m.health) > 0 and str(m.get("activity", "")) != "外出")
++	var count := people.size() + (1 if at_home else 0)
++	var covered := clampf(float(blankets(world)) / maxf(1.0, float(count)), 0.0, 1.0)
++	if t < 10.0:
++		var chill := (10.0 - t) / 10.0 * (1.0 - 0.6 * covered)
++		if at_home:
++			Mood.change(world.s, -0.4 * chill)
++			world.s.fatigue = minf(100.0, float(world.s.fatigue) + 0.6 * chill)
++		for m in people:
++			Mood.change(m, -0.4 * chill)
++		if t < 3.0 and covered < 1.0:
++			var harm := (3.0 - t) * 0.15 * (1.0 - covered)
++			if at_home:
++				world.s.health = maxf(0.0, float(world.s.health) - harm)
++			for m in people:
++				m.health = maxf(0.0, float(m.health) - harm)
++	# A word the first time each level of cold comes.
++	var level := 0
++	if t < 8.0: level = 1
++	if t < 3.0: level = 2
++	if level > int(st.warned) and at_home:
++		st.warned = level
++		notices.append("【記録】" + ("家の中でも、吐く息が白い。%s" % ("毛布か、暖をとる手段が要る。" if blankets(world) < count else "毛布にくるまって、寒さをしのいだ。")) if level == 1 else "【危険】部屋の中が、凍えるほど冷え込んでいる。このままでは体がもたない。（毛布・カセットガスストーブ）")
++
++## Lighting the cassette gas heater: three hours per can quarter... one can lasts 6 hours.
++static func light_heater(world) -> String:
++	if world.has_home_power():
++		return "電気が来ているので、エアコンで部屋は暖かい。"
++	if float(world.s.get("gas_cans", 0.0)) < 0.5:
++		return "カセットボンベが足りない（0.5本で3時間）。金物店やコンビニで探そう。"
++	world.s.gas_cans = float(world.s.gas_cans) - 0.5
++	state(world).heater_until = int(world.s.minute) + 180
++	world.advance_safe(2)
++	return "カセットガスストーブに火をつけた。小さな炎の前に手をかざすと、指先にじんわり熱が戻ってきた。（3時間・ボンベ0.5本。残り%.1f本）" % float(world.s.gas_cans)
++
++## Blankets from an empty house or the department store, once each place.
++const BLANKET_PLACES := {"近所の空き家": 2, "デパート": 4, "避難所": 1}
++static func find_blankets(world, place: String) -> String:
++	var found: Dictionary = state(world).get("found", {})
++	if not BLANKET_PLACES.has(place):
++		return "ここに毛布はなさそうだ。"
++	if place == "デパート" and not bool(world.s.district.sites["デパート"].vacant):
++		return "毛布は寝具売り場で売っている。今は店が開いているので、持ち出せない。"
++	if int(found.get(place, 0)) >= int(BLANKET_PLACES[place]):
++		return "ここの毛布は、もう持ち出してしまった。"
++	if place == "避難所" and str(world.s.get("shelter", {}).get("status", "")) == "open":
++		return "避難所の毛布は、ここで寝る人たちのものだ。"
++	var take := int(BLANKET_PLACES[place]) - int(found.get(place, 0))
++	found[place] = int(BLANKET_PLACES[place])
++	state(world).found = found
++	state(world).blankets = blankets(world) + take
++	world.advance_safe(10)
++	return "押し入れの奥から、毛布を%d枚見つけた。（毛布 %d枚）" % [take, blankets(world)] if place != "デパート" else "寝具売り場の棚から、毛布を%d枚持ち出した。（毛布 %d枚）" % [take, blankets(world)]
 diff --git a/scripts/district.gd b/scripts/district.gd
 index bbcdb5a..b9f5589 100644
 --- a/scripts/district.gd
@@ -88078,20 +88213,21 @@ index ffb0fa3..66ef595 100644
  			return _result("店に着いてから在庫を確認するよ。")
  		"拠点の状態を見る":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 577e8d5..ebb3cd0 100644
+index 577e8d5..1707ee2 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -6,6 +6,9 @@ const District = preload("res://scripts/district.gd")
+@@ -6,6 +6,10 @@ const District = preload("res://scripts/district.gd")
  const Portraits = preload("res://scripts/portraits.gd")
  const EarlyDays = preload("res://scripts/early_days.gd")
  const NeighborFate = preload("res://scripts/neighbor_fate.gd")
 +const Outposts = preload("res://scripts/outposts.gd")
 +const Chronicle = preload("res://scripts/chronicle.gd")
 +const Requests = preload("res://scripts/requests.gd")
++const Cold = preload("res://scripts/cold.gd")
  const Navigation = preload("res://scripts/navigation.gd")
  const Vitals = preload("res://scripts/vitals.gd")
  const GestureScroll = preload("res://scripts/gesture_scroll.gd")
-@@ -758,7 +761,9 @@ func _build_base_tab() -> void:
+@@ -758,7 +762,9 @@ func _build_base_tab() -> void:
  			continue
  		any_site = true
  		var c := UI.card(tab_content, place)
@@ -88102,7 +88238,7 @@ index 577e8d5..ebb3cd0 100644
  	if not any_site:
  		tab_content.add_child(UI.label("ほかの拠点はまだない。空き家や放棄された建物で「ここを拠点にする」と作れます。", 13, UI.FAINT))
  
-@@ -1424,8 +1429,14 @@ func _scroll_log_to_end() -> void:
+@@ -1424,8 +1430,14 @@ func _scroll_log_to_end() -> void:
  	log_follow_queued=false
  
  func _refresh() -> void:
@@ -88118,7 +88254,7 @@ index 577e8d5..ebb3cd0 100644
  	_drain_walker_notices()
  	_update_dialogue_input()
  	var stamp := world.clock()
-@@ -1471,6 +1482,13 @@ func _refresh() -> void:
+@@ -1471,6 +1483,13 @@ func _refresh() -> void:
  	if not Navigation.indoor(location) or visual_focus == "window": visible_count = world.visible_residents().size()
  	scene_view.update_view(location,world.hour_of_day(),str(world.s.weather),world.has_home_power() if Navigation.indoor(location) else bool(world.s.grid_online),world.can_trade(shop_id) if not shop_id.is_empty() else true,visible_count,visual_focus)
  	picture.texture = _base_texture()
@@ -88132,7 +88268,7 @@ index 577e8d5..ebb3cd0 100644
  	if picture.texture == null:
  		picture.texture = scene_view.location_texture(location,"apartment" if world.s.profile.housing=="集合住宅" and location=="建物前" else "", _visual_phase())
  	district_card.visible = District.SITES.has(location) and picture.texture == null
-@@ -1495,6 +1513,14 @@ func _on_command(raw: String) -> void:
+@@ -1495,6 +1514,14 @@ func _on_command(raw: String) -> void:
  		DisplayServer.virtual_keyboard_hide()
  	_append("▶ "+cmd)
  	cancel_requested=false
@@ -88147,7 +88283,7 @@ index 577e8d5..ebb3cd0 100644
  	var suggested := pending_local_action.duplicate()
  	pending_local_action.clear()
  	var encounter: Dictionary = Walkers.ensure(world).encounter
-@@ -1604,6 +1630,8 @@ func _show_convo_face(texture: Texture2D) -> void:
+@@ -1604,6 +1631,8 @@ func _show_convo_face(texture: Texture2D) -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -88156,10 +88292,12 @@ index 577e8d5..ebb3cd0 100644
  	if not Walkers.ensure(world).encounter.is_empty():
  		return ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"]
  	if str(NeighborFate.state(world).stage) == "attack" and (Navigation.indoor(location) or location == str(NeighborFate._person(world).get("place", ""))):
-@@ -1666,6 +1694,10 @@ func _suggestions() -> Array:
+@@ -1666,6 +1695,12 @@ func _suggestions() -> Array:
  		if Walkers.count(world, "建物前") > 0:
  			out.append("窓から物を投げて気をそらす")
  	if Navigation.indoor(location):
++		if Cold.indoor(world) < 8.0 and not Cold.heated(world) and float(world.s.get("gas_cans", 0.0)) >= 0.5:
++			out.push_front("ストーブをつける")
 +		for mate in world.s.household_members:
 +			var req: Dictionary = mate.get("request", {})
 +			if str(req.get("kind", "")) == "item" and Requests._held(world, str(req.item)) and Navigation.indoor(str(mate.location)):
@@ -88167,13 +88305,15 @@ index 577e8d5..ebb3cd0 100644
  		var news: Dictionary = world.s.get("outbreak_news", {})
  		if bool(world.s.water_online) and float(world.s.get("bath_water", 0.0)) < 50.0 and "disrupted" in news.get("done", []):
  			out.append("浴槽に水をためる")
-@@ -1741,7 +1773,13 @@ func _suggestions() -> Array:
+@@ -1741,7 +1776,15 @@ func _suggestions() -> Array:
  		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
  	else:
  		out.append("周囲を見る")
 -		if District.SITES.has(_site()) and location != "デパート":
 +		for mate in Outposts.at(world, _site()):
 +			out.append("%sを家に呼び戻す" % mate.name)
++		if Cold.BLANKET_PLACES.has(_site()) and Cold.outdoor(world) < 12.0 and int(Cold.peek(world).get("found", {}).get(_site(), 0)) < int(Cold.BLANKET_PLACES[_site()]) and (_site() != "デパート" or bool(world.s.district.sites["デパート"].vacant)) and not (_site() == "避難所" and Shelter.is_open(world)):
++			out.push_front("毛布を探す")
 +		for mate in world.s.household_members:
 +			var req: Dictionary = mate.get("request", {})
 +			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
@@ -88182,7 +88322,7 @@ index 577e8d5..ebb3cd0 100644
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else "食料を買う")
  		out.append("家に帰る")
  	return out.slice(0, 6)
-@@ -1752,7 +1790,8 @@ func _refresh_suggestions() -> void:
+@@ -1752,7 +1795,8 @@ func _refresh_suggestions() -> void:
  	for child in chips_row.get_children():
  		chips_row.remove_child(child)
  		child.queue_free()
@@ -88192,7 +88332,7 @@ index 577e8d5..ebb3cd0 100644
  		chips_scroll.visible = false
  		return
  	for text in _suggestions():
-@@ -2365,53 +2404,6 @@ func _run_plan(plan: Dictionary) -> void:
+@@ -2365,53 +2409,6 @@ func _run_plan(plan: Dictionary) -> void:
  	_report_household_errands()
  	_refresh()
  
@@ -88246,7 +88386,7 @@ index 577e8d5..ebb3cd0 100644
  ## Hourly events from the walker simulation that the player witnesses:
  ## a housemate's death, and their rising in the same room.
  func _drain_walker_notices() -> void:
-@@ -2571,8 +2563,10 @@ func _leave_home(cmd: String) -> bool:
+@@ -2571,8 +2568,10 @@ func _leave_home(cmd: String) -> bool:
  		_refresh()
  		return true
  	var heir: Dictionary = heirs[0]
@@ -88258,7 +88398,7 @@ index 577e8d5..ebb3cd0 100644
  	return true
  
  const GIVE_ITEMS := {"food": ["食料", "食べ物", "ご飯", "缶詰", "食い物", "パン"], "water": ["水", "飲み物"], "bandage": ["包帯", "薬", "手当て"]}
-@@ -2721,12 +2715,16 @@ func _process_leavers() -> void:
+@@ -2721,12 +2720,16 @@ func _process_leavers() -> void:
  			world.s.food = float(world.s.food) - food
  			world.s.water = float(world.s.water) - water
  			_append("【記録】朝になると、%sの姿がなかった。台所の備蓄が荒らされている。食料%.1f人日分と水%.0fLが消えていた。書き置きは、なかった。" % [person.name, food, water])
@@ -88275,10 +88415,28 @@ index 577e8d5..ebb3cd0 100644
  		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
-@@ -2749,6 +2747,62 @@ func _raid_command(cmd: String) -> bool:
+@@ -2749,6 +2752,80 @@ func _raid_command(cmd: String) -> bool:
  	return true
  
  ## v149.27: the shelter's ration and notice board.
++## v149.29: the cold: a gas heater, blankets.
++func _cold_command(cmd: String) -> bool:
++	if PlayerIntents.negated(cmd):
++		return false
++	var line := ""
++	if NPCMemory._mentions(cmd, ["ストーブ", "暖房をつけ", "暖をと", "暖を取"]) and Navigation.indoor(location):
++		line = Cold.light_heater(world)
++	elif NPCMemory._mentions(cmd, ["毛布を探", "毛布を持", "毛布を集", "毛布を取"]):
++		line = Cold.find_blankets(world, _site())
++	elif NPCMemory._mentions(cmd, ["寒さ", "気温", "室温", "寒い？", "寒いか"]) and not NPCMemory._mentions(cmd, ["話", "に聞"]):
++		world.advance_safe(1)
++		line = "家の中は%s（%.0f℃ほど）。外は%.0f℃ほど。毛布は%d枚。" % [Cold.word(Cold.indoor(world)), Cold.indoor(world), Cold.outdoor(world), Cold.blankets(world)] if Navigation.indoor(location) else "外は%s（%.0f℃ほど）。" % [Cold.word(Cold.outdoor(world)), Cold.outdoor(world)]
++	if line.is_empty():
++		return false
++	_append(line)
++	_refresh()
++	return true
++
 +## v149.29: what housemates asked for: a thing handed over, family searched for.
 +func _request_command(cmd: String) -> bool:
 +	if PlayerIntents.negated(cmd):
@@ -88338,16 +88496,16 @@ index 577e8d5..ebb3cd0 100644
  ## v149.28: going next door when the neighbour screams.
  func _rescue_command(cmd: String) -> bool:
  	if str(NeighborFate.state(world).stage) != "attack" or PlayerIntents.negated(cmd):
-@@ -2898,7 +2952,7 @@ func _comfort_command(cmd: String) -> bool:
+@@ -2898,7 +2975,7 @@ func _comfort_command(cmd: String) -> bool:
  
  ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
  func _care_command(cmd: String) -> bool:
 -	if _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
-+	if _request_command(cmd) or _outpost_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
++	if _cold_command(cmd) or _request_command(cmd) or _outpost_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -2924,6 +2978,8 @@ func _care_command(cmd: String) -> bool:
+@@ -2924,6 +3001,8 @@ func _care_command(cmd: String) -> bool:
  			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + hours * 60, "place": ["駅前", "商店通り", "住宅街"][world.draw(int(world.s.minute), int(person.id), "leaver", 3)]})
  			world.advance_safe(15)
  			_append("%sは小さな荷物を背負って、玄関で振り返った。「みんなを危ない目にあわせたくないから。……今まで、ありがとう」。扉が閉まり、足音が遠ざかっていった。" % person.name)
@@ -88356,7 +88514,7 @@ index 577e8d5..ebb3cd0 100644
  			_remove_housemate(index)
  			_refresh()
  			return true
-@@ -3099,7 +3155,7 @@ func _interpret(raw: String) -> String:
+@@ -3099,7 +3178,7 @@ func _interpret(raw: String) -> String:
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
  		return District.act(world, _site(), clean, Navigation.indoor(location))
@@ -88365,7 +88523,7 @@ index 577e8d5..ebb3cd0 100644
  		if world.s.health > 0:
  			world.advance_safe(1)
  		return _look()
-@@ -3116,13 +3172,13 @@ func _interpret(raw: String) -> String:
+@@ -3116,13 +3195,13 @@ func _interpret(raw: String) -> String:
  		return world.work_at_home()
  	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
  	if clean in ["店の在庫を見る","買い物する"]:
@@ -88381,7 +88539,7 @@ index 577e8d5..ebb3cd0 100644
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
  			var stock_item := {"食料":"food", "水":"water", "飲料水":"water"}.get(bought.get_string(2), "") as String
-@@ -3188,6 +3244,9 @@ func _execute_command(cmd: String) -> String:
+@@ -3188,6 +3267,9 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("ロード") or cmd.contains("読込"):
  		return _load()
  	if cmd.contains("生存記録") or cmd.contains("日誌"):
@@ -88391,7 +88549,7 @@ index 577e8d5..ebb3cd0 100644
  		var journal: Array = world.s.longplay.journal
  		var result: Array[String] = []
  		for entry in journal.slice(maxi(0,journal.size()-12)):
-@@ -3395,6 +3454,8 @@ func _routine_news(text: String) -> bool:
+@@ -3395,6 +3477,8 @@ func _routine_news(text: String) -> bool:
  func _weather_text() -> String:
  	return str({"clear":"晴れ","cloudy":"くもり","rain":"雨","snow":"雪"}.get(world.s.weather,"不明"))
  func _scene_caption() -> String:
@@ -88400,7 +88558,7 @@ index 577e8d5..ebb3cd0 100644
  	if District.SITES.has(_site()):
  		var state: Dictionary = world.s.district.sites[_site()]
  		return "%s / %s" % [location, ("補強済み" if state.level == 2 else ("拠点" if state.level == 1 else "未整備")) if state.vacant else ("営業中" if District.can_enter(world, _site()) else "閉店")]
-@@ -3415,7 +3476,7 @@ func _sync_player_position() -> void:
+@@ -3415,7 +3499,7 @@ func _sync_player_position() -> void:
  func _look(inspect_details: bool = true) -> String:
  	var paragraphs: Array[String] = [SceneDescription.describe(world, location)]
  	if inspect_details:
@@ -88409,7 +88567,15 @@ index 577e8d5..ebb3cd0 100644
  			paragraphs.append(District.describe(world, _site()))
  		elif SceneDescription.SHOPS.has(location):
  			paragraphs.append(_shop_inventory())
-@@ -3682,6 +3743,7 @@ func _load() -> String:
+@@ -3605,6 +3689,7 @@ func _status_text() -> String:
+ 	var lines: Array[String]=[]
+ 	for key in values:lines.append("%s %.1f/100（%s）"%[key,float(values[key]),Vitals.description(float(values[key]))])
+ 	lines.append("自宅の備蓄：食料 %.1f人日 / 飲料水 %.1fL / 雨水 %.1fL\n現金 %d円 / 銀行 %d円"%[float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),int(world.s.bank)])
++	lines.append("家の中：%s（%.0f℃ほど）/ 毛布 %d枚%s" % [Cold.word(Cold.indoor(world)), Cold.indoor(world), Cold.blankets(world), " / ストーブ使用中" if Cold.heater_on(world) else ""])
+ 	var warning:=Vitals.warning(world.s)
+ 	if not warning.is_empty():lines.append(warning)
+ 	return "\n".join(lines)
+@@ -3682,6 +3767,7 @@ func _load() -> String:
  	dialogue.correction_topics = loaded_corrections.duplicate(true)
  	if not world.s.has("district"):
  		world.s.district = District.fresh()
@@ -89119,29 +89285,31 @@ index 8f786ad..157969d 100644
  	world.s.injuries = int(world.s.injuries) + 1
  	if int(world.s.exposure) < 0:
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 1e8dd33..acc6c41 100644
+index 1e8dd33..bdfe20c 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -10,6 +10,9 @@ const OutbreakNews = preload("res://scripts/outbreak_news.gd")
+@@ -10,6 +10,10 @@ const OutbreakNews = preload("res://scripts/outbreak_news.gd")
  const Survivors = preload("res://scripts/survivors.gd")
  const EarlyDays = preload("res://scripts/early_days.gd")
  const NeighborFate = preload("res://scripts/neighbor_fate.gd")
 +const Outposts = preload("res://scripts/outposts.gd")
 +const Chronicle = preload("res://scripts/chronicle.gd")
 +const Requests = preload("res://scripts/requests.gd")
++const Cold = preload("res://scripts/cold.gd")
  const WorldTraits = preload("res://scripts/world_traits.gd")
  const Roles = preload("res://scripts/roles.gd")
  const Shelter = preload("res://scripts/shelter.gd")
-@@ -92,6 +95,8 @@ func step(sleeping: bool) -> void:
+@@ -92,6 +96,9 @@ func step(sleeping: bool) -> void:
  		OutbreakNews.hourly(self)
  		EarlyDays.hourly(self)
  		NeighborFate.hourly(self)
 +		Chronicle.hourly(self)
 +		Requests.hourly(self)
++		Cold.hourly(self)
  		WorldTraits.hourly(self)
  		WorldTraits.restore(self)
  		Shelter.hourly(self)
-@@ -103,6 +108,7 @@ func step(sleeping: bool) -> void:
+@@ -103,6 +110,7 @@ func step(sleeping: bool) -> void:
  			s.walkers.notices.append("【危険】%sが高い熱を出して倒れた。袖をまくると、くっきりと歯の跡があった。……ずっと、隠していたのだ。" % mate.name)
  		if not s.has("district"):
  			s.district = District.fresh()
@@ -89149,7 +89317,7 @@ index 1e8dd33..acc6c41 100644
  		District.tick(self)
  	for person in s.household_members:
  		if person.has("water_errand"):
-@@ -222,6 +228,11 @@ func _household_hour() -> void:
+@@ -222,6 +230,11 @@ func _household_hour() -> void:
  		if float(person.health)<=0:continue
  		person.hunger=minf(100,float(person.hunger)+100.0/24.0)
  		person.thirst=minf(100,float(person.thirst)+100.0/24.0)
@@ -89161,7 +89329,7 @@ index 1e8dd33..acc6c41 100644
  		# A requested cooking action owns the NPC until it finishes or is cancelled.
  		# Do not teleport the cook on an hourly schedule boundary.
  		var cooking_now: bool = str(person.get("activity", "")) == "料理" or bool(person.get("watching", false)) or person.has("scouting")
-@@ -402,6 +413,7 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+@@ -402,6 +415,7 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
  	Events.upgrade_data(migrated)
  	if not migrated.has("district"):
  		migrated.district = District.fresh()
@@ -89169,11 +89337,13 @@ index 1e8dd33..acc6c41 100644
  	return migrated if validate_state(migrated) else {}
  func validate_state(data: Dictionary) -> bool:
  	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
-@@ -420,6 +432,8 @@ func validate_state(data: Dictionary) -> bool:
+@@ -420,6 +434,10 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("neighbor_fate") and not NeighborFate.valid(data.neighbor_fate):
  		return false
 +	if data.has("chronicle") and not Chronicle.valid(data.chronicle):
++		return false
++	if data.has("cold") and not Cold.valid(data.cold):
 +		return false
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
@@ -89471,6 +89641,94 @@ index 0000000..ee6b8f7
 +++ b/tests/test_chronicle149_29.gd.uid
 @@ -0,0 +1 @@
 +uid://c2fbhnmxuyuvj
+diff --git a/tests/test_cold149_29.gd b/tests/test_cold149_29.gd
+new file mode 100644
+index 0000000..e62d7bd
+--- /dev/null
++++ b/tests/test_cold149_29.gd
+@@ -0,0 +1,82 @@
++extends SceneTree
++## v149.29: winter comes: cold nights, heating, blankets.
++const Main = preload("res://main.tscn")
++const Cold = preload("res://scripts/cold.gd")
++const Mood = preload("res://scripts/mood.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(c: bool, label: String) -> void:
++	print(("PASS " if c else "FAIL ") + label)
++	if not c: failures += 1
++func to_hour(w, hour: int) -> void:
++	w.s.minute = int(w.s.minute) / 60 * 60 + 60
++	while int(w.hour_of_day()) != hour:
++		w.s.minute += 60
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 1; p.companion_names = ["詩音"]; p.companion_genders = ["女性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.minute = 60 * 1440
++	to_hour(w, 5)
++	var dawn := Cold.outdoor(w)
++	to_hour(w, 14)
++	check(Cold.outdoor(w) > dawn, "afternoons are warmer than dawn")
++	check(Cold.outdoor(w) < 10.0, "January in Tokyo is cold (%.1f℃)" % Cold.outdoor(w))
++	w.s.minute = 230 * 1440
++	to_hour(w, 14)
++	check(Cold.outdoor(w) > 20.0, "summer is warm")
++	# Winter night, no power.
++	w.s.minute = 60 * 1440
++	to_hour(w, 4)
++	w.s.weather = "snow"
++	w.s.grid_online = false
++	w.s.equipment.battery = false
++	check(Cold.indoor(w) < 8.0, "a snowy night without heating is cold indoors (%.1f℃)" % Cold.indoor(w))
++	w.s.door_broken = true
++	check(Cold.indoor(w) < 3.0, "with the door broken in, it freezes (%.1f℃)" % Cold.indoor(w))
++	w.set_meta("player_at_home", true)
++	var shion: Dictionary = w.s.household_members[0]
++	shion.activity = "在宅"
++	var h0: float = float(w.s.health)
++	var m0: float = Mood.of(w.s)
++	w.s.walkers.notices = []
++	Cold.hourly(w)
++	check(float(w.s.health) < h0 and Mood.of(w.s) < m0, "freezing without blankets wears on health and mind")
++	check(str(w.s.walkers.notices).contains("凍える"), "and the cold is told")
++	# Blankets help.
++	Cold.state(w).blankets = 2
++	w.s.health = 100.0
++	Cold.hourly(w)
++	check(float(w.s.health) == 100.0, "a blanket each keeps the freezing off health")
++	# The gas heater.
++	Cold.state(w).blankets = 0
++	w.s.gas_cans = 1.0
++	g.location = "居間"
++	g._refresh()
++	check("ストーブをつける" in g._suggestions(), "lighting the heater is suggested")
++	await g._on_command("ストーブをつける")
++	check(Cold.heater_on(w) and Cold.indoor(w) >= 18.0 and float(w.s.gas_cans) == 0.5, "the heater warms the room and burns gas")
++	# Power: the air conditioner.
++	w.s.grid_online = true
++	Cold.state(w).heater_until = -1
++	check(Cold.indoor(w) >= 18.0, "with power, the room is heated")
++	# Blankets from the empty house.
++	w.s.grid_online = false
++	g.location = "近所の空き家"
++	await g._on_command("毛布を探す")
++	check(Cold.blankets(w) == 2, "blankets found in the empty house")
++	await g._on_command("毛布を探す")
++	check(g.log_entries[-1].contains("もう持ち出して") and Cold.blankets(w) == 2, "only once")
++	g.location = "居間"
++	await g._on_command("室温は？")
++	check(str(g.log_entries.slice(-2)).contains("℃"), "the temperature can be checked")
++	check(w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "save and load")
++	print("v149.29 cold checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_neighbor149_28.gd.uid b/tests/test_neighbor149_28.gd.uid
 new file mode 100644
 index 0000000..3473cd4
