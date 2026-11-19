@@ -65152,6 +65152,62 @@ index 0000000..0dfd32a
 +++ b/qa/solo_check.gd.uid
 @@ -0,0 +1 @@
 +uid://b5c0cg3wxuir3
+diff --git a/scripts/district.gd b/scripts/district.gd
+index bbcdb5a..b9f5589 100644
+--- a/scripts/district.gd
++++ b/scripts/district.gd
+@@ -4,7 +4,25 @@ const SITES = {
+ 	"コンビニ": {"food": 8.0, "water": 20.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(28, 22)},
+ 	"近所の空き家": {"food": 1.5, "water": 3.0, "vacant": true, "opens": 0, "closes": 24, "position": Vector2(-29, 36)},
+ 	"デパート": {"food": 30.0, "water": 45.0, "vacant": false, "opens": 10, "closes": 20, "position": Vector2(53, 31)},
++	# v149.29: the small shops can become bases once abandoned. While open they
++	# keep their own trade (world.shops); here only what is left behind.
++	"食品店": {"food": 3.0, "water": 6.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(20, 19.3), "shop": "grocer"},
++	"金物店": {"food": 0.5, "water": 2.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(38, 19.3), "shop": "hardware"},
++	"薬局": {"food": 0.5, "water": 2.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(-22, 19.3), "shop": "pharmacy"},
+ }
++
++## A small shop with its own trade while open.
++static func is_shop(place: String) -> bool:
++	return SITES.has(place) and SITES[place].has("shop")
++
++## v149.29: saves from before the small shops were bases get them added.
++static func upgrade(value: Variant) -> void:
++	if not value is Dictionary or not value.get("sites") is Dictionary:
++		return
++	for place in SITES:
++		if not value.sites.has(place):
++			var site: Dictionary = SITES[place]
++			value.sites[place] = {"food": site.food, "water": site.water, "vacant": site.vacant, "level": 0, "cache": {"food": 0.0, "water": 0.0}}
+ const FOOD_LIMIT = 4.0
+ const WATER_LIMIT = 8.0
+ const COMMANDS = ["街を歩く", "物資を持っていく", "物資を置く", "拠点の物資を持ち出す", "ここを拠点にする", "拠点を補強する"]
+@@ -47,6 +65,16 @@ static func tick(world) -> void:
+ 		world.s.district.sites["コンビニ"].vacant = true
+ 	if world.s.society == "emergency":
+ 		world.s.district.sites["デパート"].vacant = true
++	# The small shops: empty once their staff are gone, or when it is all over.
++	for place in SITES:
++		if not is_shop(place) or not world.s.district.sites.has(place):
++			continue
++		var shop: Dictionary = world.s.get("shops", {}).get(str(SITES[place].shop), {})
++		if world.s.society == "emergency" or bool(shop.get("abandoned", false)):
++			world.s.district.sites[place].vacant = true
++			if not shop.is_empty():
++				shop.abandoned = true
++				shop.open = false
+ 
+ static func can_enter(world, place: String) -> bool:
+ 	var site: Dictionary = world.s.district.sites[place]
+@@ -63,6 +91,8 @@ static func fortified(world) -> bool:
+ 
+ static func describe(world, place: String) -> String:
+ 	var site: Dictionary = world.s.district.sites[place]
++	if not site.vacant and is_shop(place):
++		return "まだ営業している。放棄されたあとに拠点として使えます。"
+ 	if not site.vacant:
+ 		if not can_enter(world, place):
+ 			return "営業時間外。中には入れません。"
 diff --git a/scripts/early_days.gd.uid b/scripts/early_days.gd.uid
 new file mode 100644
 index 0000000..88d878c
@@ -65159,6 +65215,163 @@ index 0000000..88d878c
 +++ b/scripts/early_days.gd.uid
 @@ -0,0 +1 @@
 +uid://dd0hsuaqi08yp
+diff --git a/scripts/household_actions.gd b/scripts/household_actions.gd
+index ffb0fa3..66ef595 100644
+--- a/scripts/household_actions.gd
++++ b/scripts/household_actions.gd
+@@ -225,7 +225,7 @@ static func _command(game, person: Dictionary, cmd: String) -> Dictionary:
+ 		if home:
+ 			var report := Errands.reply(world, person, {"kind":"set","item":item,"quantity":quantity})
+ 			return _result(report, report.begins_with("分かった。"))
+-		if District.SITES.has(place):
++		if District.SITES.has(place) and not District.is_shop(place):
+ 			var bag: Dictionary = person.get("request_bag", {"food":0.0,"water":0.0})
+ 			var report := District.buy(world, place, item, quantity, bag)
+ 			if report.begins_with("購入した"):
+@@ -496,7 +496,7 @@ static func _report(game, person: Dictionary, cmd: String) -> Dictionary:
+ 			var bag: Dictionary = person.get("request_bag", {"food":0.0,"water":0.0})
+ 			return _result("いま持っているのは食料%.1f日分と水%.1fLだよ。" % [bag.food, bag.water], true)
+ 		"店の在庫を見る":
+-			if District.SITES.has(place): return _result(District.describe(world, place), true)
++			if District.SITES.has(place) and (bool(world.s.district.sites[place].vacant) or not District.is_shop(place)): return _result(District.describe(world, place), true)
+ 			if place in Errands.SHOP_PLACES.values(): return _result(game._shop_inventory(place), true)
+ 			return _result("店に着いてから在庫を確認するよ。")
+ 		"拠点の状態を見る":
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 577e8d5..9ed3453 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -6,6 +6,7 @@ const District = preload("res://scripts/district.gd")
+ const Portraits = preload("res://scripts/portraits.gd")
+ const EarlyDays = preload("res://scripts/early_days.gd")
+ const NeighborFate = preload("res://scripts/neighbor_fate.gd")
++const Outposts = preload("res://scripts/outposts.gd")
+ const Navigation = preload("res://scripts/navigation.gd")
+ const Vitals = preload("res://scripts/vitals.gd")
+ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+@@ -758,7 +759,9 @@ func _build_base_tab() -> void:
+ 			continue
+ 		any_site = true
+ 		var c := UI.card(tab_content, place)
+-		c.add_child(UI.label("整備 %d · 置いた備蓄 食料 %.1f人日 / 水 %.1f L" % [int(site.level), float(site.cache.food), float(site.cache.water)], 14, UI.BODY))
++		c.add_child(UI.label("%s · 置いた備蓄 食料 %.1f人日 / 水 %.1f L" % ["補強済み" if int(site.level) >= 2 else "寝泊まりできる", float(site.cache.food), float(site.cache.water)], 14, UI.BODY))
++		var residents: Array = Outposts.at(world, place).map(func(m): return str(m.name))
++		c.add_child(UI.label("住んでいる人：%s" % ("、".join(residents) if not residents.is_empty() else "なし（同居人に「〇〇を%sに住ませる」と頼める）" % place), 13, UI.MUTED))
+ 	if not any_site:
+ 		tab_content.add_child(UI.label("ほかの拠点はまだない。空き家や放棄された建物で「ここを拠点にする」と作れます。", 13, UI.FAINT))
+ 
+@@ -1741,7 +1744,9 @@ func _suggestions() -> Array:
+ 		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
+ 	else:
+ 		out.append("周囲を見る")
+-		if District.SITES.has(_site()) and location != "デパート":
++		for mate in Outposts.at(world, _site()):
++			out.append("%sを家に呼び戻す" % mate.name)
++		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
+ 			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else "食料を買う")
+ 		out.append("家に帰る")
+ 	return out.slice(0, 6)
+@@ -2749,6 +2754,37 @@ func _raid_command(cmd: String) -> bool:
+ 	return true
+ 
+ ## v149.27: the shelter's ration and notice board.
++## v149.29: a housemate living at another base, and bringing them home.
++func _outpost_command(cmd: String) -> bool:
++	if PlayerIntents.negated(cmd):
++		return false
++	var call := Outposts.parse_call(world, cmd)
++	if call >= 0:
++		var mate: Dictionary = world.s.household_members[call]
++		if location != str(mate.station):
++			_append("%sは%sにいる。迎えに行って声をかけよう（「%sへ行く」）。何も実行していません。" % [mate.name, mate.station, mate.station])
++		else:
++			_append(Outposts.recall(world, call))
++			if dialogue.partner == call:
++				dialogue.partner = -1
++		_refresh()
++		return true
++	var stay := Outposts.parse_stay(world, cmd)
++	if stay.is_empty():
++		return false
++	var person: Dictionary = world.s.household_members[int(stay[0])]
++	var place := str(stay[1])
++	if Outposts.stationed(person) and str(person.station) == place:
++		_append("%sは、もう%sにいる。" % [person.name, place])
++	elif not (Navigation.indoor(location) and Navigation.indoor(str(person.location))) and location != place:
++		_append("%sとは、家か%sで顔を合わせて決めよう。何も実行していません。" % [person.name, place])
++	else:
++		_append(Outposts.send(world, int(stay[0]), place))
++		if dialogue.partner == int(stay[0]):
++			dialogue.partner = -1
++	_refresh()
++	return true
++
+ ## v149.28: going next door when the neighbour screams.
+ func _rescue_command(cmd: String) -> bool:
+ 	if str(NeighborFate.state(world).stage) != "attack" or PlayerIntents.negated(cmd):
+@@ -2898,7 +2934,7 @@ func _comfort_command(cmd: String) -> bool:
+ 
+ ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
+ func _care_command(cmd: String) -> bool:
+-	if _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
++	if _outpost_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
+ 		return true
+ 	for index in world.s.household_members.size():
+ 		var person: Dictionary = world.s.household_members[index]
+@@ -3099,7 +3135,7 @@ func _interpret(raw: String) -> String:
+ 		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
+ 	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
+ 		return District.act(world, _site(), clean, Navigation.indoor(location))
+-	if District.SITES.has(_site()) and clean in ["周囲を見る", "街を観察する"]:
++	if District.SITES.has(_site()) and clean in ["周囲を見る", "街を観察する"] and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
+ 		if world.s.health > 0:
+ 			world.advance_safe(1)
+ 		return _look()
+@@ -3116,13 +3152,13 @@ func _interpret(raw: String) -> String:
+ 		return world.work_at_home()
+ 	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
+ 	if clean in ["店の在庫を見る","買い物する"]:
+-		return District.describe(world, _site()) if District.SITES.has(_site()) else _shop_inventory()
++		return District.describe(world, _site()) if District.SITES.has(_site()) and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())) else _shop_inventory()
+ 	if clean == "住居を点検":return _observe("inspect")
+ 	var purchase := RegEx.new()
+ 	purchase.compile("^(?:(食品店|金物店|薬局|コンビニ|デパート)で)?(食料|水|飲料水|木材|部品|種|包帯|浄水器|ソーラーパネル|蓄電池)を(?:([0-9]{1,2})(?:個|箱|セット|本|袋|つ|缶|パック))?(?:買う|購入する)$")
+ 	var bought := purchase.search(clean)
+ 	if bought != null:
+-		if District.SITES.has(_site()):
++		if District.SITES.has(_site()) and not District.is_shop(_site()):
+ 			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
+ 				return "指定した店にいない。"
+ 			var stock_item := {"食料":"food", "水":"water", "飲料水":"water"}.get(bought.get_string(2), "") as String
+@@ -3415,7 +3451,7 @@ func _sync_player_position() -> void:
+ func _look(inspect_details: bool = true) -> String:
+ 	var paragraphs: Array[String] = [SceneDescription.describe(world, location)]
+ 	if inspect_details:
+-		if District.SITES.has(_site()):
++		if District.SITES.has(_site()) and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
+ 			paragraphs.append(District.describe(world, _site()))
+ 		elif SceneDescription.SHOPS.has(location):
+ 			paragraphs.append(_shop_inventory())
+@@ -3682,6 +3718,7 @@ func _load() -> String:
+ 	dialogue.correction_topics = loaded_corrections.duplicate(true)
+ 	if not world.s.has("district"):
+ 		world.s.district = District.fresh()
++	District.upgrade(world.s.district)
+ 	if not world.s.longplay.has("orders"):
+ 		world.s.longplay.orders = []
+ 	observed_news = str(data.get("observed_news", "まだ確認していない"))
+diff --git a/scripts/navigation.gd b/scripts/navigation.gd
+index 600173a..5b507de 100644
+--- a/scripts/navigation.gd
++++ b/scripts/navigation.gd
+@@ -85,6 +85,6 @@ static func duration(from: String, to: String) -> int:
+ 	if from in STREETS and to in STREETS:
+ 		return 6
+ 	if from in STREETS or to in STREETS:
+-		return 2 if District.SITES.has(from) or District.SITES.has(to) else 6
++		return 2 if (District.SITES.has(from) and not District.is_shop(from)) or (District.SITES.has(to) and not District.is_shop(to)) else 6
+ 	if from in ["食品店","金物店","薬局"] or to in ["食品店","金物店","薬局"]: return 3
+ 	return 1
 diff --git a/scripts/neighbor_fate.gd.uid b/scripts/neighbor_fate.gd.uid
 new file mode 100644
 index 0000000..c9a1180
@@ -65166,6 +65379,327 @@ index 0000000..c9a1180
 +++ b/scripts/neighbor_fate.gd.uid
 @@ -0,0 +1 @@
 +uid://dtfdjyo6fno2n
+diff --git a/scripts/outposts.gd b/scripts/outposts.gd
+new file mode 100644
+index 0000000..2fd0a43
+--- /dev/null
++++ b/scripts/outposts.gd
+@@ -0,0 +1,135 @@
++extends RefCounted
++## v149.29: a housemate can live at one of the player's other bases. They keep
++## it, eat from what is stored there, and look around nearby for leftovers.
++## A base with more of the dead around is more dangerous; a reinforced one
++## less so. Hungry with nothing stored, they come home.
++## State: `person.station = "<base place>"` (location is that place, activity 外出).
++
++const District = preload("res://scripts/district.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const Mood = preload("res://scripts/mood.gd")
++
++const STAY_WORDS := ["住ませ", "住んで", "暮らして", "任せ", "守って", "移って", "残って", "詰めて"]
++const CALL_WORDS := ["呼び戻", "帰ってきて", "家に戻って", "一緒に帰ろう", "家に帰ろう", "引き上げ"]
++
++static func stationed(person: Dictionary) -> bool:
++	return not str(person.get("station", "")).is_empty()
++
++static func at(world, place: String) -> Array:
++	return world.s.household_members.filter(func(m): return str(m.get("station", "")) == place and float(m.health) > 0)
++
++## "詩音を食品店に住ませる" → [index, place], or [] when the line is not that.
++static func parse_stay(world, text: String) -> Array:
++	if not _has(text, STAY_WORDS):
++		return []
++	for i in world.s.household_members.size():
++		if not text.contains(str(world.s.household_members[i].name)):
++			continue
++		for place in District.SITES:
++			if text.contains(place) or (place == "近所の空き家" and text.contains("空き家")):
++				return [i, place]
++	return []
++
++static func parse_call(world, text: String) -> int:
++	if not _has(text, CALL_WORDS):
++		return -1
++	for i in world.s.household_members.size():
++		if text.contains(str(world.s.household_members[i].name)) and stationed(world.s.household_members[i]):
++			return i
++	return -1
++
++static func _has(text: String, words: Array) -> bool:
++	for w in words:
++		if text.contains(w):
++			return true
++	return false
++
++static func send(world, index: int, place: String) -> String:
++	var person: Dictionary = world.s.household_members[index]
++	var name := str(person.name)
++	var site: Dictionary = world.s.district.sites.get(place, {})
++	if site.is_empty() or int(site.get("level", 0)) < 1:
++		return "%sはまだ寝泊まりできる拠点になっていない。先に「ここを拠点にする」で整えよう。" % place
++	if float(person.health) < 50.0 or bool(person.get("bitten", false)):
++		return "%sは体が弱っている。今は外の拠点に一人で置けない。" % name
++	if Mood.of(person) < 20.0:
++		return "%s「……ごめん。今は、一人になりたくない」" % name
++	if int(person.get("age", 30)) < 13:
++		return "%sはまだ子どもだ。一人で外の拠点には置けない。" % name
++	world.advance_safe(5)
++	person.station = place
++	person.location = place
++	person.activity = "外出"
++	person.erase("role")
++	return "%s「分かった。%sは、私が守っておく。食べ物と水は、置いてある分を使うね」%sは荷物をまとめて、%sへ向かった。" % [name, place, name, place]
++
++static func recall(world, index: int) -> String:
++	var person: Dictionary = world.s.household_members[index]
++	var name := str(person.name)
++	var place := str(person.station)
++	person.erase("station")
++	person.location = "居間"
++	person.activity = "在宅"
++	world.advance_safe(5)
++	return "%s「うん、帰ろう」%sは%sを引き払って、家に戻った。" % [name, name, place]
++
++## Hourly, for each stationed housemate (from world._household_hour).
++static func hourly(world, person: Dictionary) -> void:
++	var place := str(person.station)
++	var site: Dictionary = world.s.district.sites.get(place, {})
++	var notices: Array = world.s.walkers.notices if world.s.has("walkers") else []
++	if site.is_empty() or int(site.get("level", 0)) < 1:
++		notices.append("%sが戻ってきた。「%sには、もういられなくなった」" % [person.name, place])
++		_home(person)
++		return
++	person.location = place
++	person.activity = "外出"
++	var hour := int(world.hour_of_day())
++	var cache: Dictionary = site.cache
++	var night := hour >= 23 or hour < 6
++	person.fatigue = clampf(float(person.fatigue) + (-12.5 if night else 100.0 / 24.0), 0.0, 100.0)
++	if float(person.hunger) >= 35.0 and float(cache.food) >= 0.25:
++		cache.food = float(cache.food) - 0.25
++		person.food_used = float(person.get("food_used", 0.0)) + 0.25
++		person.hunger = maxf(0.0, float(person.hunger) - 25.0)
++	if float(person.thirst) >= 25.0 and float(cache.water) >= 0.75:
++		cache.water = float(cache.water) - 0.75
++		person.water_used = float(person.get("water_used", 0.0)) + 0.75
++		person.thirst = maxf(0.0, float(person.thirst) - 25.0)
++	if float(person.hunger) >= 80.0 or float(person.thirst) >= 80.0:
++		notices.append("%sが、ふらふらになって戻ってきた。「%sには、もう食べ物も水も残ってない……」" % [person.name, place])
++		_home(person)
++		return
++	if hour != 10:
++		return
++	var minute := int(world.s.minute)
++	# The danger of the place: the dead around it, less behind boards.
++	var walkers := Walkers.count(world, place) + Walkers.count(world, "屋外") / 2
++	var risk := clampi(3 + walkers * 4, 0, 30)
++	if int(site.level) >= 2:
++		risk = risk / 2
++	var roll: int = world.draw(minute, int(person.id) + 61, "outpost-risk", 100)
++	if roll < risk:
++		person.health = maxf(1.0, float(person.health) - 30.0)
++		if roll < risk / 4:
++			person.hidden_bite_at = minute + 12 * 60
++		notices.append("【危険】%sが、%sから逃げ帰ってきた。腕に深い引っかき傷がある。「囲まれた……もう、あそこには戻れない」" % [person.name, place])
++		_home(person)
++		return
++	# A morning round of the empty buildings nearby.
++	var found := 0.0
++	for other in world.s.district.sites:
++		var s: Dictionary = world.s.district.sites[other]
++		if other == place or not bool(s.vacant) or float(s.food) <= 0.0:
++			continue
++		var take := minf(0.5, float(s.food))
++		s.food = float(s.food) - take
++		found += take
++		break
++	if found > 0.0:
++		cache.food = minf(100.0, float(cache.food) + found)
++
++static func _home(person: Dictionary) -> void:
++	person.erase("station")
++	person.location = "居間"
++	person.activity = "在宅"
+diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
+index 632306a..fb8c179 100644
+--- a/scripts/scene_description.gd
++++ b/scripts/scene_description.gd
+@@ -69,7 +69,7 @@ static func _action_cue(world, place: String) -> String:
+ 		return "店は営業中。食料と飲み水は地下1階の食品売場で買える（「デパ地下へ行く」）。" if District.can_enter(world, place) else "営業時間外だ。いまは買い物できない。"
+ 	if place == "デパート" and not District.prepared(world, place):
+ 		return "店は放棄されている。食べ物を探すなら地下の食品売場へ。ここでは「ここを拠点にする」と入力できる。"
+-	if District.SITES.has(place):
++	if District.SITES.has(place) and (bool(world.s.district.sites[place].vacant) or not District.is_shop(place)):
+ 		var site: Dictionary = world.s.district.sites[place]
+ 		if not site.vacant:
+ 			if District.can_enter(world, place):
+diff --git a/scripts/world.gd b/scripts/world.gd
+index 1e8dd33..692a231 100644
+--- a/scripts/world.gd
++++ b/scripts/world.gd
+@@ -10,6 +10,7 @@ const OutbreakNews = preload("res://scripts/outbreak_news.gd")
+ const Survivors = preload("res://scripts/survivors.gd")
+ const EarlyDays = preload("res://scripts/early_days.gd")
+ const NeighborFate = preload("res://scripts/neighbor_fate.gd")
++const Outposts = preload("res://scripts/outposts.gd")
+ const WorldTraits = preload("res://scripts/world_traits.gd")
+ const Roles = preload("res://scripts/roles.gd")
+ const Shelter = preload("res://scripts/shelter.gd")
+@@ -103,6 +104,7 @@ func step(sleeping: bool) -> void:
+ 			s.walkers.notices.append("【危険】%sが高い熱を出して倒れた。袖をまくると、くっきりと歯の跡があった。……ずっと、隠していたのだ。" % mate.name)
+ 		if not s.has("district"):
+ 			s.district = District.fresh()
++		District.upgrade(s.district)
+ 		District.tick(self)
+ 	for person in s.household_members:
+ 		if person.has("water_errand"):
+@@ -222,6 +224,11 @@ func _household_hour() -> void:
+ 		if float(person.health)<=0:continue
+ 		person.hunger=minf(100,float(person.hunger)+100.0/24.0)
+ 		person.thirst=minf(100,float(person.thirst)+100.0/24.0)
++		# v149.29: someone living at another base keeps their own day there.
++		if Outposts.stationed(person):
++			Outposts.hourly(self, person)
++			if float(person.hunger)>=100 or float(person.thirst)>=100:person.health=maxf(0,float(person.health)-1.5)
++			continue
+ 		# A requested cooking action owns the NPC until it finishes or is cancelled.
+ 		# Do not teleport the cook on an hourly schedule boundary.
+ 		var cooking_now: bool = str(person.get("activity", "")) == "料理" or bool(person.get("watching", false)) or person.has("scouting")
+@@ -402,6 +409,7 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+ 	Events.upgrade_data(migrated)
+ 	if not migrated.has("district"):
+ 		migrated.district = District.fresh()
++	District.upgrade(migrated.district)
+ 	return migrated if validate_state(migrated) else {}
+ func validate_state(data: Dictionary) -> bool:
+ 	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
+diff --git a/tests/test_bases149_29.gd b/tests/test_bases149_29.gd
+new file mode 100644
+index 0000000..a28f8b4
+--- /dev/null
++++ b/tests/test_bases149_29.gd
+@@ -0,0 +1,121 @@
++extends SceneTree
++## v149.29: the small shops become bases once abandoned; a housemate can live
++## at another base.
++const Main = preload("res://main.tscn")
++const District = preload("res://scripts/district.gd")
++const Outposts = preload("res://scripts/outposts.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func to_hour(w, hour: int) -> void:
++	w.s.minute = int(w.s.minute) / 60 * 60 + 60
++	while int(w.hour_of_day()) != hour:
++		w.s.minute += 60
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 1
++	p.companion_names = ["詩音"]
++	p.companion_genders = ["女性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	# Open shops keep their own trade.
++	g.location = "屋外"
++	await g._on_command("食品店へ行く")
++	var cash := int(w.s.cash)
++	await g._on_command("食料を2個買う")
++	check(int(w.s.cash) < cash, "an open grocer still sells as before")
++	await g._on_command("ここを拠点にする")
++	check(int(w.s.district.sites["食品店"].level) == 0, "an open shop cannot be taken as a base")
++	# Once it is all over, the shops are empty and can be bases.
++	w.s.society = "emergency"
++	District.tick(w)
++	check(bool(w.s.district.sites["薬局"].vacant) and bool(w.s.shops.pharmacy.abandoned), "in the emergency the small shops are abandoned")
++	g.location = "屋外"
++	await g._on_command("薬局へ行く")
++	await g._on_command("物資を探索する")
++	await g._on_command("ここを拠点にする")
++	check(int(w.s.district.sites["薬局"].level) == 1, "the pharmacy becomes a base")
++	g._refresh()
++	check(str(g.picture.texture.resource_path).ends_with("pharmacy_base.jpg"), "and shows its base photo")
++	w.s.district.bag.food = 4.0
++	w.s.district.bag.water = 8.0
++	await g._on_command("物資を置く")
++	var site: Dictionary = w.s.district.sites["薬局"]
++	check(float(site.cache.food) >= 4.0, "supplies stored there")
++	# A housemate goes to live there.
++	await g._on_command("家に帰る")
++	await g._on_command("居間へ行く")
++	var shion: Dictionary = w.s.household_members[0]
++	shion.location = "居間"
++	shion.activity = "在宅"
++	await g._on_command("詩音を薬局に住ませる")
++	check(Outposts.stationed(shion) and str(shion.location) == "薬局", "a housemate goes to live at the base")
++	var cache_food := float(site.cache.food)
++	shion.hunger = 50.0
++	to_hour(w, 9)
++	w._household_hour()
++	check(float(site.cache.food) < cache_food and str(shion.location) == "薬局", "they eat from the base's own store")
++	w.s.district.sites["近所の空き家"].vacant = true
++	w.s.district.sites["近所の空き家"].food = 1.5
++	w.s.walkers.places = {}
++	var before := float(site.cache.food)
++	to_hour(w, 10)
++	w._household_hour()
++	check(float(site.cache.food) > before, "a morning round brings leftovers back from empty buildings")
++	g._refresh()
++	# Visiting them at the base.
++	g.location = "屋外"
++	await g._on_command("薬局へ行く")
++	check("詩音を家に呼び戻す" in g._suggestions(), "bringing them home is suggested at the base")
++	await g._on_command("詩音に話しかける")
++	check(g.dialogue.partner == 0, "they can be talked to at the base")
++	await g._on_command("会話を終える")
++	await g._on_command("詩音を家に呼び戻す")
++	check(not Outposts.stationed(shion) and str(shion.location) == "居間", "and they come home")
++	# Hungry with nothing stored, they come back by themselves.
++	Outposts.send(w, 0, "薬局")
++	site.cache.food = 0.0
++	site.cache.water = 0.0
++	shion.hunger = 85.0
++	w.s.walkers.notices = []
++	w._household_hour()
++	check(not Outposts.stationed(shion) and str(w.s.walkers.notices).contains("戻ってきた"), "with nothing left there, they come home")
++	# A dangerous base.
++	Outposts.send(w, 0, "薬局")
++	site.cache.food = 20.0
++	site.cache.water = 40.0
++	shion.hunger = 0.0
++	shion.thirst = 0.0
++	w.s.walkers.places = {"薬局": 6, "屋外": 6}
++	var hurt := false
++	for day in 12:
++		to_hour(w, 10)
++		w._household_hour()
++		if not Outposts.stationed(shion):
++			hurt = float(shion.health) < 100.0
++			break
++	check(hurt, "with the dead all around, they are hurt and flee home")
++	# Old saves gain the new sites.
++	var old: Dictionary = w.s.district.duplicate(true)
++	for place in ["食品店", "金物店", "薬局"]:
++		old.sites.erase(place)
++	check(not District.valid(old), "an old district lacks the shops")
++	District.upgrade(old)
++	check(District.valid(old), "and is upgraded")
++	check(w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "save and load")
++	print("v149.29 base checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_neighbor149_28.gd.uid b/tests/test_neighbor149_28.gd.uid
 new file mode 100644
 index 0000000..3473cd4
