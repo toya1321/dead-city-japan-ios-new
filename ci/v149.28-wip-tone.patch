@@ -1,0 +1,119 @@
+diff --git a/qa/real_npc_scenarios.gd b/qa/real_npc_scenarios.gd
+index a9b0013..aabb7d5 100644
+--- a/qa/real_npc_scenarios.gd
++++ b/qa/real_npc_scenarios.gd
+@@ -54,6 +54,8 @@ class RealModel extends RefCounted:
+ 
+ # [name, [lines...]]; expectations are judged by reading the log.
+ const SCENARIOS := [
++	["tone", ["今日の予定は？", "昨日はよく眠れた？", "何か困ってることある？", "晩ご飯何がいい？", "最近楽しかったことは？", "今の気分はどう？"]],
++	["shiritori", ["しりとりしよう", "りんご", "ごりら", "らいおん", "もう一回", "りす"]],
+ 	["chat", ["おはよう", "今日の予定は？", "今日は何するの？", "最近どう？", "好きな映画ある？", "それってどんな話？", "疲れてない？", "ありがとう、助かるよ"]],
+ 	["shopping_vague", ["買い物行ってきてくれない？", "水", "3本で", "ありがとう"]],
+ 	["shopping_direct", ["帰りに水を3本買ってきてもらえる？", "やっぱり買わなくていいよ"]],
+diff --git a/scripts/household_dialogue.gd b/scripts/household_dialogue.gd
+index 205ba41..3023d21 100644
+--- a/scripts/household_dialogue.gd
++++ b/scripts/household_dialogue.gd
+@@ -27,8 +27,8 @@ const END = ["会話を終える", "会話をやめる", "話を終える"]
+ const GENDERS = ["未設定", "男性", "女性", "その他"]
+ const OFFLINE_VOICE = {"男性":1, "女性":2}
+ const SPEECH_STYLES = {
+-	"男性": {"first_person":"僕", "description":"気取らない、簡潔な話し方。自然なら「〜だよ」「〜しようか」を使う。"},
+-	"女性": {"first_person":"私", "description":"柔らかく親しみやすい話し方。自然なら「〜だね」「〜しておこうね」を使う。"},
++	"男性": {"first_person":"僕", "description":"気取らない、簡潔な話し方。敬語（です・ます）は使わない。自然なら「〜だよ」「〜しようか」を使う。"},
++	"女性": {"first_person":"私", "description":"柔らかく親しみやすい話し方。敬語（です・ます）は使わない。自然なら「〜だね」「〜しておこうね」を使う。"},
+ 	"neutral": {"first_person":"私", "description":"くだけすぎない自然な日常会話。語尾に性別を強調する表現は使わない。"},
+ }
+ const OFFLINE_LINES = {
+diff --git a/scripts/household_smalltalk.gd b/scripts/household_smalltalk.gd
+index f9f8cfd..1176e82 100644
+--- a/scripts/household_smalltalk.gd
++++ b/scripts/household_smalltalk.gd
+@@ -278,6 +278,9 @@ func play(index: int, speech: String) -> String:
+ 	var game: Dictionary = games[index]
+ 	if not game.winner.is_empty():
+ 		games.erase(index)
++		if _again(text):
++			games[index] = {"used": [], "next": "", "winner": ""}
++			return "いいよ、もう一回やろう。今度も先にどうぞ！" if game.winner == "npc" else "よし、今度は負けないよ。先にどうぞ！"
+ 		if text.trim_suffix("?") in PENALTY_LINES:
+ 			return TONGUE_TWISTER_OFFER if game.winner == "player" else "今回は私の勝ちだよ。罰ゲームはなしで、もう一回やる？"
+ 		return ""
+@@ -311,6 +314,14 @@ func play(index: int, speech: String) -> String:
+ 	game.winner = "player"
+ 	return "「%s」から始まる言葉が思いつかない。私の負けだね。" % letter
+ 
++## "もう一回" and the like, after a game has ended.
++static func _again(text: String) -> bool:
++	var t := text.trim_suffix("?").trim_suffix("！").trim_suffix("!").trim_suffix("。")
++	for word in ["もう一回", "もう1回", "もういっかい", "もう一度", "もう一戦", "もう一勝負", "リベンジ", "再戦", "もっかい", "もう一回やろう", "もう一回しよう"]:
++		if t.begins_with(word) and t.length() <= word.length() + 4:
++			return true
++	return false
++
+ static func _reading(text: String) -> String:
+ 	var word := str(READINGS.get(text, text))
+ 	if word.length() < 2 or word.length() > 16:
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 5275bcb..9a01521 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -80,6 +80,7 @@ const RETRYABLE_REJECTIONS := {
+ 	"filtered_invented_promise": "存在しない約束",
+ 	"filtered_completion_claim": "まだしていない行動を済ませたと言っている",
+ 	"filtered_invented_experience": "記録にない過去の出来事",
++	"filtered_polite_tone": "敬語（です・ます）になっている。一緒に暮らす相手なので、くだけた話し言葉（〜だよ、〜だね）で言い直す",
+ 	"filtered_broken_text": "文が途中で崩れている。自然な日本語の文で言い直す",
+ 	"filtered_unsupported_title": "資料にない作品名。好きな作品は「人物」に書かれたものだけを言う",
+ 	"filtered_negated_request": "相手は頼んでいない（しなくていい・やめてと言っている）。行動は選ばずchatで返事する",
+diff --git a/scripts/npc_mind.gd b/scripts/npc_mind.gd
+index c81c405..6e82e4c 100644
+--- a/scripts/npc_mind.gd
++++ b/scripts/npc_mind.gd
+@@ -411,6 +411,15 @@ static func similarity_beyond(a: String, b: String, topic: String) -> float:
+ 			shared += 1
+ 	return float(shared) / float(mini(x.size(), y.size()))
+ 
++## A sentence that ends politely: "起きました。" "出かけます" "そうですね".
++static func polite(line: String) -> bool:
++	var ending := RegEx.new()
++	ending.compile("(です|(?<![冷覚済励澄醒])ます|ました|ません|でした|ましょう|ませんか|ですね|ですよ|(?<![冷覚済励澄醒])ますね|(?<![冷覚済励澄醒])ますよ|でしょうか)(か|ね|よ)?[。！？!?、」…]*($|[。！？!?])")
++	for sentence in line.replace("！", "。").replace("？", "。").replace("!", "。").replace("?", "。").split("。", false):
++		if ending.search(sentence.strip_edges() + "。") != null:
++			return true
++	return false
++
+ static func reject_reason(line: String, speech: String, evidence: Dictionary) -> String:
+ 	var own_name := str(evidence.get("name", ""))
+ 	if not own_name.is_empty() and (line.begins_with(own_name + "は") or line.begins_with(own_name + "が")):
+@@ -422,6 +431,9 @@ static func reject_reason(line: String, speech: String, evidence: Dictionary) ->
+ 			return "repeated_reply"
+ 	if line.contains("<") or line.contains(">") or line.contains("://") or line.contains("▶") or line.contains("{"):
+ 		return "markup"
++	# Housemates talk as family: a polite ending (です・ます) breaks the voice.
++	if polite(line):
++		return "polite_tone"
+ 	# Sampling glitches from small models: "食料1ってるよ" (a number running into
+ 	# a small kana or ん) never occurs in a well-formed line.
+ 	var broken := RegEx.new()
+diff --git a/tests/test_household_smalltalk.gd b/tests/test_household_smalltalk.gd
+index 34ab8c8..48c9d60 100644
+--- a/tests/test_household_smalltalk.gd
++++ b/tests/test_household_smalltalk.gd
+@@ -111,6 +111,15 @@ func run() -> void:
+ 	await exchange(game, "しりとりしよ", "先にどうぞ")
+ 	await exchange(game, "みかん", "私の勝ち")
+ 	await exchange(game, "じゃあ罰ゲーム", "今回は私の勝ち")
++	# v149.28: "もう一回" after a game starts a new one, not a word.
++	await exchange(game, "しりとりしよ", "先にどうぞ")
++	await exchange(game, "らいおん", "私の勝ち")
++	await exchange(game, "もう一回", "もう一回やろう")
++	await exchange(game, "りんご", "次は")
++	# Housemates never answer in polite speech.
++	var NPCMind = load("res://scripts/npc_mind.gd")
++	check(NPCMind.reject_reason("今朝7時ごろ起きました。今から9時ごろ出かけます。", "今日の予定は？", {}) == "polite_tone", "a polite reply from a housemate is regenerated")
++	check(NPCMind.reject_reason("スープ冷ますね。", "熱い", {}) == "", "a verb ending in ます is not politeness")
+ 	# Exercise every response through the same command path as player input.
+ 	var prompts := {
+ 		"アーティストだと誰が好き？": "音楽",
