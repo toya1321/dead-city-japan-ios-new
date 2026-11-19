@@ -11351,17 +11351,18 @@ index 0000000..0536478
 +detect_3d/compress_to=1
 diff --git a/qa/action_card.gd b/qa/action_card.gd
 new file mode 100644
-index 0000000..4e3a5fb
+index 0000000..6650cac
 --- /dev/null
 +++ b/qa/action_card.gd
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,29 @@
 +extends SceneTree
-+## Screenshot of the action photo card (DCJ_OUT=dir).
++## Screenshot of the action photo card (DCJ_OUT=dir, DCJ_SIZE=WxH, DCJ_FONT=15..19, DCJ_CMD).
 +const Main = preload("res://main.tscn")
 +func _initialize() -> void:
 +	call_deferred("run")
 +func run() -> void:
-+	root.size = Vector2i(390, 844)
++	var dims := OS.get_environment("DCJ_SIZE").split("x")
++	root.size = Vector2i(int(dims[0]), int(dims[1]))
 +	var g = Main.instantiate()
 +	root.add_child(g)
 +	for i in 3: await process_frame
@@ -11370,14 +11371,18 @@ index 0000000..4e3a5fb
 +	g._start_new_game(p)
 +	g._finish_intro()
 +	g.local_model.enabled = false
++	if OS.get_environment("DCJ_FONT") != "":
++		g.ui_font_size = int(OS.get_environment("DCJ_FONT"))
++		g._rebuild_log()
 +	g.world.s.hunger = 70.0
-+	await g._on_command("食事する")
-+	for i in 30: await process_frame
-+	var img := root.get_texture().get_image()
-+	img.save_png(OS.get_environment("DCJ_OUT") + "/card_eat.png")
-+	print("card visible: ", g.action_card != null and g.action_card.visible, " size ", g.action_card.size, " min ", g.action_card.get_combined_minimum_size(), " photo ", g.action_card.get_child(0).get_child(0).size, " cap ", g.action_card.get_child(0).get_child(1).size)
++	g.world.s.cigarettes = 5
++	var cmd := OS.get_environment("DCJ_CMD")
++	await g._on_command(cmd if cmd != "" else "食事する")
++	while g.advancing: await process_frame
++	for i in 20: await process_frame
++	root.get_texture().get_image().save_png(OS.get_environment("DCJ_OUT"))
 +	await create_timer(3.5).timeout
-+	print("card after 3.5s: ", g.action_card.visible)
++	root.get_texture().get_image().save_png(OS.get_environment("DCJ_OUT").replace(".png", "_after.png"))
 +	quit()
 diff --git a/qa/action_card.gd.uid b/qa/action_card.gd.uid
 new file mode 100644
@@ -11424,7 +11429,7 @@ index 0000000..75c0ec3
 +	quit()
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
 new file mode 100644
-index 0000000..d93f385
+index 0000000..d0c6319
 --- /dev/null
 +++ b/scripts/action_photos.gd
 @@ -0,0 +1,87 @@
@@ -11458,7 +11463,7 @@ index 0000000..d93f385
 +	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
 +	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
 +	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
-+	["purify", "^(雨水1Lを処理し|浴槽から水を汲んで)", "水をきれいにした。"],
++	["purify", "^(雨水1Lを浄水器に通し|浴槽から水を汲んで)", "水をきれいにした。"],
 +	["plant", "^植え付けた", "種をまいた。"],
 +	["harvest", "^収穫した", "収穫した。"],
 +	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
@@ -11523,7 +11528,7 @@ index 0000000..e1e0620
 @@ -0,0 +1 @@
 +uid://b6p0omfgg0rmb
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 57243c7..5c4f49c 100644
+index 57243c7..180e44b 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -14,6 +14,7 @@ const Vitals = preload("res://scripts/vitals.gd")
@@ -11552,7 +11557,7 @@ index 57243c7..5c4f49c 100644
  	while log_entries.size()>100:log_entries.pop_front()
  	if log_box != null:
  		while log_box.get_child_count() > log_entries.size():
-@@ -1313,6 +1318,76 @@ func _append(line: String) -> void:
+@@ -1313,6 +1318,81 @@ func _append(line: String) -> void:
  			old.queue_free()
  		call_deferred("_scroll_log_to_end")
  
@@ -11572,7 +11577,10 @@ index 57243c7..5c4f49c 100644
 +func _show_action_card(texture: Texture2D, caption: String) -> void:
 +	if action_card == null:
 +		action_card = PanelContainer.new()
-+		action_card.add_theme_stylebox_override("panel", UI.box(UI.PANEL, UI.LINE, 16, 10, 10))
++		var card_style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 10, 10)
++		card_style.shadow_color = Color(0, 0, 0, 0.6)
++		card_style.shadow_size = 18
++		action_card.add_theme_stylebox_override("panel", card_style)
 +		action_card.mouse_filter = Control.MOUSE_FILTER_STOP
 +		action_card.gui_input.connect(func(event):
 +			if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
@@ -11596,7 +11604,9 @@ index 57243c7..5c4f49c 100644
 +		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 +		column.add_child(label)
 +		add_child(action_card)
-+	var width: float = minf(360.0, size.x - 32.0)
++	# Phone portrait: nearly full width. Landscape or short screens: keep the
++	# card within about three quarters of the height.
++	var width: float = minf(minf(360.0, size.x - 32.0), (size.y * 0.75 - 70.0) / 0.75 + 20.0)
 +	var photo_rect: TextureRect = action_card.get_child(0).get_child(0)
 +	var caption_label: Label = action_card.get_child(0).get_child(1)
 +	photo_rect.texture = texture
@@ -11607,7 +11617,7 @@ index 57243c7..5c4f49c 100644
 +	action_card.size = Vector2(width, 0)
 +	action_card.reset_size()
 +	action_card.call_deferred("reset_size")
-+	action_card.position = Vector2((size.x - width) / 2.0, size.y * 0.18)
++	action_card.position = Vector2((size.x - width) / 2.0, minf(size.y * 0.18, size.y * 0.12 + 20.0))
 +	action_card.visible = true
 +	move_child(action_card, get_child_count() - 1)
 +	if action_tween != null and action_tween.is_valid():
@@ -11629,6 +11639,37 @@ index 57243c7..5c4f49c 100644
  func _rebuild_log() -> void:
  	if log_box == null:
  		return
+diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
+index 6a92f84..9436425 100644
+--- a/scripts/world_legacy.gd
++++ b/scripts/world_legacy.gd
+@@ -605,7 +605,7 @@ func longplay_action(kind: String, household: bool = false) -> String:
+ 			s.water += 0.8
+ 			s.longplay.filter_condition = maxf(0.0,float(s.longplay.filter_condition)-1.0)
+ 			advance(15)
+-			return "雨水1Lを処理し、飲料水0.8Lを得た（ゲーム内簡易モデル）。"
++			return "雨水1Lを浄水器に通し、飲み水0.8Lを得た。"
+ 		"scavenge":
+ 			if s.society == "normal": return "まだ通常の商店が営業している。探索ではなく購入が必要。"
+ 			if not household and float(s.fatigue) > 85.0: return "疲労が強く探索できない。"
+@@ -858,7 +858,7 @@ func action(kind: String, household: bool = false) -> String:
+ 			return "植え付けた。収穫には14日以上と水が必要。"
+ 		"tend":
+ 			if s.plots.is_empty(): return "栽培中の作物はない。"
+-			if s.rain_water<1.0: return "計量済み雨水が1L必要。"
++			if s.rain_water<1.0: return "ためておいた雨水が1L必要。"
+ 			s.rain_water-=1.0
+ 			s.plots[0].water+=1.0
+ 			return "最初の鉢に水1Lを与えた。"
+@@ -868,7 +868,7 @@ func action(kind: String, household: bool = false) -> String:
+ 					plot.growth=0.0
+ 					s.food+=0.5
+ 					s.inventory.harvest+=1.0
+-					return "収穫した（簡易モデル：食料0.5日分）。"
++					return "収穫した。食卓に出せる青菜が少し増えた（食料0.5人日分）。"
+ 			return "まだ収穫できない。"
+ 		"fortify":
+ 			if s.inventory.wood<3 or s.inventory.parts<2: return "補強：木材3・部品2が必要。"
 diff --git a/tests/test_action_photos149_32.gd b/tests/test_action_photos149_32.gd
 new file mode 100644
 index 0000000..c90d746
