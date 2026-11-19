@@ -65152,6 +65152,159 @@ index 0000000..0dfd32a
 +++ b/qa/solo_check.gd.uid
 @@ -0,0 +1 @@
 +uid://b5c0cg3wxuir3
+diff --git a/scripts/chronicle.gd b/scripts/chronicle.gd
+new file mode 100644
+index 0000000..7675e80
+--- /dev/null
++++ b/scripts/chronicle.gd
+@@ -0,0 +1,147 @@
++extends RefCounted
++## v149.29: the story of a life. Turning points are written down as they
++## happen (who was met, who came to live, who left or died, what happened to
++## the neighbour and the shelter, nights at the door); when the player dies
++## with nobody left to carry on, it is told back as one story. A housemate who
++## carries on gets the previous life summed up in a few lines.
++## State: `s.chronicle = {"moments": [{day, text, kind, who}], "people": {name: {kind, fate}}, "lives": [...], "society": ""}`.
++
++const MAX_MOMENTS := 80
++
++static func state(world) -> Dictionary:
++	if not world.s.has("chronicle") or not world.s.chronicle is Dictionary:
++		world.s.chronicle = {"moments": [], "people": {}, "lives": [], "society": str(world.s.get("society", "normal")), "milestone": 0, "life_from": 0}
++		for m in world.s.household_members:
++			world.s.chronicle.people[str(m.name)] = {"kind": "housemate", "fate": ""}
++	return world.s.chronicle
++
++static func valid(value: Variant) -> bool:
++	return value is Dictionary and value.get("moments", []) is Array and value.get("people", {}) is Dictionary
++
++static func day(world) -> int:
++	return (int(float(world.s.get("start_hour", 0)) * 60.0) + int(world.s.minute)) / 1440 + 1
++
++## A turning point. kind: met, joined, left, died, neighbor, shelter, raid, bitten, society, milestone, life.
++static func note(world, text: String, kind: String = "", who: String = "") -> void:
++	var st := state(world)
++	var moments: Array = st.moments
++	moments.append({"day": day(world), "text": text, "kind": kind, "who": who})
++	if moments.size() > MAX_MOMENTS:
++		# Keep the first days and the most recent ones.
++		moments.remove_at(10)
++
++static func person(world, name: String, kind: String, fate: String) -> void:
++	var people: Dictionary = state(world).people
++	var p: Dictionary = people.get(name, {"kind": kind, "fate": ""})
++	if not kind.is_empty():
++		p.kind = kind if str(p.kind) != "housemate" or kind == "housemate" else p.kind
++	if not fate.is_empty():
++		p.fate = fate
++	people[name] = p
++
++const SOCIETY_TEXT := {
++	"alert": "街に、噛みつき事件の噂が広がった。",
++	"disrupted": "店が閉まり、街の暮らしが崩れ始めた。",
++	"emergency": "緊急事態が宣言された。街は感染者のものになりつつあった。",
++}
++
++static func hourly(world) -> void:
++	var st := state(world)
++	var society := str(world.s.society)
++	if society != str(st.society):
++		st.society = society
++		if SOCIETY_TEXT.has(society):
++			note(world, str(SOCIETY_TEXT[society]), "society")
++	var d := day(world) - int(st.get("life_from", 0))
++	for mark in [7, 30, 100, 365]:
++		if d >= mark and int(st.get("milestone", 0)) < mark:
++			st.milestone = mark
++			note(world, "%sが生き延びて、%d日が過ぎた。" % [world.s.profile.name, mark], "milestone")
++
++## How the life ended, in a few words.
++static func cause(world) -> String:
++	if bool(world.s.get("bitten", false)) or bool(world.s.get("symptomatic", false)):
++		return "噛まれた傷の熱にうなされた末に、息を引き取った。"
++	if float(world.s.get("hunger", 0)) >= 100.0 or float(world.s.get("thirst", 0)) >= 100.0:
++		return "飢えと渇きの中で、静かに力尽きた。"
++	if world.s.has("walkers") and not world.s.walkers.get("encounter", {}).is_empty():
++		return "感染者に追いつかれ、逃げきれなかった。"
++	return "力尽きて、もう起き上がらなかった。"
++
++## A short line for a life that a housemate carries on from.
++static func life_ended(world, name: String, heir: String) -> void:
++	var st := state(world)
++	var days := day(world) - int(st.get("life_from", 0))
++	st.lives.append({"name": name, "days": days, "to": day(world)})
++	note(world, "%sが亡くなった。あとを、%sが継いだ。" % [name, heir], "life", name)
++	st.life_from = day(world) - 1
++	st.milestone = 0
++
++## The whole story, told when there is nobody left.
++static func epilogue(world) -> String:
++	var st := state(world)
++	var name := str(world.s.profile.name)
++	var place := "東京の住宅街" if str(world.s.profile.get("address", "東京")) == "東京" else str(world.s.profile.address)
++	var lines: Array = []
++	lines.append("―― %sの記録 ――" % name)
++	var total := day(world)
++	var lives: Array = st.get("lives", [])
++	if lives.is_empty():
++		lines.append("%sで、%d日を生き延びた。" % [place, total])
++	else:
++		var before: Array = lives.map(func(l): return str(l.name))
++		lines.append("%sで、%d日。%sから受け継いだ暮らしを、%sが最後まで守った。" % [place, total, "、".join(before), name])
++	# The people.
++	var people: Dictionary = st.people
++	var housemates: Array = []
++	var met: Array = []
++	var protagonists: Array = lives.map(func(l): return str(l.name)) + [name]
++	for who in people:
++		var p: Dictionary = people[who]
++		if who in protagonists:
++			continue
++		if str(p.kind) == "housemate":
++			housemates.append("%s（%s）" % [who, p.fate if not str(p.fate).is_empty() else "最後まで一緒だった"])
++		elif str(p.kind) in ["met", "neighbor"]:
++			met.append(who)
++	if not housemates.is_empty():
++		lines.append("共に暮らした人：" + "、".join(housemates))
++	if not met.is_empty():
++		lines.append("出会った人：" + "、".join(met.slice(0, 8)) + ("ほか" if met.size() > 8 else ""))
++	# The turning points.
++	var picked: Array = []
++	for m in st.moments:
++		if str(m.kind) in ["joined", "left", "died", "neighbor", "shelter", "raid", "bitten", "society", "life", "milestone"]:
++			picked.append(m)
++	if picked.size() > 12:
++		picked = picked.slice(0, 4) + picked.slice(picked.size() - 8)
++	if not picked.is_empty():
++		lines.append("")
++		for m in picked:
++			lines.append("%d日目　%s" % [int(m.day), m.text])
++	lines.append("")
++	lines.append("%d日目、%sは%s" % [total, name, cause(world)])
++	# What came after.
++	var after: Array = []
++	var shelter := str(world.s.get("shelter", {}).get("status", "")) if world.s.get("shelter") is Dictionary else ""
++	if shelter == "open":
++		after.append("小学校の避難所には、まだ明かりが灯っていた。")
++	elif shelter in ["overrun", "abandoned"]:
++		after.append("避難所だった小学校は、静まり返ったままだった。")
++	var nfate := str(world.s.get("neighbor_fate", {}).get("stage", "")) if world.s.get("neighbor_fate") is Dictionary else ""
++	if nfate == "turned":
++		after.append("隣の家の前を、見覚えのある影が今もさまよっている。")
++	after.append("家には、%sの書き残した日々の記録だけが残された。" % name)
++	lines.append(" ".join(after))
++	return "\n".join(lines)
++
++## The record so far, for the player to read back.
++static func read_back(world) -> String:
++	var st := state(world)
++	var lines: Array = ["%sの記録（%d日目）" % [world.s.profile.name, day(world)]]
++	var moments: Array = st.moments
++	if moments.is_empty():
++		lines.append("まだ、書き残すような出来事はない。")
++	for m in moments.slice(maxi(0, moments.size() - 15)):
++		lines.append("%d日目　%s" % [int(m.day), m.text])
++	return "\n".join(lines)
 diff --git a/scripts/district.gd b/scripts/district.gd
 index bbcdb5a..b9f5589 100644
 --- a/scripts/district.gd
@@ -65208,6 +65361,26 @@ index bbcdb5a..b9f5589 100644
  	if not site.vacant:
  		if not can_enter(world, place):
  			return "営業時間外。中には入れません。"
+diff --git a/scripts/early_days.gd b/scripts/early_days.gd
+index ef9e44d..d19ef9b 100644
+--- a/scripts/early_days.gd
++++ b/scripts/early_days.gd
+@@ -7,6 +7,7 @@ extends RefCounted
+ 
+ const Survivors = preload("res://scripts/survivors.gd")
+ const Mood = preload("res://scripts/mood.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ const WAIT := 20   # minutes they wait at the door
+ 
+ static func state(world) -> Dictionary:
+@@ -151,6 +152,7 @@ static func reply(world, yes: bool) -> String:
+ 	var polite := not str(n.voice) in ["gruff", "elder"]
+ 	if not yes and stage == "refuge":
+ 		Survivors.change_trust(world, "neighbor_0", -15)
++		Chronicle.note(world, "助けを求めて訪ねてきた隣人の%sを、家に入れなかった。" % name, "neighbor", name)
+ 		return "%sは、しばらく黙っていた。「……そうですよね。無理を言って、すみません」足音が、隣の家へ戻っていった。" % name if polite else "%sは、しばらく黙っていた。「……そうか。悪かったな」足音が、隣の家へ戻っていった。" % name
+ 	if not yes:
+ 		Survivors.change_trust(world, "neighbor_0", -3)
 diff --git a/scripts/early_days.gd.uid b/scripts/early_days.gd.uid
 new file mode 100644
 index 0000000..88d878c
@@ -65238,18 +65411,19 @@ index ffb0fa3..66ef595 100644
  			return _result("店に着いてから在庫を確認するよ。")
  		"拠点の状態を見る":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 577e8d5..9ed3453 100644
+index 577e8d5..62b9b43 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -6,6 +6,7 @@ const District = preload("res://scripts/district.gd")
+@@ -6,6 +6,8 @@ const District = preload("res://scripts/district.gd")
  const Portraits = preload("res://scripts/portraits.gd")
  const EarlyDays = preload("res://scripts/early_days.gd")
  const NeighborFate = preload("res://scripts/neighbor_fate.gd")
 +const Outposts = preload("res://scripts/outposts.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
  const Navigation = preload("res://scripts/navigation.gd")
  const Vitals = preload("res://scripts/vitals.gd")
  const GestureScroll = preload("res://scripts/gesture_scroll.gd")
-@@ -758,7 +759,9 @@ func _build_base_tab() -> void:
+@@ -758,7 +760,9 @@ func _build_base_tab() -> void:
  			continue
  		any_site = true
  		var c := UI.card(tab_content, place)
@@ -65260,7 +65434,43 @@ index 577e8d5..9ed3453 100644
  	if not any_site:
  		tab_content.add_child(UI.label("ほかの拠点はまだない。空き家や放棄された建物で「ここを拠点にする」と作れます。", 13, UI.FAINT))
  
-@@ -1741,7 +1744,9 @@ func _suggestions() -> Array:
+@@ -1426,6 +1430,11 @@ func _scroll_log_to_end() -> void:
+ func _refresh() -> void:
+ 	if float(world.s.health) <= 0 and not succession_running:
+ 		_succeed_to_housemate()
++		# v149.29: nobody left to carry on: the life is told back as a story.
++		if float(world.s.health) <= 0 and not bool(Chronicle.state(world).get("ended", false)):
++			Chronicle.state(world).ended = true
++			_drain_walker_notices()
++			_append(Chronicle.epilogue(world))
+ 	_drain_walker_notices()
+ 	_update_dialogue_input()
+ 	var stamp := world.clock()
+@@ -1495,6 +1504,14 @@ func _on_command(raw: String) -> void:
+ 		DisplayServer.virtual_keyboard_hide()
+ 	_append("▶ "+cmd)
+ 	cancel_requested=false
++	if float(world.s.health) <= 0 and bool(Chronicle.state(world).get("ended", false)):
++		if cmd.contains("新しい世界") or cmd.contains("はじめから") or cmd.contains("最初から"):
++			_show_title()
++			return
++		if cmd.contains("記録"):
++			_append(Chronicle.epilogue(world))
++			_refresh()
++			return
+ 	var suggested := pending_local_action.duplicate()
+ 	pending_local_action.clear()
+ 	var encounter: Dictionary = Walkers.ensure(world).encounter
+@@ -1604,6 +1621,8 @@ func _show_convo_face(texture: Texture2D) -> void:
+ ## and things to do otherwise. They send the text as if typed.
+ func _suggestions() -> Array:
+ 	var out: Array = []
++	if float(world.s.health) <= 0 and bool(Chronicle.state(world).get("ended", false)):
++		return ["記録を読み返す", "新しい世界で始める"]
+ 	if not Walkers.ensure(world).encounter.is_empty():
+ 		return ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"]
+ 	if str(NeighborFate.state(world).stage) == "attack" and (Navigation.indoor(location) or location == str(NeighborFate._person(world).get("place", ""))):
+@@ -1741,7 +1760,9 @@ func _suggestions() -> Array:
  		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
  	else:
  		out.append("周囲を見る")
@@ -65271,7 +65481,32 @@ index 577e8d5..9ed3453 100644
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else "食料を買う")
  		out.append("家に帰る")
  	return out.slice(0, 6)
-@@ -2749,6 +2754,37 @@ func _raid_command(cmd: String) -> bool:
+@@ -2383,6 +2404,7 @@ func _succeed_to_housemate(farewell: String = "") -> void:
+ 		_append("【記録】%sは%s、息を引き取った。" % [previous, "噛まれた傷の熱にうなされた末に" if bool(world.s.get("bitten", false)) else "力尽きて"])
+ 	else:
+ 		_append(farewell)
++	Chronicle.life_ended(world, previous, str(person.name))
+ 	world.s.profile.name = str(person.name)
+ 	world.s.profile.cohabitants = maxi(0, int(world.s.profile.cohabitants) - 1)
+ 	for key in ["companion_names", "companion_genders"]:
+@@ -2721,12 +2743,16 @@ func _process_leavers() -> void:
+ 			world.s.food = float(world.s.food) - food
+ 			world.s.water = float(world.s.water) - water
+ 			_append("【記録】朝になると、%sの姿がなかった。台所の備蓄が荒らされている。食料%.1f人日分と水%.0fLが消えていた。書き置きは、なかった。" % [person.name, food, water])
++			Chronicle.person(world, str(person.name), "housemate", "備蓄を持って姿を消した")
++			Chronicle.note(world, "%sが、備蓄を持ち出して姿を消した。" % person.name, "left", str(person.name))
+ 			Mood.change(world.s, -12.0)
+ 			_remove_housemate(i)
+ 			continue
+ 		var leaver := person.duplicate(true)
+ 		leaver.gender = HouseholdDialogue.gender_for(world.s.profile, i)
+ 		Shelter.admit(world, leaver)
++		Chronicle.person(world, str(person.name), "housemate", "書き置きを残して避難所へ")
++		Chronicle.note(world, "%sが、書き置きを残して家を出ていった。" % person.name, "left", str(person.name))
+ 		_append("【記録】%sの姿がない。居間の机に、書き置きが残されていた。「ごめんなさい。避難所に行きます。ここにいたら、おかしくなりそうだった。食べ物は持っていかない。元気でいてね」" % person.name)
+ 		Mood.change(world.s, -15.0)
+ 		_remove_housemate(i)
+@@ -2749,6 +2775,37 @@ func _raid_command(cmd: String) -> bool:
  	return true
  
  ## v149.27: the shelter's ration and notice board.
@@ -65309,7 +65544,7 @@ index 577e8d5..9ed3453 100644
  ## v149.28: going next door when the neighbour screams.
  func _rescue_command(cmd: String) -> bool:
  	if str(NeighborFate.state(world).stage) != "attack" or PlayerIntents.negated(cmd):
-@@ -2898,7 +2934,7 @@ func _comfort_command(cmd: String) -> bool:
+@@ -2898,7 +2955,7 @@ func _comfort_command(cmd: String) -> bool:
  
  ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
  func _care_command(cmd: String) -> bool:
@@ -65318,7 +65553,16 @@ index 577e8d5..9ed3453 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -3099,7 +3135,7 @@ func _interpret(raw: String) -> String:
+@@ -2924,6 +2981,8 @@ func _care_command(cmd: String) -> bool:
+ 			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + hours * 60, "place": ["駅前", "商店通り", "住宅街"][world.draw(int(world.s.minute), int(person.id), "leaver", 3)]})
+ 			world.advance_safe(15)
+ 			_append("%sは小さな荷物を背負って、玄関で振り返った。「みんなを危ない目にあわせたくないから。……今まで、ありがとう」。扉が閉まり、足音が遠ざかっていった。" % person.name)
++			Chronicle.person(world, str(person.name), "housemate", "噛まれて、自ら家を出た")
++			Chronicle.note(world, "噛まれた%sが、皆を守るために一人で家を出ていった。" % person.name, "left", str(person.name))
+ 			_remove_housemate(index)
+ 			_refresh()
+ 			return true
+@@ -3099,7 +3158,7 @@ func _interpret(raw: String) -> String:
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
  		return District.act(world, _site(), clean, Navigation.indoor(location))
@@ -65327,7 +65571,7 @@ index 577e8d5..9ed3453 100644
  		if world.s.health > 0:
  			world.advance_safe(1)
  		return _look()
-@@ -3116,13 +3152,13 @@ func _interpret(raw: String) -> String:
+@@ -3116,13 +3175,13 @@ func _interpret(raw: String) -> String:
  		return world.work_at_home()
  	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
  	if clean in ["店の在庫を見る","買い物する"]:
@@ -65343,7 +65587,17 @@ index 577e8d5..9ed3453 100644
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
  			var stock_item := {"食料":"food", "水":"water", "飲料水":"water"}.get(bought.get_string(2), "") as String
-@@ -3415,7 +3451,7 @@ func _sync_player_position() -> void:
+@@ -3188,6 +3247,9 @@ func _execute_command(cmd: String) -> String:
+ 	if cmd.contains("ロード") or cmd.contains("読込"):
+ 		return _load()
+ 	if cmd.contains("生存記録") or cmd.contains("日誌"):
++		# v149.29: the turning points of this life.
++		if not Chronicle.state(world).moments.is_empty():
++			return Chronicle.read_back(world)
+ 		var journal: Array = world.s.longplay.journal
+ 		var result: Array[String] = []
+ 		for entry in journal.slice(maxi(0,journal.size()-12)):
+@@ -3415,7 +3477,7 @@ func _sync_player_position() -> void:
  func _look(inspect_details: bool = true) -> String:
  	var paragraphs: Array[String] = [SceneDescription.describe(world, location)]
  	if inspect_details:
@@ -65352,7 +65606,7 @@ index 577e8d5..9ed3453 100644
  			paragraphs.append(District.describe(world, _site()))
  		elif SceneDescription.SHOPS.has(location):
  			paragraphs.append(_shop_inventory())
-@@ -3682,6 +3718,7 @@ func _load() -> String:
+@@ -3682,6 +3744,7 @@ func _load() -> String:
  	dialogue.correction_topics = loaded_corrections.duplicate(true)
  	if not world.s.has("district"):
  		world.s.district = District.fresh()
@@ -65372,6 +65626,51 @@ index 600173a..5b507de 100644
 +		return 2 if (District.SITES.has(from) and not District.is_shop(from)) or (District.SITES.has(to) and not District.is_shop(to)) else 6
  	if from in ["食品店","金物店","薬局"] or to in ["食品店","金物店","薬局"]: return 3
  	return 1
+diff --git a/scripts/neighbor_fate.gd b/scripts/neighbor_fate.gd
+index 860e2e7..37aabe1 100644
+--- a/scripts/neighbor_fate.gd
++++ b/scripts/neighbor_fate.gd
+@@ -11,6 +11,7 @@ extends RefCounted
+ const Survivors = preload("res://scripts/survivors.gd")
+ const Mood = preload("res://scripts/mood.gd")
+ const EarlyDays = preload("res://scripts/early_days.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ const ID := "neighbor_0"
+ const RESCUE_WINDOW := 180
+ 
+@@ -71,6 +72,7 @@ static func hourly(world) -> void:
+ 			if minute >= int(st.attack_at):
+ 				st.stage = "attack"
+ 				st.at = minute
++				st.heard = _at_home(world)
+ 				if _at_home(world):
+ 					_notice(world, "【危険】隣の家から、悲鳴が聞こえた。何かが倒れる音、ガラスの割れる音。……そして、静かになった。（「隣を助けに行く」）", true)
+ 		"attack":
+@@ -80,6 +82,9 @@ static func hourly(world) -> void:
+ static func _turn(world) -> void:
+ 	var st := state(world)
+ 	var p := _person(world)
++	var who := str(p.get("name", ""))
++	Chronicle.person(world, who, "neighbor", "感染者になった")
++	Chronicle.note(world, ("隣の悲鳴を聞いた夜、駆けつけなかった。隣人の%sは、感染者になった。" if bool(st.get("heard", false)) else "隣人の%sが、感染者になった。") % who, "neighbor", who)
+ 	st.stage = "turned"
+ 	st.at = int(world.s.minute)
+ 	if str(p.get("status", "")) == "alive":
+@@ -128,11 +133,14 @@ static func rescue(world, weapon: int) -> String:
+ 			mate.hidden_bite_at = minute + (6 + world.draw(minute, 55, "neighbor-bite-hours", 18)) * 60
+ 		Mood.change(world.s, 4.0)
+ 		world.s.health = maxf(1.0, float(world.s.health) - 8.0)
++		Chronicle.note(world, "隣の悲鳴を聞いて駆けつけ、%sを感染者から助け出した。" % name, "neighbor", name)
+ 		var strike := "手にした武器を振り下ろし" if weapon > 0 else "そばにあった椅子をつかんで殴りつけ"
+ 		return "隣の家に飛び込んだ。台所の隅で、%sが感染者ともみ合っていた。%s、引きはがす。腕を引いて、二人で家まで走った。\n%s「……ありがとう。もう、だめかと思った」服は、ところどころ破れている。（同居人になった）" % [name, strike, name]
+ 	world.s.health = maxf(1.0, float(world.s.health) - 15.0)
+ 	world.s.injuries = float(world.s.injuries) + 1.0
+ 	Mood.change(world.s, -10.0)
++	st.heard = false
+ 	_turn(world)
++	Chronicle.note(world, "隣に駆けつけたが、間に合わなかった。", "neighbor", name)
+ 	st.seen = "turned"
+ 	return "【危険】隣の家に飛び込んだ。……遅かった。床に倒れていた%sが、ゆっくりと起き上がる。その目は、もう人のものではなかった。つかみかかる手を振り払い、転がるように家まで逃げ帰った。" % name
 diff --git a/scripts/neighbor_fate.gd.uid b/scripts/neighbor_fate.gd.uid
 new file mode 100644
 index 0000000..c9a1180
@@ -65520,6 +65819,42 @@ index 0000000..2fd0a43
 +	person.erase("station")
 +	person.location = "居間"
 +	person.activity = "在宅"
+diff --git a/scripts/raiders.gd b/scripts/raiders.gd
+index 1b6e0a0..73a4c3c 100644
+--- a/scripts/raiders.gd
++++ b/scripts/raiders.gd
+@@ -9,6 +9,7 @@ extends RefCounted
+ const Walkers = preload("res://scripts/walkers.gd")
+ const Mood = preload("res://scripts/mood.gd")
+ const WorldTraits = preload("res://scripts/world_traits.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ 
+ static func active(world) -> bool:
+ 	return world.s.get("raid", {}) is Dictionary and not world.s.get("raid", {}).is_empty()
+@@ -60,6 +61,7 @@ static func _rob(world, lead: String) -> String:
+ 	world.s.water = float(world.s.water) - water
+ 	world.s.cash = int(world.s.cash) - cash
+ 	Mood.everyone(world, -10.0)
++	Chronicle.note(world, "略奪者に押し入られ、食料と水を奪われた。", "raid")
+ 	return "【危険】%s台所の食料%.1f人日分、水%.0fL、現金%d円を奪って、走り去った。" % [lead, food, water, cash]
+ 
+ static func adults(world) -> int:
+@@ -81,6 +83,7 @@ static func answer(world, kind: String, weapon: int = 0) -> String:
+ 			var chance := mini(85, 25 + 15 * adults(world))
+ 			if roll < chance:
+ 				world.s.raid = {}
++				Chronicle.note(world, "夜、玄関に来た略奪者を、怒鳴り声で追い払った。", "raid")
+ 				return "扉越しに、ありったけの声で怒鳴った。%s中の気配に、相手は舌打ちして去っていった。" % ("家の中から何人もの声が重なり、" if adults(world) > 1 else "")
+ 			return "怒鳴り返したが、外から笑い声が返ってきた。扉を叩く音が強くなる。"
+ 		"give":
+@@ -96,6 +99,7 @@ static func answer(world, kind: String, weapon: int = 0) -> String:
+ 			if roll < chance:
+ 				world.s.raid = {}
+ 				world.s.health = maxf(1.0, float(world.s.health) - 10.0)
++				Chronicle.note(world, "夜、押し入ろうとした略奪者と戦い、追い払った。", "raid")
+ 				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
+ 			world.s.health = maxf(1.0, float(world.s.health) - 25.0)
+ 			world.s.raid = {}
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
 index 632306a..fb8c179 100644
 --- a/scripts/scene_description.gd
@@ -65533,19 +65868,116 @@ index 632306a..fb8c179 100644
  		var site: Dictionary = world.s.district.sites[place]
  		if not site.vacant:
  			if District.can_enter(world, place):
+diff --git a/scripts/shelter.gd b/scripts/shelter.gd
+index a2d0c3c..b8e8860 100644
+--- a/scripts/shelter.gd
++++ b/scripts/shelter.gd
+@@ -17,6 +17,7 @@ const Survivors = preload("res://scripts/survivors.gd")
+ const WorldTraits = preload("res://scripts/world_traits.gd")
+ const Mood = preload("res://scripts/mood.gd")
+ const Walkers = preload("res://scripts/walkers.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ const PLACE := "避難所"
+ const CAPACITY := 180
+ const STATUSES := ["school", "open", "overrun", "abandoned"]
+@@ -193,6 +194,7 @@ static func _fall(world, cause: String) -> void:
+ 		if bool(p.met) or bool(p.get("former", false)):
+ 			lost.append(str(p.name))
+ 	var how := "門が破られ、感染者がなだれ込んだ" if cause == "gate" else "体育館の中で発症した人を止められず、感染が広がった"
++	Chronicle.note(world, "避難所の小学校が陥落した。%s。" % how, "shelter")
+ 	if _player_here(world):
+ 		world.s.walkers.alarm = true
+ 		world.s.health = maxf(1.0, float(world.s.health) - 10.0)
+@@ -213,6 +215,7 @@ static func _abandon(world) -> void:
+ 		if str(p.place) == PLACE and str(p.status) == "alive":
+ 			p.place = "住宅街"
+ 	_notice(world, "【記録】避難所の食料が尽き、人々は散り散りに出ていったらしい。小学校は、もう空っぽだ。")
++	Chronicle.note(world, "食料の尽きた避難所から、人々が去っていった。", "shelter")
+ 
+ ## A housemate who left with a note goes to the shelter, where they can be
+ ## found again and brought home. If it is not open, they go elsewhere.
+diff --git a/scripts/survivors.gd b/scripts/survivors.gd
+index 19de623..ceef483 100644
+--- a/scripts/survivors.gd
++++ b/scripts/survivors.gd
+@@ -11,6 +11,7 @@ extends RefCounted
+ const Mood = preload("res://scripts/mood.gd")
+ const Parts = preload("res://scripts/survivor_parts.gd")
+ const Navigation = preload("res://scripts/navigation.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ 
+ const ITEM_LABEL := {"food": "食料", "water": "水", "bandage": "包帯"}
+ const JOIN_TRUST := 60
+@@ -363,6 +364,8 @@ static func meet(world, place: String) -> Array:
+ 		if not bool(p.met):
+ 			p.met = true
+ 			lines.append("【出会い】" + _intro_now(world, p))
++			Chronicle.person(world, str(p.name), "neighbor" if bool(p.get("neighbor", false)) else "met", "")
++			Chronicle.note(world, "%sと出会った。" % str(p.label), "met", str(p.name))
+ 	return lines
+ 
+ ## v149.28: the neighbour's greeting fits the hour, and after the breakdown
+@@ -601,6 +604,8 @@ static func _join(world, id: String) -> String:
+ 	genders.append(str(p.gender))
+ 	world.s.profile.companion_genders = genders
+ 	Mood.change(world.s, 6.0)
++	Chronicle.person(world, str(p.name), "housemate", "")
++	Chronicle.note(world, "%sが、家に加わった。" % p.name, "joined", str(p.name))
+ 	return str(JOIN_LINES[str(p.voice)]) % str(p.name) + "%sは、あなたの家に向かった。（同居人になった）" % p.name
+ 
+ # ---------------------------------------------------------------------------
+diff --git a/scripts/walkers.gd b/scripts/walkers.gd
+index 8f786ad..157969d 100644
+--- a/scripts/walkers.gd
++++ b/scripts/walkers.gd
+@@ -4,6 +4,7 @@ extends RefCounted
+ ## risky. All randomness goes through world.draw so results are reproducible.
+ const Navigation = preload("res://scripts/navigation.gd")
+ const Mood = preload("res://scripts/mood.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
+ const WorldTraits = preload("res://scripts/world_traits.gd")
+ 
+ const OUTDOOR := ["屋外", "商店通り", "住宅街", "駅前", "建物前", "デパート正面"]
+@@ -668,6 +669,8 @@ static func housemates_hourly(world) -> Array:
+ 			person.activity = "死亡"
+ 			w.pending.append({"id": -1000 - int(person.id), "at": int(world.s.minute) + 60 * (1 + world.draw(int(world.s.minute), int(person.id), "mate-rise", 3)), "place": place, "name": str(person.name)})
+ 			lines.append("%sが、静かに息を引き取った。" % person.name)
++			Chronicle.person(world, str(person.name), "housemate", "噛まれて亡くなった")
++			Chronicle.note(world, "%sが、噛まれた傷のために亡くなった。" % person.name, "died", str(person.name))
+ 			Mood.everyone(world, -25.0)
+ 	for line in lines:
+ 		w.notices.append(line)
+@@ -675,6 +678,8 @@ static func housemates_hourly(world) -> Array:
+ 
+ static func _bite(world, enc: Dictionary, lead: String) -> Dictionary:
+ 	var minute := int(world.s.minute)
++	if not bool(world.s.get("bitten", false)):
++		Chronicle.note(world, "%sが、感染者に噛まれた。" % world.s.profile.name, "bitten")
+ 	world.s.health = maxf(0.0, float(world.s.health) - 15.0)
+ 	world.s.injuries = int(world.s.injuries) + 1
+ 	if int(world.s.exposure) < 0:
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 1e8dd33..692a231 100644
+index 1e8dd33..923c216 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -10,6 +10,7 @@ const OutbreakNews = preload("res://scripts/outbreak_news.gd")
+@@ -10,6 +10,8 @@ const OutbreakNews = preload("res://scripts/outbreak_news.gd")
  const Survivors = preload("res://scripts/survivors.gd")
  const EarlyDays = preload("res://scripts/early_days.gd")
  const NeighborFate = preload("res://scripts/neighbor_fate.gd")
 +const Outposts = preload("res://scripts/outposts.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
  const WorldTraits = preload("res://scripts/world_traits.gd")
  const Roles = preload("res://scripts/roles.gd")
  const Shelter = preload("res://scripts/shelter.gd")
-@@ -103,6 +104,7 @@ func step(sleeping: bool) -> void:
+@@ -92,6 +94,7 @@ func step(sleeping: bool) -> void:
+ 		OutbreakNews.hourly(self)
+ 		EarlyDays.hourly(self)
+ 		NeighborFate.hourly(self)
++		Chronicle.hourly(self)
+ 		WorldTraits.hourly(self)
+ 		WorldTraits.restore(self)
+ 		Shelter.hourly(self)
+@@ -103,6 +106,7 @@ func step(sleeping: bool) -> void:
  			s.walkers.notices.append("【危険】%sが高い熱を出して倒れた。袖をまくると、くっきりと歯の跡があった。……ずっと、隠していたのだ。" % mate.name)
  		if not s.has("district"):
  			s.district = District.fresh()
@@ -65553,7 +65985,7 @@ index 1e8dd33..692a231 100644
  		District.tick(self)
  	for person in s.household_members:
  		if person.has("water_errand"):
-@@ -222,6 +224,11 @@ func _household_hour() -> void:
+@@ -222,6 +226,11 @@ func _household_hour() -> void:
  		if float(person.health)<=0:continue
  		person.hunger=minf(100,float(person.hunger)+100.0/24.0)
  		person.thirst=minf(100,float(person.thirst)+100.0/24.0)
@@ -65565,7 +65997,7 @@ index 1e8dd33..692a231 100644
  		# A requested cooking action owns the NPC until it finishes or is cancelled.
  		# Do not teleport the cook on an hourly schedule boundary.
  		var cooking_now: bool = str(person.get("activity", "")) == "料理" or bool(person.get("watching", false)) or person.has("scouting")
-@@ -402,6 +409,7 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
+@@ -402,6 +411,7 @@ func migrate_legacy(data: Dictionary) -> Dictionary:
  	Events.upgrade_data(migrated)
  	if not migrated.has("district"):
  		migrated.district = District.fresh()
@@ -65573,6 +66005,15 @@ index 1e8dd33..692a231 100644
  	return migrated if validate_state(migrated) else {}
  func validate_state(data: Dictionary) -> bool:
  	if not (super.validate_state(data) and Events.valid_data(data) and valid_profile(data.get("profile",{})) and (not data.has("district") or District.valid(data.district))):
+@@ -420,6 +430,8 @@ func validate_state(data: Dictionary) -> bool:
+ 		return false
+ 	if data.has("neighbor_fate") and not NeighborFate.valid(data.neighbor_fate):
+ 		return false
++	if data.has("chronicle") and not Chronicle.valid(data.chronicle):
++		return false
+ 	for person in data.household_members:
+ 		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
+ 			return false
 diff --git a/tests/test_bases149_29.gd b/tests/test_bases149_29.gd
 new file mode 100644
 index 0000000..a28f8b4
@@ -65699,6 +66140,99 @@ index 0000000..a28f8b4
 +	check(District.valid(old), "and is upgraded")
 +	check(w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "save and load")
 +	print("v149.29 base checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_chronicle149_29.gd b/tests/test_chronicle149_29.gd
+new file mode 100644
+index 0000000..b3d6d23
+--- /dev/null
++++ b/tests/test_chronicle149_29.gd
+@@ -0,0 +1,87 @@
++extends SceneTree
++## v149.29: the story of a life: turning points are written down, a housemate
++## who carries on gets the previous life summed up, and when nobody is left
++## the whole life is told back.
++const Main = preload("res://main.tscn")
++const Chronicle = preload("res://scripts/chronicle.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++const Raiders = preload("res://scripts/raiders.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.address = "東京"
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	Survivors.ensure(w)
++	# Meeting the neighbour.
++	g.location = "屋外"
++	await g._on_command("住宅街へ行く")
++	var nb: Dictionary = Survivors.person(w, "neighbor_0")
++	check(str(Chronicle.state(w).moments).contains("出会った"), "meeting someone is written down")
++	# The city coming apart is written down once.
++	w.s.society = "disrupted"
++	Chronicle.hourly(w)
++	Chronicle.hourly(w)
++	var society_notes: Array = Chronicle.state(w).moments.filter(func(m): return str(m.kind) == "society")
++	check(society_notes.size() == 1, "a change in the city is written once")
++	# Someone joins, a raid is fought off.
++	nb.trust = 90
++	await g._on_command("お隣さん、一緒に住みませんか")
++	check(str(Chronicle.state(w).moments).contains("家に加わった"), "someone coming to live is written down")
++	w.s.raid = {"at": int(w.s.minute), "size": 2}
++	w.s.food = 3.0
++	Raiders.answer(w, "give")
++	w.s.raid = {"at": int(w.s.minute), "size": 2}
++	w.s.door_locked = false
++	w.s.barricade = 0
++	w.s.lights_off = false
++	w.s.grid_online = true
++	w.s.minute = int(w.s.raid.at) + 60
++	while not (w.hour_of_day() < 6.0 or w.hour_of_day() >= 18.0):
++		w.s.minute += 60
++		w.s.raid.at = int(w.s.minute) - 60
++	Raiders.hourly(w)
++	check(str(Chronicle.state(w).moments).contains("略奪者に押し入られ"), "a robbery is written down")
++	# Milestones.
++	w.s.minute += 8 * 1440
++	Chronicle.hourly(w)
++	check(str(Chronicle.state(w).moments).contains("7日が過ぎた"), "a week survived is marked")
++	g.location = "居間"
++	await g._on_command("生存記録")
++	check(str(g.log_entries.slice(-3)).contains("トウヤの記録") and str(g.log_entries.slice(-3)).contains("7日が過ぎた"), "the record can be read back")
++	# The player dies; the housemate carries on.
++	var first := str(w.s.profile.name)
++	var heir := str(w.s.household_members[0].name)
++	w.s.health = 0.0
++	g._refresh()
++	check(str(w.s.profile.name) == heir and float(w.s.health) > 0.0 and str(Chronicle.state(w).moments).contains("あとを、%sが継いだ" % heir), "a housemate carries on, and that is written down")
++	# Nobody left: the life is told back.
++	w.s.bitten = true
++	w.s.health = 0.0
++	g._refresh()
++	var story: String = g.log_entries[-1]
++	check(story.begins_with("―― %sの記録 ――" % heir) and story.contains(first) and story.contains("噛まれた傷"), "with nobody left, the whole story is told: " + story.left(60))
++	check(story.contains("略奪者") and story.contains("日目"), "the turning points are in it")
++	check(g._suggestions() == ["記録を読み返す", "新しい世界で始める"], "after the end: read it again, or a new world")
++	await g._on_command("記録を読み返す")
++	check(g.log_entries[-1].begins_with("――"), "the story can be read again")
++	check(w.validate_state(w.s), "valid")
++	await g._on_command("新しい世界で始める")
++	check(is_instance_valid(g.title_screen), "a new world starts from the title")
++	print("v149.29 chronicle checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_neighbor149_28.gd.uid b/tests/test_neighbor149_28.gd.uid
 new file mode 100644
