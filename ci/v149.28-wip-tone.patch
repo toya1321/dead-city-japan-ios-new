@@ -210916,7 +210916,7 @@ index 34ab8c8..48c9d60 100644
  	var prompts := {
  		"アーティストだと誰が好き？": "音楽",
 diff --git a/tests/test_life149_24.gd b/tests/test_life149_24.gd
-index 0fabadc..27529d8 100644
+index 0fabadc..1b1fd44 100644
 --- a/tests/test_life149_24.gd
 +++ b/tests/test_life149_24.gd
 @@ -134,7 +134,7 @@ func run() -> void:
@@ -210928,9 +210928,11 @@ index 0fabadc..27529d8 100644
  	await g._on_command("映画を観る")
  	check("sound" in Walkers.home_reasons(w), "at normal volume it is")
  	await g._on_command("タバコを吸う")
-@@ -174,7 +174,7 @@ func run() -> void:
+@@ -173,8 +173,9 @@ func run() -> void:
+ 	w.s.walkers.erase("sound_until")
  	w.s.sim.phone_charge = 80.0
  	var m3: float = w.s.mood
++	load("res://scripts/neighbor_fate.gd").state(w).asked = true   # no knock in the middle of this film
  	await g._on_command("映画を観る")
 -	check(g.log_entries[-1].contains("スマホ") and float(w.s.sim.phone_charge) < 70.0 and float(w.s.mood) > m3 + 5.0 and not ("sound" in Walkers.home_reasons(w)), "a film on the phone, quietly, for battery")
 +	check(str(g.log_entries.slice(-3)).contains("スマホ") and float(w.s.sim.phone_charge) < 70.0 and float(w.s.mood) > m3 + 5.0 and not ("sound" in Walkers.home_reasons(w)), "a film on the phone, quietly, for battery")
