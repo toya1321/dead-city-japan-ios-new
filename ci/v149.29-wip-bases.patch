@@ -88715,7 +88715,7 @@ index a2d0c3c..8896655 100644
  	return "持ち出し袋の食料%.1f人日分を、倉庫の係に渡した。「ありがとう、子どもたちに回すよ」" % food
  
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
-index 19de623..4b8e746 100644
+index 19de623..2e07ad5 100644
 --- a/scripts/survivors.gd
 +++ b/scripts/survivors.gd
 @@ -11,6 +11,7 @@ extends RefCounted
@@ -88752,6 +88752,96 @@ index 19de623..4b8e746 100644
  	return str(JOIN_LINES[str(p.voice)]) % str(p.name) + "%sは、あなたの家に向かった。（同居人になった）" % p.name
  
  # ---------------------------------------------------------------------------
+@@ -611,6 +617,7 @@ static func daily(world, walkers_at: Callable) -> Array:
+ 		return []
+ 	var minute := int(world.s.minute)
+ 	var day := minute / 1440
++	_arrivals(world, day)
+ 	var people: Dictionary = ensure(world).people
+ 	for id in people:
+ 		var p: Dictionary = people[id]
+@@ -624,7 +631,7 @@ static func daily(world, walkers_at: Callable) -> Array:
+ 			cause = "wound"
+ 		elif str(p.tag) in ["hungry", "lost"] and int(p.given) == 0 and day >= int(p.get("hunger_day", 999)):
+ 			cause = "hunger"
+-		elif str(p.tag) == "hidden_bite" and day >= 22:
++		elif str(p.tag) == "hidden_bite" and day >= int(p.get("turn_day", 22)):
+ 			cause = "turned"
+ 		elif str(world.s.society) == "emergency":
+ 			var risk := clampi(int(walkers_at.call(str(p.place))) * 3 - int(p.traits.courage) / 10, 0, 30)
+@@ -639,6 +646,72 @@ static func daily(world, walkers_at: Callable) -> Array:
+ 			world.s.walkers.places[str(p.place)] = int(world.s.walkers.places.get(str(p.place), 0)) + 1
+ 	return []
+ 
++## v149.29: people keep coming. Every few days someone new turns up somewhere
++## in the district: fleeing another part of the city, looking for family,
++## or just walking. Fewer when the streets are full of the dead.
++const MAX_LOOSE := 9
++const ARRIVAL_LINES := [
++	"%sの方から来たらしい。", "%sから歩いてきたという。", "%sの避難所を追われてきたらしい。",
++]
++const FROM := ["世田谷", "新宿", "中野", "杉並", "渋谷", "練馬", "目黒"]
++
++static func _arrivals(world, day: int) -> void:
++	var people: Dictionary = ensure(world).people
++	var loose := 0
++	var used := {}
++	var kinds := {}
++	for id in people:
++		var p: Dictionary = people[id]
++		used[str(p.name)] = true
++		if str(p.status) == "alive" and str(p.place) != "避難所" and not bool(p.get("neighbor", false)):
++			loose += 1
++			kinds[str(p.role)] = int(kinds.get(str(p.role), 0)) + 1
++	if loose >= MAX_LOOSE:
++		return
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([int(world.s.get("seed", 1)), day, "arrival"])
++	var chance := 30 if str(world.s.society) == "disrupted" else 22
++	if rng.randi_range(1, 100) > chance:
++		return
++	var places: Array = _places(world)
++	if str(world.s.get("shelter", {}).get("status", "")) != "open" if world.s.get("shelter") is Dictionary else true:
++		places.erase("避難所")
++	var roles: Array = Parts.ROLES.keys()
++	for attempt in 12:
++		var role_id: String = roles[rng.randi_range(0, roles.size() - 1)]
++		if role_id in ["child", "elder"] and int(kinds.get(role_id, 0)) > 0:
++			continue
++		var role: Dictionary = Parts.ROLES[role_id]
++		var options: Array = role.places.filter(func(pl): return pl in places)
++		if options.is_empty():
++			options = places.filter(func(pl): return not pl in ["避難所"])
++		if options.is_empty():
++			return
++		var place: String = options[rng.randi_range(0, options.size() - 1)]
++		var male: bool = rng.randi_range(1, 100) <= int(role.male)
++		var made := _make(rng, role_id, role, male, place, used)
++		if made.is_empty():
++			continue
++		var id := "arrival_%d" % day
++		made.id = id
++		made.arrived = day
++		# Their troubles started when they arrived, not on day one.
++		for key in ["deadline_day", "hunger_day"]:
++			if made.has(key):
++				made[key] = int(made[key]) - 14 + day
++		if str(made.tag) == "hidden_bite":
++			made.turn_day = day + 6 + rng.randi_range(0, 6)
++		var from: String = FROM[rng.randi_range(0, FROM.size() - 1)]
++		made.background = str(made.background) + str(ARRIVAL_LINES[rng.randi_range(0, ARRIVAL_LINES.size() - 1)]) % from
++		for other in people.values():
++			if str(other.place) == place and str(other.label) == str(made.label):
++				made.label = ("年配の" if int(made.age) >= 50 else "若い") + str(made.label)
++		people[id] = made
++		if world.s.has("walkers"):
++			var hint := "住宅街の方" if place in ["住宅街", "近所の空き家"] else ("駅の方" if place in ["駅前", "デパート", "デパート正面"] else "商店通りの方")
++			world.s.walkers.notices.append(str(["【記録】窓の外、%sへ、見慣れない人影が足早に歩いていった。感染者の歩き方ではなかった。", "【記録】%sから、誰かが助けを呼ぶような声が、一度だけ聞こえた。", "【記録】%sで、知らない誰かが物を探している気配がした。"][rng.randi_range(0, 2)]) % hint)
++		return
++
+ ## Joined survivors: a hidden bite surfaces. Returns indexes newly bitten.
+ static func household_hourly(world) -> Array:
+ 	var out: Array = []
 diff --git a/scripts/ui_kit.gd b/scripts/ui_kit.gd
 index fabb501..a890b9e 100644
 --- a/scripts/ui_kit.gd
@@ -88866,6 +88956,58 @@ index 1e8dd33..923c216 100644
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
+diff --git a/tests/test_arrivals149_29.gd b/tests/test_arrivals149_29.gd
+new file mode 100644
+index 0000000..470b72c
+--- /dev/null
++++ b/tests/test_arrivals149_29.gd
+@@ -0,0 +1,46 @@
++extends SceneTree
++## v149.29: new people keep coming after the breakdown, up to a limit.
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(c: bool, label: String) -> void:
++	print(("PASS " if c else "FAIL ") + label)
++	if not c: failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	g._start_new_game(g.world.DEFAULT_PROFILE.duplicate(true))
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var people: Dictionary = Survivors.ensure(w).people
++	for d in 10:
++		w.s.minute = (d + 3) * 1440
++		Survivors.daily(w, func(place): return 0)
++	check(people.keys().filter(func(k): return str(k).begins_with("arrival")).is_empty(), "nobody new before the breakdown")
++	w.s.society = "disrupted"
++	var notices := 0
++	for d in 60:
++		w.s.minute = (d + 13) * 1440
++		w.s.walkers.notices = []
++		Survivors.daily(w, func(place): return 0)
++		if str(w.s.walkers.notices).contains("【記録】"): notices += 1
++	var arrived: Array = people.keys().filter(func(k): return str(k).begins_with("arrival"))
++	check(arrived.size() >= 3, "people keep coming after the breakdown (%d)" % arrived.size())
++	check(notices >= arrived.size(), "their coming is noticed")
++	var loose: Array = people.keys().filter(func(k): return str(people[k].status) == "alive" and str(people[k].place) != "避難所" and not bool(people[k].get("neighbor", false)))
++	check(loose.size() <= Survivors.MAX_LOOSE, "but not without limit")
++	var a: Dictionary = people[arrived[0]]
++	check(str(a.background).contains("来た") or str(a.background).contains("追われて") or str(a.background).contains("歩いてきた"), "a newcomer has come from somewhere: " + str(a.background).right(25))
++	if a.has("deadline_day"):
++		check(int(a.deadline_day) > int(a.arrived), "their troubles start on arrival")
++	w.s.society = "disrupted"
++	g.location = str(a.place)
++	g._check_walkers(str(a.place))
++	check(bool(a.met), "a newcomer can be met where they are")
++	check(w.validate_state(w.s) and g._save().begins_with("保存") and g._load() == "保存データを読み込んだ。", "save and load")
++	print("v149.29 arrival checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_bases149_29.gd b/tests/test_bases149_29.gd
 new file mode 100644
 index 0000000..a28f8b4
