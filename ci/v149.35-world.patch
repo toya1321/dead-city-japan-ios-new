@@ -1,0 +1,815 @@
+diff --git a/qa/npc_watch.gd b/qa/npc_watch.gd
+new file mode 100644
+index 0000000..f4fd60f
+--- /dev/null
++++ b/qa/npc_watch.gd
+@@ -0,0 +1,40 @@
++extends SceneTree
++## Watches the survivors live on their own for DCJ_DAYS days (nobody acts).
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const Trade = preload("res://scripts/trade.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var seen_events := 0
++	for day in int(OS.get_environment("DCJ_DAYS")):
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.advance_safe(60)
++		var st: Dictionary = Survivors.ensure(w)
++		var line: Array = []
++		for id in st.people:
++			var q: Dictionary = st.people[id]
++			if str(q.status) == "alive" and not bool(q.get("neighbor", false)) and not str(id).begins_with("shelter"):
++				var gd: Dictionary = Trade.goods(w, str(id))
++				line.append("%s@%s(%s f%.0f w%.0f)" % [q.name, q.place, q.get("plan", "-"), float(gd.get("food", 0)), float(gd.get("water", 0))])
++		print("DAY %d %s | %s" % [day + 1, w.s.society, " ".join(line)])
++		var events: Array = st.get("events", [])
++		for e in events.slice(maxi(0, events.size() - (events.size() - seen_events))):
++			pass
++		for i in range(seen_events, events.size()):
++			print("   * ", events[i].text)
++		seen_events = events.size()
++	var sites := {}
++	for k in w.s.district.sites:
++		sites[k] = "%.0f/%.0f" % [float(w.s.district.sites[k].food), float(w.s.district.sites[k].water)]
++	print("SITES ", sites)
++	quit()
+diff --git a/qa/perf_long.gd b/qa/perf_long.gd
+new file mode 100644
+index 0000000..617ec1b
+--- /dev/null
++++ b/qa/perf_long.gd
+@@ -0,0 +1,33 @@
++extends SceneTree
++## Time per simulated day and save size, over DCJ_DAYS days (nobody acts).
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 9
++	p.cohabitants = 1
++	p.companion_names = ["詩音"]
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var days := int(OS.get_environment("DCJ_DAYS"))
++	var t0 := Time.get_ticks_msec()
++	for day in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			for m in w.s.household_members:
++				m.hunger = 0.0; m.thirst = 0.0; m.health = 100.0
++			w.advance_safe(60)
++		if day % 30 == 29:
++			var people: Dictionary = Survivors.ensure(w).people
++			var alive := 0
++			for id in people:
++				if str(people[id].status) == "alive": alive += 1
++			var size := JSON.stringify(w.s).length()
++			print("DAY %d ms/day=%.0f save=%dKB society=%s survivors_alive=%d walkers_total=%d events=%d chronicle=%d" % [day + 1, float(Time.get_ticks_msec() - t0) / float(day + 1), size / 1024, w.s.society, alive, load("res://scripts/walkers.gd").total(w), w.s.events.size(), load("res://scripts/chronicle.gd").state(w).get("notes", []).size()])
++	quit()
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 0f2add4..b8d3555 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -3754,6 +3754,10 @@ func _execute_command(cmd: String) -> String:
+ 			var far := Walkers.far_sounds(world, location)
+ 			if not far.is_empty():
+ 				observed += "\n" + far
++			# v149.35: the living pass by too.
++			var passing: String = load("res://scripts/npc_life.gd").passing(world)
++			if not passing.is_empty():
++				observed += "\n" + passing
+ 			var sign := NeighborFate.sign(world, false)
+ 			if not sign.is_empty():
+ 				observed += "\n" + sign
+diff --git a/scripts/npc_bonds.gd b/scripts/npc_bonds.gd
+new file mode 100644
+index 0000000..c763043
+--- /dev/null
++++ b/scripts/npc_bonds.gd
+@@ -0,0 +1,160 @@
++extends RefCounted
++## v149.35 world stage 2: what survivors become to one another. Each pair who
++## have met keep a bond in acq[other]: trust and liking (-100..100), how often
++## they met, and what passed between them. When they are together, what they
++## do comes from who they are (honesty, loyalty, temper, suspicion, courage)
++## and what they have: sharing food, a fair swap (both sides judge with the
++## same trade engine as with the player), bandaging a wound, stealing in the
++## night, quarrelling, keeping company — and what they say of the player.
++## Every act moves real goods, and every act is remembered.
++
++const Trade = preload("res://scripts/trade.gd")
++
++const MEMORY_CAP := 6
++
++static func _t(p: Dictionary, key: String) -> float:
++	return float(p.get("traits", {}).get(key, 50))
++
++## The bond a has with b (made on first meeting from their natures).
++static func bond(people: Dictionary, a: String, b: String, minute: int) -> Dictionary:
++	var pa: Dictionary = people[a]
++	var acq: Dictionary = pa.get("acq", {})
++	var known: Dictionary = acq.get(b, {})
++	if not known.has("trust"):
++		var pb: Dictionary = people[b]
++		known.trust = int(40 - _t(pa, "suspicion") * 0.4 + _t(pb, "honesty") * 0.2)
++		# Like temper clashes; like honesty attracts.
++		known.like = int(10 - absf(_t(pa, "temper") - _t(pb, "temper")) * 0.3 + (_t(pb, "honesty") - 50.0) * 0.2)
++		known.mem = known.get("mem", [])
++		if not known.has("first"):
++			known.first = minute
++			known.last = minute
++			known.n = 0
++	acq[b] = known
++	pa.acq = acq
++	return known
++
++static func _remember(known: Dictionary, minute: int, what: String) -> void:
++	var mem: Array = known.get("mem", [])
++	mem.append({"at": minute, "what": what})
++	while mem.size() > MEMORY_CAP:
++		mem.pop_front()
++	known.mem = mem
++
++static func _shift(known: Dictionary, trust: int, like: int) -> void:
++	known.trust = clampi(int(known.get("trust", 0)) + trust, -100, 100)
++	known.like = clampi(int(known.get("like", 0)) + like, -100, 100)
++
++## One turn of two people together (called every few hours they share).
++static func together(world, a: String, b: String, note: Callable) -> void:
++	var people: Dictionary = world.s.survivors.people
++	var pa: Dictionary = people[a]
++	var pb: Dictionary = people[b]
++	var minute := int(world.s.minute)
++	var ab := bond(people, a, b, minute)
++	var ba := bond(people, b, a, minute)
++	var roll: int = world.draw(minute, absi(hash([a, b])) % 9973, "bond", 100)
++	var ga := Trade.goods(world, a)
++	var gb := Trade.goods(world, b)
++	var hour := int(world.hour_of_day())
++	var name_a := str(pa.get("name", ""))
++	var name_b := str(pb.get("name", ""))
++	# Time together, without trouble, builds a little trust.
++	_shift(ab, 1, 0)
++	_shift(ba, 1, 0)
++	# Something happens between the same two at most once a day.
++	if minute - int(ab.get("act_at", -100000)) < 1440 or minute - int(ba.get("act_at", -100000)) < 1440:
++		return
++	ab.act_at = minute
++	# A wound bandaged: the one who has a bandage and cares, for one who bleeds.
++	if str(pb.get("tag", "")) == "injured" and not bool(pb.get("treated", false)) and float(ga.get("bandage", 0.0)) >= 1.0 and int(ab.like) + _t(pa, "loyalty") * 0.5 >= 30:
++		ga.bandage = float(ga.bandage) - 1.0
++		pb.treated = true
++		_shift(ba, 25, 20)
++		_shift(ab, 5, 10)
++		_remember(ba, minute, "%sが傷の手当てをしてくれた" % name_a)
++		_remember(ab, minute, "%sの傷を手当てした" % name_b)
++		note.call("%sが、%sの傷に包帯を巻いた。" % [name_a, name_b], a)
++		return
++	var a_short_food := float(ga.get("food", 0.0)) < Trade.reserve(world, a, "food")
++	var b_short_food := float(gb.get("food", 0.0)) < Trade.reserve(world, b, "food")
++	# Sharing: one with plenty, one with nothing, someone kind or a friend.
++	var spare_a := float(ga.get("food", 0.0)) - Trade.reserve(world, a, "food")
++	if b_short_food and spare_a >= 1.0 and _t(pa, "honesty") * 0.5 + _t(pa, "loyalty") * 0.3 + float(ab.like) > 55.0 + float(roll) * 0.3:
++		ga.food = float(ga.food) - 1.0
++		gb.food = float(gb.get("food", 0.0)) + 1.0
++		_shift(ba, 20, 15)
++		_shift(ab, 3, 5)
++		_remember(ba, minute, "%sが食べ物を分けてくれた" % name_a)
++		_remember(ab, minute, "%sに食べ物を分けた" % name_b)
++		note.call("%sが、%sに食料を分けた。" % [name_a, name_b], a)
++		return
++	# Stealing: at night, from someone asleep, by the desperate and dishonest.
++	if (hour < 5 or hour >= 22) and a_short_food and float(gb.get("food", 0.0)) >= 1.0 and _t(pa, "honesty") < 40.0 and roll < 30:
++		gb.food = float(gb.food) - 1.0
++		ga.food = float(ga.get("food", 0.0)) + 1.0
++		# It is noticed more often than not.
++		if roll < 20:
++			_shift(ba, -60, -50)
++			_remember(ba, minute, "%sに食べ物を盗まれた" % name_a)
++			note.call("夜のうちに、%sが%sの食料を盗んだ。気づかれて、ひどい言い争いになった。" % [name_a, name_b], a)
++		return
++	# A fair swap: each gives what they can spare for what they lack, judged
++	# by the same rules as any trade.
++	var swap := _swap(world, a, b)
++	if not swap.is_empty() and int(ab.trust) >= 0 and int(ba.trust) >= 0:
++		ga[swap.give] = float(ga.get(swap.give, 0.0)) - float(swap.give_n)
++		gb[swap.give] = float(gb.get(swap.give, 0.0)) + float(swap.give_n)
++		gb[swap.get] = float(gb.get(swap.get, 0.0)) - float(swap.get_n)
++		ga[swap.get] = float(ga.get(swap.get, 0.0)) + float(swap.get_n)
++		_shift(ab, 6, 3)
++		_shift(ba, 6, 3)
++		_remember(ab, minute, "%sと物を交換した" % name_b)
++		_remember(ba, minute, "%sと物を交換した" % name_a)
++		note.call("%sと%sが、%sと%sを交換した。" % [name_a, name_b, Trade.amount_text(swap.give, swap.give_n), Trade.amount_text(swap.get, swap.get_n)], a)
++		return
++	# Quarrels: short tempers and short supplies.
++	if (_t(pa, "temper") + _t(pb, "temper")) / 2.0 + (20.0 if a_short_food or b_short_food else 0.0) - float(ab.get("like", 0)) * 0.2 > 80.0 + float(roll) * 0.5:
++		_shift(ab, -5, -15)
++		_shift(ba, -5, -15)
++		_remember(ab, minute, "%sと口論になった" % name_b)
++		_remember(ba, minute, "%sと口論になった" % name_a)
++		note.call("%sと%sが、言い争いをしていた。" % [name_a, name_b], a)
++	# What they say of the player: a trusted friend's word moves opinion.
++	var pt := int(pa.get("trust", 30))
++	var qt := int(pb.get("trust", 30))
++	if bool(pa.get("met", false)) and int(ba.trust) >= 40 and absi(pt - qt) >= 15:
++		pb.trust = clampi(qt + (pt - qt) / 4, 0, 100)
++		pb.heard_of_player = true
++
++## What a could give b for something b can give a, fair to both.
++static func _swap(world, a: String, b: String) -> Dictionary:
++	var spare_a := Trade.spare(world, a)
++	var spare_b := Trade.spare(world, b)
++	for give in spare_a:
++		for take in spare_b:
++			if give == take:
++				continue
++			var give_n := float(Trade.ITEMS[give].step)
++			var take_n := float(Trade.ITEMS[take].step)
++			# Worth more to each than what they part with.
++			# Clearly worth more to each than what they part with.
++			if Trade.receive_value(world, a, take, take_n) > Trade.give_cost(world, a, give, give_n) * 1.3 and Trade.receive_value(world, b, give, give_n) > Trade.give_cost(world, b, take, take_n) * 1.3:
++				return {"give": give, "give_n": give_n, "get": take, "get_n": take_n}
++	return {}
++
++## The one they trust and like most, if strongly enough to keep company.
++static func companion(world, id: String) -> String:
++	var p: Dictionary = world.s.survivors.people.get(id, {})
++	var best := ""
++	var best_score := 120
++	for other in p.get("acq", {}):
++		var k: Dictionary = p.acq[other]
++		var q: Dictionary = world.s.survivors.people.get(other, {})
++		if str(q.get("status", "")) != "alive":
++			continue
++		var score := int(k.get("trust", 0)) + int(k.get("like", 0))
++		if score >= best_score:
++			best_score = score
++			best = str(other)
++	return best
+diff --git a/scripts/npc_life.gd b/scripts/npc_life.gd
+new file mode 100644
+index 0000000..8d1a56a
+--- /dev/null
++++ b/scripts/npc_life.gd
+@@ -0,0 +1,276 @@
++extends RefCounted
++## v149.35 world stage 1: survivors live on their own. Once the town is coming
++## apart, each one decides every few hours from their own state — hunger,
++## thirst, danger where they stand, the night, their nerve — whether to stay
++## hidden, move away from the dead, go for supplies, or make for the shelter.
++## They walk the same streets as the player, one place at a time, take from
++## the same shelves (what they take is gone), and meet one another. Nothing
++## is decided when the player arrives: it has already happened.
++##
++## Kept in each person: place (as before), goods (trade.gd), plan, acq
++## {other_id: {first, last, n}}. A short log of what happened lives in
++## s.survivors.events (bounded) for the world's history.
++
++const Navigation = preload("res://scripts/navigation.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const District = preload("res://scripts/district.gd")
++const Trade = preload("res://scripts/trade.gd")
++const NpcBonds = preload("res://scripts/npc_bonds.gd")
++
++## Where survivors go. Home rooms and the player's doorstep are not theirs.
++const PLACES := ["屋外", "商店通り", "住宅街", "駅前", "デパート正面", "デパート", "デパート地下", "コンビニ", "食品店", "金物店", "薬局", "近所の空き家", "避難所"]
++const SUPPLY_SITES := {"コンビニ": "コンビニ", "食品店": "食品店", "金物店": "金物店", "薬局": "薬局", "近所の空き家": "近所の空き家", "デパート": "デパート", "デパート地下": "デパート"}
++const LOG_CAP := 60
++
++static func _graph(world) -> Dictionary:
++	var g: Dictionary = Navigation.graph(str(world.s.profile.get("housing", "一戸建て")))
++	var out := {}
++	for place in PLACES:
++		out[place] = g.get(place, []).filter(func(n): return n in PLACES)
++	return out
++
++static func _roamer(id: String, p: Dictionary) -> bool:
++	return str(p.get("status", "")) == "alive" and not bool(p.get("neighbor", false)) and not id.begins_with("shelter") and str(p.get("place", "")) in PLACES
++
++static func _danger(world, place: String) -> int:
++	return Walkers.count(world, place) + Walkers.horde_at(world, place)
++
++static func _site_left(world, place: String, cash: int = 0) -> float:
++	var site_name: String = SUPPLY_SITES.get(place, "")
++	if site_name.is_empty():
++		return 0.0
++	var site: Dictionary = world.s.district.sites.get(site_name, {})
++	if site.is_empty():
++		return 0.0
++	# v149.35: a shop still open sells to those with the money.
++	if not bool(site.get("vacant", false)):
++		if cash < 600 or not District.can_enter(world, site_name) or District.is_shop(site_name):
++			return 0.0
++	return float(site.get("food", 0.0)) + float(site.get("water", 0.0)) / 2.0
++
++static func _note(world, text: String, who: String = "") -> void:
++	var st: Dictionary = world.s.survivors
++	var log: Array = st.get("events", [])
++	log.append({"at": int(world.s.minute), "text": text, "who": who})
++	while log.size() > LOG_CAP:
++		log.pop_front()
++	st.events = log
++
++## One step toward a goal along the streets ("" if already there or no way).
++static func _toward(world, from: String, goal: String) -> String:
++	if from == goal:
++		return ""
++	var g := _graph(world)
++	var seen := {from: ""}
++	var queue: Array = [from]
++	while not queue.is_empty():
++		var at: String = queue.pop_front()
++		if at == goal:
++			break
++		for n in g.get(at, []):
++			if not seen.has(n):
++				seen[n] = at
++				queue.append(n)
++	if not seen.has(goal):
++		return ""
++	var step := goal
++	while str(seen[step]) != from:
++		step = str(seen[step])
++	return step
++
++## Hourly, for everyone out there.
++static func hourly(world) -> void:
++	if not world.s.get("survivors") is Dictionary:
++		return
++	var society := str(world.s.get("society", "normal"))
++	if not society in ["disrupted", "emergency"]:
++		return
++	var minute := int(world.s.minute)
++	var hour := int(world.hour_of_day())
++	var night := hour < 6 or hour >= 20
++	var people: Dictionary = world.s.survivors.people
++	var g := _graph(world)
++	var moved := false
++	for id in people:
++		var p: Dictionary = people[id]
++		if not _roamer(str(id), p):
++			continue
++		# Each person thinks it over every three hours, not all at once.
++		if (hour + absi(hash(str(id))) % 3) % 3 != 0:
++			continue
++		var here := str(p.place)
++		var danger := _danger(world, here)
++		var courage := float(p.get("traits", {}).get("courage", 50))
++		var roll: int = world.draw(minute, absi(hash(str(id))) % 9973, "npc-life", 100)
++		var goods := Trade.goods(world, str(id))
++		var hungry := float(goods.get("food", 0.0)) < Trade.reserve(world, str(id), "food") * 0.5
++		var thirsty := float(goods.get("water", 0.0)) < Trade.reserve(world, str(id), "water") * 0.5
++		var goal := ""
++		var plan := "stay"
++		if danger >= 2 and roll < 70:
++			# Away from the dead: the quietest place next door.
++			plan = "flee"
++			var best := here
++			for n in g.get(here, []):
++				if _danger(world, n) < _danger(world, best):
++					best = n
++			goal = best
++		elif night:
++			plan = "hide"
++		elif here == "避難所" and load("res://scripts/shelter.gd").is_open(world):
++			plan = "sheltered"
++		elif (hungry or thirsty) and _site_left(world, here, int(p.get("cash", 0))) > 0.0:
++			plan = "forage"
++		elif (hungry or thirsty or danger > 0) and load("res://scripts/shelter.gd").is_open(world) and float(p.get("traits", {}).get("suspicion", 50)) < 65:
++			plan = "to_shelter"
++			goal = "避難所"
++		elif hungry or thirsty:
++			# The nearest place that still has something, braver ones farther.
++			plan = "to_supplies"
++			var reach := 2 + int(courage / 30.0)
++			var best_d := 99
++			for place in SUPPLY_SITES:
++				if _site_left(world, place, int(p.get("cash", 0))) <= 0.0 or _danger(world, place) >= 3:
++					continue
++				var d := _distance(g, here, place)
++				if d <= reach and d < best_d:
++					best_d = d
++					goal = place
++		elif not _rival_here(world, str(id), here).is_empty():
++			# v149.35 stage 2: away from someone they cannot stand.
++			plan = "avoid"
++			var options_away: Array = g.get(here, [])
++			if not options_away.is_empty():
++				goal = options_away[roll % options_away.size()]
++		elif not NpcBonds.companion(world, str(id)).is_empty() and str(people[NpcBonds.companion(world, str(id))].place) != here and str(people[NpcBonds.companion(world, str(id))].place) in PLACES:
++			# Keeping company with the one they trust most.
++			plan = "with_friend"
++			goal = str(people[NpcBonds.companion(world, str(id))].place)
++		elif roll < 8:
++			# Now and then they look around nearby (and so meet others).
++			plan = "wander"
++			var options: Array = g.get(here, [])
++			if not options.is_empty():
++				goal = options[roll % options.size()]
++		p.plan = plan
++		if plan == "forage":
++			_forage(world, str(id), p, here)
++		elif not goal.is_empty() and goal != here:
++			var next := _toward(world, here, goal) if not plan in ["flee", "wander", "avoid"] else goal
++			if not next.is_empty():
++				p.place = next
++				moved = true
++				# Someone walking up to where the player stands is noticed.
++				if world.has_meta("player_place") and str(world.get_meta("player_place")) == next and world.s.has("walkers"):
++					world.s.walkers.notices.append("【出会い】%sが、こちらへ歩いてきた。" % str(p.get("label", "誰か")))
++				if next == "避難所":
++					_note(world, "%sが、避難所に入った。" % str(p.get("name", "")), str(id))
++	_meetings(world)
++
++static func _distance(g: Dictionary, from: String, to: String) -> int:
++	if from == to:
++		return 0
++	var seen := {from: 0}
++	var queue: Array = [from]
++	while not queue.is_empty():
++		var at: String = queue.pop_front()
++		for n in g.get(at, []):
++			if not seen.has(n):
++				seen[n] = int(seen[at]) + 1
++				if n == to:
++					return int(seen[n])
++				queue.append(n)
++	return 99
++
++## Taking from the shelves: what is taken is gone for everyone after.
++static func _forage(world, id: String, p: Dictionary, place: String) -> void:
++	var site: Dictionary = world.s.district.sites[SUPPLY_SITES[place]]
++	var goods := Trade.goods(world, id)
++	var food := minf(float(site.food), 2.0)
++	var water := minf(float(site.water), 4.0)
++	if not bool(site.get("vacant", false)):
++		# Bought, not taken: as much as the money covers.
++		var cash := int(p.get("cash", 0))
++		food = minf(food, floorf(float(cash) / 600.0))
++		cash -= int(food) * 600
++		water = minf(water, floorf(float(cash) / 120.0) * 2.0)
++		cash -= int(water / 2.0) * 120
++		p.cash = cash
++		if food + water > 0.0:
++			_note(world, "%sが、%sで買い物をしていった。" % [str(p.get("name", "")), place], id)
++	site.food = float(site.food) - food
++	site.water = float(site.water) - water
++	goods.food = float(goods.get("food", 0.0)) + food
++	goods.water = float(goods.get("water", 0.0)) + water
++	if food + water > 0.0 and bool(site.get("vacant", false)):
++		_note(world, "%sが、%sの棚から物資を持ち出した。" % [str(p.get("name", "")), place], id)
++
++## Those in the same place meet, and remember it.
++static func _meetings(world) -> void:
++	var people: Dictionary = world.s.survivors.people
++	var by_place := {}
++	for id in people:
++		var p: Dictionary = people[id]
++		if str(p.get("status", "")) != "alive" or not str(p.get("place", "")) in PLACES:
++			continue
++		if not by_place.has(p.place):
++			by_place[p.place] = []
++		by_place[p.place].append(str(id))
++	var minute := int(world.s.minute)
++	for place in by_place:
++		var here: Array = by_place[place]
++		if here.size() < 2:
++			continue
++		for a in here:
++			for b in here:
++				if a == b:
++					continue
++				var acq: Dictionary = people[a].get("acq", {})
++				var known: Dictionary = acq.get(b, {})
++				if known.is_empty():
++					known = {"first": minute, "last": minute, "n": 0}
++					if a < b:
++						_note(world, "%sと%sが、%sで出会った。" % [str(people[a].get("name", "")), str(people[b].get("name", "")), place], a)
++				if minute - int(known.get("last", 0)) >= 60 or int(known.n) == 0:
++					known.n = int(known.n) + 1
++				known.last = minute
++				acq[b] = known
++				people[a].acq = acq
++		# v149.35 stage 2: those together act toward one another, now and then.
++		var hour := int(world.hour_of_day())
++		for a in here:
++			for b in here:
++				if a == b:
++					continue
++				if (hour + absi(hash([a, b])) % 3) % 3 != 0:
++					continue
++				if str(people[a].get("status", "")) != "alive" or str(people[b].get("status", "")) != "alive":
++					continue
++				NpcBonds.together(world, a, b, func(text, who): _note(world, text, who))
++
++## Someone here this person cannot stand ("" if none).
++static func _rival_here(world, id: String, place: String) -> String:
++	var p: Dictionary = world.s.survivors.people[id]
++	for other in p.get("acq", {}):
++		var k: Dictionary = p.acq[other]
++		var q: Dictionary = world.s.survivors.people.get(other, {})
++		if str(q.get("status", "")) == "alive" and str(q.get("place", "")) == place and int(k.get("like", 0)) + int(k.get("trust", 0)) <= -60:
++			return str(other)
++	return ""
++
++## What can be seen of passers-by from the window (or the doorstep).
++static func passing(world) -> String:
++	if not world.s.get("survivors") is Dictionary:
++		return ""
++	var seen: Array = []
++	for id in world.s.survivors.people:
++		var p: Dictionary = world.s.survivors.people[id]
++		if _roamer(str(id), p) and str(p.place) == "屋外":
++			seen.append(p)
++	if seen.is_empty():
++		return ""
++	if seen.size() == 1:
++		var p: Dictionary = seen[0]
++		var how := "足早に歩いていく" if str(p.get("plan", "")) in ["to_supplies", "to_shelter", "flee"] else "あたりをうかがいながら立っている"
++		return "通りを、%sが%s。" % [str(p.get("label", "誰か")), how]
++	return "通りに、生きている人が%d人いる。何か話しているようだ。" % seen.size()
+diff --git a/scripts/trade.gd b/scripts/trade.gd
+index b76af42..6131be1 100644
+--- a/scripts/trade.gd
++++ b/scripts/trade.gd
+@@ -307,9 +307,25 @@ static func daily(world, id: String) -> void:
+ 	var g := goods(world, id)
+ 	var mouths := 1.0 + float(p.get("dependents", 0))
+ 	var day := int(world.s.minute) / 1440
++	var short := false
+ 	for item in DAILY:
+ 		var need := float(DAILY[item]) * mouths
++		short = short or float(g.get(item, 0.0)) < need
+ 		g[item] = maxf(0.0, float(g.get(item, 0.0)) - need)
++	# v149.35: days without enough to eat and drink wear a person down; past
++	# a week and a half, they do not get up again.
++	if short:
++		# Counted once a day, however often the day is looked at.
++		if int(p.get("short_on", -1)) != day:
++			p.short_on = day
++			p.short_days = int(p.get("short_days", 0)) + 1
++	else:
++		p.erase("short_days")
++	if int(p.get("short_days", 0)) >= 10 and not bool(p.get("neighbor", false)):
++		p.status = "dead"
++		p.died = int(world.s.minute)
++		p.cause = "hunger"
++		return
+ 	# Going out for supplies: the braver find more, less as the town empties.
+ 	var courage := float(p.get("traits", {}).get("courage", 50))
+ 	var luck := _hash(id, "forage-%d" % day) % 100
+@@ -322,6 +338,20 @@ static func daily(world, id: String) -> void:
+ 			g.food = float(g.food) + mouths
+ 			g.water = float(g.water) + 2.0 * mouths
+ 		return
++	# v149.35: those who walk the streets find things where they are
++	# (npc_life.gd); the shelter feeds those inside while it can.
++	var place := str(p.get("place", ""))
++	if place == "避難所":
++		var shelter = load("res://scripts/shelter.gd")
++		if shelter.is_open(world):
++			var st: Dictionary = shelter.state(world)
++			var share := minf(float(st.stock), mouths)
++			st.stock = float(st.stock) - share
++			g.food = float(g.get("food", 0.0)) + share
++			g.water = float(g.get("water", 0.0)) + 2.0 * share
++		return
++	if load("res://scripts/npc_life.gd")._roamer(id, p):
++		return
+ 	if float(luck) < courage * town * 0.6:
+ 		g.food = float(g.get("food", 0.0)) + 1.0
+ 	if float(luck) < courage * town * 0.9:
+diff --git a/scripts/world.gd b/scripts/world.gd
+index 5d08c00..0f1cbe2 100644
+--- a/scripts/world.gd
++++ b/scripts/world.gd
+@@ -1,5 +1,6 @@
+ extends "res://scripts/world_legacy.gd"
+ const District = preload("res://scripts/district.gd")
++const NpcLife = preload("res://scripts/npc_life.gd")
+ const Events = preload("res://scripts/world_events.gd")
+ const HouseholdSmalltalk = preload("res://scripts/household_smalltalk.gd")
+ const HouseholdDialogue = preload("res://scripts/household_dialogue.gd")
+@@ -92,6 +93,7 @@ func step(sleeping: bool) -> void:
+ 		_household_hour()
+ 		Walkers.hourly(self)
+ 		Walkers.horde_hourly(self)
++		NpcLife.hourly(self)
+ 		Walkers.housemates_hourly(self)
+ 		Walkers.home_events(self)
+ 		Raiders.hourly(self)
+diff --git a/tests/test_arrivals149_29.gd b/tests/test_arrivals149_29.gd
+index 470b72c..7e1ce25 100644
+--- a/tests/test_arrivals149_29.gd
++++ b/tests/test_arrivals149_29.gd
+@@ -33,7 +33,12 @@ func run() -> void:
+ 	check(notices >= arrived.size(), "their coming is noticed")
+ 	var loose: Array = people.keys().filter(func(k): return str(people[k].status) == "alive" and str(people[k].place) != "避難所" and not bool(people[k].get("neighbor", false)))
+ 	check(loose.size() <= Survivors.MAX_LOOSE, "but not without limit")
+-	var a: Dictionary = people[arrived[0]]
++	# v149.35: people now live (and may starve) on their own goods; meet the
++	# latest arrival, who is still alive.
++	var a: Dictionary = people[arrived[-1]]
++	for k in arrived:
++		if str(people[k].status) == "alive":
++			a = people[k]
+ 	check(str(a.background).contains("来た") or str(a.background).contains("追われて") or str(a.background).contains("歩いてきた"), "a newcomer has come from somewhere: " + str(a.background).right(25))
+ 	if a.has("deadline_day"):
+ 		check(int(a.deadline_day) > int(a.arrived), "their troubles start on arrival")
+diff --git a/tests/test_npc_life149_35.gd b/tests/test_npc_life149_35.gd
+new file mode 100644
+index 0000000..87d7cb2
+--- /dev/null
++++ b/tests/test_npc_life149_35.gd
+@@ -0,0 +1,173 @@
++extends SceneTree
++## v149.35 world stage 1: survivors live on their own — they move, take from
++## the same shelves as the player, go to the shelter, meet one another, and
++## the same world gives the same history, reloaded or not.
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const Trade = preload("res://scripts/trade.gd")
++const NpcLife = preload("res://scripts/npc_life.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func fresh(g, seed: int) -> void:
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++
++func days(w, n: int) -> void:
++	for d in n:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.advance_safe(60)
++
++func places(w) -> Dictionary:
++	var out := {}
++	var people: Dictionary = Survivors.ensure(w).people
++	for id in people:
++		out[id] = "%s:%s" % [people[id].status, people[id].place]
++	return out
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	fresh(g, 12)
++	var w = g.world
++	var start := places(w)
++	days(w, 2)
++	check(places(w) == start, "while life is ordinary, nobody wanders")
++	# Into the breakdown.
++	days(w, 14)
++	var people: Dictionary = Survivors.ensure(w).people
++	var moved := 0
++	var met := 0
++	for id in people:
++		if start.has(id) and str(places(w)[id]).get_slice(":", 1) != str(start[id]).get_slice(":", 1):
++			moved += 1
++		met += people[id].get("acq", {}).size()
++	check(moved >= 3, "once the town comes apart, people move on their own (%d)" % moved)
++	check(met >= 4, "and meet one another, and remember it (%d)" % met)
++	var log: Array = Survivors.ensure(w).get("events", [])
++	check(log.any(func(e): return str(e.text).contains("避難所に入った")), "some make for the shelter")
++	check(log.any(func(e): return str(e.text).contains("棚から物資を持ち出した")), "some take from the shelves")
++
++	# What they take is gone from the shelf, and is theirs.
++	w.s.society = "emergency"
++	var site: Dictionary = w.s.district.sites["近所の空き家"]
++	site.vacant = true
++	site.food = 3.0
++	site.water = 4.0
++	var someone := ""
++	for id in people:
++		if NpcLife._roamer(str(id), people[id]):
++			someone = str(id)
++			break
++	var their: Dictionary = Trade.goods(w, someone)
++	var before_total := float(site.food) + float(their.get("food", 0.0))
++	NpcLife._forage(w, someone, people[someone], "近所の空き家")
++	check(float(site.food) + float(their.food) == before_total and float(site.food) < 3.0, "taking from a shelf moves food, it does not make it")
++
++	# Starving for ten days ends a life.
++	var q: Dictionary = people[someone]
++	var tg: Dictionary = Trade.goods(w, someone)
++	q.place = "住宅街"
++	for i in 10:
++		tg.food = 0.0
++		tg.water = 0.0
++		if str(q.status) == "alive":
++			Trade.daily(w, someone)
++		w.s.minute = int(w.s.minute) + 1440
++	check(str(q.status) == "dead" and str(q.cause) == "hunger", "ten days without food or water and they do not get up")
++
++	# Passers-by can be seen from the window.
++	for id in people:
++		if NpcLife._roamer(str(id), people[id]):
++			people[id].place = "屋外"
++			break
++	check(NpcLife.passing(w).begins_with("通り"), "someone on the street is seen from the window")
++
++	# Stage 2: what people do to one another moves real goods and is remembered.
++	var NpcBonds = load("res://scripts/npc_bonds.gd")
++	fresh(g, 12)
++	w = g.world
++	w.s.society = "emergency"
++	people = Survivors.ensure(w).people
++	var two: Array = []
++	for id in people:
++		if NpcLife._roamer(str(id), people[id]) and two.size() < 2:
++			two.append(str(id))
++	var a: String = two[0]
++	var b: String = two[1]
++	var pa: Dictionary = people[a]
++	var pb: Dictionary = people[b]
++	pa.place = "住宅街"
++	pb.place = "住宅街"
++	pa.traits.honesty = 90
++	pa.traits.loyalty = 90
++	pa.dependents = 0
++	pb.dependents = 0
++	Trade.goods(w, a).food = 9.0
++	Trade.goods(w, b).food = 0.0
++	w.s.minute = 4 * 1440 + 6 * 60   # 14:00
++	pb.tag = ""
++	NpcBonds.bond(people, a, b, int(w.s.minute)).like = 60   # friends already
++	var sum_before := float(Trade.goods(w, a).food) + float(Trade.goods(w, b).food)
++	NpcBonds.together(w, a, b, func(t, who): pass)
++	check(float(Trade.goods(w, b).food) == 1.0 and float(Trade.goods(w, a).food) + float(Trade.goods(w, b).food) == sum_before, "someone kind shares food with one who has none; nothing is made")
++	var kb: Dictionary = pb.acq[a]
++	check(int(kb.trust) > 20 and str(kb.mem[-1].what).contains("分けてくれた"), "and it is remembered, and trusted")
++	NpcBonds.together(w, a, b, func(t, who): pass)
++	check(float(Trade.goods(w, b).food) == 1.0, "one act between the same two a day")
++	# A wound bandaged by someone who cares.
++	w.s.minute += 1440
++	pb.tag = "injured"
++	pb.treated = false
++	Trade.goods(w, a).bandage = 1.0
++	NpcBonds.together(w, a, b, func(t, who): pass)
++	check(bool(pb.treated) and float(Trade.goods(w, a).bandage) == 0.0, "a wound is bandaged with a real bandage")
++	# Theft at night, by the desperate and dishonest, is remembered.
++	w.s.minute += 1440
++	w.s.minute = (int(w.s.minute) / 1440) * 1440 + 15 * 60   # 23:00
++	pa.traits.honesty = 10
++	Trade.goods(w, a).food = 0.0
++	Trade.goods(w, b).food = 5.0
++	var stolen := false
++	for i in 12:
++		w.s.minute += 1441
++		NpcBonds.together(w, a, b, func(t, who): pass)
++		if float(Trade.goods(w, a).food) > 0.0:
++			stolen = true
++			break
++	check(stolen and float(Trade.goods(w, a).food) + float(Trade.goods(w, b).food) == 5.0, "the desperate may steal in the night (nothing made or lost)")
++	# What a trusted friend says of the player changes minds.
++	pa.met = true
++	pa.trust = 90
++	pb.trust = 20
++	pb.acq[a].trust = 80
++	pb.acq[a].act_at = -100000
++	pa.acq[b].act_at = -100000
++	w.s.minute += 1440
++	NpcBonds.together(w, a, b, func(t, who): pass)
++	check(int(pb.trust) > 20 and bool(pb.get("heard_of_player", false)), "a friend's good word about the player travels")
++
++	# The same seed makes the same history; a save in the middle changes nothing.
++	fresh(g, 21)
++	days(g.world, 12)
++	var straight := places(g.world)
++	var straight_log := JSON.stringify(Survivors.ensure(g.world).get("events", []))
++	fresh(g, 21)
++	days(g.world, 6)
++	g._save()
++	g._load()
++	days(g.world, 6)
++	check(places(g.world) == straight, "a world reloaded midway goes on exactly as one left running")
++	check(JSON.stringify(Survivors.ensure(g.world).get("events", [])) == straight_log, "and its history is the same")
++	print("v149.35 npc life checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
