@@ -1,0 +1,483 @@
+diff --git a/qa/shop_shot.gd b/qa/shop_shot.gd
+new file mode 100644
+index 0000000..b9ac8ab
+--- /dev/null
++++ b/qa/shop_shot.gd
+@@ -0,0 +1,36 @@
++extends SceneTree
++## Screenshot of the shop window (DCJ_PLACE, DCJ_OUT); also buys one item.
++const Main = preload("res://main.tscn")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	root.size = Vector2i(390, 844)
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	g.world.s.minute = 3 * 60
++	await g._on_command(OS.get_environment("DCJ_PLACE") + "へ行く")
++	for i in 10: await process_frame
++	print("visible=", g.shop_window != null and g.shop_window.visible, " offers=", g.ShopWindow.offers(g).map(func(o): return o.name))
++	print("chips=", g._suggestions())
++	root.get_texture().get_image().save_png(OS.get_environment("DCJ_OUT"))
++	if g.shop_window != null and g.shop_window.visible:
++		var offer: Dictionary = g.ShopWindow.offers(g)[0]
++		g.shop_window.counts[str(offer.id)] = 2
++		await g.shop_window._buy(offer)
++		for i in 10: await process_frame
++		print("after buy: ", g.log_entries.slice(-2), " note=", g.shop_window.note_label.text)
++		root.get_texture().get_image().save_png(OS.get_environment("DCJ_OUT").replace(".png", "_after.png"))
++		g.shop_window.visible = false
++		await g._on_command("在庫を見る")
++		for i in 5: await process_frame
++		print("reopen by command: ", g.shop_window.visible, " ", g.log_entries[-1])
++		await g._on_command("家に帰る")
++		for i in 5: await process_frame
++		print("after leaving: ", g.shop_window.visible)
++	quit()
+diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
+index a2f0e0b..2c13ef6 100644
+--- a/scripts/action_plan.gd
++++ b/scripts/action_plan.gd
+@@ -2,7 +2,7 @@ extends RefCounted
+ # Offline parsing is intentionally bounded. Unknown clauses reject the WHOLE
+ # plan before mutation. AI plans use the same validation and action executor.
+ const District = preload("res://scripts/district.gd")
+-const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
++const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
+ const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
+ const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
+ const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
+diff --git a/scripts/main.gd b/scripts/main.gd
+index 79d10bf..746f72f 100644
+--- a/scripts/main.gd
++++ b/scripts/main.gd
+@@ -15,6 +15,7 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+ const TitleScreen = preload("res://scripts/title_screen.gd")
+ const SceneView = preload("res://scripts/scene_view.gd")
+ const ActionPhotos = preload("res://scripts/action_photos.gd")
++const ShopWindow = preload("res://scripts/shop_window.gd")
+ const Combat = preload("res://scripts/combat.gd")
+ const CombatIntent = preload("res://scripts/combat_intent.gd")
+ const Weapons = preload("res://scripts/weapons.gd")
+@@ -139,6 +140,9 @@ var vitals_values: Dictionary = {}
+ var warning_label: Label
+ var scene_view: Control
+ var action_card: PanelContainer
++## v149.34: the shop counter window, and the place it last opened by itself.
++var shop_window: PanelContainer
++var shop_seen_at := ""
+ var combat_panel: PanelContainer
+ ## The street right after the last one fell: shown until the next command.
+ var combat_after := false
+@@ -1352,6 +1356,9 @@ func _action_card_for(line: String) -> void:
+ 		forced_action_kind = ""
+ 	if hit.is_empty():
+ 		return
++	# v149.34: buying at the counter window shows no photo over it.
++	if shop_window != null and shop_window.visible and str(hit.kind) == "shop":
++		return
+ 	var path: String = ActionPhotos.path(world, str(hit.kind))
+ 	if path.is_empty():
+ 		return
+@@ -1413,6 +1420,28 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+ 	action_tween.tween_property(action_card, "modulate:a", 0.0, 0.4)
+ 	action_tween.tween_callback(func(): action_card.visible = false)
+ 
++## v149.34: arriving at an open shop shows what it sells; leaving closes it.
++func _refresh_shop_window() -> void:
++	if world == null or not is_inside_tree():
++		return
++	if shop_window != null and shop_window.visible:
++		if Combat.active(world) or float(world.s.health) <= 0:
++			shop_window.visible = false
++		else:
++			shop_window.refresh()
++	if location != shop_seen_at:
++		shop_seen_at = location
++		if not Combat.active(world) and not ShopWindow.offers(self).is_empty():
++			_open_shop_window()
++
++func _open_shop_window() -> bool:
++	if shop_window == null:
++		shop_window = ShopWindow.new()
++		shop_window.visible = false
++		add_child(shop_window)
++	move_child(shop_window, get_child_count() - 1)
++	return shop_window.open(self)
++
+ func _hide_action_card() -> void:
+ 	if action_card == null:
+ 		return
+@@ -1542,6 +1571,7 @@ func _scroll_log_to_end() -> void:
+ 
+ func _refresh() -> void:
+ 	_refresh_combat_panel()
++	_refresh_shop_window()
+ 	# v149.29: a death ends the story (no succession); the life is told back,
+ 	# with what became of those left behind.
+ 	if float(world.s.health) <= 0 and not succession_running:
+@@ -1932,7 +1962,9 @@ func _suggestions() -> Array:
+ 			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
+ 				out.push_front("%sの%sを探す" % [mate.name, req.rel])
+ 		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
+-			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else "食料を買う")
++			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else ("品物を見る" if not ShopWindow.offers(self).is_empty() else "食料を買う"))
++		if not "品物を見る" in out and not ShopWindow.offers(self).is_empty():
++			out.push_front("品物を見る")
+ 		out.append("家に帰る")
+ 	return out.slice(0, 6)
+ 
+@@ -3426,7 +3458,7 @@ func _canonical_command(raw: String) -> String:
+ 		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
+ 	}
+ 	if aliases.has(cmd): return aliases[cmd]
+-	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する"]
++	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
+ 	if cmd in exact: return cmd
+ 	if _parse_wait_minutes(cmd) != -1: return cmd
+ 	var movement := RegEx.new()
+@@ -3479,7 +3511,10 @@ func _interpret(raw: String) -> String:
+ 		if world.s.health<=0:return "死亡している。"
+ 		return world.work_at_home()
+ 	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
+-	if clean in ["店の在庫を見る","買い物する"]:
++	if clean in ["店の在庫を見る","買い物する","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","何が売ってる","買い物をする"]:
++		# v149.34: the counter window shows it; the log keeps a short line.
++		if not Combat.active(world) and _open_shop_window():
++			return "%sの品ぞろえを確かめた。" % ShopWindow.title_for(location)
+ 		return District.describe(world, _site()) if District.SITES.has(_site()) and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())) else _shop_inventory()
+ 	if clean == "住居を点検":return _observe("inspect")
+ 	var purchase := RegEx.new()
+diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
+index fb8c179..6de9c8d 100644
+--- a/scripts/scene_description.gd
++++ b/scripts/scene_description.gd
+@@ -73,7 +73,7 @@ static func _action_cue(world, place: String) -> String:
+ 		var site: Dictionary = world.s.district.sites[place]
+ 		if not site.vacant:
+ 			if District.can_enter(world, place):
+-				return "店は営業中。「店の在庫を見る」で品ぞろえを確かめたり、「水を買う」と注文したりできる。"
++				return "店は営業中。「品物を見る」で品ぞろえを確かめて、買う物を選べる。"
+ 			return "営業時間外だ。いまは買い物できない。"
+ 		if not District.prepared(world, place):
+ 			var occupancy := "寝泊まりの支度はまだしていない。" if place == "近所の空き家" else "店は放棄されている。"
+@@ -82,7 +82,7 @@ static func _action_cue(world, place: String) -> String:
+ 		return shelter + "「ここで一晩過ごす」ことも、「拠点の状態を見る」こともできる。"
+ 	if SHOPS.has(place):
+ 		if world.can_trade(SHOPS[place]):
+-			return "店は営業中。「店の在庫を見る」で品ぞろえを確かめられる。"
++			return "店は営業中。「品物を見る」で品ぞろえを確かめて、買う物を選べる。"
+ 		return "店は休業中。いまは買い物できない。"
+ 	match place:
+ 		"寝室": return "「窓を見る」と外の様子を確かめられる。休むなら「寝る」。"
+diff --git a/scripts/shop_window.gd b/scripts/shop_window.gd
+new file mode 100644
+index 0000000..1c66dd9
+--- /dev/null
++++ b/scripts/shop_window.gd
+@@ -0,0 +1,229 @@
++extends PanelContainer
++## v149.34: the shop counter as a window. Opens on arriving at an open shop
++## (or with 「品物を見る」「在庫を見る」), lists what is on sale with price and
++## stock, and buys through the same typed commands as before, so time, money,
++## stock and what can be carried follow the existing rules. Item pictures live
++## in assets/items/item_<id>.png (shown when present).
++
++const UI = preload("res://scripts/ui_kit.gd")
++const District = preload("res://scripts/district.gd")
++const HomeLife = preload("res://scripts/home_life.gd")
++const ICON_DIR := "res://assets/items/"
++
++var game
++var place := ""
++var counts := {}
++var list_box: VBoxContainer
++var title_label: Label
++var cash_label: Label
++var note_label: Label
++var busy := false
++
++## What this place sells now: [{id, name, unit, price, stock, command}].
++## stock is how many can be bought (-1: no limit). Empty when not a shop or
++## not open. Reads only (never creates state).
++static func offers(game_node) -> Array:
++	var world = game_node.world
++	var where := str(game_node.location)
++	var out: Array = []
++	if float(world.s.health) <= 0:
++		return out
++	match where:
++		"コンビニ", "デパート地下":
++			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
++			var site: Dictionary = world.s.district.sites[site_name]
++			if bool(site.vacant) or not District.can_enter(world, site_name):
++				return out
++			out.append({"id": "food", "name": "食料", "unit": "1人日分", "price": 600, "stock": int(floor(float(site.food))), "command": "食料を%d個買う"})
++			out.append({"id": "water", "name": "飲料水", "unit": "2L", "price": 120, "stock": int(floor(float(site.water) / 2.0)), "command": "水を%d本買う"})
++			if where == "コンビニ":
++				var tobacco: Dictionary = world.s.get("tobacco_stock") if world.s.get("tobacco_stock") is Dictionary else HomeLife.TOBACCO_START
++				out.append({"id": "tobacco", "name": "タバコ", "unit": "1箱（20本）", "price": 600, "stock": int(tobacco.get("コンビニ", 0)), "command": "タバコを%d箱買う"})
++				out.append({"id": "gas", "name": "カセットボンベ", "unit": "1本", "price": 150, "stock": -1, "command": "カセットボンベを%d本買う"})
++		"食品店", "金物店", "薬局":
++			var id: String = {"食品店": "grocer", "金物店": "hardware", "薬局": "pharmacy"}[where]
++			if not world.can_trade(id):
++				return out
++			var words := {"food": "食料を%d個買う", "water": "水を%d本買う", "wood": "木材を%d個買う", "parts": "部品を%d個買う", "seeds": "種を%d袋買う", "bandage": "包帯を%d個買う", "filter": "浄水器を%d個買う", "solar": "ソーラーパネルを%d個買う", "battery": "蓄電池を%d個買う"}
++			var units := {"food": "1人日分", "water": "2L", "wood": "1束", "parts": "1袋", "seeds": "1袋", "bandage": "1巻", "filter": "1台", "solar": "1台", "battery": "1台"}
++			for item in world.CATALOG:
++				var entry: Dictionary = world.CATALOG[item]
++				if str(entry.shop) != id:
++					continue
++				var stock := int(floor(float(world.s.shops[id].stock.get(item, 0)) / float(entry.amount)))
++				if item in ["filter", "solar", "battery"]:
++					stock = mini(stock, 1)
++				out.append({"id": str(item), "name": str(entry.name), "unit": str(units.get(item, "")), "price": int(entry.price), "stock": stock, "command": str(words[item])})
++			if id == "hardware":
++				out.append({"id": "gas", "name": "カセットボンベ", "unit": "1本", "price": 150, "stock": -1, "command": "カセットボンベを%d本買う"})
++	return out
++
++static func title_for(where: String) -> String:
++	return {"デパート地下": "デパ地下の食品売場"}.get(where, where)
++
++func _init() -> void:
++	var style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 12, 12)
++	style.shadow_color = Color(0, 0, 0, 0.6)
++	style.shadow_size = 18
++	add_theme_stylebox_override("panel", style)
++	mouse_filter = Control.MOUSE_FILTER_STOP
++	var column := VBoxContainer.new()
++	column.add_theme_constant_override("separation", 8)
++	add_child(column)
++	var head := HBoxContainer.new()
++	column.add_child(head)
++	title_label = UI.label("", 17, UI.TEXT, false)
++	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	head.add_child(title_label)
++	var close := UI.button("閉じる", false, 36, 13)
++	close.custom_minimum_size.x = 72
++	close.pressed.connect(func(): visible = false)
++	head.add_child(close)
++	cash_label = UI.label("", 12, UI.MUTED, true)
++	column.add_child(cash_label)
++	var scroll := ScrollContainer.new()
++	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
++	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
++	scroll.custom_minimum_size = Vector2(0, 120)
++	column.add_child(scroll)
++	list_box = VBoxContainer.new()
++	list_box.add_theme_constant_override("separation", 6)
++	list_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	scroll.add_child(list_box)
++	note_label = UI.label("", 13, UI.ACCENT, true)
++	column.add_child(note_label)
++
++func open(game_node) -> bool:
++	game = game_node
++	var items := offers(game)
++	if items.is_empty():
++		visible = false
++		return false
++	if place != str(game.location):
++		counts.clear()
++		note_label.text = ""
++	place = str(game.location)
++	_fill(items)
++	visible = true
++	return true
++
++func refresh() -> void:
++	if not visible or game == null:
++		return
++	if str(game.location) != place:
++		visible = false
++		return
++	var items := offers(game)
++	if items.is_empty():
++		visible = false
++		return
++	_fill(items)
++
++func _place_on_screen() -> void:
++	var parent := get_parent() as Control
++	var area: Vector2 = parent.size if parent != null else Vector2(390, 844)
++	var width := minf(380.0, area.x - 24.0)
++	var rows := list_box.get_child_count()
++	var height := minf(110.0 + 64.0 * rows + (24.0 if not note_label.text.is_empty() else 0.0), area.y * 0.72)
++	custom_minimum_size = Vector2(width, height)
++	size = Vector2(width, height)
++	for row in list_box.get_children():
++		row.custom_minimum_size.x = width - 24.0
++	position = Vector2((area.x - width) / 2.0, maxf(12.0, area.y * 0.1))
++
++func _fill(items: Array) -> void:
++	var world = game.world
++	title_label.text = "%s（営業中）" % title_for(place)
++	var bag: Dictionary = world.s.district.get("bag", {})
++	var carry := ""
++	if place in ["コンビニ", "デパート地下"]:
++		carry = "\n持てる量：食料 %.0f／%.0f ・ 水 %.0f／%.0f L" % [float(bag.get("food", 0.0)), District.FOOD_LIMIT, float(bag.get("water", 0.0)), District.WATER_LIMIT]
++	cash_label.text = "所持金 %d円%s" % [int(world.s.cash), carry]
++	for child in list_box.get_children():
++		list_box.remove_child(child)
++		child.queue_free()
++	for offer in items:
++		list_box.add_child(_row(offer))
++	_place_on_screen()
++
++func _icon(id: String) -> Control:
++	var path := ICON_DIR + "item_%s.png" % id
++	if ResourceLoader.exists(path):
++		var picture := TextureRect.new()
++		picture.texture = load(path)
++		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
++		picture.custom_minimum_size = Vector2(40, 40)
++		return picture
++	# No picture yet: a plain tile with the first letter.
++	var tile := PanelContainer.new()
++	tile.add_theme_stylebox_override("panel", UI.box(UI.PANEL_2, UI.EDGE, 8, 0, 0))
++	tile.custom_minimum_size = Vector2(40, 40)
++	var letter := UI.label("", 16, UI.ACCENT, false)
++	letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
++	tile.add_child(letter)
++	return tile
++
++func _row(offer: Dictionary) -> Control:
++	var id := str(offer.id)
++	var stock := int(offer.stock)
++	var top := 12 if stock < 0 else mini(12, stock)
++	var n := clampi(int(counts.get(id, 1)), 1, maxi(1, top))
++	counts[id] = n
++	var row := PanelContainer.new()
++	row.add_theme_stylebox_override("panel", UI.box(UI.PANEL_2, UI.LINE, 10, 8, 6))
++	var line := HBoxContainer.new()
++	line.add_theme_constant_override("separation", 4)
++	row.add_child(line)
++	var icon := _icon(id)
++	if icon is PanelContainer:
++		(icon.get_child(0) as Label).text = str(offer.name).left(1)
++	line.add_child(icon)
++	var text := VBoxContainer.new()
++	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	text.add_theme_constant_override("separation", 0)
++	line.add_child(text)
++	var name_label := UI.label(str(offer.name), 14, UI.TEXT, false)
++	name_label.clip_text = true
++	text.add_child(name_label)
++	var stock_words := "" if stock < 0 else (" 売り切れ" if stock <= 0 else " 残り%d" % stock)
++	var detail := UI.label("%d円（%s）%s" % [int(offer.price), offer.unit, stock_words], 11, UI.MUTED, true)
++	detail.custom_minimum_size.x = 60
++	text.add_child(detail)
++	var minus := UI.button("−", false, 36, 15)
++	minus.custom_minimum_size.x = 32
++	var amount := UI.label(str(n), 15, UI.TEXT, false)
++	amount.custom_minimum_size.x = 22
++	amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	var plus := UI.button("+", false, 36, 15)
++	plus.custom_minimum_size.x = 32
++	var buy := UI.button("買う", true, 36, 14)
++	buy.custom_minimum_size.x = 52
++	minus.pressed.connect(func():
++		counts[id] = maxi(1, int(counts[id]) - 1)
++		amount.text = str(counts[id]))
++	plus.pressed.connect(func():
++		counts[id] = mini(maxi(1, top), int(counts[id]) + 1)
++		amount.text = str(counts[id]))
++	buy.pressed.connect(func(): _buy(offer))
++	buy.disabled = stock == 0
++	minus.disabled = stock == 0
++	plus.disabled = stock == 0
++	line.add_child(minus)
++	line.add_child(amount)
++	line.add_child(plus)
++	line.add_child(buy)
++	return row
++
++func _buy(offer: Dictionary) -> void:
++	if busy or game == null:
++		return
++	busy = true
++	var n := int(counts.get(str(offer.id), 1))
++	var command := str(offer.command) % n
++	await game._on_command(command)
++	busy = false
++	var last := str(game.log_entries[-1]) if not game.log_entries.is_empty() else ""
++	note_label.text = last.get_slice("\n", 0).left(80)
++	refresh()
+diff --git a/tests/test_scene_description30.gd b/tests/test_scene_description30.gd
+index ea0880e..6fd0063 100644
+--- a/tests/test_scene_description30.gd
++++ b/tests/test_scene_description30.gd
+@@ -43,7 +43,7 @@ func run() -> void:
+ 
+ 	await game._on_command("鍵を開ける")
+ 	await game._on_command("コンビニへ行く")
+-	check(game.location == "コンビニ" and game.log_entries[-1].contains("冷蔵ケース") and game.log_entries[-1].contains("営業中") and game.log_entries[-1].contains("水を買う"), "open store shows shopping guidance")
++	check(game.location == "コンビニ" and game.log_entries[-1].contains("冷蔵ケース") and game.log_entries[-1].contains("営業中") and game.log_entries[-1].contains("品物を見る"), "open store shows shopping guidance (v149.34: the counter window)")
+ 	await game._on_command("周囲を見る")
+ 	check(game.log_entries[-1].contains("冷蔵ケース") and game.log_entries[-1].contains("食料 8.0人日"), "looking again describes the scene and retains local stock details")
+ 
+diff --git a/tests/test_shop149_34.gd b/tests/test_shop149_34.gd
+new file mode 100644
+index 0000000..23bccec
+--- /dev/null
++++ b/tests/test_shop149_34.gd
+@@ -0,0 +1,51 @@
++extends SceneTree
++## v149.34: the shop counter window — opens on arrival and by asking, lists
++## what each shop sells, buys through the usual rules, closes on leaving.
++const Main = preload("res://main.tscn")
++const ShopWindow = preload("res://scripts/shop_window.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.minute = 3 * 60
++	await g._on_command("コンビニへ行く")
++	check(g.shop_window != null and g.shop_window.visible, "arriving at an open konbini opens the counter window")
++	var names: Array = ShopWindow.offers(g).map(func(o): return str(o.name))
++	check(names == ["食料", "飲料水", "タバコ", "カセットボンベ"], "the konbini sells food, water, cigarettes and gas cans")
++	check("品物を見る" in g._suggestions(), "and a chip opens it again")
++	var cash := int(w.s.cash)
++	var food: Dictionary = ShopWindow.offers(g)[0]
++	g.shop_window.counts["food"] = 2
++	await g.shop_window._buy(food)
++	check(int(w.s.cash) == cash - 1200 and float(w.s.district.bag.food) == 2.0, "buying two meals charges 1200 yen and they are carried")
++	check(int(ShopWindow.offers(g)[0].stock) == int(food.stock) - 2, "and the stock shown goes down")
++	g.shop_window.visible = false
++	await g._on_command("在庫を見る")
++	check(g.shop_window.visible and g.log_entries[-1].contains("品ぞろえを確かめた"), "「在庫を見る」 opens the window")
++	await g._on_command("食品店へ行く")
++	check(g.shop_window.visible and ShopWindow.offers(g).map(func(o): return str(o.name)) == ["食料", "飲料水"], "the grocer's window shows its own goods")
++	await g._on_command("薬局へ行く")
++	var bandages := int(w.s.inventory.bandage)
++	g.shop_window.counts["bandage"] = 1
++	await g.shop_window._buy(ShopWindow.offers(g)[0])
++	check(int(w.s.inventory.bandage) == bandages + 1, "bandages bought at the pharmacy")
++	await g._on_command("家に帰る")
++	check(not g.shop_window.visible, "leaving the shop closes it")
++	w.s.minute = 15 * 60   # 23:00, the small shops shut
++	await g._on_command("薬局へ行く")
++	check(ShopWindow.offers(g).is_empty() and not g.shop_window.visible, "a closed shop does not open the window")
++	print("v149.34 shop checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
