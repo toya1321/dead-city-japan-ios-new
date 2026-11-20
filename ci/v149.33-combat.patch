@@ -207231,6 +207231,42 @@ index 0000000..cb58ba7
 +++ b/qa/narrate_real.gd.uid
 @@ -0,0 +1 @@
 +uid://cmktk4yxfejah
+diff --git a/qa/outbreak_timing.gd b/qa/outbreak_timing.gd
+new file mode 100644
+index 0000000..2a49c47
+--- /dev/null
++++ b/qa/outbreak_timing.gd
+@@ -0,0 +1,30 @@
++extends SceneTree
++## When the town falls, for many worlds (DCJ_SEEDS=a,b,c; DCJ_DAYS).
++const Main = preload("res://main.tscn")
++const Shelter = preload("res://scripts/shelter.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	for seed_text in OS.get_environment("DCJ_SEEDS").split(","):
++		var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++		p.seed = int(seed_text)
++		g._start_new_game(p)
++		g._finish_intro()
++		var w = g.world
++		var seen := {}
++		var marks: Array = []
++		for hour in int(OS.get_environment("DCJ_DAYS")) * 24:
++			w.s.hunger = 0.0
++			w.s.thirst = 0.0
++			w.s.fatigue = 0.0
++			w.s.health = 100.0
++			w.advance_safe(60)
++			for key in [str(w.s.society), "shelter:" + Shelter.status(w), "konbini_vacant:" + str(w.s.district.sites["コンビニ"].vacant)]:
++				if not seen.has(key):
++					seen[key] = true
++					marks.append("%s@%d" % [key, int(w.s.minute) / 1440 + 1])
++		print("SEED %s  %s" % [seed_text, "  ".join(marks)])
++	quit()
 diff --git a/qa/playthrough.gd b/qa/playthrough.gd
 new file mode 100644
 index 0000000..24dd085
@@ -207891,10 +207927,10 @@ index f703d4b..9eafec8 100644
  	var housemates: Array = []
 diff --git a/scripts/combat.gd b/scripts/combat.gd
 new file mode 100644
-index 0000000..7953909
+index 0000000..572ff4b
 --- /dev/null
 +++ b/scripts/combat.gd
-@@ -0,0 +1,875 @@
+@@ -0,0 +1,878 @@
 +extends RefCounted
 +## v149.33 (combat stage 1): each walker in an encounter as its own body —
 +## distance, state, wounds — and how many seconds an action takes. The
@@ -208632,7 +208668,10 @@ index 0000000..7953909
 +					outcome.down = true
 +					return {"line": line + CombatText.result(world, "cripple" if int(z.hurt.legs) >= 2 else "down"), "outcome": outcome}
 +				return {"line": line + CombatText.result(world, "leg_hold"), "outcome": outcome}
-+			return {"line": line + CombatText.result(world, "leg_hit_down"), "outcome": outcome}
++			# One already down: the standing-height lines (knees, ankles) do not fit.
++			var low := ("地面を這う相手の脚を、%sで切りつけた。" if klass == "blade" else "地面を這う相手の脚に、%sを叩きつけた。") % Weapons.name_of(type)
++			_last_land = low
++			return {"line": low + CombatText.result(world, "leg_hit_down"), "outcome": outcome}
 +		"arms":
 +			return {"line": line + CombatText.result(world, "arms_twice" if int(z.hurt.arms) >= 2 else "arms"), "outcome": outcome}
 +		_:
@@ -208947,10 +208986,10 @@ index 0000000..99b4d21
 +uid://cnlgpixisg14j
 diff --git a/scripts/combat_record.gd b/scripts/combat_record.gd
 new file mode 100644
-index 0000000..b9533fe
+index 0000000..3a6df23
 --- /dev/null
 +++ b/scripts/combat_record.gd
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,225 @@
 +extends RefCounted
 +## v149.33 (combat stage 8): what a fight came to, and what a life of them
 +## did. A short result card at the end of each fight; a running record
@@ -209072,8 +209111,13 @@ index 0000000..b9533fe
 +	if how == "won" and not Navigation.indoor(place) and not bool(enc.get("siege", false)):
 +		lines.append(AreaSafety.line(world, place))
 +	# Slipping away from the dead with nothing happening needs no card.
-+	if how == "escaped" and kills == 0 and new_wounds.is_empty() and gear.is_empty() and Skills.summary(world, xp_start, tech_start).is_empty():
-+		return check(world)
++	# (A level gained on the way is told in one quiet line, not a whole card.)
++	if how == "escaped" and kills == 0 and new_wounds.is_empty() and gear.is_empty():
++		var quiet: Array = []
++		for line in Skills.summary(world, xp_start, tech_start):
++			quiet.append(str(line))
++		quiet.append_array(check(world))
++		return quiet
 +	var card := "\n".join(lines)
 +	var out: Array = [card]
 +	out.append_array(check(world))
@@ -209180,7 +209224,7 @@ index 0000000..c0fe896
 +uid://b0t5nymbjowvd
 diff --git a/scripts/combat_text.gd b/scripts/combat_text.gd
 new file mode 100644
-index 0000000..ac235bb
+index 0000000..85bb9a1
 --- /dev/null
 +++ b/scripts/combat_text.gd
 @@ -0,0 +1,152 @@
@@ -209228,7 +209272,7 @@ index 0000000..ac235bb
 +	"head_wound_down": ["浅かった。相手は地面でもがきながら、まだこちらへ手を伸ばしてくる。"],
 +	"down": ["相手はバランスを崩して、前のめりに倒れこんだ。", "膝が折れ、相手は地面に転がった。", "相手の脚がもつれ、仰向けに倒れた。"],
 +	"cripple": ["膝がおかしな方向に曲がり、相手は崩れ落ちた。もう立てないだろう。", "脚はもう体を支えていない。相手は地面を這いはじめた。"],
-+	"leg_hit_down": ["倒れた相手の脚を打った。這う速さが鈍った。"],
++	"leg_hit_down": ["這う速さが鈍った。", "まだ腕で地面をかいて、こちらへ寄ってくる。"],
 +	"leg_hold": ["脚に当たったが、相手は踏みとどまった。", "相手はぐらついたが、倒れなかった。"],
 +	"arms": ["つかみかかる腕の勢いが鈍った。", "腕がだらりと下がった。つかむ力は弱っているはずだ。"],
 +	"arms_twice": ["もう一方の腕も止めた。伸びてくる腕に、もう力がない。"],
@@ -209405,7 +209449,7 @@ index b6d46d4..a30a5d8 100644
  	if profile.housing=="集合住宅":result[1].body=str(result[1].body)+"\n\n玄関の外は建物の共用廊下に通じている。"
  	return result
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 542300b..8ec9cf3 100644
+index 542300b..2395fd6 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -15,6 +15,16 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
@@ -209790,6 +209834,24 @@ index 542300b..8ec9cf3 100644
  			world.advance(10)
  		return response
  	if cmd.contains("配送状況") or cmd.contains("注文履歴"):
+@@ -3464,7 +3655,7 @@ func _execute_command(cmd: String) -> String:
+ 				return "食事をするには台所へ行こう。"
+ 		var light_meal := float(world.s.hunger) < 15.0
+ 		if not _eat_here():
+-			return "今は食事が不要、または使える食料が足りない。"
++			return "今は、お腹は空いていない。" if float(world.s.hunger) < 1.0 else "食べられる物が、もう残っていない。店か空き家で探すか、避難所の配給を頼るしかない。"
+ 		# A hungry person eats a proper meal, not one bite (up to 3 portions).
+ 		var portions := 1
+ 		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
+@@ -3473,7 +3664,7 @@ func _execute_command(cmd: String) -> String:
+ 		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
+ 	if cmd.contains("水を飲") or cmd.contains("飲み水"):
+ 		if not _drink_here():
+-			return "今は水分補給が不要、または飲める水がない。"
++			return "今は、喉は渇いていない。" if float(world.s.thirst) < 1.0 else "飲める水が、もう残っていない。"
+ 		var cups := 1
+ 		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
+ 			cups += 1
 @@ -3609,6 +3800,12 @@ func _look(inspect_details: bool = true) -> String:
  	var observed := _observe("sight")
  	if inspect_details or observed != "新しく確認できた出来事はない。":
@@ -211204,7 +211266,7 @@ index 9c580cb..2c2a4b4 100644
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index 9436425..5d5db47 100644
+index 9436425..abae9e1 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
 @@ -113,6 +113,10 @@ func step(sleeping: bool) -> void:
@@ -211236,6 +211298,15 @@ index 9436425..5d5db47 100644
  			if bitten:
  				s.exposure = s.minute
  				s.symptoms_due = s.minute + (6 + draw(s.minute, a.id, "contact-fever", 19)) * 60
+@@ -840,7 +845,7 @@ func action(kind: String, household: bool = false) -> String:
+ 				s.inventory.bandage-=1
+ 				s.injuries=maxf(0.0,s.injuries-2)
+ 				return "傷を手当てした。"
+-			return "包帯がない、または傷がない。"
++			return "包帯がない。薬局や空き家で探せる。" if s.inventory.bandage <= 0 else "手当てが必要な傷はない。"
+ 		"craft":
+ 			if s.inventory.wood<2 or s.inventory.parts<1:
+ 				return "プランター製作：木材2・部品1が必要。"
 @@ -942,6 +947,14 @@ func clock() -> String:
  	var base := Time.get_unix_time_from_datetime_string(START_TIME)
  	return Time.get_datetime_string_from_unix_time(int(base)+int(s.minute)*60).replace("T"," ").substr(0,16)
