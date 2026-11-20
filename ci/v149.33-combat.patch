@@ -206841,12 +206841,51 @@ index 0000000..556ba54
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index b355109..d9eac4a 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '180'
+-assert info['CFBundleShortVersionString'] == '0.149.31'
++assert str(info['CFBundleVersion']) == '181'
++assert info['CFBundleShortVersionString'] == '0.149.33'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.31-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.33-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.31-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.33-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 77ab1c4..82fc247 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.31"
+-application/version="180"
++application/short_version="0.149.33"
++application/version="181"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/autoplay.gd b/qa/autoplay.gd
 new file mode 100644
-index 0000000..c17e05c
+index 0000000..9136871
 --- /dev/null
 +++ b/qa/autoplay.gd
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,182 @@
 +extends SceneTree
 +## A sensible player, played automatically for DCJ_DAYS days (DCJ_SEED).
 +## Prints notable moments and a line per day; nothing is cheated.
@@ -206959,6 +206998,13 @@ index 0000000..c17e05c
 +	for i in 3: await process_frame
 +	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
 +	p.seed = int(OS.get_environment("DCJ_SEED"))
++	if OS.get_environment("DCJ_HOUSING") != "":
++		p.housing = OS.get_environment("DCJ_HOUSING")
++	if OS.get_environment("DCJ_MATES") != "":
++		var names: Array = OS.get_environment("DCJ_MATES").split(",")
++		p.cohabitants = names.size()
++		p.companion_names = names
++		p.companion_genders = ["女性", "男性", "女性"].slice(0, names.size())
 +	g._start_new_game(p)
 +	print("INTRO: ", g.intro_body.text.replace("\n", " / ").left(400))
 +	g._finish_intro()
@@ -206972,6 +207018,27 @@ index 0000000..c17e05c
 +		var day := int(s.minute) / 1440
 +		if day != last_day:
 +			last_day = day
++			if OS.get_environment("DCJ_SAVELOAD") == "1" and day > 0 and not Combat.active(w()):
++				var before_state := JSON.stringify(w().s)
++				var before_place: String = g.location
++				g._save()
++				g._load()
++				for i in 3: await process_frame
++				var after_state := JSON.stringify(w().s)
++				if before_state != after_state or before_place != g.location:
++					var a: Dictionary = JSON.parse_string(before_state)
++					var b: Dictionary = JSON.parse_string(after_state)
++					var diff: Array = []
++					for key in a:
++						if JSON.stringify(a[key]) != JSON.stringify(b.get(key)):
++							diff.append(key)
++					for key in b:
++						if not a.has(key):
++							diff.append("+" + key)
++					print("SAVELOAD MISMATCH day %d place %s->%s keys %s" % [day + 1, before_place, g.location, diff])
++				else:
++					print("SAVELOAD ok day %d" % (day + 1))
++				s = w().s
 +			print("DAY %d %s | 街:%s 体%.0f 心%.0f 食%.1f 水%.1f 携行食%.1f | 倒した%d 噛まれ:%s 戦闘%d 外出%d | 感染者:%s 避難所:%s" % [day + 1, g.clock_label.text, s.society, s.health, float(s.get("mood", 70)), s.food, s.water, float(s.get("carried_food", 0.0)), int(s.walkers.get("killed", 0)), str(s.get("bitten", false)), fights, trips, s.walkers.places, Shelter.status(w())])
 +		if Combat.active(w()):
 +			await fight_out(); continue
@@ -206997,6 +207064,7 @@ index 0000000..c17e05c
 +		if float(s.hunger) > 55:
 +			await do("食事する"); continue
 +		await do("1時間休息")
++	print("MATES ", w().s.household_members.map(func(m): return "%s:%s:%.0f" % [m.name, m.get("location", "?"), float(m.health)]))
 +	print("END day %d health %.0f bitten %s killed %d fights %d trips %d steps %d" % [int(w().s.minute) / 1440 + 1, w().s.health, str(w().s.get("bitten", false)), int(w().s.walkers.get("killed", 0)), fights, trips, steps])
 +	print(load("res://scripts/combat_record.gd").records_text(w()))
 +	quit()
@@ -207385,6 +207453,100 @@ index 0000000..24dd085
 +		if g.action_card != null and g.action_card.visible and g.action_card_kind != "":
 +			await snap(g, g.action_card_kind)
 +	quit()
+diff --git a/qa/realmodel_phrases.gd b/qa/realmodel_phrases.gd
+new file mode 100644
+index 0000000..64a2226
+--- /dev/null
++++ b/qa/realmodel_phrases.gd
+@@ -0,0 +1,88 @@
++extends SceneTree
++## Everyday free-text inputs, played with the real model (DCJ_LLAMA_PROBE,
++## DCJ_GGUF); prints what the game did, to be read by a person.
++const Main = preload("res://main.tscn")
++const Real = preload("res://qa/real_npc_scenarios.gd")
++const Combat = preload("res://scripts/combat.gd")
++const Shelter = preload("res://scripts/shelter.gd")
++const CASES := [
++	["home", "腹減ったし何か食べるか"],
++	["home", "ちょっと外の様子を見てみる"],
++	["home", "喉かわいた"],
++	["home", "タバコ一本吸って落ち着く"],
++	["home", "暇だから本でも読もうかな"],
++	["home", "眠いからもう寝よう"],
++	["home", "玄関に鍵かけといて"],
++	["home", "コンビニに買い出しに行く"],
++	["home", "窓を全部ふさいで光が漏れないようにする"],
++	["home", "お風呂に水ためとこう"],
++	["konbini", "水を3本と食料を2つください"],
++	["konbini", "タバコひと箱"],
++	["fight", "近くにある自転車を倒して足止めする"],
++	["fight", "後ろに下がって距離をとる"],
++	["fight", "包丁で首を狙う"],
++	["fight", "全力で逃げる"],
++	["fight", "物陰に隠れてやり過ごす"],
++	["shelter", "配給の列に並ぶ"],
++	["shelter", "見張りを手伝わせてください"],
++	["shelter", "体育館で一晩泊まる"],
++	["outside", "家に戻る"],
++	["outside", "あたりを見回す"],
++]
++func _initialize() -> void:
++	call_deferred("run")
++func setup(g, state: String) -> void:
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 41
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	w.s.minute = 4 * 1440 + 3 * 60
++	w.s.hunger = 50.0
++	w.s.thirst = 50.0
++	w.s.cigarettes = 5
++	g.location = "居間"
++	match state:
++		"konbini":
++			g.location = "コンビニ"
++		"fight":
++			w.s.society = "emergency"
++			g.location = "商店通り"
++			w.s.walkers.places = {"商店通り": 2}
++			w.s.walkers.encounter = {"place": "商店通り", "count": 2, "near": true, "since": w.s.minute, "from": "屋外"}
++			Combat.sync(w)
++		"shelter":
++			w.s.society = "disrupted"
++			var st: Dictionary = Shelter.state(w)
++			st.status = "open"; st.pop = 80; st.stock = 300.0
++			g.location = "避難所"
++		"outside":
++			g.location = "商店通り"
++	g._sync_player_position()
++	g._refresh()
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var use_model := not OS.get_environment("DCJ_GGUF").is_empty()
++	var only := OS.get_environment("DCJ_ONLY")
++	var backend = Real.RealModel.new() if use_model else null
++	if use_model:
++		g.local_model.backend = backend
++	g.local_model.load_timeout_ms = 400000
++	g.local_model.generation_timeout_ms = 400000
++	for case in CASES:
++		if not only.is_empty() and not str(case[1]) in only.split("|"):
++			continue
++		setup(g, str(case[0]))
++		g.local_model.enabled = use_model
++		var before: int = g.log_entries.size()
++		var started := Time.get_ticks_msec()
++		await g._on_command(str(case[1]))
++		while g.advancing:
++			await process_frame
++		var lines: Array = []
++		for i in range(max(0, before), g.log_entries.size()):
++			lines.append(str(g.log_entries[i]).replace("\n", " / ").left(150))
++		print("CASE [%s] %s  (%.1fs)\n    -> %s" % [case[0], case[1], (Time.get_ticks_msec() - started) / 1000.0, "\n    -> ".join(lines)])
++	quit()
 diff --git a/qa/siege_play.gd b/qa/siege_play.gd
 new file mode 100644
 index 0000000..9e46d10
@@ -207562,11 +207724,67 @@ index 8eae35a..78c1030 100644
  	if kind == "eat" and not world.s.household_members.is_empty():
  		options.append("act_eat_together")
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index bb1b505..aeef026 100644
+index bb1b505..a2f0e0b 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
-@@ -61,7 +61,7 @@ static func local(game, raw: String) -> Dictionary:
+@@ -4,7 +4,7 @@ extends RefCounted
+ const District = preload("res://scripts/district.gd")
+ const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
+ const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
+-const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る"]
++const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
+ const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
+ 
+ static func failure(message: String) -> Dictionary:return {"ok":false,"actions":[],"clarification":message}
+@@ -51,6 +51,32 @@ static func validate(game, data, ai: bool = false) -> Dictionary:
+ 	for item in actions:
+ 		if item.get("command","") in ["保存","読込"] and actions.size()!=1:return failure("保存・読込は単独で指定してください。")
+ 	return {"ok":true,"actions":actions,"clarification":""}
++## v149.33: "水を3本と食料を2つください" / "タバコひと箱" at a shop become
++## one purchase each ("水を3本買う、食料を2個買う"); "" when it is not that.
++const KANJI_COUNTS := {"ひと": 1, "一": 1, "ふた": 2, "二": 2, "みっ": 3, "三": 3, "よっ": 4, "四": 4, "いつ": 5, "五": 5}
++static func _shopping(game, text: String) -> String:
++	var cue := false
++	for word in ["ください", "下さい", "ちょうだい", "買う", "買い", "お願いします"]:
++		cue = cue or text.contains(word)
++	var at_shop: bool = str(game.location) in ["コンビニ", "デパート", "デパート地下", "食品店", "金物店", "薬局"]
++	# Only the player's own order at the counter (not a plan, not an errand).
++	if not at_shop or text.contains("、") or text.contains("頼") or text.contains("：") or text.contains(":"):
++		return ""
++	var re := RegEx.new()
++	re.compile("(食料|食べ物|水|飲料水|タバコ|たばこ|煙草|カセットボンベ|ボンベ)を?([0-9]+|ひと|一|ふた|二|みっ|三|よっ|四|いつ|五)(本|個|箱|つ|袋|缶)")
++	var found := re.search_all(text)
++	if found.is_empty():
++		return ""
++	var orders: Array = []
++	for m in found:
++		var count_text := m.get_string(2)
++		var n: int = int(KANJI_COUNTS.get(count_text, int(count_text)))
++		match m.get_string(1):
++			"食料", "食べ物": orders.append("食料を%d個買う" % n)
++			"水", "飲料水": orders.append("水を%d本買う" % n)
++			# Tobacco and gas cans are bought by their own handler (home_life).
++	return "、".join(orders)
++
+ static func local(game, raw: String) -> Dictionary:
+ 	var text:=raw.strip_edges().replace("　"," ").replace("\n","、").trim_suffix("。")
+ 	if text.length()>1200:return failure("文章は1200文字以内で入力してください。")
+@@ -59,9 +85,21 @@ static func local(game, raw: String) -> Dictionary:
+ 		if text.contains(token):return failure("質問・否定・選択を含む指示です。実行したい内容を具体的に確認してください。何も実行していません。")
+ 	text=text.replace("異変があれば中断する","").replace("異変があれば中断","").replace("危険なら中断する","")
  	text=text.replace("食事と水分を取りながら","").replace("食事と水分補給をしながら","").replace("飲食しながら","")
++	var shopping := _shopping(game, text)
++	if not shopping.is_empty():
++		text = shopping
++	# v149.33: short everyday sayings, for when the model is not there.
++	elif text.length() <= 24 and not text.contains("、") and not ("迷" in text or "どうしよう" in text or "かな" in text or "べきか" in text):
++		for rule in [[["腹減", "腹へ", "お腹すい", "おなかすい", "お腹空", "何か食べ", "なにか食べ", "ご飯にしよ", "飯にしよ"], "食事する"], [["眠い", "寝よう", "もう寝る"], "寝る"], [["外の様子を見", "外の様子見"], "窓から外を見る" if game.Navigation.indoor(str(game.location)) else "周囲を見る"]]:
++			var hit := false
++			for word in rule[0]:
++				hit = hit or text.contains(word)
++			if hit:
++				text = str(rule[1])
++				break
  	for ending in ["してください","して下さい","してほしい"]:
  		if text.ends_with(ending):text=text.trim_suffix(ending)+"する"
 -	for pair in [["行って","行く、"],["入って","入る、"],["歩いて","歩く、"],["拠点にして","拠点にする、"],["探索して","探索する、"],["出て","出る、"],["食事をして","食事する、"],["買って","買う、"],["移動して","移動する、"],["戻って","戻る、"],["帰って","帰る、"],["食べて","食べる、"],["食事して","食事する、"],["飲んで","飲む、"],["潤して","潤す、"],["うるおして","うるおす、"],["見て","見る、"],["開けて","開ける、"],["閉めて","閉める、"],["確認して","確認する、"],["それから","、"],["そのあと","、"],["その後","、"],["続けて","、"],["。","、"],["、から","、"]]:
@@ -207574,12 +207792,12 @@ index bb1b505..aeef026 100644
  		text=text.replace(pair[0],pair[1])
  	var actions:Array=[]
  	for part in text.split("、",false):
-@@ -91,7 +91,7 @@ static func local(game, raw: String) -> Dictionary:
+@@ -91,7 +129,7 @@ static func local(game, raw: String) -> Dictionary:
  			cmd = "水を飲む"
  		elif cmd in NEWS_ALIASES:
  			cmd = "ニュースを見る"
 -		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
-+		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
++		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
  		cmd=str(synonyms.get(cmd,cmd))
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
@@ -207961,10 +208179,10 @@ index f703d4b..9eafec8 100644
  	var housemates: Array = []
 diff --git a/scripts/combat.gd b/scripts/combat.gd
 new file mode 100644
-index 0000000..572ff4b
+index 0000000..0db5457
 --- /dev/null
 +++ b/scripts/combat.gd
-@@ -0,0 +1,878 @@
+@@ -0,0 +1,887 @@
 +extends RefCounted
 +## v149.33 (combat stage 1): each walker in an encounter as its own body —
 +## distance, state, wounds — and how many seconds an action takes. The
@@ -208587,16 +208805,25 @@ index 0000000..572ff4b
 +				return out
 +			out.lines.append("扉を閉めようとしたが、相手の腕が隙間に割り込んでいる。閉まらない。")
 +		"obstacle":
-+			if terrain(world) != "shop":
++			# v149.33: a street has bicycles and signboards, once per fight.
++			if terrain(world) == "street" and place in ["商店通り", "駅前", "住宅街", "デパート正面"] and not bool(enc.get("street_obstacle", false)):
++				enc.street_obstacle = true
++				out.seconds = step_seconds(world, "obstacle")
++				Walkers.make_noise(world, place)
++				for each in zombies(world):
++					each.dist = float(each.dist) + 2.0
++				out.lines.append("そばの自転車を引き倒して、相手の前に転がした。派手な音が響く。相手は車輪に足を取られている。")
++			elif terrain(world) != "shop":
 +				out.lines.append("ここには、倒して道をふさげるような物がない。（何もしていない）")
 +				out.invalid = true
 +				return out
-+			out.seconds = step_seconds(world, "obstacle")
-+			Walkers.make_noise(world, place)
-+			for each in zombies(world):
-+				each.dist = float(each.dist) + 3.0
-+			AreaSafety.block(world, place)
-+			out.lines.append("棚を引き倒して、通路をふさいだ。商品が派手に散らばる。相手は棚に足を取られている。")
++			else:
++				out.seconds = step_seconds(world, "obstacle")
++				Walkers.make_noise(world, place)
++				for each in zombies(world):
++					each.dist = float(each.dist) + 3.0
++				AreaSafety.block(world, place)
++				out.lines.append("棚を引き倒して、通路をふさいだ。商品が派手に散らばる。相手は棚に足を取られている。")
 +		_:
 +			out.lines.append("どう動くか、もう少し具体的に書いてほしい。（何もしていない）")
 +			out.invalid = true
@@ -208852,7 +209079,7 @@ index 0000000..4874b17
 +uid://cpgeq8y7gw6nd
 diff --git a/scripts/combat_intent.gd b/scripts/combat_intent.gd
 new file mode 100644
-index 0000000..e1bba15
+index 0000000..2b63b02
 --- /dev/null
 +++ b/scripts/combat_intent.gd
 @@ -0,0 +1,155 @@
@@ -208867,14 +209094,14 @@ index 0000000..e1bba15
 +const Weapons = preload("res://scripts/weapons.gd")
 +
 +const PARTS := [
-+	["head", ["頭", "脳天", "顔", "額", "頭部", "首から上"]],
++	["head", ["頭", "脳天", "顔", "額", "頭部", "首から上", "首", "喉", "のど", "こめかみ"]],
 +	["legs", ["脚", "足", "膝", "ひざ", "すね", "太もも", "足首", "足元"]],
 +	["arms", ["腕", "手首", "手を", "肩"]],
 +	["torso", ["胴", "腹", "胸", "体を", "体に", "背中"]],
 +]
 +## Order matters: the first matching word wins.
 +const ACTS := [
-+	["obstacle", ["棚を倒", "塞ぐ", "ふさぐ", "バリケード", "道をふさ", "通路をふさ"]],
++	["obstacle", ["棚を倒", "塞ぐ", "ふさぐ", "バリケード", "道をふさ", "通路をふさ", "自転車を倒", "足止め", "看板を倒", "ゴミ箱を倒"]],
 +	["spray", ["噴射", "消火器を吹", "消火器をかけ", "消火器を浴び", "目くらまし", "粉をかけ"]],
 +	["siege_drop", ["物を落と", "から落と", "落としてやる", "上から落と"]],
 +	["board", ["板を打ち", "打ちつけ", "補強を足"]],
@@ -209258,7 +209485,7 @@ index 0000000..c0fe896
 +uid://b0t5nymbjowvd
 diff --git a/scripts/combat_text.gd b/scripts/combat_text.gd
 new file mode 100644
-index 0000000..85bb9a1
+index 0000000..a231239
 --- /dev/null
 +++ b/scripts/combat_text.gd
 @@ -0,0 +1,152 @@
@@ -209374,7 +209601,7 @@ index 0000000..85bb9a1
 +
 +## The retold move, or "" when it says more than the move (any outcome at all:
 +## the outcome is the rules' own sentence, added after it).
-+const MOVE_CLAIMS := ["当た", "命中", "手応え", "直撃", "捉え", "外れ", "かわ", "それた", "空を切"]
++const MOVE_CLAIMS := ["当た", "命中", "手応え", "直撃", "捉え", "外れ", "かわ", "それた", "空を切", "押しつけ", "押さえつけ", "倒れた", "崩れ", "止まった", "動かなくな"]
 +
 +static func accept_move(line: String) -> String:
 +	var text := line.strip_edges().trim_suffix("。") + "。"
@@ -209439,9 +209666,18 @@ index 02c3642..31c6246 100644
  		world.s.district.sites["コンビニ"].vacant = true
  	if world.s.society == "emergency":
 diff --git a/scripts/home_life.gd b/scripts/home_life.gd
-index f5fb1da..8dc8329 100644
+index f5fb1da..a4b03a2 100644
 --- a/scripts/home_life.gd
 +++ b/scripts/home_life.gd
+@@ -34,7 +34,7 @@ static func _names_anyone(game, cmd: String) -> bool:
+ static func handle(game, cmd: String) -> bool:
+ 	if _names_anyone(game, cmd) or game.PlayerIntents.negated(cmd):
+ 		return false
+-	if (_has(cmd, ["タバコ", "煙草", "たばこ"]) and _has(cmd, ["買", "ください", "下さい", "ちょうだい"])) or (game.location == "コンビニ" and _has(cmd, BRANDS)):
++	if (_has(cmd, ["タバコ", "煙草", "たばこ"]) and _has(cmd, ["買", "ください", "下さい", "ちょうだい"])) or (game.location == "コンビニ" and (_has(cmd, BRANDS) or (_has(cmd, ["タバコ", "煙草", "たばこ"]) and cmd.contains("箱")))):
+ 		return _buy_tobacco(game, cmd)
+ 	if _has(cmd, ["タバコ", "煙草", "たばこ"]) and _has(cmd, ["探", "集め", "あさ", "漁"]):
+ 		return _find_tobacco(game)
 @@ -44,7 +44,7 @@ static func handle(game, cmd: String) -> bool:
  		return _fill_bath(game)
  	if _has(cmd, ["浴槽", "風呂", "湯船", "バスタブ"]) and _has(cmd, ["汲", "くむ", "使う", "飲"]):
@@ -209451,7 +209687,16 @@ index f5fb1da..8dc8329 100644
  		return _wait_clear(game)
  	if _has(cmd, ["息をひそめ", "息を潜め", "息を殺", "じっとして", "じっとする", "身を潜め", "静かにして", "やり過ご", "物音を立てず", "音を立てない", "動かない", "伏せ", "布団をかぶ", "息を止め"]) and Navigation.indoor(game.location):
  		return _hold_breath(game)
-@@ -136,8 +136,8 @@ static func _smoke(game) -> bool:
+@@ -88,6 +88,8 @@ static func _buy_tobacco(game, cmd: String) -> bool:
+ 	if not game.District.can_enter(world, "コンビニ"):
+ 		return _done(game, "営業時間外。")
+ 	var boxes := 1
++	for pair in [["ひと箱", "1箱"], ["一箱", "1箱"], ["ふた箱", "2箱"], ["二箱", "2箱"], ["三箱", "3箱"]]:
++		cmd = cmd.replace(pair[0], pair[1])
+ 	var number := RegEx.new()
+ 	number.compile("([0-9]{1,2})\\s*(箱|個|つ)")
+ 	var found := number.search(cmd)
+@@ -136,8 +138,8 @@ static func _smoke(game) -> bool:
  	var where := ""
  	if Navigation.indoor(game.location):
  		# The vent carries the smoke out to the door.
@@ -211455,13 +211700,16 @@ index e796b73..33cced8 100644
  		reported_total+=int(region.reported)
  	w.s.regional_cases=reported_total
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index 9436425..6250864 100644
+index 9436425..3951d2c 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
-@@ -113,6 +113,10 @@ func step(sleeping: bool) -> void:
+@@ -112,7 +112,12 @@ func step(sleeping: bool) -> void:
+ 	if float(s.longplay.shelter_integrity) <= 0.0 and s.weather in ["rain", "snow"]:
  		s.health = maxf(0.0,float(s.health)-0.003)
  	if s.injuries > 0:
- 		s.health = maxf(0.0,s.health-0.002*s.injuries)
+-		s.health = maxf(0.0,s.health-0.002*s.injuries)
++		# v149.33: many small cuts hurt, but not without end (capped at four).
++		s.health = maxf(0.0,s.health-0.002*minf(4.0, float(s.injuries)))
 +	# v149.33: a body that is fed, watered and rested slowly mends (about 9 a
 +	# day, most of it in sleep). A bite never does; nor does bleeding.
 +	if s.health > 0.0 and s.health < 100.0 and not bool(s.get("bitten", false)) and not bool(s.symptomatic) and float(s.hunger) < 70.0 and float(s.thirst) < 70.0 and float(s.fatigue) < 90.0 and not _bleeding():
@@ -211469,7 +211717,7 @@ index 9436425..6250864 100644
  	if s.exposure >= 0 and s.minute>=int(s.symptoms_due):
  		s.symptomatic = true
  	if s.symptomatic:
-@@ -196,14 +200,19 @@ func step(sleeping: bool) -> void:
+@@ -196,14 +201,19 @@ func step(sleeping: bool) -> void:
  		_resident_arrived(a, day)
  		if pos.distance_to(target)<1.0 and not stimulus and a.kind == "symptomatic":
  			a.route = (int(a.route) + (1 if draw(s.minute,a.id,"direction",2)==0 else ROUTE.size()-1))%ROUTE.size()
@@ -211491,7 +211739,7 @@ index 9436425..6250864 100644
  			if bitten:
  				s.exposure = s.minute
  				s.symptoms_due = s.minute + (6 + draw(s.minute, a.id, "contact-fever", 19)) * 60
-@@ -840,7 +849,7 @@ func action(kind: String, household: bool = false) -> String:
+@@ -840,7 +850,7 @@ func action(kind: String, household: bool = false) -> String:
  				s.inventory.bandage-=1
  				s.injuries=maxf(0.0,s.injuries-2)
  				return "傷を手当てした。"
@@ -211500,7 +211748,7 @@ index 9436425..6250864 100644
  		"craft":
  			if s.inventory.wood<2 or s.inventory.parts<1:
  				return "プランター製作：木材2・部品1が必要。"
-@@ -942,6 +951,14 @@ func clock() -> String:
+@@ -942,6 +952,14 @@ func clock() -> String:
  	var base := Time.get_unix_time_from_datetime_string(START_TIME)
  	return Time.get_datetime_string_from_unix_time(int(base)+int(s.minute)*60).replace("T"," ").substr(0,16)
  
@@ -213051,10 +213299,10 @@ index 10f23dc..f79845f 100644
  	check(g.log_entries[-1].contains("購入"), "bottles can be counted with 本: " + g.log_entries[-1])
 diff --git a/tests/test_playthrough149_33.gd b/tests/test_playthrough149_33.gd
 new file mode 100644
-index 0000000..22c8cbf
+index 0000000..2c0928d
 --- /dev/null
 +++ b/tests/test_playthrough149_33.gd
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,147 @@
 +extends SceneTree
 +## v149.33: fixes from a full playthrough with the real photos — phrasing that
 +## was not understood, the door walked to, smoke not called cooking, a bite
@@ -213189,6 +213437,12 @@ index 0000000..22c8cbf
 +	st.status = "open"; st.opened_day = Shelter._day(w)
 +	check(Shelter._new(w, st), "a shelter just opened holds for a few days")
 +	st.status = "school"; st.opened_day = -1
++	# Phrasings found with the real model, now read by the rules too.
++	var CI = load("res://scripts/combat_intent.gd")
++	var neck: Array = CI.parse("包丁で首を狙う")
++	check(not neck.is_empty() and str(neck[0].get("part", "")) == "head", "aiming at the neck is a blow to the head")
++	var ankle: Array = CI.parse("足首を切る")
++	check(not ankle.is_empty() and str(ankle[0].get("part", "")) == "legs", "but an ankle is still the legs")
 +	# A death says how it ended before the story is told.
 +	w.s.health = 0.0
 +	await g._on_command("様子を見る")
