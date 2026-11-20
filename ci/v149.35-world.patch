@@ -93,7 +93,7 @@ index 0000000..617ec1b
 +			print("DAY %d ms/day=%.0f save=%dKB society=%s survivors_alive=%d walkers_total=%d events=%d chronicle=%d" % [day + 1, float(Time.get_ticks_msec() - t0) / float(day + 1), size / 1024, w.s.society, alive, load("res://scripts/walkers.gd").total(w), w.s.events.size(), load("res://scripts/chronicle.gd").state(w).get("notes", []).size()])
 +	quit()
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..4229b3d 100644
+index 2c13ef6..8278633 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -101,10 +101,19 @@ index 2c13ef6..4229b3d 100644
  # plan before mutation. AI plans use the same validation and action executor.
  const District = preload("res://scripts/district.gd")
 -const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
-+const QUERIES = ["空き家を探す","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
++const QUERIES = ["空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
+@@ -129,7 +129,7 @@ static func local(game, raw: String) -> Dictionary:
+ 			cmd = "水を飲む"
+ 		elif cmd in NEWS_ALIASES:
+ 			cmd = "ニュースを見る"
+-		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
++		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","仕事を手伝う":"手伝う","作業を手伝う":"手伝う","畑を手伝う":"手伝う","補強を手伝う":"手伝う","食料を預ける":"食料を寄付する","水を預ける":"水を寄付する","物資を預ける":"物資を寄付する","ここに住ませてもらう":"仲間に入れてもらう","ここで暮らしたい":"仲間に入れてもらう","仲間に入れて":"仲間に入れてもらう","集まりを抜ける":"ここを出る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
+ 		cmd=str(synonyms.get(cmd,cmd))
+ 		var canonical:String=game._canonical_command(cmd)
+ 		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/district.gd b/scripts/district.gd
 index 31c6246..63ae475 100644
 --- a/scripts/district.gd
@@ -142,31 +151,50 @@ index 31c6246..63ae475 100644
  	var site: Dictionary = world.s.district.sites[place]
  	if world.s.health <= 0 or site.vacant or not can_enter(world, place):
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..186cfc6 100644
+index 0f2add4..8e6e158 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -1971,6 +1971,8 @@ func _suggestions() -> Array:
+@@ -1971,6 +1971,14 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
 +		if location == "住宅街" and District.houses_open(world) and float(District.houses(world).food) > 0.0:
 +			out.push_front("空き家を探す")
++		var group_here: Dictionary = load("res://scripts/npc_groups.gd").at(world, location) if world.s.get("survivors") is Dictionary else {}
++		if not group_here.is_empty():
++			out.push_front("手伝う")
++			out.push_front("食料を寄付する")
++			if str(world.s.get("npc_group", "")) != str(group_here.id):
++				out.push_front("仲間に入れてもらう")
  		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else ("品物を見る" if not ShopWindow.offers(self).is_empty() else "食料を買う"))
  		if not "品物を見る" in out and not ShopWindow.offers(self).is_empty():
-@@ -3473,7 +3475,7 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,7 +3481,7 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
 -	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
-+	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
++	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
  	if cmd in exact: return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3506,6 +3508,19 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3514,32 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
++	# v149.35 stage 4: a group's home — helping, giving, asking to live there.
++	var settled_here: Dictionary = load("res://scripts/npc_groups.gd").at(world, location) if world.s.get("survivors") is Dictionary else {}
++	if not settled_here.is_empty():
++		var Groups = load("res://scripts/npc_groups.gd")
++		if clean in ["手伝う", "仕事を手伝う", "作業を手伝う", "畑を手伝う", "補強を手伝う"]:
++			return Groups.help(world, settled_here)
++		if clean in ["物資を寄付する", "物資を預ける", "食料を寄付する", "食料を預ける", "水を寄付する", "水を預ける", "寄付する"]:
++			var item := "water" if clean.begins_with("水") else "food"
++			return Groups.donate(world, settled_here, item, 2.0 if item == "water" else 1.0)
++		if clean in ["仲間に入れてもらう", "ここに住ませてもらう", "ここで暮らしたい", "仲間に入れて"]:
++			return Groups.ask_join(world, settled_here)
++	if clean in ["ここを出る", "集まりを抜ける"] and world.s.get("survivors") is Dictionary:
++		return load("res://scripts/npc_groups.gd").leave(world)
 +	# v149.35: the abandoned houses along the residential street.
 +	if location == "住宅街" and clean in ["物資を探索する", "空き家を探す", "家を探す", "民家を探す"]:
 +		if not District.houses_open(world):
@@ -183,7 +211,17 @@ index 0f2add4..186cfc6 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3754,6 +3769,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3730,8 @@ func _execute_command(cmd: String) -> String:
+ 	if cmd.contains("寝る") or cmd.contains("睡眠"):
+ 		if location != "寝室" and Navigation.indoor(location):
+ 			_append(_move_to("寝室"))
+-		if location != "寝室" and not District.prepared(world, _site()):
++		var with_group: bool = world.s.get("survivors") is Dictionary and str(load("res://scripts/npc_groups.gd").player_group(world).get("home", "")) == location
++		if location != "寝室" and not District.prepared(world, _site()) and not with_group:
+ 			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
+ 		var before := _eat_before_sleep()
+ 		var elapsed: int = world.advance_safe(480, true)
+@@ -3754,6 +3789,10 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -194,7 +232,16 @@ index 0f2add4..186cfc6 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3860,6 +3879,9 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3839,6 +3878,8 @@ func _can_live_here() -> bool:
+ 	return Navigation.indoor(location) or District.prepared(world, _site())
+ 
+ func _eat_here() -> bool:
++	if not Navigation.indoor(location) and world.s.get("survivors") is Dictionary and float(world.s.district.bag.food) <= 0.0:
++		load("res://scripts/npc_groups.gd").feed_player(world)
+ 	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
+ 
+ func _drink_here() -> bool:
+@@ -3860,6 +3901,9 @@ func _look(inspect_details: bool = true) -> String:
  	# Stage 6: how safe it is here, once the city has broken down.
  	if inspect_details and not Navigation.indoor(location) and str(world.s.society) in ["disrupted", "emergency"]:
  		paragraphs.append(AreaSafety.line(world, location))
@@ -372,10 +419,10 @@ index 0000000..c763043
 +	return best
 diff --git a/scripts/npc_groups.gd b/scripts/npc_groups.gd
 new file mode 100644
-index 0000000..8e81fd1
+index 0000000..9e11d25
 --- /dev/null
 +++ b/scripts/npc_groups.gd
-@@ -0,0 +1,224 @@
+@@ -0,0 +1,348 @@
 +extends RefCounted
 +## v149.35 world stage 3: survivors who trust one another settle together.
 +## A group has a home (an empty shop or house that is quiet enough), a shared
@@ -403,12 +450,17 @@ index 0000000..8e81fd1
 +		st.groups = {}
 +	return st.groups
 +
++## Reading only (looking must not change the saved world).
++static func _peek(world) -> Dictionary:
++	var st = world.s.get("survivors")
++	return st.get("groups", {}) if st is Dictionary and st.get("groups") is Dictionary else {}
++
 +static func of(world, id: String) -> Dictionary:
 +	var p: Dictionary = world.s.survivors.people.get(id, {})
 +	var gid := str(p.get("group", ""))
 +	if gid.is_empty():
 +		return {}
-+	return groups(world).get(gid, {})
++	return _peek(world).get(gid, {})
 +
 +static func _bond(people: Dictionary, a: String, b: String) -> int:
 +	var k: Dictionary = people[a].get("acq", {}).get(b, {})
@@ -519,18 +571,22 @@ index 0000000..8e81fd1
 +				if extra > 0.0:
 +					mine[item] = float(mine[item]) - extra
 +					g.store[item] = float(g.store.get(item, 0.0)) + extra
++		# The player, living with them and there, is another pair of hands.
++		var hands := at_home.size()
++		if str(world.s.get("npc_group", "")) == str(gid) and str(world.get_meta("player_place", "")) == str(g.home):
++			hands += 1
 +		# Settled long enough: a garden and rain barrels, worked by those home.
 +		var settled := day - int(g.founded) / 1440
 +		if settled >= 3:
 +			# Planters, then beds: more hands, more ground worked.
-+			g.garden = minf(1.0, float(g.garden) + 0.06 * float(at_home.size()))
++			g.garden = minf(1.0, float(g.garden) + 0.06 * float(hands))
 +			if settled >= 5:
-+				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(at_home.size())
-+			g.store.water = float(g.store.get("water", 0.0)) + 2.0 + float(at_home.size())
++				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(hands)
++			g.store.water = float(g.store.get("water", 0.0)) + 2.0 + float(hands)
 +		# Walls go up with work (and wood, if there is any).
 +		var wood := minf(float(g.store.get("wood", 0.0)), 1.0)
 +		g.store.wood = float(g.store.get("wood", 0.0)) - wood
-+		g.walls = minf(100.0, float(g.walls) + 2.0 * float(at_home.size()) + 10.0 * wood)
++		g.walls = minf(100.0, float(g.walls) + 2.0 * float(hands) + 10.0 * wood)
 +		# Each member short of their day's food and water takes it from the store.
 +		var short := false
 +		for m in g.members:
@@ -587,8 +643,8 @@ index 0000000..8e81fd1
 +
 +## What the player sees on arriving at a group's home.
 +static func describe(world, place: String) -> String:
-+	for gid in groups(world):
-+		var g: Dictionary = groups(world)[gid]
++	for gid in _peek(world):
++		var g: Dictionary = _peek(world)[gid]
 +		if bool(g.get("ended", false)):
 +			if str(g.home) == place and int(world.s.minute) - int(g.get("ended_at", 0)) < 30 * 1440:
 +				return "入口の板が外れかけている。中には、誰かが暮らしていた跡だけが残っていた。"
@@ -600,6 +656,121 @@ index 0000000..8e81fd1
 +		var garden := "裏手のプランターに、青い芽が並んでいる。" if float(g.garden) >= 0.3 else ""
 +		return "ここには、%d人が身を寄せ合って暮らしている。%s%s" % [n, walls, garden]
 +	return ""
++
++# ---------------------------------------------------------------------------
++# Stage 4: the player and a group.
++
++## The active group living at this place, or {}.
++static func at(world, place: String) -> Dictionary:
++	for gid in _peek(world):
++		var g: Dictionary = _peek(world)[gid]
++		if not bool(g.get("ended", false)) and str(g.home) == place:
++			return g
++	return {}
++
++static func player_group(world) -> Dictionary:
++	var gid := str(world.s.get("npc_group", ""))
++	if gid.is_empty() or not world.s.get("survivors") is Dictionary:
++		return {}
++	var g: Dictionary = _peek(world).get(gid, {})
++	if g.is_empty() or bool(g.get("ended", false)):
++		return {}
++	return g
++
++## What the group as a whole thinks of the player (their members' trust).
++static func opinion(world, g: Dictionary) -> int:
++	var people: Dictionary = world.s.survivors.people
++	var total := 0
++	var n := 0
++	for m in g.members:
++		if people.has(m):
++			total += int(people[m].get("trust", 30))
++			n += 1
++	return total / maxi(1, n)
++
++static func _warm(world, g: Dictionary, amount: int) -> void:
++	for m in g.members:
++		var p: Dictionary = world.s.survivors.people.get(m, {})
++		if not p.is_empty():
++			p.trust = clampi(int(p.get("trust", 30)) + amount, 0, 100)
++			p.met = true
++
++## How the group stands on cash, from what its members believe (re-judged as
++## people come and go): "cash" (they take it), "goods" (they will not), "mixed".
++static func cash_policy(world, g: Dictionary) -> String:
++	var Trade2 = load("res://scripts/trade.gd")
++	var total := 0.0
++	for m in g.members:
++		total += Trade2.cash_trust(world, str(m), true)
++	var avg := total / maxf(1.0, float(g.members.size()))
++	if avg >= 0.5:
++		return "cash"
++	if avg < 0.3:
++		return "goods"
++	return "mixed"
++
++## Giving to the store: it is theirs now, and they remember who gave.
++static func donate(world, g: Dictionary, item: String, qty: float) -> String:
++	var Trade2 = load("res://scripts/trade.gd")
++	if Trade2.held(world, item) < qty:
++		return "持ち歩いている%sが足りない。" % Trade2.ITEMS[item].label
++	Trade2._add_player(world, item, -qty)
++	g.store[item] = float(g.store.get(item, 0.0)) + qty
++	_warm(world, g, mini(20, 3 + int(Trade2.ITEMS[item].base) * int(qty) / 400))
++	world.advance_safe(5)
++	return "%sを、%sの人たちの蓄えに預けた。「……ありがたい」という声が返ってきた。" % [Trade2.amount_text(item, qty), str(g.home)]
++
++## Working with them: three hours on the walls and the garden.
++static func help(world, g: Dictionary) -> String:
++	var minutes: int = world.advance_safe(180)
++	if minutes < 180:
++		return "作業は途中で止まった。"
++	g.walls = minf(100.0, float(g.walls) + 6.0)
++	g.garden = minf(1.0, float(g.garden) + 0.05)
++	world.s.walkers.noise = world.s.walkers.get("noise", {})
++	_warm(world, g, 4)
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 12.0)
++	return "%sの人たちと3時間、入口の補強と畑の手入れをした。汗をぬぐうと、誰かが水を回してくれた。" % str(g.home)
++
++## Asking to live with them. They decide from what they think of the player
++## and whether there is food to go round.
++static func ask_join(world, g: Dictionary) -> String:
++	if not player_group(world).is_empty():
++		return "すでに、%sの人たちと暮らしている。" % str(player_group(world).home)
++	var view := opinion(world, g)
++	var mouths := float(g.members.size() + 1)
++	if g.members.size() >= 8:
++		return "「悪いけど、もうこれ以上は寝る場所がない」"
++	if view < 45:
++		return "顔を見合わせたあと、首を横に振られた。「あんたのことは、まだよく知らない」（信頼がまだ足りない）"
++	if float(g.store.get("food", 0.0)) < mouths and view < 70:
++		return "「食べ物が、今いる人の分で精一杯なんだ」（食料を預ければ、考えてくれるかもしれない）"
++	world.s.npc_group = str(g.id)
++	world.advance_safe(10)
++	return "「……いいよ。ここで一緒にやろう」%sで、寝泊まりできるようになった。蓄えから食事もできる。（「ここを出る」で離れられる）" % str(g.home)
++
++static func leave(world) -> String:
++	var g := player_group(world)
++	if g.is_empty():
++		return "どこの集まりにも加わっていない。"
++	world.s.npc_group = ""
++	_warm(world, g, -5)
++	return "%sの人たちに別れを告げた。" % str(g.home)
++
++## A meal from the store for a member at home (moved to the bag and eaten).
++static func feed_player(world) -> bool:
++	var g := player_group(world)
++	if g.is_empty() or str(world.get_meta("player_place", "")) != str(g.home):
++		return false
++	var bag: Dictionary = world.s.district.bag
++	var moved := false
++	for item in ["food", "water"]:
++		var portion := minf(0.75 if item == "food" else 1.5, float(g.store.get(item, 0.0)))
++		if portion > 0.0:
++			g.store[item] = float(g.store[item]) - portion
++			bag[item] = float(bag[item]) + portion
++			moved = true
++	return moved
 diff --git a/scripts/npc_life.gd b/scripts/npc_life.gd
 new file mode 100644
 index 0000000..0d840f8
@@ -910,9 +1081,27 @@ index 0000000..0d840f8
 +		return "通りを、%sが%s。" % [str(p.get("label", "誰か")), how]
 +	return "通りに、生きている人が%d人いる。何か話しているようだ。" % seen.size()
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
-index 5ea74f7..b09d948 100644
+index 5ea74f7..43b6fe6 100644
 --- a/scripts/survivors.gd
 +++ b/scripts/survivors.gd
+@@ -524,7 +524,7 @@ static func trade(world, id: String, text: String) -> String:
+ 		if item == "cash":
+ 			give["cash"] = qty
+ 			continue
+-		var theirs: bool = Trade.goods(world, id).get(item, 0.0) > 0.0
++		var theirs: bool = Trade.stock(world, id).get(item, 0.0) > 0.0
+ 		var mine: bool = Trade.held(world, item) > 0.0
+ 		# The thing asked for is theirs; what the player carries is the offer.
+ 		if theirs and (not mine or (wants_something and want.is_empty() and not give.has(item))):
+@@ -538,7 +538,7 @@ static func trade(world, id: String, text: String) -> String:
+ 	if want.is_empty():
+ 		return "%s「それと何を替えたいの？」\n%s" % [name, offers_text(world, id)]
+ 	for item in want:
+-		if float(Trade.goods(world, id).get(item, 0.0)) < float(want[item]):
++		if float(Trade.stock(world, id).get(item, 0.0)) < float(want[item]):
+ 			return "%s「%sは、そんなに持ってない」" % [name, Trade.ITEMS[item].label]
+ 	if give.is_empty():
+ 		var item: String = want.keys()[0]
 @@ -718,6 +718,10 @@ static func _join(world, id: String) -> String:
  # Time passing.
  
@@ -935,10 +1124,96 @@ index 5ea74f7..b09d948 100644
  				cause = "bitten"
  		if cause.is_empty():
 diff --git a/scripts/trade.gd b/scripts/trade.gd
-index b76af42..6131be1 100644
+index b76af42..388e8a6 100644
 --- a/scripts/trade.gd
 +++ b/scripts/trade.gd
-@@ -307,9 +307,25 @@ static func daily(world, id: String) -> void:
+@@ -82,6 +82,22 @@ static func goods(world, id: String) -> Dictionary:
+ 		p.dependents = 1 if str(p.get("situation", "")) in ["family"] or str(p.get("role", "")) == "elder" else 0
+ 	return g
+ 
++## v149.35 stage 4: what a person trades from — the group's store when they
++## are at the group's home, their own goods otherwise.
++static func stock(world, id: String) -> Dictionary:
++	var g: Dictionary = load("res://scripts/npc_groups.gd").of(world, id)
++	var p: Dictionary = world.s.survivors.people.get(id, {})
++	if not g.is_empty() and not bool(g.get("ended", false)) and str(p.get("place", "")) == str(g.home):
++		return g.store
++	return goods(world, id)
++
++static func _mouths(world, id: String) -> float:
++	var g: Dictionary = load("res://scripts/npc_groups.gd").of(world, id)
++	var p: Dictionary = world.s.survivors.people.get(id, {})
++	if not g.is_empty() and not bool(g.get("ended", false)) and str(p.get("place", "")) == str(g.home):
++		return float(g.members.size())
++	return 1.0 + float(p.get("dependents", 0))
++
+ ## What the player has on them, in the same units.
+ static func held(world, item: String) -> float:
+ 	var s = world.s
+@@ -134,8 +150,16 @@ const SCARCITY := {"normal": 1.0, "alert": 1.2, "disrupted": 1.8, "emergency": 3
+ 
+ ## How far this person still trusts cash (0 = worthless to them). Never just
+ ## the town's state: shops still open, their own habits and their hopes count.
+-static func cash_trust(world, id: String) -> float:
++static func cash_trust(world, id: String, own_only: bool = false) -> float:
+ 	var p: Dictionary = world.s.survivors.people.get(id, {})
++	if not own_only:
++		var Groups = load("res://scripts/npc_groups.gd")
++		var g: Dictionary = Groups.of(world, id)
++		if not g.is_empty() and not bool(g.get("ended", false)) and str(p.get("place", "")) == str(g.home):
++			# A settled group keeps its own rule about money.
++			match Groups.cash_policy(world, g):
++				"goods": return 0.03
++				"cash": return clampf(cash_trust(world, id, true) * 1.3, 0.02, 1.2)
+ 	var base: float = {"normal": 1.0, "alert": 0.95, "disrupted": 0.6, "emergency": 0.25, "devastated": 0.08}.get(phase(world), 1.0)
+ 	var sites: Dictionary = world.s.get("district", {}).get("sites", {})
+ 	var open := 0
+@@ -151,7 +175,7 @@ static func cash_trust(world, id: String) -> float:
+ 
+ static func reserve(world, id: String, item: String) -> float:
+ 	var p: Dictionary = world.s.survivors.people[id]
+-	var mouths := 1.0 + float(p.get("dependents", 0))
++	var mouths := _mouths(world, id)
+ 	if DAILY.has(item):
+ 		return float(DAILY[item]) * mouths * 2.0
+ 	if item == "bandage" and str(p.get("tag", "")) == "injured" and not bool(p.get("treated", false)):
+@@ -170,7 +194,7 @@ static func _unit_base(world, item: String) -> float:
+ static func give_cost(world, id: String, item: String, qty: float) -> float:
+ 	if item == "cash":
+ 		return qty * cash_trust(world, id)
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	var have := float(g.get(item, 0.0))
+ 	var keep := reserve(world, id, item)
+ 	var unit := _unit_base(world, item)
+@@ -186,7 +210,7 @@ static func receive_value(world, id: String, item: String, qty: float) -> float:
+ 	if item == "cash":
+ 		return qty * cash_trust(world, id)
+ 	var p: Dictionary = world.s.survivors.people[id]
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	var have := float(g.get(item, 0.0))
+ 	var keep := reserve(world, id, item)
+ 	var unit := _unit_base(world, item)
+@@ -219,7 +243,7 @@ static func margin(world, id: String) -> float:
+ ## Checks a proposal against both sides' holdings and the person's judgement.
+ ## Returns {ok, reason, got, gave} (got/gave: value to them).
+ static func judge(world, id: String, deal: Dictionary) -> Dictionary:
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	var p: Dictionary = world.s.survivors.people[id]
+ 	for item in deal.get("give", {}):
+ 		if held(world, item) < float(deal.give[item]):
+@@ -247,7 +271,7 @@ static func execute(world, id: String, deal: Dictionary) -> String:
+ 	if not bool(verdict.ok):
+ 		return str(verdict.reason)
+ 	var p: Dictionary = world.s.survivors.people[id]
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	for item in deal.get("give", {}):
+ 		var q := float(deal.give[item])
+ 		_add_player(world, item, -q)
+@@ -307,9 +331,25 @@ static func daily(world, id: String) -> void:
  	var g := goods(world, id)
  	var mouths := 1.0 + float(p.get("dependents", 0))
  	var day := int(world.s.minute) / 1440
@@ -964,7 +1239,7 @@ index b76af42..6131be1 100644
  	# Going out for supplies: the braver find more, less as the town empties.
  	var courage := float(p.get("traits", {}).get("courage", 50))
  	var luck := _hash(id, "forage-%d" % day) % 100
-@@ -322,6 +338,20 @@ static func daily(world, id: String) -> void:
+@@ -322,6 +362,20 @@ static func daily(world, id: String) -> void:
  			g.food = float(g.food) + mouths
  			g.water = float(g.water) + 2.0 * mouths
  		return
@@ -985,6 +1260,24 @@ index b76af42..6131be1 100644
  	if float(luck) < courage * town * 0.6:
  		g.food = float(g.get("food", 0.0)) + 1.0
  	if float(luck) < courage * town * 0.9:
+@@ -350,7 +404,7 @@ static func side_text(side: Dictionary) -> String:
+ 
+ ## What they could part with now, and what they are short of.
+ static func spare(world, id: String) -> Dictionary:
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	var out := {}
+ 	for item in g:
+ 		if not ITEMS.has(item):
+@@ -363,7 +417,7 @@ static func spare(world, id: String) -> Dictionary:
+ 	return out
+ 
+ static func short_of(world, id: String) -> Array:
+-	var g := goods(world, id)
++	var g := stock(world, id)
+ 	var out: Array = []
+ 	for item in DAILY:
+ 		if float(g.get(item, 0.0)) < reserve(world, id, item):
 diff --git a/scripts/world.gd b/scripts/world.gd
 index 5d08c00..0f1cbe2 100644
 --- a/scripts/world.gd
@@ -1022,6 +1315,118 @@ index 470b72c..7e1ce25 100644
  	check(str(a.background).contains("来た") or str(a.background).contains("追われて") or str(a.background).contains("歩いてきた"), "a newcomer has come from somewhere: " + str(a.background).right(25))
  	if a.has("deadline_day"):
  		check(int(a.deadline_day) > int(a.arrived), "their troubles start on arrival")
+diff --git a/tests/test_npc_groups149_35.gd b/tests/test_npc_groups149_35.gd
+new file mode 100644
+index 0000000..f1b7543
+--- /dev/null
++++ b/tests/test_npc_groups149_35.gd
+@@ -0,0 +1,106 @@
++extends SceneTree
++## v149.35 world stage 4: the player and a settled group — trading with
++## their store, giving, helping, asking to live there, sleeping and eating
++## there, leaving; each group with its own rule about cash.
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const Trade = preload("res://scripts/trade.gd")
++const NpcGroups = preload("res://scripts/npc_groups.gd")
++const NpcBonds = preload("res://scripts/npc_bonds.gd")
++const NpcLife = preload("res://scripts/npc_life.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 12
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.society = "emergency"
++	w.s.minute = 6 * 1440 + 4 * 60
++	w.s.district.sites["近所の空き家"].vacant = true
++	var people: Dictionary = Survivors.ensure(w).people
++	var two: Array = []
++	for id in people:
++		if NpcLife._roamer(str(id), people[id]) and two.size() < 2:
++			two.append(str(id))
++	var a: String = two[0]
++	var b: String = two[1]
++	for id in two:
++		people[id].place = "近所の空き家"
++		people[id].trust = 30
++		people[id].dependents = 0
++	for pair in [[a, b], [b, a]]:
++		var k: Dictionary = NpcBonds.bond(people, pair[0], pair[1], int(w.s.minute))
++		k.trust = 60
++		k.like = 40
++	NpcGroups.hourly(w, func(t, who): pass)
++	var grp: Dictionary = NpcGroups.of(w, a)
++	check(not grp.is_empty(), "a group has settled in the empty house")
++	grp.store.food = 6.0
++	grp.store.water = 10.0
++	g.location = "近所の空き家"
++	g._sync_player_position()
++	w.set_meta("player_place", "近所の空き家")
++	check(g._suggestions().has("手伝う") and g._suggestions().has("仲間に入れてもらう"), "at their home, helping and asking to join are offered")
++
++	# Not yet trusted: they say no, and why.
++	await g._on_command("仲間に入れてもらう")
++	check(str(g.log_entries.slice(-4)).contains("信頼がまだ足りない") and str(w.s.get("npc_group", "")) == "", "strangers are not taken in")
++	# Giving and helping win them over.
++	w.s.district.bag.food = 4.0
++	var store_before := float(grp.store.food)
++	await g._on_command("食料を寄付する")
++	check(float(grp.store.food) == store_before + 1.0 and float(w.s.district.bag.food) == 3.0, "what is given goes into their store, from the player's bag")
++	var walls_before := float(grp.walls)
++	for i in 4:
++		await g._on_command("手伝う")
++	check(float(grp.walls) > walls_before and NpcGroups.opinion(w, grp) >= 45, "working with them raises the walls and their opinion (%d)" % NpcGroups.opinion(w, grp))
++	await g._on_command("仲間に入れてもらう")
++	check(str(w.s.get("npc_group", "")) == str(grp.id), "then they take the player in: " + g.log_entries[-1])
++	# Living there: sleeping and eating from the store.
++	w.s.district.bag.food = 0.0
++	w.s.hunger = 60.0
++	var store_food := float(grp.store.food)
++	await g._on_command("食事する")
++	check(float(grp.store.food) < store_food and float(w.s.hunger) < 60.0, "a member eats from the store")
++	w.s.fatigue = 80.0
++	await g._on_command("寝る")
++	check(float(w.s.fatigue) < 80.0 and not g.log_entries[-1].contains("移動する必要がある"), "and sleeps there")
++
++	# Trading with a member at home draws on the group's store.
++	var spare: Dictionary = Trade.spare(w, a)
++	check(spare.has("water"), "what the group can spare is the store's (%s)" % str(spare))
++
++	# Each group has its own rule about money.
++	w.s.society = "emergency"   # (the test world's own simulation had moved it)
++	w.s.district.sites["コンビニ"].vacant = true
++	w.s.district.sites["デパート"].vacant = true
++	for m in grp.members:
++		people[m].traits.suspicion = 95
++		people[m].role = "student"
++	var rule := NpcGroups.cash_policy(w, grp)
++	check(rule == "goods" and Trade.cash_trust(w, a) < 0.05, "a wary group will not take cash at home (%s, %.2f)" % [rule, Trade.cash_trust(w, a)])
++	for m in grp.members:
++		people[m].traits.suspicion = 5
++		people[m].role = "office"
++	w.s.society = "disrupted"
++	check(NpcGroups.cash_policy(w, grp) != "goods", "another, more trusting, still does")
++
++	# Leaving.
++	await g._on_command("ここを出る")
++	check(str(w.s.get("npc_group", "")) == "", "the player can leave")
++	g._save()
++	g._load()
++	check(str(g.world.s.get("npc_group", "")) == "" and NpcGroups.at(g.world, "近所の空き家").size() > 0, "the group and its home survive a reload")
++	print("v149.35 group checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_npc_life149_35.gd b/tests/test_npc_life149_35.gd
 new file mode 100644
 index 0000000..107f3fd
