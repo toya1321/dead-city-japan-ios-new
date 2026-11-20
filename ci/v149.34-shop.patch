@@ -4860,8 +4860,20 @@ index a2f0e0b..2c13ef6 100644
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
+diff --git a/scripts/intro.gd b/scripts/intro.gd
+index a30a5d8..971fbda 100644
+--- a/scripts/intro.gd
++++ b/scripts/intro.gd
+@@ -31,5 +31,7 @@ static func pages(profile: Dictionary) -> Array:
+ 	var past: String = str(Skills.background_for(int(profile.get("seed", 0))).intro)
+ 	if not past.is_empty():
+ 		result[0].body=str(result[0].body)+"\n"+past
++	# v149.34: the money there is, all of it in hand.
++	result[0].body=str(result[0].body)+"\n"+Skills.money_line(int(profile.get("seed", 0)), str(profile.get("job", "無職")))
+ 	if profile.housing=="集合住宅":result[1].body=str(result[1].body)+"\n\n玄関の外は建物の共用廊下に通じている。"
+ 	return result
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 79d10bf..73c2dcf 100644
+index 79d10bf..0f2add4 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -15,6 +15,8 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
@@ -4883,6 +4895,15 @@ index 79d10bf..73c2dcf 100644
  var combat_panel: PanelContainer
  ## The street right after the last one fell: shown until the next command.
  var combat_after := false
+@@ -753,7 +758,7 @@ func _build_items_tab() -> void:
+ 		tab_content.add_child(toggle)
+ 		if show_missing_items:
+ 			tab_content.add_child(UI.label("、".join(missing), 13, UI.FAINT))
+-	inventory_status.text = "現金 %s円 / 銀行 %s円\n雨水 %.1f L · 住居の耐久 %.0f / 100" % [_yen(int(world.s.cash)), _yen(int(world.s.bank)), float(world.s.rain_water), float(world.s.longplay.shelter_integrity)]
++	inventory_status.text = "現金 %s円\n雨水 %.1f L · 住居の耐久 %.0f / 100" % [_yen(int(world.s.cash)), float(world.s.rain_water), float(world.s.longplay.shelter_integrity)]
+ 
+ ## v149.28: one line of the items tab, with its picture when there is one.
+ func _item_row(parent: Control, id: String, text: String, font_size: int = 15) -> void:
 @@ -1352,6 +1357,9 @@ func _action_card_for(line: String) -> void:
  		forced_action_kind = ""
  	if hit.is_empty():
@@ -4930,6 +4951,15 @@ index 79d10bf..73c2dcf 100644
  	# v149.29: a death ends the story (no succession); the life is told back,
  	# with what became of those left behind.
  	if float(world.s.health) <= 0 and not succession_running:
+@@ -1589,7 +1620,7 @@ func _refresh() -> void:
+ 		vitals_bars[key].add_theme_stylebox_override("fill",style)
+ 	warning_label.text = Vitals.warning(world.s)
+ 	warning_label.visible = not warning_label.text.is_empty()
+-	inventory_status.text = "食料 %.1f人日\n飲料水 %.1f L\n雨水 %.1f L\n現金 %d円\n銀行 %d円\n住居耐久 %.0f / 100" % [float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),int(world.s.bank),float(world.s.longplay.shelter_integrity)]
++	inventory_status.text = "食料 %.1f人日\n飲料水 %.1f L\n雨水 %.1f L\n現金 %d円\n住居耐久 %.0f / 100" % [float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),float(world.s.longplay.shelter_integrity)]
+ 	world_status.text = "%s / %s\n%s\n\n確認した報道\n%s" % [str(world.s.profile.name),str(world.s.profile.housing),str(world.s.profile.address),observed_news]
+ 	world_status.add_theme_font_size_override("font_size",18)
+ 	var shop_id: String = {"食品店":"grocer","金物店":"hardware","薬局":"pharmacy"}.get(location,"")
 @@ -1794,12 +1825,21 @@ func _suggestions() -> Array:
  	if not survivor_partner.is_empty():
  		var sd: Dictionary = Survivors.person(world, survivor_partner)
@@ -5003,6 +5033,15 @@ index 79d10bf..73c2dcf 100644
  		return District.describe(world, _site()) if District.SITES.has(_site()) and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())) else _shop_inventory()
  	if clean == "住居を点検":return _observe("inspect")
  	var purchase := RegEx.new()
+@@ -4006,7 +4056,7 @@ func _status_text() -> String:
+ 	var values := Vitals.values(world.s)
+ 	var lines: Array[String]=[]
+ 	for key in values:lines.append("%s %.1f/100（%s）"%[key,float(values[key]),Vitals.description(float(values[key]))])
+-	lines.append("自宅の備蓄：食料 %.1f人日 / 飲料水 %.1fL / 雨水 %.1fL\n現金 %d円 / 銀行 %d円"%[float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),int(world.s.bank)])
++	lines.append("自宅の備蓄：食料 %.1f人日 / 飲料水 %.1fL / 雨水 %.1fL\n現金 %d円"%[float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash)])
+ 	lines.append("家の中：%s（%.0f℃ほど）/ 毛布 %d枚%s" % [Cold.word(Cold.indoor(world)), Cold.indoor(world), Cold.blankets(world), " / ストーブ使用中" if Cold.heater_on(world) else ""])
+ 	var warning:=Vitals.warning(world.s)
+ 	if not warning.is_empty():lines.append(warning)
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
 index fb8c179..6de9c8d 100644
 --- a/scripts/scene_description.gd
@@ -5274,6 +5313,46 @@ index 0000000..2bc31f2
 +++ b/scripts/shop_window.gd.uid
 @@ -0,0 +1 @@
 +uid://yuu7k0ry8ktf
+diff --git a/scripts/skills.gd b/scripts/skills.gd
+index e19e987..c7e3f72 100644
+--- a/scripts/skills.gd
++++ b/scripts/skills.gd
+@@ -25,13 +25,30 @@ const DAILY_SOFT_CAP := 35
+ 
+ ## A past the player brings, one per world (from the world's seed).
+ const BACKGROUNDS := [
+-	{"id": "baseball", "skill": "strike", "xp": 80, "intro": "玄関の傘立てには、高校の野球部で使っていた金属バットが、今も立てかけてある。", "bat": true},
+-	{"id": "cook", "skill": "blade", "xp": 80, "intro": "料理だけは好きで、台所の包丁は毎週自分で研いでいる。", "bat": false},
+-	{"id": "runner", "skill": "agility", "xp": 80, "intro": "運動は得意ではないが、昔から逃げ足だけは速かった。", "bat": false},
+-	{"id": "dojo", "skill": "", "xp": 0, "intro": "子どもの頃、近所の道場に少しだけ通っていた。体の動かし方は、まだどこかで覚えている。", "bat": false},
+-	{"id": "none", "skill": "", "xp": 0, "intro": "", "bat": false},
++	{"id": "baseball", "skill": "strike", "xp": 80, "intro": "玄関の傘立てには、高校の野球部で使っていた金属バットが、今も立てかけてある。", "bat": true, "cash": 22000, "money": "給料日前で、財布と机の引き出しを合わせても、現金は%s円しかない。"},
++	{"id": "cook", "skill": "blade", "xp": 80, "intro": "料理だけは好きで、台所の包丁は毎週自分で研いでいる。", "bat": false, "cash": 41000, "money": "食材の買い出し用に、台所の缶へ現金を入れている。財布と合わせて%s円。"},
++	{"id": "runner", "skill": "agility", "xp": 80, "intro": "運動は得意ではないが、昔から逃げ足だけは速かった。", "bat": false, "cash": 15000, "money": "財布の中身は%s円。細かい出費が多くて、なかなか貯まらない。"},
++	{"id": "dojo", "skill": "", "xp": 0, "intro": "子どもの頃、近所の道場に少しだけ通っていた。体の動かし方は、まだどこかで覚えている。", "bat": false, "cash": 68000, "money": "祖母に言われて、たんすに現金を置いてある。財布と合わせて%s円。"},
++	{"id": "none", "skill": "", "xp": 0, "intro": "", "bat": false, "cash": 34000, "money": "財布と引き出しの封筒を合わせて、手元にある現金は%s円。"},
+ ]
+ 
++## v149.34: all money is cash in hand (there are no bank accounts). How much
++## comes from the past, and a little from the work the player does.
++const JOB_CASH := {"無職": 0, "会社員": 30000, "自営業": 20000, "学生": -10000}
++static func starting_cash(seed: int, job: String) -> int:
++	return maxi(3000, int(background_for(seed).get("cash", 30000)) + int(JOB_CASH.get(job, 0)))
++
++static func yen(n: int) -> String:
++	var t := str(absi(n))
++	var out := ""
++	while t.length() > 3:
++		out = "," + t.right(3) + out
++		t = t.left(t.length() - 3)
++	return ("-" if n < 0 else "") + t + out
++
++static func money_line(seed: int, job: String) -> String:
++	return str(background_for(seed).get("money", "手元にある現金は%s円。")) % yen(starting_cash(seed, job))
++
+ static func background_for(seed: int) -> Dictionary:
+ 	return BACKGROUNDS[absi(hash([seed, "background"])) % BACKGROUNDS.size()]
+ 
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 index e977521..5ea74f7 100644
 --- a/scripts/survivors.gd
@@ -5920,6 +5999,88 @@ index 0000000..b76af42
 +			break
 +	found.sort_custom(func(a, b): return int(a[0]) < int(b[0]))
 +	return found.map(func(f): return [f[1], f[2]])
+diff --git a/scripts/world.gd b/scripts/world.gd
+index 2c2a4b4..5d08c00 100644
+--- a/scripts/world.gd
++++ b/scripts/world.gd
+@@ -42,6 +42,9 @@ func configure(profile: Dictionary) -> bool:
+ 	reset()
+ 	s.profile = profile.duplicate(true)
+ 	s.seed = int(profile.seed)
++	# v149.34: money is cash in hand only, from the player's past and work.
++	s.cash = load("res://scripts/skills.gd").starting_cash(int(profile.seed), str(profile.job))
++	s.bank = 0
+ 	s.sim.local_region = Events.region_for_address(str(profile.address))
+ 	var taste_rng := RandomNumberGenerator.new()
+ 	taste_rng.randomize()
+@@ -321,7 +324,7 @@ func buy_quantity(shop_id: String,item: String,quantity: int) -> String:
+ 	if not CATALOG.has(item) or str(CATALOG[item].shop)!=shop_id:return "この店では扱っていません。"
+ 	var shop:Dictionary=s.shops[shop_id]
+ 	if Vector2(float(s.player_pos[0]),float(s.player_pos[2])).distance_to(Vector2(float(shop.x),float(shop.z)))>4:return "店頭に近づいてください。"
+-	match _shop_purchase_issue(shop_id, item, quantity, int(s.cash) + int(s.bank)):
++	match _shop_purchase_issue(shop_id, item, quantity, int(s.cash)):
+ 		"closed": return "この店は休業中です。"
+ 		"rationed": return "この店では一度に2個までです。"
+ 		"equipment_quantity": return "設備は1台ずつ購入してください。"
+@@ -329,9 +332,7 @@ func buy_quantity(shop_id: String,item: String,quantity: int) -> String:
+ 		"cash": return "お金が足りない。"
+ 	if item in HouseholdErrands.GEAR and _has_or_carries_equipment(item):return "その設備はすでに所持しているか、家に持ち帰る途中です。"
+ 	var price := _record_sale(shop_id, item, quantity)
+-	var cash_paid:=mini(int(s.cash),price)
+-	s.cash-=cash_paid
+-	s.bank-=price-cash_paid
++	s.cash-=price
+ 	add_household_purchase(item, quantity)
+ 	advance_safe(5+int(shop.get("queue_minutes",0)))
+ 	return "%sを購入した（%d円）。" % [CATALOG[item].name, price]
+@@ -400,7 +401,7 @@ func work_at_home() -> String:
+ 	while int(s.minute)-before<240 and float(s.health)>0 and has_home_power() and float(s.sim.communications)>=30:
+ 		advance_safe(1)
+ 	if int(s.minute)-before<240:return "%d分で作業が中断された。報酬は発生していない。"%(int(s.minute)-before)
+-	s.bank+=pay
++	s.cash+=pay
+ 	s.sim.payroll-=pay
+ 	return "4時間の仕事を終え、%d円の報酬を得た。"%pay
+ 
+diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
+index 3951d2c..847392a 100644
+--- a/scripts/world_legacy.gd
++++ b/scripts/world_legacy.gd
+@@ -525,8 +525,8 @@ func place_order(item: String, quantity: int) -> String:
+ 	if pending >= 8:
+ 		return "未配達の注文が多すぎる。"
+ 	var price: int = (850 if item == "food" else 180) * quantity
+-	if int(s.cash) + int(s.bank) < price:
+-		return "注文に必要なお金が足りない。"
++	if int(s.cash) < price:
++		return "注文に必要なお金が足りない。（支払いは代金引換・現金のみ）"
+ 	while s.longplay.orders.size() >= 256:
+ 		var removed := false
+ 		for i in range(s.longplay.orders.size()):
+@@ -535,9 +535,7 @@ func place_order(item: String, quantity: int) -> String:
+ 				removed = true
+ 				break
+ 		if not removed: return "注文履歴が満杯。"
+-	var from_cash: int = mini(int(s.cash), price)
+-	s.cash -= from_cash
+-	s.bank -= price - from_cash
++	s.cash -= price
+ 	var lead_days: int = 1 + draw(int(s.minute),quantity,"shipping-lead",3)
+ 	if s.society == "alert": lead_days += 2
+ 	var order := {"id":int(s.minute)*100 + s.longplay.orders.size(),"item":item,"quantity":quantity,"price":price,"due":int(s.minute)+lead_days*1440,"status":"pending"}
+@@ -977,10 +975,8 @@ func buy(shop_id: String,item: String) -> String:
+ 	var amount: float=2.0 if item=="water" else 1.0
+ 	var price: int=prices[item]
+ 	if shop.stock[item]<amount: return "売り切れです。"
+-	if s.cash+s.bank<price: return "所持金が足りない。"
+-	var from_cash: int=mini(int(s.cash),price)
+-	s.cash-=from_cash
+-	s.bank-=price-from_cash
++	if s.cash<price: return "所持金が足りない。"
++	s.cash-=price
+ 	shop.stock[item]-=amount
+ 	match item:
+ 		"food": s.food+=amount
 diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
 index b6631e0..7be9f4a 100644
 --- a/tests/test_action_play149_32.gd
@@ -5939,6 +6100,68 @@ index b6631e0..7be9f4a 100644
  			g.survivor_partner = ""
  			break
  	# The shelter.
+diff --git a/tests/test_actions22.gd b/tests/test_actions22.gd
+index b05f43c..978e4f5 100644
+--- a/tests/test_actions22.gd
++++ b/tests/test_actions22.gd
+@@ -34,14 +34,14 @@ func run()->void:
+ 	g.location="薬局";g._sync_player_position();g._refresh();await process_frame
+ 	check(not g._interpret("近くの住民を観察").contains("屋外に出る"),"street shop permits nearby observation")
+ 	var w=World.new();w.s.profile.job="自営業";w.s.sim.payroll=3500
+-	var bank:int=w.s.bank;w.work_at_home()
+-	check(w.s.bank==bank+3000 and w.s.sim.payroll<=500,"freelance pay uses own 3000 yen threshold")
++	var bank:int=w.s.cash;w.work_at_home()
++	check(w.s.cash==bank+3000 and w.s.sim.payroll<=500,"freelance pay uses own 3000 yen threshold (paid in cash, v149.34)")
+ 	w=World.new();w.s.profile.job="学生";w.s.sim.payroll=0
+ 	w.work_at_home()
+-	check(w.s.sim.study_sessions==1 and w.s.minute==120 and w.s.bank==250000,"study does not require payroll or create money")
++	check(w.s.sim.study_sessions==1 and w.s.minute==120 and w.s.cash==25000,"study does not require payroll or create money")
+ 	w=World.new();w.s.profile.job="会社員";w.s.grid_online=false;w.s.equipment.battery=true;w.s.battery=1.01
+-	bank=w.s.bank;w.work_at_home()
+-	check(w.s.minute<240 and w.s.bank==bank,"power exhaustion interrupts actual work with no payment")
++	bank=w.s.cash;w.work_at_home()
++	check(w.s.minute<240 and w.s.cash==bank,"power exhaustion interrupts actual work with no payment")
+ 	# Equivalent natural-language clauses must use the same engine route.
+ 	var other=Main.instantiate();root.add_child(other);await process_frame
+ 	other._start_new_game(other.world.DEFAULT_PROFILE.duplicate(true));other._finish_intro()
+diff --git a/tests/test_audit22.gd b/tests/test_audit22.gd
+index c5fed45..2e62517 100644
+--- a/tests/test_audit22.gd
++++ b/tests/test_audit22.gd
+@@ -57,8 +57,8 @@ func run()->void:
+ 	w.s.agents[1].supplies=6.0;w._update_resident_routines()
+ 	check(w.s.agents[1].destination=="home","CURFEW resident routine honors active external restriction")
+ 	w=World.new();w.s.profile.job="会社員";w.s.grid_online=false;w.s.equipment.battery=true;w.s.battery=1000
+-	var bank:int=w.s.bank;w.work_at_home()
+-	check(w.s.bank>bank,"BATTERY-WORK stored power supports home work")
++	var bank:int=w.s.cash;w.work_at_home()
++	check(w.s.cash>bank,"BATTERY-WORK stored power supports home work")
+ 	game.world.reset();game.location="寝室";game._sync_player_position();game._refresh()
+ 	root.size=Vector2i(1280,360);await process_frame;await process_frame;await process_frame
+ 	check(game.command_input.get_global_rect().end.y<=360,"KEYBOARD-SPACE input fits reduced landscape height")
+@@ -91,8 +91,8 @@ func run()->void:
+ 	var frozen:PackedByteArray=var_to_bytes(corpse.s);corpse.buy_quantity("grocer","food",1)
+ 	check(frozen==var_to_bytes(corpse.s),"DEAD-PURCHASE cannot buy after death")
+ 	var interrupted=World.new();interrupted.s.profile.job="会社員";interrupted.s.sim.communications=0.0
+-	var before_bank:int=interrupted.s.bank;interrupted.work_at_home()
+-	check(interrupted.s.bank==before_bank and interrupted.s.minute==0,"WORK-NETWORK blocked work does not mint income")
++	var before_bank:int=interrupted.s.cash;interrupted.work_at_home()
++	check(interrupted.s.cash==before_bank and interrupted.s.minute==0,"WORK-NETWORK blocked work does not mint income")
+ 	var malformed:Dictionary=game.world.s.duplicate(true);malformed.sim=null
+ 	check(game.world.migrate_legacy(malformed).is_empty(),"SAVE-MALFORMED nested malformed state rejected without script error")
+ 	game._save()
+diff --git a/tests/test_normal_play22.gd b/tests/test_normal_play22.gd
+index e7ceb2f..4cc66a7 100644
+--- a/tests/test_normal_play22.gd
++++ b/tests/test_normal_play22.gd
+@@ -10,6 +10,7 @@ func run()->void:
+ 	var game=Main.instantiate();root.add_child(game);await process_frame
+ 	var profile:Dictionary=game.world.DEFAULT_PROFILE.duplicate(true);profile.cohabitants=1;profile.companion_names=["同居人"]
+ 	game._start_new_game(profile);game._finish_intro();await process_frame
++	game.world.s.cash = 400000   # v149.34: this test buys one of everything
+ 	for command in ["玄関へ行く","鍵を開ける","外に出る","食品店へ行く","食料を12個買う","食料を12個買う","食料を12個買う","水を12個買う","水を12個買う","金物店へ行く","木材を12個買う","部品を12個買う","種を4個買う","浄水器を買う","ソーラーパネルを買う","蓄電池を買う","薬局へ行く","包帯を3個買う","家に帰る"]:
+ 		var answer:String=game._interpret(command)
+ 		print("PLAY ",command," => ",answer.split("\n")[0])
 diff --git a/tests/test_playthrough149_33.gd.uid b/tests/test_playthrough149_33.gd.uid
 new file mode 100644
 index 0000000..4147eed
@@ -5961,10 +6184,10 @@ index ea0880e..6fd0063 100644
  
 diff --git a/tests/test_shop149_34.gd b/tests/test_shop149_34.gd
 new file mode 100644
-index 0000000..23bccec
+index 0000000..9ec48b6
 --- /dev/null
 +++ b/tests/test_shop149_34.gd
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,64 @@
 +extends SceneTree
 +## v149.34: the shop counter window — opens on arrival and by asking, lists
 +## what each shop sells, buys through the usual rules, closes on leaving.
@@ -5987,6 +6210,12 @@ index 0000000..23bccec
 +	g._finish_intro()
 +	g.local_model.enabled = false
 +	var w = g.world
++	# v149.34: no bank account; the money in hand comes from the past.
++	var Skills = load("res://scripts/skills.gd")
++	check(int(w.s.cash) == Skills.starting_cash(5, "無職") and int(w.s.bank) == 0, "money is cash in hand, set by the player's past (%d yen)" % int(w.s.cash))
++	check(g.intro_body.text.contains(Skills.yen(int(w.s.cash)) + "円") or str(g.log_entries).contains(Skills.yen(int(w.s.cash)) + "円") or Skills.money_line(5, "無職").contains("円"), "the opening says how much there is")
++	var cash_job: int = Skills.starting_cash(5, "会社員")
++	check(cash_job > int(w.s.cash), "a job adds a little")
 +	w.s.minute = 3 * 60
 +	await g._on_command("コンビニへ行く")
 +	check(g.shop_window != null and g.shop_window.visible, "arriving at an open konbini opens the counter window")
@@ -6014,6 +6243,13 @@ index 0000000..23bccec
 +	w.s.minute = 15 * 60   # 23:00, the small shops shut
 +	await g._on_command("薬局へ行く")
 +	check(ShopWindow.offers(g).is_empty() and not g.shop_window.visible, "a closed shop does not open the window")
++	# Without the cash, nothing is bought (no account to draw on).
++	w.s.minute = 4 * 1440 + 3 * 60
++	w.s.cash = 100
++	await g._on_command("コンビニへ行く")
++	var food_bag := float(w.s.district.bag.food)
++	await g._on_command("食料を1個買う")
++	check(float(w.s.district.bag.food) == food_bag and int(w.s.cash) == 100, "without enough cash nothing is bought")
 +	print("v149.34 shop checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_shop149_34.gd.uid b/tests/test_shop149_34.gd.uid
@@ -6047,6 +6283,19 @@ index 5aee241..424a484 100644
  	await g._on_command("何か知っていることはないか聞く")
  	check(g.log_entries[-1].contains(p.info.left(6)), "with trust, they share what they know")
  	p.trust = 70
+diff --git a/tests/test_system_v9.py b/tests/test_system_v9.py
+index f4eeec0..c380593 100644
+--- a/tests/test_system_v9.py
++++ b/tests/test_system_v9.py
+@@ -18,7 +18,7 @@ checks={
+     'load restores known events': 'known_events = loaded_known' in m,
+     'event array bounded': 'if s.events.size() > 240' in w,
+     'save validates event fields': 'for e in data.events:' in w,
+-    'orders charge money': 's.cash -= from_cash' in w and 's.bank -= price - from_cash' in w,
++    'orders charge money': 's.cash -= price' in w and 's.bank -=' not in w,
+     'orders arrive only on time': 'int(s.minute) < int(order.due)' in w,
+     'orders can fail': 'order.status = "failed"' in w,
+     'orders have bounded quantity': 'if quantity < 1 or quantity > 12' in w,
 diff --git a/tests/test_trade149_34.gd b/tests/test_trade149_34.gd
 new file mode 100644
 index 0000000..4984036
