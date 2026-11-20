@@ -1,3 +1,10 @@
+diff --git a/qa/economy_long.gd.uid b/qa/economy_long.gd.uid
+new file mode 100644
+index 0000000..049960c
+--- /dev/null
++++ b/qa/economy_long.gd.uid
+@@ -0,0 +1 @@
++uid://cy1s36s7pxiux
 diff --git a/qa/npc_watch.gd b/qa/npc_watch.gd
 new file mode 100644
 index 0000000..15eacb7
@@ -53,6 +60,13 @@ index 0000000..15eacb7
 +	print("HOUSES ", w.s.district.get("houses", {}))
 +	print("GROUPS ", JSON.stringify(Survivors.ensure(w).get("groups", {})).left(600))
 +	quit()
+diff --git a/qa/npc_watch.gd.uid b/qa/npc_watch.gd.uid
+new file mode 100644
+index 0000000..f1270ba
+--- /dev/null
++++ b/qa/npc_watch.gd.uid
+@@ -0,0 +1 @@
++uid://br8rswovuswqg
 diff --git a/qa/perf_long.gd b/qa/perf_long.gd
 new file mode 100644
 index 0000000..617ec1b
@@ -92,6 +106,13 @@ index 0000000..617ec1b
 +			var size := JSON.stringify(w.s).length()
 +			print("DAY %d ms/day=%.0f save=%dKB society=%s survivors_alive=%d walkers_total=%d events=%d chronicle=%d" % [day + 1, float(Time.get_ticks_msec() - t0) / float(day + 1), size / 1024, w.s.society, alive, load("res://scripts/walkers.gd").total(w), w.s.events.size(), load("res://scripts/chronicle.gd").state(w).get("notes", []).size()])
 +	quit()
+diff --git a/qa/perf_long.gd.uid b/qa/perf_long.gd.uid
+new file mode 100644
+index 0000000..87375ab
+--- /dev/null
++++ b/qa/perf_long.gd.uid
+@@ -0,0 +1 @@
++uid://b8scaaj2y4f6a
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
 index 2c13ef6..7a583cd 100644
 --- a/scripts/action_plan.gd
@@ -115,10 +136,102 @@ index 2c13ef6..7a583cd 100644
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/district.gd b/scripts/district.gd
-index 31c6246..63ae475 100644
+index 31c6246..cd97e3b 100644
 --- a/scripts/district.gd
 +++ b/scripts/district.gd
-@@ -172,6 +172,31 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -1,6 +1,14 @@
+ extends RefCounted
++const TownMap = preload("res://scripts/town_map.gd")
+ 
+-const SITES = {
++## v149.36: the old places plus the wider town's buildings.
++static var SITES := _all_sites()
++static func _all_sites() -> Dictionary:
++	var out: Dictionary = OLD_SITES.duplicate(true)
++	out.merge(TownMap.sites())
++	return out
++
++const OLD_SITES = {
+ 	"コンビニ": {"food": 8.0, "water": 20.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(28, 22)},
+ 	"近所の空き家": {"food": 1.5, "water": 3.0, "vacant": true, "opens": 0, "closes": 24, "position": Vector2(-29, 36)},
+ 	"デパート": {"food": 30.0, "water": 45.0, "vacant": false, "opens": 10, "closes": 20, "position": Vector2(53, 31)},
+@@ -43,14 +51,16 @@ static func _supplies(value: Variant, food_limit: float, water_limit: float) ->
+ static func valid(value: Variant) -> bool:
+ 	if not value is Dictionary or not _supplies(value.get("bag"), FOOD_LIMIT, WATER_LIMIT):
+ 		return false
++	# Older saves gain new buildings on upgrade (done before this check).
+ 	if not value.get("sites") is Dictionary or value.sites.size() != SITES.size():
+ 		return false
+ 	if not value.get("current") is String or (value.current != "" and not SITES.has(value.current)):
+ 		return false
+ 	for place in SITES:
+ 		var site = value.sites.get(place)
+-		# v149.27: a well-stocked world may hold up to twice the usual stock.
+-		if not _supplies(site, SITES[place].food * 2.0, SITES[place].water * 2.0):
++		# v149.27: a well-stocked world may hold up to twice the usual stock;
++		# v149.35: and what a group leaves behind when it ends.
++		if not _supplies(site, maxf(SITES[place].food * 2.0, 1000.0), maxf(SITES[place].water * 2.0, 1000.0)):
+ 			return false
+ 		if not site.get("vacant") is bool or not _amount(site.get("level"), 2) or float(site.level) != floorf(float(site.level)):
+ 			return false
+@@ -71,6 +81,13 @@ static func tick(world) -> void:
+ 		world.s.district.sites["コンビニ"].vacant = true
+ 	if world.s.society == "emergency":
+ 		world.s.district.sites["デパート"].vacant = true
++	# v149.36: the wider town's shops shut when supplies stop coming.
++	for place in TownMap.buildings():
++		var at: String = str(TownMap.PLACES[place].get("closes_at", ""))
++		if at.is_empty() or not world.s.district.sites.has(place):
++			continue
++		if world.s.society == "emergency" or (world.s.society == "disrupted" and float(world.s.sim.logistics) < 60.0):
++			world.s.district.sites[place].vacant = true
+ 	# The small shops: empty once their staff are gone, or when it is all over.
+ 	for place in SITES:
+ 		if not is_shop(place) or not world.s.district.sites.has(place):
+@@ -82,6 +99,21 @@ static func tick(world) -> void:
+ 				shop.abandoned = true
+ 				shop.open = false
+ 
++## v149.36: goods beyond food and water some buildings hold (a home centre's
++## timber and fittings, a hospital's bandages), counted per world.
++const EXTRA_PRICE := {"wood": 500, "parts": 800, "seeds": 200, "bandage": 300}
++const EXTRA_LABEL := {"wood": "木材", "parts": "部品", "seeds": "種", "bandage": "包帯"}
++static func extras(world, place: String) -> Dictionary:
++	var site: Dictionary = world.s.district.sites.get(place, {})
++	if site.is_empty():
++		return {}
++	if not site.get("extra") is Dictionary:
++		site.extra = TownMap.PLACES.get(place, {}).get("specials", {}).duplicate()
++	return site.extra
++
++static func sells(place: String) -> bool:
++	return bool(TownMap.PLACES.get(place, {}).get("sells", false))
++
+ static func can_enter(world, place: String) -> bool:
+ 	var site: Dictionary = world.s.district.sites[place]
+ 	var hours: Dictionary = SITES[place]
+@@ -145,7 +177,19 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+ 		return "営業中や管理中の建物では実行できない。"
+ 	match command:
+ 		"物資を探索する":
+-			return _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, 2.0, 4.0), "残っていた物資を回収した")
++			var found := _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, 2.0, 4.0), "残っていた物資を回収した")
++			# v149.36: and what else the place holds, a few at a time.
++			var more: Array = []
++			var stock := extras(world, place)
++			for item in stock:
++				var take := mini(int(stock[item]), 3 if item != "bandage" else 5)
++				if take > 0:
++					stock[item] = int(stock[item]) - take
++					world.s.inventory[item] = int(world.s.inventory.get(item, 0)) + take
++					more.append("%s%d" % [EXTRA_LABEL.get(item, item), take])
++			if not more.is_empty():
++				found += "\nほかにも見つけた：%s。" % "、".join(more)
++			return found
+ 		"ここを拠点にする":
+ 			if site.level >= 1:
+ 				return "ここはすでに寝泊まりできる。"
+@@ -172,10 +216,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  			return _transfer_text(world, _transfer(site.cache, bag, FOOD_LIMIT, WATER_LIMIT, FOOD_LIMIT, WATER_LIMIT), "拠点の備蓄から持ち出した")
  	return "ここでは実行できない。"
  
@@ -126,23 +239,42 @@ index 31c6246..63ae475 100644
 +## died, what is left in their kitchens is there for whoever searches — the
 +## player and every survivor alike. Plenty at first, harder to find as the
 +## houses are emptied one by one.
-+const HOUSES_FOOD := 160.0
-+const HOUSES_WATER := 220.0
-+static func houses(world) -> Dictionary:
++## v149.36: every residential area has its own houses (the old street keeps
++## its 100 or so homes; the wider town's areas say how many they have).
++const OLD_STREET_HOMES := 100
++static func homes_in(place: String) -> int:
++	if place == "住宅街":
++		return OLD_STREET_HOMES
++	return int(TownMap.PLACES.get(place, {}).get("households", 0))
++
++static func is_houses(place: String) -> bool:
++	return homes_in(place) > 0
++
++static func houses(world, place: String = "住宅街") -> Dictionary:
 +	var d: Dictionary = world.s.district
-+	if not d.get("houses") is Dictionary:
-+		d.houses = {"food": HOUSES_FOOD, "water": HOUSES_WATER}
-+	return d.houses
++	if not d.get("houses_by") is Dictionary:
++		d.houses_by = {}
++		# An older save's single store for the old street carries over.
++		if d.get("houses") is Dictionary:
++			d.houses_by["住宅街"] = d.houses
++			d.erase("houses")
++	if not d.houses_by.has(place):
++		var n := float(homes_in(place))
++		d.houses_by[place] = {"food": n * TownMap.FOOD_PER_HOME, "water": n * TownMap.WATER_PER_HOME}
++	return d.houses_by[place]
 +
 +static func houses_open(world) -> bool:
 +	return str(world.s.get("society", "normal")) in ["disrupted", "emergency"]
 +
-+## What one search of the houses turns up (food, water), taken from the pool.
-+static func search_houses(world, food_cap: float, water_cap: float) -> Vector2:
-+	var h := houses(world)
-+	var left := float(h.food) / HOUSES_FOOD
-+	var food := minf(float(h.food), roundf(food_cap * left))
-+	var water := minf(float(h.water), roundf(water_cap * float(h.water) / HOUSES_WATER / 2.0) * 2.0)
++## What one search of the houses turns up (food, water), taken from the pool:
++## easy at first, harder as the homes are emptied one by one.
++static func search_houses(world, food_cap: float, water_cap: float, place: String = "住宅街") -> Vector2:
++	var h := houses(world, place)
++	var n := float(maxi(1, homes_in(place)))
++	var left := clampf(float(h.food) / (n * TownMap.FOOD_PER_HOME), 0.0, 1.0)
++	var wet := clampf(float(h.water) / (n * TownMap.WATER_PER_HOME), 0.0, 1.0)
++	var food := minf(float(h.food), roundf(food_cap * sqrt(left)))
++	var water := minf(float(h.water), roundf(water_cap * sqrt(wet) / 2.0) * 2.0)
 +	h.food = float(h.food) - food
 +	h.water = float(h.water) - water
 +	return Vector2(food, water)
@@ -150,8 +282,41 @@ index 31c6246..63ae475 100644
  static func buy(world, place: String, item: String, quantity: int, actor_bag: Dictionary = {}) -> String:
  	var site: Dictionary = world.s.district.sites[place]
  	if world.s.health <= 0 or site.vacant or not can_enter(world, place):
+ 		return "この店では現在購入できない。"
++	if EXTRA_PRICE.has(item) and sells(place):
++		var stock := extras(world, place)
++		if quantity < 1 or quantity > 12:
++			return "数量は1～12です。"
++		if int(stock.get(item, 0)) < quantity:
++			return "店の在庫が足りない（残り%d）。" % int(stock.get(item, 0))
++		var cost := int(EXTRA_PRICE[item]) * quantity
++		if int(world.s.cash) < cost:
++			return "現金が足りない（%d円必要、所持%d円）。" % [cost, int(world.s.cash)]
++		stock[item] = int(stock[item]) - quantity
++		world.s.inventory[item] = int(world.s.inventory.get(item, 0)) + quantity
++		world.s.cash = int(world.s.cash) - cost
++		world.advance_safe(5)
++		return "%sを%d個購入した（%d円）。" % [EXTRA_LABEL[item], quantity, cost]
+ 	if item not in ["food", "water"] or quantity < 1 or quantity > 12:
+ 		return "ここで買えるのは食料と飲料水。数量は1～12です。"
+ 	var amount := float(quantity) * (1.0 if item == "food" else 2.0)
+diff --git a/scripts/home_life.gd b/scripts/home_life.gd
+index a4b03a2..70dde13 100644
+--- a/scripts/home_life.gd
++++ b/scripts/home_life.gd
+@@ -199,8 +199,8 @@ static func heat_source(world) -> String:
+ 
+ static func _buy_gas(game, cmd: String) -> bool:
+ 	var world = game.world
+-	if not game.location in ["コンビニ", "金物店"]:
+-		return _done(game, "カセットボンベはコンビニか金物店で買える。何も実行していません。")
++	if not game.location in ["コンビニ", "金物店", "ホームセンター"]:
++		return _done(game, "カセットボンベはコンビニか金物店、ホームセンターで買える。何も実行していません。")
+ 	if game.location == "コンビニ" and (bool(world.s.district.sites["コンビニ"].vacant) or not game.District.can_enter(world, "コンビニ")):
+ 		return _done(game, "今は買えない。")
+ 	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..d039543 100644
+index 0f2add4..15e3daf 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1844,6 +1844,8 @@ func _suggestions() -> Array:
@@ -167,7 +332,7 @@ index 0f2add4..d039543 100644
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
-+		if location == "住宅街" and District.houses_open(world) and float(District.houses(world).food) > 0.0:
++		if District.is_houses(location) and District.houses_open(world) and float(District.houses(world, location).food) > 0.0:
 +			out.push_front("空き家を探す")
 +		if District.prepared(world, _site()) and world.s.get("survivors") is Dictionary and load("res://scripts/npc_groups.gd").at(world, _site()).is_empty() and Survivors.active(world):
 +			out.push_front("ここを集落にする")
@@ -225,13 +390,13 @@ index 0f2add4..d039543 100644
 +	if clean in ["ここを出る", "集まりを抜ける"] and world.s.get("survivors") is Dictionary:
 +		return load("res://scripts/npc_groups.gd").leave(world)
 +	# v149.35: the abandoned houses along the residential street.
-+	if location == "住宅街" and clean in ["物資を探索する", "空き家を探す", "家を探す", "民家を探す"]:
++	if District.is_houses(location) and clean in ["物資を探索する", "空き家を探す", "家を探す", "民家を探す"]:
 +		if not District.houses_open(world):
 +			return "どの家にも、まだ人が暮らしている。"
 +		var bag: Dictionary = world.s.district.bag
 +		world.advance_safe(40)
-+		Walkers.make_noise(world, "住宅街", 40)
-+		var got := District.search_houses(world, minf(2.0, District.FOOD_LIMIT - float(bag.food)), minf(4.0, District.WATER_LIMIT - float(bag.water)))
++		Walkers.make_noise(world, location, 40)
++		var got := District.search_houses(world, minf(2.0, District.FOOD_LIMIT - float(bag.food)), minf(4.0, District.WATER_LIMIT - float(bag.water)), location)
 +		bag.food = float(bag.food) + got.x
 +		bag.water = float(bag.water) + got.y
 +		if got.x + got.y <= 0.0:
@@ -240,6 +405,15 @@ index 0f2add4..d039543 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
+@@ -3539,7 +3586,7 @@ func _interpret(raw: String) -> String:
+ 		if District.SITES.has(_site()) and not District.is_shop(_site()):
+ 			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
+ 				return "指定した店にいない。"
+-			var stock_item := {"食料":"food", "水":"water", "飲料水":"water"}.get(bought.get_string(2), "") as String
++			var stock_item := {"食料":"food", "水":"water", "飲料水":"water", "木材":"wood", "部品":"parts", "種":"seeds", "包帯":"bandage"}.get(bought.get_string(2), "") as String
+ 			if location == "デパート" and not stock_item.is_empty():
+ 				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
+ 			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
 @@ -3696,7 +3743,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
@@ -296,6 +470,79 @@ index 0f2add4..d039543 100644
  	if report!="新しく確認できた出来事はない。":observed_news=report
  	elif observed_news=="まだ確認していない":observed_news="新しい報道は確認できない。"
  	visual_focus="news"
+diff --git a/scripts/navigation.gd b/scripts/navigation.gd
+index 5b507de..6610b8f 100644
+--- a/scripts/navigation.gd
++++ b/scripts/navigation.gd
+@@ -1,11 +1,17 @@
+ extends RefCounted
+ const District = preload("res://scripts/district.gd")
++const TownMap = preload("res://scripts/town_map.gd")
+ const STREETS = ["商店通り","住宅街","駅前"]
+ const DEPARTMENT = ["デパート正面","デパート地下"]
+ const NODES = ["寝室","居間","台所","廊下","玄関","共用廊下","建物前","屋外","食品店","金物店","薬局"]
+ const ALIASES = {"寝室":"寝室","自室":"寝室","リビング":"居間","居間":"居間","台所":"台所","キッチン":"台所","廊下":"廊下","室内":"廊下","玄関":"玄関","共用部分":"共用廊下","共用廊下":"共用廊下","建物の共用部分":"共用廊下","建物前":"建物前","建物の外":"建物前","街路":"屋外","外":"屋外","屋外":"屋外","食品店":"食品店","スーパー":"食品店","金物店":"金物店","薬局":"薬局","家":"玄関","自宅":"玄関","商店通り":"商店通り","住宅街":"住宅街","駅前":"駅前","コンビニ":"コンビニ","近所の空き家":"近所の空き家","空き家":"近所の空き家","近所の家":"近所の空き家","他の家":"近所の空き家","デパート":"デパート","百貨店":"デパート","デパート1階":"デパート","デパートの1階":"デパート","デパート正面":"デパート正面","デパートの前":"デパート正面","デパートの正面":"デパート正面","デパートの入口":"デパート正面","デパート入口":"デパート正面","デパート地下":"デパート地下","デパ地下":"デパート地下","デパートの地下":"デパート地下","地下食品売場":"デパート地下","地下の食品売場":"デパート地下","食品売場":"デパート地下","デパートの食品売場":"デパート地下","避難所":"避難所","小学校":"避難所","学校":"避難所","体育館":"避難所"}
+ static func all_nodes() -> Array:
+-	return NODES + STREETS + DEPARTMENT + ["避難所"] + District.SITES.keys()
++	var out: Array = NODES + STREETS + DEPARTMENT + ["避難所"] + District.SITES.keys() + TownMap.PLACES.keys()
++	var seen := {}
++	return out.filter(func(n):
++		if seen.has(n): return false
++		seen[n] = true
++		return true)
+ 
+ static func graph(housing: String) -> Dictionary:
+ 	var g := {"寝室":["居間","廊下"],"居間":["寝室","台所","廊下","玄関"],"台所":["居間","廊下"],"廊下":["寝室","居間","台所","玄関"],"玄関":["居間","廊下"],"共用廊下":["玄関","建物前"],"建物前":["屋外"],"屋外":["建物前","食品店","金物店","薬局"],"食品店":["屋外"],"金物店":["屋外"],"薬局":["屋外"]}
+@@ -20,6 +26,14 @@ static func graph(housing: String) -> Dictionary:
+ 	g["デパート正面"] = ["駅前","デパート"]
+ 	g["デパート"] = ["デパート正面","デパート地下"]
+ 	g["デパート地下"] = ["デパート"]
++	# v149.36: the wider town hangs off the old streets.
++	var wider := TownMap.links()
++	for place in wider:
++		if not g.has(place):
++			g[place] = []
++		for other in wider[place]:
++			if not other in g[place]:
++				g[place].append(other)
+ 	if housing == "集合住宅":
+ 		g["玄関"].append("共用廊下")
+ 		g["建物前"].append("共用廊下")
+@@ -54,7 +68,11 @@ static func destination(raw: String) -> String:
+ 	var re := RegEx.new()
+ 	re.compile("^(.+?)(?:へ|に)(?:移動(?:する)?|行く|入る|戻る|帰る|出る)(?:してください)?$")
+ 	var match_value := re.search(cmd)
+-	if match_value != null and ALIASES.has(match_value.get_string(1)): return str(ALIASES[match_value.get_string(1)])
++	if match_value != null:
++		var said := match_value.get_string(1)
++		var wider := TownMap.aliases()
++		if wider.has(said): return str(wider[said])
++		if ALIASES.has(said): return str(ALIASES[said])
+ 	return ""
+ static func indoor(place: String) -> bool:
+ 	return place in ["寝室","居間","台所","廊下","玄関"]
+@@ -62,6 +80,9 @@ static func position(place: String) -> Array:
+ 	if District.SITES.has(place):
+ 		var point: Vector2 = District.SITES[place].position
+ 		return [point.x, 1.6, point.y]
++	if TownMap.PLACES.has(place):
++		var at: Vector2 = TownMap.PLACES[place].pos
++		return [at.x, 1.6, at.y]
+ 	match place:
+ 		"商店通り": return [25.0,1.6,21.0]
+ 		"住宅街": return [-26.0,1.6,37.0]
+@@ -78,6 +99,11 @@ static func position(place: String) -> Array:
+ 		"薬局": return [-22.0,1.6,19.3]
+ 	return [0.0,3.35,-2.0]
+ static func duration(from: String, to: String) -> int:
++	# v149.36: the wider town's own walking times.
++	if TownMap.PLACES.has(to):
++		return int(TownMap.PLACES[to].minutes)
++	if TownMap.PLACES.has(from):
++		return int(TownMap.PLACES[from].minutes)
+ 	if from == "避難所" or to == "避難所":
+ 		return 4
+ 	if from in DEPARTMENT or to in DEPARTMENT:
 diff --git a/scripts/npc_bonds.gd b/scripts/npc_bonds.gd
 new file mode 100644
 index 0000000..c763043
@@ -462,12 +709,19 @@ index 0000000..c763043
 +			best_score = score
 +			best = str(other)
 +	return best
+diff --git a/scripts/npc_bonds.gd.uid b/scripts/npc_bonds.gd.uid
+new file mode 100644
+index 0000000..708c627
+--- /dev/null
++++ b/scripts/npc_bonds.gd.uid
+@@ -0,0 +1 @@
++uid://cf56sbjq1gcm7
 diff --git a/scripts/npc_groups.gd b/scripts/npc_groups.gd
 new file mode 100644
-index 0000000..09e833d
+index 0000000..030d15c
 --- /dev/null
 +++ b/scripts/npc_groups.gd
-@@ -0,0 +1,398 @@
+@@ -0,0 +1,405 @@
 +extends RefCounted
 +## v149.35 world stage 3: survivors who trust one another settle together.
 +## A group has a home (an empty shop or house that is quiet enough), a shared
@@ -485,7 +739,10 @@ index 0000000..09e833d
 +const Walkers = preload("res://scripts/walkers.gd")
 +
 +## Places a group may settle in.
-+const HOMES := ["近所の空き家", "金物店", "食品店", "薬局", "コンビニ", "デパート", "デパート地下"]
++const TownMap = preload("res://scripts/town_map.gd")
++const OLD_HOMES := ["近所の空き家", "金物店", "食品店", "薬局", "コンビニ", "デパート", "デパート地下"]
++## v149.36: and the wider town's empty buildings and open ground.
++static var HOMES: Array = OLD_HOMES + TownMap.buildings() + TownMap.PLACES.keys().filter(func(p): return bool(TownMap.PLACES[p].get("farmland", false)))
 +const FORM_BOND := 70
 +const JOIN_BOND := 50
 +
@@ -514,6 +771,9 @@ index 0000000..09e833d
 +static func _home_ok(world, place: String) -> bool:
 +	if not place in HOMES:
 +		return false
++	# Open ground (a park, the riverside) is always there to be taken.
++	if bool(TownMap.PLACES.get(place, {}).get("farmland", false)):
++		return true
 +	var site_name := "デパート" if place == "デパート地下" else place
 +	var site: Dictionary = world.s.district.sites.get(site_name, {})
 +	return not site.is_empty() and bool(site.get("vacant", false))
@@ -628,7 +888,8 @@ index 0000000..09e833d
 +			# Planters, then beds: more hands, more ground worked.
 +			g.garden = minf(1.0, float(g.garden) + 0.06 * float(hands))
 +			if settled >= 5:
-+				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(hands)
++				var ground := 2.0 if bool(TownMap.PLACES.get(str(g.home), {}).get("farmland", false)) else 1.0
++				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(hands) * ground
 +			g.store.water = float(g.store.get("water", 0.0)) + 2.0 + float(hands)
 +		# Walls go up with work (and wood, if there is any).
 +		var wood := minf(float(g.store.get("wood", 0.0)), 1.0)
@@ -866,12 +1127,19 @@ index 0000000..09e833d
 +	var people: Dictionary = world.s.survivors.people
 +	var names: Array = g.members.map(func(m): return str(people[m].name) if people.has(m) else "?")
 +	return "%sの暮らし\n暮らしている人：%s\n蓄え：食料 %.0f人日・水 %.0f L\n守り：%s ・ 畑：%s" % [str(g.home), "あなた" + ("、" + "、".join(names) if not names.is_empty() else ""), float(g.store.get("food", 0.0)), float(g.store.get("water", 0.0)), "しっかりしている" if float(g.walls) >= 50.0 else ("板を打ちつけた程度" if float(g.walls) >= 15.0 else "ほとんどない"), "実り始めている" if float(g.garden) >= 0.5 else ("芽が出た" if float(g.garden) > 0.0 else "まだない")]
+diff --git a/scripts/npc_groups.gd.uid b/scripts/npc_groups.gd.uid
+new file mode 100644
+index 0000000..77dc2ba
+--- /dev/null
++++ b/scripts/npc_groups.gd.uid
+@@ -0,0 +1 @@
++uid://dlmveetxq41al
 diff --git a/scripts/npc_life.gd b/scripts/npc_life.gd
 new file mode 100644
-index 0000000..0d840f8
+index 0000000..16cb485
 --- /dev/null
 +++ b/scripts/npc_life.gd
-@@ -0,0 +1,303 @@
+@@ -0,0 +1,312 @@
 +extends RefCounted
 +## v149.35 world stage 1: survivors live on their own. Once the town is coming
 +## apart, each one decides every few hours from their own state — hunger,
@@ -893,8 +1161,17 @@ index 0000000..0d840f8
 +const NpcGroups = preload("res://scripts/npc_groups.gd")
 +
 +## Where survivors go. Home rooms and the player's doorstep are not theirs.
-+const PLACES := ["屋外", "商店通り", "住宅街", "駅前", "デパート正面", "デパート", "デパート地下", "コンビニ", "食品店", "金物店", "薬局", "近所の空き家", "避難所"]
-+const SUPPLY_SITES := {"コンビニ": "コンビニ", "食品店": "食品店", "金物店": "金物店", "薬局": "薬局", "近所の空き家": "近所の空き家", "デパート": "デパート", "デパート地下": "デパート"}
++const TownMap = preload("res://scripts/town_map.gd")
++const OLD_PLACES := ["屋外", "商店通り", "住宅街", "駅前", "デパート正面", "デパート", "デパート地下", "コンビニ", "食品店", "金物店", "薬局", "近所の空き家", "避難所"]
++const OLD_SUPPLY := {"コンビニ": "コンビニ", "食品店": "食品店", "金物店": "金物店", "薬局": "薬局", "近所の空き家": "近所の空き家", "デパート": "デパート", "デパート地下": "デパート"}
++## v149.36: and the wider town.
++static var PLACES: Array = OLD_PLACES + TownMap.PLACES.keys()
++static var SUPPLY_SITES: Dictionary = _supply()
++static func _supply() -> Dictionary:
++	var out: Dictionary = OLD_SUPPLY.duplicate()
++	for place in TownMap.buildings():
++		out[place] = place
++	return out
 +const LOG_CAP := 60
 +
 +static func _graph(world) -> Dictionary:
@@ -911,8 +1188,8 @@ index 0000000..0d840f8
 +	return Walkers.count(world, place) + Walkers.horde_at(world, place)
 +
 +static func _site_left(world, place: String, cash: int = 0) -> float:
-+	if place == "住宅街":
-+		return float(District.houses(world).food) + float(District.houses(world).water) / 2.0 if District.houses_open(world) else 0.0
++	if District.is_houses(place):
++		return float(District.houses(world, place).food) + float(District.houses(world, place).water) / 2.0 if District.houses_open(world) else 0.0
 +	var site_name: String = SUPPLY_SITES.get(place, "")
 +	if site_name.is_empty():
 +		return 0.0
@@ -1019,7 +1296,7 @@ index 0000000..0d840f8
 +			plan = "to_supplies"
 +			var reach := 2 + int(courage / 30.0)
 +			var best_d := 99
-+			for place in SUPPLY_SITES.keys() + ["住宅街"]:
++			for place in SUPPLY_SITES.keys() + ["住宅街"] + TownMap.houses():
 +				if _site_left(world, place, int(p.get("cash", 0))) <= 0.0 or _danger(world, place) >= bear + 2:
 +					continue
 +				var d := _distance(g, here, place)
@@ -1079,8 +1356,8 @@ index 0000000..0d840f8
 +
 +## Taking from the shelves: what is taken is gone for everyone after.
 +static func _forage(world, id: String, p: Dictionary, place: String) -> void:
-+	if place == "住宅街":
-+		var got := District.search_houses(world, 2.0, 4.0)
++	if District.is_houses(place):
++		var got := District.search_houses(world, 2.0, 4.0, place)
 +		var mine := Trade.goods(world, id)
 +		mine.food = float(mine.get("food", 0.0)) + got.x
 +		mine.water = float(mine.get("water", 0.0)) + got.y
@@ -1175,6 +1452,107 @@ index 0000000..0d840f8
 +		var how := "足早に歩いていく" if str(p.get("plan", "")) in ["to_supplies", "to_shelter", "flee"] else "あたりをうかがいながら立っている"
 +		return "通りを、%sが%s。" % [str(p.get("label", "誰か")), how]
 +	return "通りに、生きている人が%d人いる。何か話しているようだ。" % seen.size()
+diff --git a/scripts/npc_life.gd.uid b/scripts/npc_life.gd.uid
+new file mode 100644
+index 0000000..b95515d
+--- /dev/null
++++ b/scripts/npc_life.gd.uid
+@@ -0,0 +1 @@
++uid://v0rn482gqrkl
+diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
+index 6de9c8d..8d018d3 100644
+--- a/scripts/scene_description.gd
++++ b/scripts/scene_description.gd
+@@ -26,12 +26,18 @@ const DETAILS = {
+ const SHOPS = {"食品店":"grocer", "金物店":"hardware", "薬局":"pharmacy"}
+ const STREET_VIEWS = ["建物前", "屋外", "共用廊下", "商店通り", "住宅街", "駅前", "食品店", "金物店", "薬局", "デパート正面"]
+ 
++const TownMap = preload("res://scripts/town_map.gd")
++
+ static func describe(world, place: String) -> String:
+ 	var housing := str(world.s.profile.housing)
+ 	var detail := str(DETAILS.get(place, ""))
++	# v149.36: the wider town says what it looks like as things change.
++	if TownMap.PLACES.has(place):
++		var society := str(world.s.get("society", "normal"))
++		detail = TownMap.text(place, "normal" if society == "normal" else ("alert" if society in ["alert", "disrupted"] else "collapse"))
+ 	if place == "建物前":
+ 		detail = "集合住宅の入口に出た。住戸へは共用廊下を通る。" if housing == "集合住宅" else "家の玄関先に出た。敷地の先は通りにつながっている。"
+-	if place in STREET_VIEWS:
++	if place in STREET_VIEWS or TownMap.kind(place) in ["street", "houses", "land"]:
+ 		detail += _outside_light(str(world.s.weather), world.hour_of_day())
+ 		if not world.visible_residents().is_empty():
+ 			detail += "近くに人影が見える。"
+diff --git a/scripts/scene_view.gd b/scripts/scene_view.gd
+index c95188d..a05ea8c 100644
+--- a/scripts/scene_view.gd
++++ b/scripts/scene_view.gd
+@@ -1,7 +1,15 @@
+ extends Control
+ # Runtime overlays only. The photo is a location image, never an illustration
+ # of a specific event, a stock count, or a particular resident.
+-const PHOTO_NAMES={
++const TownMap = preload("res://scripts/town_map.gd")
++## v149.36: and the wider town's pictures (placeholders until they exist).
++static var PHOTO_NAMES: Dictionary = _photos()
++static func _photos() -> Dictionary:
++	var out: Dictionary = OLD_PHOTO_NAMES.duplicate()
++	for place in TownMap.PLACES:
++		out[place] = str(TownMap.PLACES[place].photo)
++	return out
++const OLD_PHOTO_NAMES={
+ 	"寝室":"bedroom","居間":"living","台所":"kitchen","廊下":"hall",
+ 	"玄関":"entrance","共用廊下":"corridor","建物前":"building",
+ 	"屋外":"street","商店通り":"shopping_street","住宅街":"residential","駅前":"station_front",
+@@ -28,7 +36,10 @@ func location_texture(location: String, override_name: String = "", phase: Strin
+ 	if file.is_empty():return null
+ 	# A place without its own photo yet borrows its surroundings'.
+ 	if not ResourceLoader.exists("res://assets/photos/"+file+".jpg"):
+-		file = {"school":"residential"}.get(file, file)
++		var stand_in := {"school":"residential"}
++		for place in TownMap.PLACES:
++			stand_in[str(TownMap.PLACES[place].photo)] = str(TownMap.PLACES[place].fallback)
++		file = stand_in.get(file, file)
+ 		if not ResourceLoader.exists("res://assets/photos/"+file+".jpg"):return null
+ 	var stage := PHASES.find(phase)
+ 	while stage > 0:
+@@ -45,7 +56,7 @@ func update_view(next_place:String,next_hour:float,next_weather:String,next_powe
+ 	queue_redraw()
+ func _draw()->void:
+ 	if ending:return
+-	var outdoor:bool=place in ["建物前","屋外","共用廊下","食品店","金物店","薬局","商店通り","住宅街","駅前"]
++	var outdoor:bool=place in ["建物前","屋外","共用廊下","食品店","金物店","薬局","商店通り","住宅街","駅前"] or TownMap.kind(place) in ["street","houses","land"]
+ 	var night:bool=hour<6 or hour>=18
+ 	if night or (not outdoor and not power):draw_rect(Rect2(Vector2.ZERO,size),Color(0.02,0.04,0.09,0.64 if outdoor or (not power and not dark_photo) else (0.12 if dark_photo else 0.18)))
+ 	# v149.29: snow is shown by the winter photos, not dots drawn on top.
+diff --git a/scripts/shop_window.gd b/scripts/shop_window.gd
+index 79480a1..dd84cbd 100644
+--- a/scripts/shop_window.gd
++++ b/scripts/shop_window.gd
+@@ -28,6 +28,23 @@ static func offers(game_node) -> Array:
+ 	var out: Array = []
+ 	if float(world.s.health) <= 0:
+ 		return out
++	# v149.36: the wider town's big shops (a supermarket, a home centre).
++	if District.sells(where):
++		var big: Dictionary = world.s.district.sites.get(where, {})
++		if big.is_empty() or bool(big.vacant) or not District.can_enter(world, where):
++			return out
++		if float(big.food) >= 1.0:
++			out.append({"id": "food", "name": "食料", "unit": "1人日分", "price": 600, "stock": int(floor(float(big.food))), "command": "食料を%d個買う"})
++		if float(big.water) >= 2.0:
++			out.append({"id": "water", "name": "飲料水", "unit": "2L", "price": 120, "stock": int(floor(float(big.water) / 2.0)), "command": "水を%d本買う"})
++		var stock: Dictionary = District.extras(world, where)
++		var cmd := {"wood": "木材を%d個買う", "parts": "部品を%d個買う", "seeds": "種を%d袋買う", "bandage": "包帯を%d個買う"}
++		var unit := {"wood": "1束", "parts": "1袋", "seeds": "1袋", "bandage": "1巻"}
++		for item in stock:
++			out.append({"id": str(item), "name": str(District.EXTRA_LABEL[item]), "unit": str(unit[item]), "price": int(District.EXTRA_PRICE[item]), "stock": int(stock[item]), "command": str(cmd[item])})
++		if where == "ホームセンター":
++			out.append({"id": "gas", "name": "カセットボンベ", "unit": "1本", "price": 150, "stock": -1, "command": "カセットボンベを%d本買う"})
++		return out
+ 	match where:
+ 		"コンビニ", "デパート地下":
+ 			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 index 5ea74f7..976e230 100644
 --- a/scripts/survivors.gd
@@ -1229,6 +1607,140 @@ index 5ea74f7..976e230 100644
  			if world.draw(minute, hash(id), "survivor-risk", 100) < risk:
  				cause = "bitten"
  		if cause.is_empty():
+diff --git a/scripts/town_map.gd b/scripts/town_map.gd
+new file mode 100644
+index 0000000..308cf13
+--- /dev/null
++++ b/scripts/town_map.gd
+@@ -0,0 +1,121 @@
++extends RefCounted
++## v149.36: the wider town. A made-up suburb of Tokyo laid out the way such
++## towns are: a private railway with its station and a bus terminal on the
++## north side, a big arterial road with a home centre, a petrol station, a
++## general hospital and a police box; low-rise houses north and south of the
++## line, a big 1970s housing estate (団地), a lower secondary school and a
++## shrine; a river with its embankment and a riverside ground; a park; a
++## strip of warehouses by the road. The existing places (the street outside
++## the house, the shopping street, the residential street, the station front,
++## the shops, the department store, the primary school shelter) stay as they
++## were; everything here hangs off them.
++##
++## kinds: street (outdoors, walked through), houses (many homes, searched as
++## one store), site (a building: shop or empty, can be a base), land (open
++## ground: water, gardens). photo: the picture this place should have; until
++## it exists, `fallback` (an existing picture) is shown.
++
++## place: {kind, area, links, minutes, pos, photo, fallback, aliases, text{normal,alert,collapse}, ...}
++const PLACES := {
++	# --- 駅周辺 ---
++	"駅のホーム": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(58, 34), "photo": "station_platform", "fallback": "station_front",
++		"aliases": ["ホーム", "駅の中", "改札", "駅構内"], "food": 2.0, "water": 6.0, "vacant": true,
++		"text": {"normal": "私鉄の駅の上りホーム。数分おきに各駅停車が入ってくる。", "alert": "ホームの電光掲示板に「運転見合わせ」の文字が流れている。", "collapse": "止まったままの電車が、ドアを開けたままホームに並んでいる。車内に置き去りの荷物が見える。"}},
++	"駅の北口": {"kind": "street", "area": "駅周辺", "links": ["駅前", "大通り"], "minutes": 4, "pos": Vector2(62, 44), "photo": "station_north", "fallback": "station_front",
++		"aliases": ["北口", "バスターミナル", "バス停"], "text": {"normal": "駅の北口のバスロータリー。客待ちのタクシーが並んでいる。", "alert": "バス乗り場に長い列ができている。運転本数が減っているらしい。", "collapse": "ロータリーにバスが斜めに停まったまま、扉が開いている。"}},
++	"スーパー": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(46, 38), "photo": "supermarket", "fallback": "grocer",
++		"aliases": ["スーパーマーケット", "大きなスーパー"], "food": 220.0, "water": 300.0, "vacant": false, "opens": 9, "closes": 22, "sells": true, "closes_at": "disrupted",
++		"specials": {"bandage": 4}, "text": {"normal": "駅前の大型スーパー。入口に特売のチラシが貼ってある。", "alert": "レジに長い列。棚の米と水がほとんど空になっている。", "collapse": "自動ドアがこじ開けられ、店内に商品が散乱している。"}},
++	"駅前のマンション": {"kind": "houses", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(54, 24), "photo": "tower_apartment", "fallback": "apartment",
++		"aliases": ["マンション", "駅前マンション", "タワーマンション"], "households": 120, "text": {"normal": "駅前に建つ十数階建てのマンション。オートロックの玄関がある。", "alert": "エントランスに「不要な外出を控えて」と管理会社の掲示。", "collapse": "オートロックは電気が落ちて開いたまま。上の階の窓がいくつか割れている。"}},
++	# --- 大通り（幹線道路） ---
++	"大通り": {"kind": "street", "area": "大通り", "links": ["駅の北口", "北の住宅街", "ホームセンター", "ガソリンスタンド", "総合病院", "交番", "倉庫街"], "minutes": 6, "pos": Vector2(80, 60), "photo": "arterial_road", "fallback": "street",
++		"aliases": ["幹線道路", "国道", "大きな通り"], "text": {"normal": "片側二車線の幹線道路。トラックがひっきりなしに走っている。", "alert": "パトカーがサイレンを鳴らして何台も通り過ぎていく。", "collapse": "乗り捨てられた車が車線をふさいでいる。ドアの開いた車も多い。"}},
++	"ホームセンター": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(92, 66), "photo": "home_center", "fallback": "hardware",
++		"aliases": ["ホムセン", "ホーム センター", "DIYの店"], "food": 6.0, "water": 30.0, "vacant": false, "opens": 9, "closes": 20, "sells": true, "closes_at": "disrupted",
++		"specials": {"wood": 20, "parts": 15, "seeds": 10}, "text": {"normal": "広い駐車場のある大型のホームセンター。園芸と資材の売り場がある。", "alert": "発電機とカセットボンベの棚が空になっている。", "collapse": "入口のシャッターが半分壊れている。資材売り場の奥は暗くて見通せない。"}},
++	"ガソリンスタンド": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 3, "pos": Vector2(86, 54), "photo": "gas_station", "fallback": "street",
++		"aliases": ["スタンド", "給油所"], "food": 3.0, "water": 8.0, "vacant": true, "specials": {"parts": 3},
++		"text": {"normal": "セルフ式のガソリンスタンド。併設の売店がある。", "alert": "給油待ちの車が道路まで並んでいる。", "collapse": "給油機は止まり、売店のガラスが割られている。"}},
++	"総合病院": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(96, 50), "photo": "hospital", "fallback": "pharmacy",
++		"aliases": ["病院", "大きな病院"], "food": 10.0, "water": 40.0, "vacant": true, "specials": {"bandage": 25}, "danger": 2,
++		"text": {"normal": "大通り沿いの総合病院。救急車の出入り口がある。", "alert": "救急外来の前に救急車が何台も並び、入口に人があふれている。", "collapse": "救急外来の自動ドアの向こうで、何かが動いている。"}},
++	"交番": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 2, "pos": Vector2(76, 64), "photo": "police_box", "fallback": "street",
++		"aliases": ["警察", "派出所"], "food": 1.0, "water": 2.0, "vacant": true,
++		"text": {"normal": "大通りの角の交番。警察官が立っている。", "alert": "「パトロール中」の札がかかったまま、誰もいない。", "collapse": "扉が開け放たれ、机の上の書類が床に散らばっている。"}},
++	"倉庫街": {"kind": "site", "area": "大通り", "links": ["大通り", "南の住宅街"], "minutes": 5, "pos": Vector2(70, 80), "photo": "warehouses", "fallback": "street",
++		"aliases": ["倉庫", "物流倉庫", "食品倉庫"], "food": 400.0, "water": 300.0, "vacant": true, "danger": 2,
++		"text": {"normal": "物流会社の倉庫が並ぶ一角。フォークリフトが行き来している。", "alert": "トラックの出入りが止まり、門が閉じられている。", "collapse": "食品倉庫の搬入口が開いたまま。中は段ボールの山だ。"}},
++	# --- 北の住宅地 ---
++	"北の住宅街": {"kind": "houses", "area": "北の住宅地", "links": ["大通り", "住宅街", "団地", "中学校", "神社", "川沿いの土手"], "minutes": 6, "pos": Vector2(-30, 70), "photo": "residential_north", "fallback": "residential",
++		"aliases": ["北の住宅地", "線路の北の住宅街"], "households": 150, "text": {"normal": "線路の北に広がる、古い一戸建ての多い住宅街。", "alert": "雨戸を閉め切った家が目立つ。", "collapse": "玄関の開いたままの家が並んでいる。洗濯物が干しっぱなしだ。"}},
++	"団地": {"kind": "houses", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-50, 90), "photo": "danchi", "fallback": "apartment",
++		"aliases": ["公営団地", "団地の棟", "集会所"], "households": 300, "danger": 1, "text": {"normal": "五階建ての棟がいくつも並ぶ大きな団地。中央に集会所と小さな公園がある。", "alert": "掲示板に「高齢の方の安否確認にご協力を」と貼り紙。", "collapse": "階段の踊り場から、うめき声が響いてくる。"}},
++	"中学校": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-20, 92), "photo": "junior_high", "fallback": "school",
++		"aliases": ["中学", "第二中学校"], "food": 15.0, "water": 40.0, "vacant": true, "text": {"normal": "鉄筋の校舎とグラウンドのある区立の中学校。", "alert": "休校の張り紙。校門は閉ざされている。", "collapse": "校門は開いたまま。グラウンドに机がいくつも積まれている。"}},
++	"神社": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 3, "pos": Vector2(-60, 66), "photo": "shrine", "fallback": "residential",
++		"aliases": ["お宮", "鎮守の森"], "food": 1.0, "water": 10.0, "vacant": true, "text": {"normal": "大きな楠の木に囲まれた、小さな神社。社務所がある。", "alert": "社務所に「当分の間、お休みします」の貼り紙。", "collapse": "境内は静かだ。手水舎に雨水がたまっている。"}},
++	# --- 川沿い ---
++	"川沿いの土手": {"kind": "land", "area": "川沿い", "links": ["北の住宅街", "住宅街", "河川敷のグラウンド", "橋"], "minutes": 6, "pos": Vector2(-80, 50), "photo": "river_embankment", "fallback": "street",
++		"aliases": ["土手", "川", "川沿い", "河川敷"], "water_source": true, "text": {"normal": "川沿いの土手の上の遊歩道。ジョギングをする人が行き交う。", "alert": "人通りが減り、土手の上が妙に静かだ。", "collapse": "土手の草が伸び放題になっている。川の水は流れ続けている。"}},
++	"河川敷のグラウンド": {"kind": "land", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 3, "pos": Vector2(-95, 58), "photo": "riverside_ground", "fallback": "street",
++		"aliases": ["グラウンド", "野球場", "河川敷のグランド"], "farmland": true, "water_source": true, "text": {"normal": "河川敷の野球グラウンド。管理小屋とベンチがある。", "alert": "グラウンドに人影はない。", "collapse": "広い土の地面が、手つかずのまま広がっている。"}},
++	"橋": {"kind": "street", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 4, "pos": Vector2(-100, 40), "photo": "bridge", "fallback": "street",
++		"aliases": ["大橋", "川の橋", "隣町への橋"], "entry": true, "text": {"normal": "隣町へ渡る大きな橋。車の流れが途切れない。", "alert": "橋のたもとに警察の車両が止まり、検問をしている。", "collapse": "橋の上に車が何台も放置されている。向こう岸から、何かが歩いてくる。"}},
++	# --- 南の住宅地 ---
++	"南の住宅街": {"kind": "houses", "area": "南の住宅地", "links": ["商店通り", "公園", "倉庫街"], "minutes": 6, "pos": Vector2(30, -40), "photo": "residential_south", "fallback": "residential",
++		"aliases": ["南の住宅地", "線路の南の住宅街"], "households": 120, "text": {"normal": "商店街の裏手から続く、細い路地の多い住宅街。", "alert": "路地に人の気配がない。", "collapse": "路地の奥で、割れたガラスが日に光っている。"}},
++	"公園": {"kind": "land", "area": "南の住宅地", "links": ["南の住宅街"], "minutes": 3, "pos": Vector2(40, -60), "photo": "park", "fallback": "residential",
++		"aliases": ["大きな公園", "区立公園", "管理棟"], "farmland": true, "water_source": true, "text": {"normal": "芝生広場と池のある区立公園。管理棟と公衆トイレがある。", "alert": "芝生広場に人がいない。管理棟が閉まっている。", "collapse": "芝生が伸びて、池のまわりの柵が倒れている。"}},
++}
++
++## Houses: each household leaves this much behind (Tokyo homes keep rice,
++## canned and dried food for a week or two; water a few litres).
++const FOOD_PER_HOME := 5.0
++const WATER_PER_HOME := 4.0
++
++static func kind(place: String) -> String:
++	return str(PLACES.get(place, {}).get("kind", ""))
++
++static func links() -> Dictionary:
++	var out := {}
++	for place in PLACES:
++		for other in PLACES[place].links:
++			if not out.has(place):
++				out[place] = []
++			if not out.has(other):
++				out[other] = []
++			if not other in out[place]:
++				out[place].append(other)
++			if not place in out[other]:
++				out[other].append(place)
++	return out
++
++static func outdoor() -> Array:
++	return PLACES.keys().filter(func(p): return str(PLACES[p].kind) in ["street", "houses", "land"])
++
++static func buildings() -> Array:
++	return PLACES.keys().filter(func(p): return str(PLACES[p].kind) == "site")
++
++static func houses() -> Array:
++	return PLACES.keys().filter(func(p): return str(PLACES[p].kind) == "houses")
++
++## District entries for the buildings here (merged into District.SITES).
++static func sites() -> Dictionary:
++	var out := {}
++	for place in buildings():
++		var d: Dictionary = PLACES[place]
++		out[place] = {"food": float(d.get("food", 0.0)), "water": float(d.get("water", 0.0)), "vacant": bool(d.get("vacant", true)), "opens": int(d.get("opens", 0)), "closes": int(d.get("closes", 24)), "position": d.pos}
++	return out
++
++static func aliases() -> Dictionary:
++	var out := {}
++	for place in PLACES:
++		out[place] = place
++		for a in PLACES[place].get("aliases", []):
++			out[str(a)] = place
++	return out
++
++static func text(place: String, phase: String) -> String:
++	var t: Dictionary = PLACES.get(place, {}).get("text", {})
++	return str(t.get(phase, t.get("normal", "")))
+diff --git a/scripts/town_map.gd.uid b/scripts/town_map.gd.uid
+new file mode 100644
+index 0000000..085cc67
+--- /dev/null
++++ b/scripts/town_map.gd.uid
+@@ -0,0 +1 @@
++uid://dwom703w71r3s
 diff --git a/scripts/town_news.gd b/scripts/town_news.gd
 new file mode 100644
 index 0000000..3bdd0c7
@@ -1323,6 +1835,13 @@ index 0000000..3bdd0c7
 +	if lines.is_empty():
 +		return "町のことは、まだ何も耳に入っていない。（窓の外、ラジオ、人の話から知ることができる）"
 +	return "\n".join(lines.slice(maxi(0, lines.size() - 12)))
+diff --git a/scripts/town_news.gd.uid b/scripts/town_news.gd.uid
+new file mode 100644
+index 0000000..d12fd61
+--- /dev/null
++++ b/scripts/town_news.gd.uid
+@@ -0,0 +1 @@
++uid://c0drhclfqocjc
 diff --git a/scripts/trade.gd b/scripts/trade.gd
 index b76af42..388e8a6 100644
 --- a/scripts/trade.gd
@@ -1478,6 +1997,72 @@ index b76af42..388e8a6 100644
  	var out: Array = []
  	for item in DAILY:
  		if float(g.get(item, 0.0)) < reserve(world, id, item):
+diff --git a/scripts/trade.gd.uid b/scripts/trade.gd.uid
+new file mode 100644
+index 0000000..67d58c7
+--- /dev/null
++++ b/scripts/trade.gd.uid
+@@ -0,0 +1 @@
++uid://bkba3o5cmowq5
+diff --git a/scripts/walkers.gd b/scripts/walkers.gd
+index 1e90817..403a6b6 100644
+--- a/scripts/walkers.gd
++++ b/scripts/walkers.gd
+@@ -9,9 +9,12 @@ const Mood = preload("res://scripts/mood.gd")
+ const Chronicle = preload("res://scripts/chronicle.gd")
+ const WorldTraits = preload("res://scripts/world_traits.gd")
+ 
+-const OUTDOOR := ["屋外", "商店通り", "住宅街", "駅前", "建物前", "デパート正面"]
+-const BUILDINGS := ["コンビニ", "近所の空き家", "デパート", "デパート地下", "食品店", "金物店", "薬局", "避難所"]
+-const TOWN_CAP := 50
++const TownMap = preload("res://scripts/town_map.gd")
++## v149.36: the old streets and buildings, and the wider town's.
++static var OUTDOOR: Array = ["屋外", "商店通り", "住宅街", "駅前", "建物前", "デパート正面"] + TownMap.outdoor()
++static var BUILDINGS: Array = ["コンビニ", "近所の空き家", "デパート", "デパート地下", "食品店", "金物店", "薬局", "避難所"] + TownMap.buildings()
++## The town holds more of the dead now it is bigger.
++const TOWN_CAP := 150
+ const RISE_MIN_HOURS := 2
+ const RISE_MAX_HOURS := 6
+ const WEAPONS := {"バール": 25, "金づち": 25, "ハンマー": 25, "包丁": 10, "木刀": 20, "傘": 0}
+@@ -104,12 +107,12 @@ static func hourly(world) -> void:
+ 	var day := minute / 1440
+ 	if minute % 1440 == 0 and day != int(w.last_day):
+ 		w.last_day = day
+-		var arriving: int = {"normal": 0, "alert": world.draw(minute, 0, "walker-arrival", 2), "disrupted": 1 + world.draw(minute, 0, "walker-arrival", 2), "emergency": 2 + world.draw(minute, 0, "walker-arrival", 3)}.get(str(world.s.society), 0)
++		var arriving: int = {"normal": 0, "alert": world.draw(minute, 0, "walker-arrival", 2), "disrupted": 2 + world.draw(minute, 0, "walker-arrival", 3), "emergency": 4 + world.draw(minute, 0, "walker-arrival", 5)}.get(str(world.s.society), 0)
+ 		# The town fills up to a point; beyond it the dead pass through as hordes.
+ 		if total(world) >= TOWN_CAP:
+ 			arriving = 0
+ 		for i in arriving:
+-			_add(world, ["駅前", "商店通り"][world.draw(minute, i, "walker-entry", 2)], 1)
++			_add(world, ["駅前", "商店通り", "橋", "駅の北口", "大通り"][world.draw(minute, i, "walker-entry", 5)], 1)
+ 		# Long after the collapse the dead slowly fall apart.
+ 		if day >= 60:
+ 			for place in w.places.keys():
+diff --git a/scripts/weapons.gd b/scripts/weapons.gd
+index 1e93ac4..dfc1830 100644
+--- a/scripts/weapons.gd
++++ b/scripts/weapons.gd
+@@ -26,6 +26,9 @@ const TYPES := {
+ const FINDS := {
+ 	"金物店": ["bar", "pipe"], "近所の空き家": ["bat", "golf"], "デパート": ["golf", "bat"],
+ 	"共用廊下": ["extinguisher"], "建物前": [],
++	# v149.36: the wider town.
++	"ホームセンター": ["bar", "pipe", "plank"], "ガソリンスタンド": ["bar"], "中学校": ["bat"], "交番": ["pipe"], "倉庫街": ["bar", "pipe"],
++	"団地": ["golf", "bat"], "北の住宅街": ["golf"], "南の住宅街": ["bat"], "駅前のマンション": ["golf"],
+ }
+ ## Bite protection by part (percent), from material, thickness and cover.
+ const ARMOR := {
+@@ -36,7 +39,8 @@ const ARMOR := {
+ 	"magazine": {"name": "腕に巻いた雑誌", "cover": {"arms": 40}},
+ 	"boots": {"name": "作業用のブーツ", "cover": {"legs": 40}},
+ }
+-const ARMOR_FINDS := {"金物店": ["gloves", "helmet", "boots"], "近所の空き家": ["leather"], "デパート": ["leather", "gloves"]}
++const ARMOR_FINDS := {"金物店": ["gloves", "helmet", "boots"], "近所の空き家": ["leather"], "デパート": ["leather", "gloves"],
++	"ホームセンター": ["gloves", "helmet", "boots"], "倉庫街": ["helmet", "gloves"], "交番": ["helmet"], "中学校": ["helmet"]}
+ const WOUND_NAMES := {"bruise": "打撲", "cut": "裂傷", "fracture": "骨折", "bleeding": "出血", "bite": "噛み傷"}
+ const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
+ ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
 index 5d08c00..0f1cbe2 100644
 --- a/scripts/world.gd
@@ -1695,6 +2280,13 @@ index 0000000..7ca4784
 +	check(NpcGroups.status_text(w).contains("暮らしている人：あなた、"), "and its state can be read")
 +	print("v149.35 group checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_npc_groups149_35.gd.uid b/tests/test_npc_groups149_35.gd.uid
+new file mode 100644
+index 0000000..647916d
+--- /dev/null
++++ b/tests/test_npc_groups149_35.gd.uid
+@@ -0,0 +1 @@
++uid://cs7gfulx6fk0i
 diff --git a/tests/test_npc_life149_35.gd b/tests/test_npc_life149_35.gd
 new file mode 100644
 index 0000000..107f3fd
@@ -1918,3 +2510,104 @@ index 0000000..107f3fd
 +	check(JSON.stringify(Survivors.ensure(g.world).get("events", [])) == straight_log, "and its history is the same")
 +	print("v149.35 npc life checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_npc_life149_35.gd.uid b/tests/test_npc_life149_35.gd.uid
+new file mode 100644
+index 0000000..0d06d68
+--- /dev/null
++++ b/tests/test_npc_life149_35.gd.uid
+@@ -0,0 +1 @@
++uid://litrtaov1upn
+diff --git a/tests/test_town149_36.gd b/tests/test_town149_36.gd
+new file mode 100644
+index 0000000..bd3ad65
+--- /dev/null
++++ b/tests/test_town149_36.gd
+@@ -0,0 +1,81 @@
++extends SceneTree
++## v149.36: the wider town — reachable on foot, its shops and buildings work
++## like the old ones, its houses can be searched, its walkers and survivors
++## move through it, old saves gain it, and every place has a picture.
++const Main = preload("res://main.tscn")
++const TownMap = preload("res://scripts/town_map.gd")
++const District = preload("res://scripts/district.gd")
++const Navigation = preload("res://scripts/navigation.gd")
++const ShopWindow = preload("res://scripts/shop_window.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const NpcLife = preload("res://scripts/npc_life.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	# Every new place can be walked to from the house.
++	var unreachable: Array = []
++	for place in TownMap.PLACES:
++		if Navigation.route("寝室", place, "一戸建て").is_empty():
++			unreachable.append(place)
++	check(unreachable.is_empty(), "every place in the wider town can be reached on foot %s" % str(unreachable))
++	check(TownMap.PLACES.size() >= 18, "the town has grown by %d places" % TownMap.PLACES.size())
++	check(Navigation.destination("スーパーへ行く") == "スーパー" and Navigation.destination("団地に行く") == "団地" and Navigation.destination("土手へ行く") == "川沿いの土手", "places are known by everyday names")
++	# A trip takes the time the town's size makes it.
++	var start := int(w.s.minute)
++	w.s.minute = 2 * 60
++	await g._on_command("団地へ行く")
++	check(g.location == "団地" and int(w.s.minute) - 2 * 60 >= 15, "walking to the estate takes a while (%d min)" % (int(w.s.minute) - 2 * 60))
++	check(g._look().contains("団地"), "and it is described")
++	check(g.scene_view.location_texture("団地", "", "normal") != null, "with a picture (a stand-in until its own is made)")
++	# The supermarket sells; the home centre sells timber and fittings.
++	await g._on_command("スーパーへ行く")
++	var names: Array = ShopWindow.offers(g).map(func(o): return str(o.name))
++	check(g.location == "スーパー" and names.has("食料") and names.has("包帯"), "the supermarket sells food, water and more: %s" % str(names))
++	var cash := int(w.s.cash)
++	await g._on_command("包帯を2個買う")
++	check(int(w.s.cash) == cash - 600 and int(w.s.inventory.bandage) >= 2, "and buying works")
++	await g._on_command("ホームセンターへ行く")
++	names = ShopWindow.offers(g).map(func(o): return str(o.name))
++	check(names.has("木材") and names.has("部品") and names.has("カセットボンベ"), "the home centre sells timber, fittings and gas: %s" % str(names))
++	# When it falls, what is left can be carried off.
++	w.s.society = "emergency"
++	w.s.district.sites["ホームセンター"].vacant = true
++	var wood := int(w.s.inventory.wood)
++	await g._on_command("物資を探索する")
++	check(int(w.s.inventory.wood) > wood and g.log_entries[-1].contains("ほかにも見つけた"), "an abandoned home centre gives up timber: " + g.log_entries[-1].get_slice("\n", 1))
++	# The estate's homes are a store of their own, larger than the old street's.
++	var estate: Dictionary = District.houses(w, "団地")
++	var street: Dictionary = District.houses(w, "住宅街")
++	check(float(estate.food) > float(street.food), "the estate holds more than the old street (%.0f vs %.0f)" % [float(estate.food), float(street.food)])
++	await g._on_command("団地へ行く")
++	var bag := float(w.s.district.bag.food)
++	await g._on_command("空き家を探す")
++	check(float(w.s.district.bag.food) > bag, "searching the estate turns up food")
++	# The dead and the living reach the new places.
++	check("団地" in Walkers.OUTDOOR and "ホームセンター" in Walkers.BUILDINGS and "大通り" in NpcLife.PLACES, "walkers and survivors move through the new places")
++	# An old save gains the new buildings and keeps its own houses store.
++	var old: Dictionary = w.s.district.duplicate(true)
++	for place in TownMap.buildings():
++		old.sites.erase(place)
++	old.erase("houses_by")
++	old.houses = {"food": 33.0, "water": 44.0}
++	District.upgrade(old)
++	check(District.valid(old), "an older district is brought up to date")
++	w.s.district = old
++	check(float(District.houses(w, "住宅街").food) == 33.0, "and its old street keeps what was left")
++	print("v149.36 town checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_trade149_34.gd.uid b/tests/test_trade149_34.gd.uid
+new file mode 100644
+index 0000000..f2eee53
+--- /dev/null
++++ b/tests/test_trade149_34.gd.uid
+@@ -0,0 +1 @@
++uid://bwh7o2c3smk65
