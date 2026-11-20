@@ -209405,7 +209405,7 @@ index b6d46d4..a30a5d8 100644
  	if profile.housing=="集合住宅":result[1].body=str(result[1].body)+"\n\n玄関の外は建物の共用廊下に通じている。"
  	return result
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 542300b..dd10218 100644
+index 542300b..8ec9cf3 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -15,6 +15,16 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
@@ -209748,7 +209748,7 @@ index 542300b..dd10218 100644
  		var destination := back if not back.is_empty() and back != location else ("屋外" if location != "屋外" else "建物前")
  		var path := Navigation.route(location, destination, str(world.s.profile.housing))
  		if path.size() >= 2:
-@@ -3168,12 +3350,13 @@ func _encounter_turn(cmd: String) -> void:
+@@ -3168,12 +3350,18 @@ func _encounter_turn(cmd: String) -> void:
  				world.s.household_members[i].activity = "在宅" if Navigation.indoor(destination) else "外出"
  			world.advance_safe(Navigation.duration(path[0], path[1]))
  			_append("%sまで戻った。" % (location if present.is_empty() else location + "まで、一緒に"))
@@ -209758,6 +209758,11 @@ index 542300b..dd10218 100644
 -	if bool(result.bitten):
 -		var heirs: Array = world.s.household_members.filter(func(p): return float(p.health) > 0)
 -		_append("噛まれた傷から、じわじわと熱が広がっていく気がする。この傷は治らない。動けるのは、あと数日。" + ("残された時間で、%sに物資や拠点を託すことも、巻き込まないように一人で出ていくこともできる。" % heirs[0].name if not heirs.is_empty() else "残された時間で、何をするか決めなければならない。"))
++	# v149.33: running back into the house, the door is slammed and locked.
++	if str(last.get("kind", "")) == "flee" and Navigation.indoor(location) and not bool(world.s.door_locked) and bool(world.s.profile.has_key) and not bool(world.s.get("door_broken", false)):
++		world.s.door_open = false
++		world.s.door_locked = true
++		_append("玄関の扉を閉めて、鍵をかけた。")
 +	for mate_index in present:
 +		var mate: Dictionary = world.s.household_members[mate_index]
 +		if bool(mate.get("bitten", false)) and int(mate.get("bitten_at", -1)) >= int(world.s.minute) - 30 and not bool(mate.get("bite_told", false)):
@@ -209768,7 +209773,7 @@ index 542300b..dd10218 100644
  	_refresh()
  
  func _report_household_errands() -> void:
-@@ -3382,6 +3565,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3382,6 +3570,8 @@ func _execute_command(cmd: String) -> String:
  		visual_focus = "event"
  		return "\n".join(lines)
  	if cmd.contains("玄関を補強") or cmd.contains("バリケード"):
@@ -209777,7 +209782,7 @@ index 542300b..dd10218 100644
  		if location != "玄関": return "玄関で作業する必要がある。"
  		var response := world.action("fortify")
  		if response.begins_with("玄関を補強"):
-@@ -3393,6 +3578,7 @@ func _execute_command(cmd: String) -> String:
+@@ -3393,6 +3583,7 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("包帯") or cmd.contains("手当て"):
  		var response := world.action("bandage")
  		if response.begins_with("傷を手当て"):
@@ -209785,7 +209790,7 @@ index 542300b..dd10218 100644
  			world.advance(10)
  		return response
  	if cmd.contains("配送状況") or cmd.contains("注文履歴"):
-@@ -3609,6 +3795,12 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3609,6 +3800,12 @@ func _look(inspect_details: bool = true) -> String:
  	var observed := _observe("sight")
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
@@ -209798,7 +209803,7 @@ index 542300b..dd10218 100644
  	return "\n\n".join(paragraphs)
  
  ## v149.25: the department store's food hall belongs to the same site as its
-@@ -3660,6 +3852,11 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3660,6 +3857,11 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			world.s.door_open=true
  		var elapsed:int=world.advance_safe(Navigation.duration(previous,location)+(1 if entry_locked else 0))
  		if crossing_door:world.s.door_open=false
@@ -209810,7 +209815,7 @@ index 542300b..dd10218 100644
  		if entry_locked or (location=="玄関" and not Navigation.indoor(previous) and "玄関の鍵を閉めた" in auto_steps):world.s.door_locked=true
  		if not companion.is_empty() and (companion.location != location or float(companion.health) <= 0):
  			break
-@@ -3699,6 +3896,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3699,6 +3901,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
@@ -209819,7 +209824,7 @@ index 542300b..dd10218 100644
  	if location not in ["玄関","共用廊下","建物前"]:return "玄関のそばで操作する必要がある。"
  	if command=="扉を閉める":
  		world.s.door_open=false
-@@ -3707,6 +3906,7 @@ func _door_action(command: String) -> String:
+@@ -3707,6 +3911,7 @@ func _door_action(command: String) -> String:
  	if command.contains("閉め") or command=="施錠する":
  		if bool(world.s.get("door_broken", false)):return "扉が壊れていて、鍵がかからない。「扉を直す」で直せる（木材1・部品1、60分、音が出る）。"
  		if location!="玄関" and not world.s.profile.has_key:return "玄関の鍵を持っていない。"
@@ -209827,7 +209832,7 @@ index 542300b..dd10218 100644
  		world.s.door_open=false
  		world.s.door_locked=true
  		world.advance_safe(1)
-@@ -3777,7 +3977,7 @@ func _read_news(command: String) -> String:
+@@ -3777,7 +3982,7 @@ func _read_news(command: String) -> String:
  	visual_focus="news"
  	return "情報源：%s\n%s%s"%[{"tv":"テレビ","sns":"スマートフォン・SNS","radio":"ラジオ"}[channel],"新しい報道はない。前回確認した内容：\n" if report=="新しく確認できた出来事はない。" and observed_news!="新しい報道は確認できない。" else "",observed_news]
  func _inventory_text() -> String:
@@ -211199,10 +211204,21 @@ index 9c580cb..2c2a4b4 100644
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
  			return false
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index 9436425..38b6be5 100644
+index 9436425..5d5db47 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
-@@ -196,14 +196,15 @@ func step(sleeping: bool) -> void:
+@@ -113,6 +113,10 @@ func step(sleeping: bool) -> void:
+ 		s.health = maxf(0.0,float(s.health)-0.003)
+ 	if s.injuries > 0:
+ 		s.health = maxf(0.0,s.health-0.002*s.injuries)
++	# v149.33: a body that is fed, watered and rested slowly mends (about 9 a
++	# day, most of it in sleep). A bite never does; nor does bleeding.
++	if s.health > 0.0 and s.health < 100.0 and not bool(s.get("bitten", false)) and not bool(s.symptomatic) and float(s.hunger) < 70.0 and float(s.thirst) < 70.0 and float(s.fatigue) < 90.0 and not _bleeding():
++		s.health = minf(100.0, s.health + (0.012 if sleeping else 0.003))
+ 	if s.exposure >= 0 and s.minute>=int(s.symptoms_due):
+ 		s.symptomatic = true
+ 	if s.symptomatic:
+@@ -196,14 +200,15 @@ func step(sleeping: bool) -> void:
  		_resident_arrived(a, day)
  		if pos.distance_to(target)<1.0 and not stimulus and a.kind == "symptomatic":
  			a.route = (int(a.route) + (1 if draw(s.minute,a.id,"direction",2)==0 else ROUTE.size()-1))%ROUTE.size()
@@ -211220,6 +211236,21 @@ index 9436425..38b6be5 100644
  			if bitten:
  				s.exposure = s.minute
  				s.symptoms_due = s.minute + (6 + draw(s.minute, a.id, "contact-fever", 19)) * 60
+@@ -942,6 +947,14 @@ func clock() -> String:
+ 	var base := Time.get_unix_time_from_datetime_string(START_TIME)
+ 	return Time.get_datetime_string_from_unix_time(int(base)+int(s.minute)*60).replace("T"," ").substr(0,16)
+ 
++func _bleeding() -> bool:
++	if not s.get("combat") is Dictionary:
++		return false
++	for wound in s.combat.get("wounds", []):
++		if str(wound.get("kind", "")) == "bleeding" and not bool(wound.get("treated", false)):
++			return true
++	return false
++
+ func hour_of_day() -> float:
+ 	return fmod(float(s.start_hour)+float(s.minute)/60.0,24.0)
+ 
 diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
 index 690293b..b6631e0 100644
 --- a/tests/test_action_play149_32.gd
@@ -212756,10 +212787,10 @@ index 10f23dc..f79845f 100644
  	check(g.log_entries[-1].contains("購入"), "bottles can be counted with 本: " + g.log_entries[-1])
 diff --git a/tests/test_playthrough149_33.gd b/tests/test_playthrough149_33.gd
 new file mode 100644
-index 0000000..0a242be
+index 0000000..3748e71
 --- /dev/null
 +++ b/tests/test_playthrough149_33.gd
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,121 @@
 +extends SceneTree
 +## v149.33: fixes from a full playthrough with the real photos — phrasing that
 +## was not understood, the door walked to, smoke not called cooking, a bite
@@ -212856,6 +212887,24 @@ index 0000000..0a242be
 +	var day_start := int(w.s.minute) / 1440
 +	w.advance_safe(24 * 60)
 +	check(float(w.s.district.sites["コンビニ"].food) >= 8.0, "the konbini is restocked in normal times")
++	# A fed, rested body mends; a bitten one does not.
++	w.s.health = 50.0
++	w.s.hunger = 10.0
++	w.s.thirst = 10.0
++	w.s.fatigue = 10.0
++	w.s.bitten = false
++	w.s.symptomatic = false
++	w.s.injuries = 0.0
++	w.s.combat.wounds = []
++	w.advance_safe(12 * 60)
++	check(float(w.s.health) > 50.5, "health slowly comes back with food, water and rest (%.1f)" % float(w.s.health))
++	var mended := float(w.s.health)
++	w.s.bitten = true
++	w.s.hunger = 10.0
++	w.s.thirst = 10.0
++	w.advance_safe(6 * 60)
++	check(float(w.s.health) <= mended + 0.01, "but never after a bite")
++	w.s.bitten = false
 +	# A death says how it ended before the story is told.
 +	w.s.health = 0.0
 +	await g._on_command("様子を見る")
