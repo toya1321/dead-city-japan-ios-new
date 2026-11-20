@@ -113,8 +113,21 @@ index 0000000..87375ab
 +++ b/qa/perf_long.gd.uid
 @@ -0,0 +1 @@
 +uid://b8scaaj2y4f6a
+diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
+index 35febbb..e409018 100644
+--- a/scripts/action_photos.gd
++++ b/scripts/action_photos.gd
+@@ -35,7 +35,7 @@ const KINDS := [
+ 	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
+ 	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
+ 	["purify", "^(雨水1Lを浄水器に通し|浴槽から水を汲んで)", "水をきれいにした。"],
+-	["plant", "^植え付けた", "種をまいた。"],
++	["plant", "^([^【「（\\n]{1,10}を)?植え付けた", "種をまいた。"],
+ 	["harvest", "^収穫した", "収穫した。"],
+ 	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
+ 	["lock", "^玄関を閉めて施錠した", "鍵を閉めた。"],
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..7a583cd 100644
+index 2c13ef6..7fc0f4d 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -122,19 +135,97 @@ index 2c13ef6..7a583cd 100644
  # plan before mutation. AI plans use the same validation and action executor.
  const District = preload("res://scripts/district.gd")
 -const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
-+const QUERIES = ["ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
++const QUERIES = ["水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
-@@ -129,7 +129,7 @@ static func local(game, raw: String) -> Dictionary:
+@@ -20,6 +20,9 @@ static func wait_action(raw: String) -> Dictionary:
+ static func allowed(game, command: String, ai: bool = false) -> bool:
+ 	if command in COMMANDS or command in QUERIES or command in District.COMMANDS:return true
+ 	if not game.Navigation.destination(command).is_empty():return true
++	# v149.36: sowing a named crop ("小松菜を植える", "じゃがいもを育てる").
++	var Crops = load("res://scripts/crops.gd")
++	if not Crops.named(command).is_empty() and (command.contains("植え") or command.contains("育て") or command.contains("まく") or command.contains("蒔く")):return true
+ 	var re:=RegEx.new()
+ 	re.compile("^(?:(?:食品店|金物店|薬局|コンビニ|デパート)で)?(?:食料|水|飲料水|木材|部品|種|包帯|浄水器|ソーラーパネル|蓄電池)を(?:[0-9]{1,2}(?:個|箱|セット|本|袋|つ|缶|パック))?(?:買う|購入する)$")
+ 	if re.search(command)!=null:return true
+@@ -129,7 +132,7 @@ static func local(game, raw: String) -> Dictionary:
  			cmd = "水を飲む"
  		elif cmd in NEWS_ALIASES:
  			cmd = "ニュースを見る"
 -		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
-+		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","ここで人を集める":"ここを集落にする","暮らしの様子":"集落の様子","町の噂":"町のうわさ","噂を思い出す":"うわさを思い出す","うわさ":"町のうわさ","噂":"町のうわさ","仕事を手伝う":"手伝う","作業を手伝う":"手伝う","畑を手伝う":"手伝う","補強を手伝う":"手伝う","食料を預ける":"食料を寄付する","水を預ける":"水を寄付する","物資を預ける":"物資を寄付する","ここに住ませてもらう":"仲間に入れてもらう","ここで暮らしたい":"仲間に入れてもらう","仲間に入れて":"仲間に入れてもらう","集まりを抜ける":"ここを出る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
++		var synonyms:Dictionary={"外を歩く":"街を歩く","街を探索する":"街を歩く","外を徘徊する":"街を歩く","地図を見る":"街の地図を見る","周辺地図を見る":"街の地図を見る","備蓄を持っていく":"物資を持っていく","食料と水を持っていく":"物資を持っていく","備蓄を置く":"物資を置く","ここに籠城する":"ここを拠点にする","籠城する":"ここを拠点にする","食事を取る":"食事する","ご飯を食べる":"食事する","ごはんを食べる":"食事する","ニュースを確認する":"ニュースを見る","周りを見回す":"周囲を見る","家の中を見て回る":"周囲を見る","水を沸かす":"水を煮沸する","川で水を汲む":"川の水を汲む","池で水を汲む":"池の水を汲む","ここで人を集める":"ここを集落にする","暮らしの様子":"集落の様子","町の噂":"町のうわさ","噂を思い出す":"うわさを思い出す","うわさ":"町のうわさ","噂":"町のうわさ","仕事を手伝う":"手伝う","作業を手伝う":"手伝う","畑を手伝う":"手伝う","補強を手伝う":"手伝う","食料を預ける":"食料を寄付する","水を預ける":"水を寄付する","物資を預ける":"物資を寄付する","ここに住ませてもらう":"仲間に入れてもらう","ここで暮らしたい":"仲間に入れてもらう","仲間に入れて":"仲間に入れてもらう","集まりを抜ける":"ここを出る","あたりを見回す":"周囲を見る","辺りを見回す":"周囲を見る","見回す":"周囲を見る","あたりを見る":"周囲を見る","周りを見る":"周囲を見る","玄関に鍵かけといて":"鍵を閉める","鍵かけといて":"鍵を閉める","鍵をかける":"鍵を閉める","鍵かける":"鍵を閉める","玄関の鍵をかける":"鍵を閉める","戸締まりする":"鍵を閉める","コンビニに買い出しに行く":"コンビニへ行く","コンビニに買い物に行く":"コンビニへ行く","コンビニで買い物する":"コンビニへ行く","様子を見る":"周囲を見る","買い物に行く":"コンビニへ行く","買い物へ行く":"コンビニへ行く","買い出しに行く":"コンビニへ行く","荷物を詰める":"物資を持っていく","持ち出し袋に荷物を詰める":"物資を持っていく","持ち出し袋を用意する":"物資を持っていく","荷造りする":"物資を持っていく","家の中を見回る":"周囲を見る","部屋を見て回る":"周囲を見る","家の中を見る":"周囲を見る","少し休む":"1時間休息","寝室で寝る":"寝る","台所で食事する":"食事する","玄関を補強する":"玄関を補強","水やりする":"水やり","作物に水をやる":"水やり","鉢に水をやる":"水やり","鉢植えに水をやる":"水やり","収穫する":"収穫","食料を確認する":"状態","食料を確認":"状態","備蓄を確認する":"状態","備蓄を確認":"状態","備蓄を見る":"状態","食料を見る":"状態","在庫を確認する":"状態","食べ物を確認する":"状態","水を確認する":"状態","残りの食料を確認する":"状態","隣の家を訪ねる":"住宅街へ行く","隣の家に行く":"住宅街へ行く","隣の家へ行く":"住宅街へ行く","隣人を訪ねる":"住宅街へ行く","お隣を訪ねる":"住宅街へ行く","隣に挨拶に行く":"住宅街へ行く"}
  		cmd=str(synonyms.get(cmd,cmd))
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
+diff --git a/scripts/crops.gd b/scripts/crops.gd
+new file mode 100644
+index 0000000..f34241c
+--- /dev/null
++++ b/scripts/crops.gd
+@@ -0,0 +1,62 @@
++extends RefCounted
++## v149.36: what grows, and how fast — real crops on their real timetables,
++## slowed by the cold (Tokyo winters are mild, but not for summer crops).
++## Cress on the kitchen windowsill is ready in a week but feeds little;
++## komatsuna and radish take a month or so; potatoes and sweet potatoes take
++## three or four months and feed a household. Nothing is hurried for the
++## game's sake: choosing what to sow, and when, is the decision.
++
++const Cold = preload("res://scripts/cold.gd")
++
++## days: to harvest in good weather; yield: food (person-days) per planter;
++## seed: what is used to sow it; kind: how it takes the cold.
++const CROPS := {
++	"kaiware": {"label": "かいわれ大根", "days": 7, "yield": 0.15, "seed": "seeds", "kind": "indoor", "words": ["かいわれ", "カイワレ", "豆苗", "スプラウト"]},
++	"komatsuna": {"label": "小松菜", "days": 35, "yield": 0.8, "seed": "seeds", "kind": "hardy", "words": ["小松菜", "青菜", "葉物"]},
++	"radish": {"label": "ラディッシュ", "days": 30, "yield": 0.6, "seed": "seeds", "kind": "hardy", "words": ["ラディッシュ", "二十日大根", "はつか大根"]},
++	"potato": {"label": "じゃがいも", "days": 100, "yield": 3.0, "seed": "food", "kind": "cool", "words": ["じゃがいも", "ジャガイモ", "馬鈴薯", "芋"]},
++	"sweetpotato": {"label": "さつまいも", "days": 120, "yield": 4.0, "seed": "food", "kind": "warm", "words": ["さつまいも", "サツマイモ", "さつま芋"]},
++}
++const DEFAULT := "komatsuna"
++
++## Which crop a line names ("" if none).
++static func named(text: String) -> String:
++	for id in CROPS:
++		for word in CROPS[id].words:
++			if text.contains(word):
++				return id
++	return ""
++
++## How fast a crop grows now, from the season (1.0 = its normal pace).
++static func season(world, crop: String) -> float:
++	var kind := str(CROPS.get(crop, CROPS[DEFAULT]).kind)
++	if kind == "indoor":
++		return 1.0 if Cold.indoor(world) >= 10.0 else 0.5
++	# The day's mean temperature (not the hour's), a little warmer by a window
++	# or on a balcony than in the street.
++	var hour: float = world.hour_of_day()
++	var t: float = Cold.outdoor(world) - 4.0 * cos((hour - 14.0) / 24.0 * TAU) + 3.0
++	match kind:
++		"hardy":
++			if t < 5.0: return 0.3
++			if t < 10.0: return 0.6
++			if t > 30.0: return 0.6
++			return 1.0
++		"cool":
++			if t < 8.0: return 0.2
++			if t < 12.0: return 0.5
++			if t > 28.0: return 0.5
++			return 1.0
++		"warm":
++			if t < 16.0: return 0.05
++			if t < 21.0: return 0.5
++			return 1.0
++	return 1.0
++
++static func label(crop: String) -> String:
++	return str(CROPS.get(crop, CROPS[DEFAULT]).label)
++
++## What a group's garden makes in a day, against good-weather output
++## (a mix of greens and roots).
++static func garden_season(world) -> float:
++	return (season(world, "komatsuna") + season(world, "potato")) / 2.0
 diff --git a/scripts/district.gd b/scripts/district.gd
 index 31c6246..cd97e3b 100644
 --- a/scripts/district.gd
@@ -316,7 +407,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..15e3daf 100644
+index 0f2add4..0444db0 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1844,6 +1844,8 @@ func _suggestions() -> Array:
@@ -328,10 +419,12 @@ index 0f2add4..15e3daf 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1971,6 +1973,16 @@ func _suggestions() -> Array:
+@@ -1971,6 +1973,18 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
++		if bool(load("res://scripts/town_map.gd").PLACES.get(location, {}).get("water_source", false)):
++			out.push_front("水を汲む")
 +		if District.is_houses(location) and District.houses_open(world) and float(District.houses(world, location).food) > 0.0:
 +			out.push_front("空き家を探す")
 +		if District.prepared(world, _site()) and world.s.get("survivors") is Dictionary and load("res://scripts/npc_groups.gd").at(world, _site()).is_empty() and Survivors.active(world):
@@ -345,7 +438,7 @@ index 0f2add4..15e3daf 100644
  		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else ("品物を見る" if not ShopWindow.offers(self).is_empty() else "食料を買う"))
  		if not "品物を見る" in out and not ShopWindow.offers(self).is_empty():
-@@ -2838,7 +2850,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2852,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -355,19 +448,55 @@ index 0f2add4..15e3daf 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3473,7 +3486,7 @@ func _canonical_command(raw: String) -> String:
+@@ -3457,6 +3472,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+ # substring-based execution. This is a bounded Japanese grammar, not an LLM.
+ func _canonical_command(raw: String) -> String:
+ 	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
++	# v149.36: sowing a named crop is its own command.
++	if not load("res://scripts/crops.gd").named(cmd).is_empty() and (cmd.contains("植え") or cmd.contains("育て") or cmd.contains("まく") or cmd.contains("蒔く")):
++		return cmd
+ 	for ending in ["してください", "して下さい", "してほしい"]:
+ 		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
+ 	var aliases := {
+@@ -3473,7 +3491,7 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
 -	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
-+	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
++	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
  	if cmd in exact: return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3506,6 +3519,40 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3524,66 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
++	# v149.36: water from the river or the park's pond (to be treated at home).
++	if clean in ["水を汲む", "川の水を汲む", "池の水を汲む", "手水舎の水を汲む"]:
++		if not bool(load("res://scripts/town_map.gd").PLACES.get(location, {}).get("water_source", false)):
++			return "ここには、汲める水がない。（川沿いの土手、河川敷、公園で汲める）"
++		var room := 8.0 - float(world.s.district.bag.water) - float(world.s.get("raw_carry", 0.0))
++		if room < 1.0:
++			return "もう持ちきれない。"
++		world.advance_safe(15)
++		Walkers.make_noise(world, location, 20)
++		world.s.raw_carry = float(world.s.get("raw_carry", 0.0)) + floorf(room)
++		return "空のペットボトルに、水を%.0fL汲んだ。濁っているので、このままでは飲めない。（家に持ち帰ると、ためておく水のタンクに入る）" % floorf(room)
++	if clean in ["水を煮沸する", "煮沸する", "水を沸かす"]:
++		if location != "台所":
++			return "台所で煮沸する。"
++		if float(world.s.rain_water) < 1.0:
++			return "煮沸する水（ためておいた水）がない。"
++		var gas := float(world.s.get("gas_cans", 0.0))
++		if not world.has_home_power() and gas < 0.1:
++			return "火がない。電気もカセットボンベもない。"
++		var litres := minf(4.0, floorf(float(world.s.rain_water)))
++		world.s.rain_water = float(world.s.rain_water) - litres
++		world.s.water = float(world.s.water) + litres
++		if not world.has_home_power():
++			world.s.gas_cans = gas - 0.1
++		world.advance_safe(30)
++		return "ためておいた水%.0fLを鍋で煮沸し、冷まして飲み水にした（30分%s）。" % [litres, "" if world.has_home_power() else "・カセットボンベ少し"]
 +	# v149.35 stage 4: a group's home — helping, giving, asking to live there.
 +	var settled_here: Dictionary = load("res://scripts/npc_groups.gd").at(world, location) if world.s.get("survivors") is Dictionary else {}
 +	if not settled_here.is_empty():
@@ -405,7 +534,7 @@ index 0f2add4..15e3daf 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3586,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3617,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -414,7 +543,20 @@ index 0f2add4..15e3daf 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3696,7 +3743,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3750,10 @@ func _execute_command(cmd: String) -> String:
+ 	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
+ 		if location != "台所": return "台所で製作する。"
+ 		return world.action("craft")
+-	if cmd.contains("種を植") or cmd.contains("植え付"):
++	if cmd.contains("種を植") or cmd.contains("植え付") or (cmd.contains("植え") and not load("res://scripts/crops.gd").named(cmd).is_empty()) or (cmd.contains("育て") and not load("res://scripts/crops.gd").named(cmd).is_empty()):
+ 		if location != "台所": return "台所で植え付ける。"
+-		return world.action("plant")
++		var crop: String = load("res://scripts/crops.gd").named(cmd)
++		return world.plant(crop if not crop.is_empty() else "komatsuna")
+ 	if cmd.contains("水やり") or cmd.contains("水をやる"):
+ 		if location != "台所": return "台所で水やりをする。"
+ 		var result: String = world.action("tend")
+@@ -3696,7 +3775,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -424,7 +566,7 @@ index 0f2add4..15e3daf 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3802,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3834,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -439,7 +581,7 @@ index 0f2add4..15e3daf 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3839,6 +3895,8 @@ func _can_live_here() -> bool:
+@@ -3839,6 +3927,8 @@ func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
  func _eat_here() -> bool:
@@ -448,7 +590,7 @@ index 0f2add4..15e3daf 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3860,6 +3918,9 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3860,6 +3950,9 @@ func _look(inspect_details: bool = true) -> String:
  	# Stage 6: how safe it is here, once the city has broken down.
  	if inspect_details and not Navigation.indoor(location) and str(world.s.society) in ["disrupted", "emergency"]:
  		paragraphs.append(AreaSafety.line(world, location))
@@ -458,7 +600,20 @@ index 0f2add4..15e3daf 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -4037,6 +4098,11 @@ func _read_news(command: String) -> String:
+@@ -3943,6 +4036,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 	if location != destination and District.SITES.has(destination) and world.s.health > 0:
+ 		result += " 到着時には%sに入れなかった。" % destination
+ 	# v149.28: what was carried home goes into the kitchen stock.
++	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0 and float(world.s.get("raw_carry", 0.0)) > 0.0:
++		# v149.36: river or pond water goes into the untreated store.
++		var raw := float(world.s.raw_carry)
++		world.s.rain_water = minf(200.0, float(world.s.rain_water) + raw)
++		world.s.raw_carry = 0.0
++		result += "\n汲んできた水%.0fLを、ためておく水のタンクに移した。（飲むには「浄水する」か「水を煮沸する」）" % raw
+ 	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
+ 		var bag: Dictionary = world.s.district.bag
+ 		var food := float(bag.food)
+@@ -4037,6 +4136,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -718,10 +873,10 @@ index 0000000..708c627
 +uid://cf56sbjq1gcm7
 diff --git a/scripts/npc_groups.gd b/scripts/npc_groups.gd
 new file mode 100644
-index 0000000..030d15c
+index 0000000..65f6f7c
 --- /dev/null
 +++ b/scripts/npc_groups.gd
-@@ -0,0 +1,405 @@
+@@ -0,0 +1,407 @@
 +extends RefCounted
 +## v149.35 world stage 3: survivors who trust one another settle together.
 +## A group has a home (an empty shop or house that is quiet enough), a shared
@@ -889,8 +1044,10 @@ index 0000000..030d15c
 +			g.garden = minf(1.0, float(g.garden) + 0.06 * float(hands))
 +			if settled >= 5:
 +				var ground := 2.0 if bool(TownMap.PLACES.get(str(g.home), {}).get("farmland", false)) else 1.0
-+				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(hands) * ground
-+			g.store.water = float(g.store.get("water", 0.0)) + 2.0 + float(hands)
++				# v149.36: gardens follow the seasons too.
++				var season: float = load("res://scripts/crops.gd").garden_season(world)
++				g.store.food = float(g.store.get("food", 0.0)) + float(g.garden) * 0.6 * float(hands) * ground * season
++			g.store.water = float(g.store.get("water", 0.0)) + 2.0 + float(hands) + (4.0 if bool(TownMap.PLACES.get(str(g.home), {}).get("water_source", false)) else 0.0)
 +		# Walls go up with work (and wood, if there is any).
 +		var wood := minf(float(g.store.get("wood", 0.0)), 1.0)
 +		g.store.wood = float(g.store.get("wood", 0.0)) - wood
@@ -2082,6 +2239,127 @@ index 5d08c00..0f1cbe2 100644
  		Walkers.housemates_hourly(self)
  		Walkers.home_events(self)
  		Raiders.hourly(self)
+diff --git a/scripts/world_events.gd b/scripts/world_events.gd
+index 33cced8..8412c0c 100644
+--- a/scripts/world_events.gd
++++ b/scripts/world_events.gd
+@@ -219,7 +219,8 @@ static func eligible(w: RefCounted,d: Dictionary) -> bool:
+ 				if not a.dead and bool(a.departed):return true
+ 			return false
+ 		"cold":return int(_calendar(w).month) in [11,12,1,2] and w.s.weather in ["cloudy","snow"]
+-		"pests":return not w.s.plots.is_empty() and float(w.s.plots[0].growth)>0.2
++		# v149.36: pests are a warm-weather trouble, and take a little at a time.
++		"pests":return not w.s.plots.is_empty() and float(w.s.plots[0].growth)>0.2 and load("res://scripts/cold.gd").outdoor(w)>=12.0
+ 		"filter_wear":return bool(w.s.equipment.filter) and float(w.s.longplay.filter_condition)>0 and float(w.s.longplay.water_collected)>0
+ 		"crop_care":return int(sim.gardens)>0 and hour==11 and float(sim.warehouse.water)>=2 and not _living(w).is_empty()
+ 	return false
+@@ -332,7 +333,7 @@ static func _apply(w: RefCounted,id: String) -> Dictionary:
+ 			for a in w.s.agents:
+ 				if not a.dead and a.departed:a.departed=false;_send(w,a,"home","home",1440);return {"actor":int(a.id),"position":[float(a.x),float(a.z)],"channel":"sight","summary":"地区を離れていた住民が帰ってきた。"}
+ 		"cold":w.s.weather="snow";return {"weather":"snow","position":[0.0,14.0],"channel":"sight","summary":"冷え込みで移動と屋外活動に時間がかかる。"}
+-		"pests":var loss:float=minf(0.12,float(w.s.plots[0].growth));w.s.plots[0].growth-=loss;return {"growth_lost":loss,"channel":"inspect","summary":"育てていた作物の一部が傷んでいる。"}
++		"pests":var loss:float=minf(0.06,float(w.s.plots[0].growth));w.s.plots[0].growth-=loss;return {"growth_lost":loss,"channel":"inspect","summary":"育てていた作物の一部が傷んでいる。"}
+ 		"filter_wear":w.s.longplay.filter_condition=maxf(0,float(w.s.longplay.filter_condition)-2);return {"filter_condition":w.s.longplay.filter_condition,"channel":"inspect","summary":"浄水設備の消耗が進んだ。"}
+ 		"crop_care":
+ 			sim.warehouse.water-=2
+diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
+index 847392a..43adc5e 100644
+--- a/scripts/world_legacy.gd
++++ b/scripts/world_legacy.gd
+@@ -246,7 +246,12 @@ func step(sleeping: bool) -> void:
+ 	s.noise = pending
+ 	for plot in s.plots:
+ 		if plot.water>0:
+-			plot.growth = minf(1.0,plot.growth+_crop_growth_factor()/(14*1440))
++			# v149.36: each crop on its own timetable, slowed by the season.
++			var crop := str(plot.get("crop", "komatsuna"))
++			var spec: Dictionary = load("res://scripts/crops.gd").CROPS.get(crop, {"days": 14})
++			if int(s.minute) % 60 == 0 or not plot.has("pace"):
++				plot.pace = load("res://scripts/crops.gd").season(self, crop) if plot.has("crop") else 1.0
++			plot.growth = minf(1.0,plot.growth+_crop_growth_factor()*float(plot.pace)/(float(spec.days)*1440))
+ 			plot.water = maxf(0.0,plot.water-1.0/1440.0)
+ 
+ # Hidden deterministic outbreak timeline. Independent of player observations.
+@@ -858,12 +863,7 @@ func action(kind: String, household: bool = false) -> String:
+ 			advance(30)
+ 			return "プランターを製作した（30分）。"
+ 		"plant":
+-			if s.inventory.planter<1 or s.inventory.seeds<1:
+-				return "プランターと種が必要。"
+-			s.inventory.planter-=1
+-			s.inventory.seeds-=1
+-			s.plots.append({"growth":0.0,"water":1.0})
+-			return "植え付けた。収穫には14日以上と水が必要。"
++			return plant("komatsuna")
+ 		"tend":
+ 			if s.plots.is_empty(): return "栽培中の作物はない。"
+ 			if s.rain_water<1.0: return "ためておいた雨水が1L必要。"
+@@ -871,13 +871,29 @@ func action(kind: String, household: bool = false) -> String:
+ 			s.plots[0].water+=1.0
+ 			return "最初の鉢に水1Lを与えた。"
+ 		"harvest":
++			var Crops = load("res://scripts/crops.gd")
+ 			for plot in s.plots:
+ 				if plot.growth>=1.0:
+-					plot.growth=0.0
+-					s.food+=0.5
+-					s.inventory.harvest+=1.0
+-					return "収穫した。食卓に出せる青菜が少し増えた（食料0.5人日分）。"
+-			return "まだ収穫できない。"
++					var crop := str(plot.get("crop", ""))
++					if not Crops.CROPS.has(crop):
++						# A planter sown before crops had names: greens that regrow.
++						plot.growth=0.0
++						s.food+=0.5
++						s.inventory.harvest+=1.0
++						return "収穫した。食卓に出せる青菜が少し増えた（食料0.5人日分）。"
++					var amount := float(Crops.CROPS[crop].yield)
++					s.plots.erase(plot)
++					s.inventory.planter += 1
++					s.food+=amount
++					s.inventory.harvest+=amount
++					return "収穫した：%s（食料%.1f人日分）。空いたプランターに、また何か植えられる。" % [Crops.label(crop) if Crops.CROPS.has(crop) else "青菜", amount]
++			if s.plots.is_empty():
++				return "栽培中の作物はない。"
++			var best: Dictionary = s.plots[0]
++			for plot in s.plots:
++				if float(plot.growth) > float(best.growth):
++					best = plot
++			return "まだ収穫できない。（いちばん育っている%sで、%d%%ほど）" % [Crops.label(str(best.get("crop", "komatsuna"))), int(float(best.growth) * 100.0)]
+ 		"fortify":
+ 			if s.inventory.wood<3 or s.inventory.parts<2: return "補強：木材3・部品2が必要。"
+ 			s.inventory.wood-=3
+@@ -997,6 +1013,30 @@ func _road_connector() -> float:
+ 	return 50.0
+ func _traffic_speed_factor() -> float:
+ 	return 1.0
++## v149.36: sowing a named crop in a free planter.
++func plant(crop: String) -> String:
++	var Crops = load("res://scripts/crops.gd")
++	if not Crops.CROPS.has(crop):
++		crop = Crops.DEFAULT
++	var spec: Dictionary = Crops.CROPS[crop]
++	if s.inventory.planter < 1:
++		return "空いているプランターがない。（台所で「プランターを作る」：木材2・部品1）"
++	if str(spec.seed) == "seeds":
++		if s.inventory.seeds < 1:
++			return "%sを植えるには、種が必要。" % spec.label
++		s.inventory.seeds -= 1
++	else:
++		# Seed potatoes are potatoes: half a day's food from the store.
++		if float(s.food) < 0.5:
++			return "種芋にする食料（0.5人日分）が台所にない。"
++		s.food -= 0.5
++	s.inventory.planter -= 1
++	s.plots.append({"growth": 0.0, "water": 1.0, "crop": crop})
++	var pace: float = Crops.season(self, crop)
++	var when := "今の気温のままなら、%d日ほどで収穫できそうだ（寒くなれば遅れる）。" % int(ceil(float(spec.days) / maxf(0.05, pace))) if pace > 0.05 else "今は寒すぎて、暖かくなるまでほとんど育たない。"
++	advance(15)
++	return "%sを植え付けた。%s水やりを忘れずに。" % [spec.label, when]
++
+ func _crop_growth_factor() -> float:
+ 	return 1.0
+ func _resident_arrived(a: Dictionary, day: int) -> void:
 diff --git a/tests/test_arrivals149_29.gd b/tests/test_arrivals149_29.gd
 index 470b72c..7e1ce25 100644
 --- a/tests/test_arrivals149_29.gd
@@ -2100,6 +2378,90 @@ index 470b72c..7e1ce25 100644
  	check(str(a.background).contains("来た") or str(a.background).contains("追われて") or str(a.background).contains("歩いてきた"), "a newcomer has come from somewhere: " + str(a.background).right(25))
  	if a.has("deadline_day"):
  		check(int(a.deadline_day) > int(a.arrived), "their troubles start on arrival")
+diff --git a/tests/test_crops149_36.gd b/tests/test_crops149_36.gd
+new file mode 100644
+index 0000000..b376f14
+--- /dev/null
++++ b/tests/test_crops149_36.gd
+@@ -0,0 +1,78 @@
++extends SceneTree
++## v149.36: crops on their real timetables, slowed by the season; water from
++## the river carried home and treated.
++const Main = preload("res://main.tscn")
++const Crops = preload("res://scripts/crops.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func days_until_ripe(w, crop: String, start_minute: int) -> int:
++	w.s.plots = [{"growth": 0.0, "water": 500.0, "crop": crop}]
++	w.s.minute = start_minute
++	for h in 400 * 24:
++		w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.health = 100.0; w.s.fatigue = 0.0
++		w.s.walkers.places = {}
++		w.advance(60)
++		if float(w.s.plots[0].growth) >= 1.0:
++			return (int(w.s.minute) - start_minute) / 1440 + 1
++	return 999
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	check(Crops.named("小松菜を植える") == "komatsuna" and Crops.named("じゃがいもを育てる") == "potato" and Crops.named("かいわれを育てる") == "kaiware", "crops are known by name")
++	# Sowing uses a planter and seeds (or seed potatoes from the food store).
++	g.location = "台所"
++	g._sync_player_position()
++	w.s.inventory.planter = 3
++	w.s.inventory.seeds = 2
++	w.s.food = 5.0
++	await g._on_command("小松菜を植える")
++	check(w.s.plots.size() == 1 and str(w.s.plots[0].crop) == "komatsuna" and int(w.s.inventory.seeds) == 1 and g.log_entries[-1].contains("日ほどで収穫"), "komatsuna sown, with how long it will take: " + g.log_entries[-1])
++	await g._on_command("じゃがいもを植える")
++	check(w.s.plots.size() == 2 and float(w.s.food) == 4.5, "potatoes are sown from the food store")
++	# Real timetables: cress in a week indoors, potatoes in months, and winter slows them.
++	var cress := days_until_ripe(w, "kaiware", 0)
++	check(cress >= 7 and cress <= 9, "cress on the windowsill is ready in about a week (%d days)" % cress)
++	# 10 November start: greens in late autumn take longer than their 35 days.
++	var greens := days_until_ripe(w, "komatsuna", 0)
++	check(greens > 35 and greens < 90, "komatsuna sown in November takes longer than in spring (%d days)" % greens)
++	w.s.minute = 30 * 1440   # December
++	check(Crops.season(w, "sweetpotato") < 0.5, "sweet potatoes barely grow in the cold")
++	# Harvest gives the crop's own yield and frees the planter.
++	w.s.plots = [{"growth": 1.0, "water": 1.0, "crop": "potato"}]
++	var food := float(w.s.food)
++	var planters := int(w.s.inventory.planter)
++	await g._on_command("収穫する")
++	check(float(w.s.food) == food + 3.0 and int(w.s.inventory.planter) == planters + 1 and w.s.plots.is_empty(), "potatoes feed for days, and the planter is free again")
++	# River water: drawn, carried home, boiled.
++	w.s.society = "emergency"
++	w.s.minute = 6 * 1440 + 4 * 60
++	w.s.district.bag.water = 0.0
++	g.location = "川沿いの土手"
++	g._sync_player_position()
++	check(g._suggestions().has("水を汲む"), "at the river, drawing water is offered")
++	await g._on_command("水を汲む")
++	check(float(w.s.get("raw_carry", 0.0)) == 8.0, "eight litres drawn, not yet drinkable")
++	w.s.walkers.places = {}
++	w.s.walkers.encounter = {}
++	var rain := float(w.s.rain_water)
++	await g._on_command("家に帰る")
++	check(float(w.s.rain_water) == rain + 8.0 and float(w.s.get("raw_carry", 0.0)) == 0.0, "carried home into the untreated store")
++	await g._on_command("台所へ行く")
++	var water := float(w.s.water)
++	w.s.gas_cans = 2.0
++	await g._on_command("水を煮沸する")
++	check(float(w.s.water) == water + 4.0, "boiled, it is drinking water: " + g.log_entries[-1])
++	print("v149.36 crop checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_npc_groups149_35.gd b/tests/test_npc_groups149_35.gd
 new file mode 100644
 index 0000000..7ca4784
@@ -2517,6 +2879,21 @@ index 0000000..0d06d68
 +++ b/tests/test_npc_life149_35.gd.uid
 @@ -0,0 +1 @@
 +uid://litrtaov1upn
+diff --git a/tests/test_revision21_events.gd b/tests/test_revision21_events.gd
+index 9df2ea7..48433d3 100644
+--- a/tests/test_revision21_events.gd
++++ b/tests/test_revision21_events.gd
+@@ -32,7 +32,9 @@ func fixture(d:Dictionary)->RefCounted:
+ 	if d.id=="repair_grid":w.s.grid_online=false
+ 	if d.id=="repair_water":w.s.water_online=false
+ 	if d.id=="return":w.s.agents[2].departed=true
+-	if d.id=="pests":w.s.plots=[{"growth":0.6,"water":1.0,"ready":false}]
++	if d.id=="pests":
++		w.s.plots=[{"growth":0.6,"water":1.0,"ready":false}]
++		w.s.minute = 200 * 1440   # v149.36: pests come in the warm months
+ 	if d.id=="filter_wear":w.s.equipment.filter=true;w.s.longplay.water_collected=10.0
+ 	if d.id=="crop_care":w.s.sim.gardens=2
+ 	return w
 diff --git a/tests/test_town149_36.gd b/tests/test_town149_36.gd
 new file mode 100644
 index 0000000..bd3ad65
