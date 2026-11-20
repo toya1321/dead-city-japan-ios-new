@@ -6222,7 +6222,7 @@ index 0000000..f68f3cc
 +uid://cymcpchsklgg
 diff --git a/qa/fight_play.gd b/qa/fight_play.gd
 new file mode 100644
-index 0000000..5d9c306
+index 0000000..b6eaf8b
 --- /dev/null
 +++ b/qa/fight_play.gd
 @@ -0,0 +1,55 @@
@@ -6274,7 +6274,7 @@ index 0000000..5d9c306
 +		var start: int = g.log_entries.size()
 +		await g._on_command(cmd)
 +		for i in range(start, g.log_entries.size()): print(g.log_entries[i].replace("\n", " / "))
-+		if not Combat.active(w): print("   (encounter over)  killed=", w.s.walkers.get("killed", 0), " health=", w.s.health); break
++		if not Combat.active(w): print("   (no encounter)  killed=", w.s.walkers.get("killed", 0), " health=", w.s.health)
 +	if OS.get_environment("DCJ_OUT") != "":
 +		for i in 10: await process_frame
 +		g._hide_action_card()
@@ -6705,12 +6705,84 @@ index 0000000..0eef067
 +			a.held_by = ""
 +			lines.append("%sは自分で振りほどき、遅れて追いついてきた。息が上がり、顔は真っ青だ。" % m.name)
 +	return lines
+diff --git a/scripts/area_safety.gd b/scripts/area_safety.gd
+new file mode 100644
+index 0000000..25e0328
+--- /dev/null
++++ b/scripts/area_safety.gd
+@@ -0,0 +1,66 @@
++extends RefCounted
++## v149.33 (combat stage 6): how safe a place is right now, from what is
++## actually there — the dead here and next door (they drift), recent noise
++## (it draws them), people living nearby (they make noise), and what blocks
++## the way (fallen shelves, a fortified base). Clearing a street makes it
++## safer only as long as nothing drifts back in: there is no "safe for N
++## days" switch.
++
++const Walkers = preload("res://scripts/walkers.gd")
++const Navigation = preload("res://scripts/navigation.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++
++static func blocked(world, place: String) -> bool:
++	return int(Walkers.ensure(world).get("blocks", {}).get(place, -1)) > int(world.s.minute)
++
++static func block(world, place: String, days: int = 3) -> void:
++	var w := Walkers.ensure(world)
++	if not w.get("blocks") is Dictionary:
++		w.blocks = {}
++	w.blocks[place] = int(world.s.minute) + days * 1440
++
++static func fortified(world, place: String) -> bool:
++	var sites: Dictionary = world.s.get("district", {}).get("sites", {})
++	return sites.has(place) and int(sites[place].get("level", 0)) >= 2
++
++static func people_at(world, place: String) -> int:
++	if place == "避難所":
++		return 0
++	return Survivors.here(world, place).size() if world.s.has("survivors") else 0
++
++## {score 0-100, words, reasons} for a place.
++static func assess(world, place: String) -> Dictionary:
++	var w := Walkers.ensure(world)
++	var minute := int(world.s.minute)
++	var here := Walkers.count(world, place)
++	var around := 0
++	for next in Navigation.graph(str(world.s.profile.housing)).get(place, []):
++		if next in Walkers.OUTDOOR or next in Walkers.BUILDINGS:
++			around += Walkers.count(world, next)
++	var noisy := int(w.noise.get(place, -1)) >= minute
++	var score := 100 - 15 * mini(here, 6) - 4 * mini(around, 10) - (15 if noisy else 0) - 3 * mini(people_at(world, place), 4)
++	var reasons: Array = []
++	if here > 0:
++		reasons.append("すぐ近くに感染者がいる")
++	if around >= 3:
++		reasons.append("隣の通りから流れてくるかもしれない")
++	elif around > 0:
++		reasons.append("近くの通りにも気配がある")
++	if noisy:
++		reasons.append("さっきの物音が、まだ周りを呼んでいる")
++	if blocked(world, place):
++		score += 10
++		reasons.append("倒した棚が、通り道をふさいでいる")
++	if fortified(world, place):
++		score += 15
++		reasons.append("補強した拠点がある")
++	score = clampi(score, 0, 100)
++	# Nothing that is drawing them in can be called quiet.
++	if noisy or here > 0 or around >= 3:
++		score = mini(score, 79)
++	var words := "静かだ。今のところ、安全そうに見える" if score >= 80 else ("比較的落ち着いている" if score >= 55 else ("油断できない" if score >= 30 else "危険だ"))
++	return {"score": score, "words": words, "reasons": reasons}
++
++static func line(world, place: String) -> String:
++	var a := assess(world, place)
++	return "このあたりは、%s。%s" % [a.words, ("（" + "、".join(a.reasons) + "）") if not a.reasons.is_empty() else ""]
 diff --git a/scripts/combat.gd b/scripts/combat.gd
 new file mode 100644
-index 0000000..28c7ef9
+index 0000000..f859f11
 --- /dev/null
 +++ b/scripts/combat.gd
-@@ -0,0 +1,805 @@
+@@ -0,0 +1,811 @@
 +extends RefCounted
 +## v149.33 (combat stage 1): each walker in an encounter as its own body —
 +## distance, state, wounds — and how many seconds an action takes. The
@@ -6730,6 +6802,8 @@ index 0000000..28c7ef9
 +const CombatText = preload("res://scripts/combat_text.gd")
 +const Allies = preload("res://scripts/allies.gd")
 +const Skills = preload("res://scripts/skills.gd")
++const Remains = preload("res://scripts/remains.gd")
++const AreaSafety = preload("res://scripts/area_safety.gd")
 +
 +const TRACKED := 6
 +const SPEED := {"fresh": 1.3, "old": 0.8}
@@ -6780,6 +6854,8 @@ index 0000000..28c7ef9
 +			"state": "standing",
 +			"hurt": {"head": 0, "arms": 0, "legs": 0, "torso": 0},
 +			"kind": "fresh" if world.draw(minute, serial * 11, "z-kind", 100) < 35 else "old",
++			# Stage 6: who it was, and what that person carried.
++			"life": Remains.life_for(world, str(enc.place), serial),
 +		})
 +	enc.serial = serial
 +	# Stage 2: "noticed" and "how close" are kept apart. An encounter that
@@ -7078,6 +7154,7 @@ index 0000000..28c7ef9
 +	var w := Walkers.ensure(world)
 +	var enc: Dictionary = w.encounter
 +	zombies(world).erase(z)
++	Remains.add_body(world, str(enc.place), z)
 +	Walkers._add(world, str(enc.place), -1)
 +	w.killed = int(w.get("killed", 0)) + 1
 +
@@ -7294,6 +7371,7 @@ index 0000000..28c7ef9
 +			Walkers.make_noise(world, place)
 +			for each in zombies(world):
 +				each.dist = float(each.dist) + 3.0
++			AreaSafety.block(world, place)
 +			out.lines.append("棚を引き倒して、通路をふさいだ。商品が派手に散らばる。相手は棚に足を取られている。")
 +		_:
 +			out.lines.append("どう動くか、もう少し具体的に書いてほしい。（何もしていない）")
@@ -7854,10 +7932,10 @@ index b6d46d4..a30a5d8 100644
  	if profile.housing=="集合住宅":result[1].body=str(result[1].body)+"\n\n玄関の外は建物の共用廊下に通じている。"
  	return result
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 542300b..1477df6 100644
+index 542300b..6cf8e52 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -15,6 +15,12 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+@@ -15,6 +15,14 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
  const TitleScreen = preload("res://scripts/title_screen.gd")
  const SceneView = preload("res://scripts/scene_view.gd")
  const ActionPhotos = preload("res://scripts/action_photos.gd")
@@ -7867,10 +7945,12 @@ index 542300b..1477df6 100644
 +const CombatText = preload("res://scripts/combat_text.gd")
 +const Allies = preload("res://scripts/allies.gd")
 +const Skills = preload("res://scripts/skills.gd")
++const Remains = preload("res://scripts/remains.gd")
++const AreaSafety = preload("res://scripts/area_safety.gd")
  const SceneDescription = preload("res://scripts/scene_description.gd")
  const Plan = preload("res://scripts/action_plan.gd")
  const CareWait = preload("res://scripts/care_wait.gd")
-@@ -129,6 +135,10 @@ var vitals_values: Dictionary = {}
+@@ -129,6 +137,10 @@ var vitals_values: Dictionary = {}
  var warning_label: Label
  var scene_view: Control
  var action_card: PanelContainer
@@ -7881,7 +7961,7 @@ index 542300b..1477df6 100644
  var action_card_kind := ""
  ## Set just before appending a result whose kind cannot be read from the text.
  var forced_action_kind := ""
-@@ -296,6 +306,14 @@ func _build_ui() -> void:
+@@ -296,6 +308,14 @@ func _build_ui() -> void:
  	danger_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  	vitals_row.add_child(danger_label)
  
@@ -7896,7 +7976,7 @@ index 542300b..1477df6 100644
  	main_layout=BoxContainer.new();main_layout.size_flags_vertical=Control.SIZE_EXPAND_FILL;main_layout.add_theme_constant_override("separation",8);base.add_child(main_layout)
  	content_column=VBoxContainer.new();content_column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;content_column.size_flags_stretch_ratio=1.22;content_column.add_theme_constant_override("separation",6);main_layout.add_child(content_column)
  	# Scene picture: small by default, can be folded into a one-line bar.
-@@ -1398,6 +1416,13 @@ func _hide_action_card() -> void:
+@@ -1398,6 +1418,13 @@ func _hide_action_card() -> void:
  		action_tween.kill()
  	action_card.visible = false
  
@@ -7910,7 +7990,7 @@ index 542300b..1477df6 100644
  func _rebuild_log() -> void:
  	if log_box == null:
  		return
-@@ -1512,6 +1537,7 @@ func _scroll_log_to_end() -> void:
+@@ -1512,6 +1539,7 @@ func _scroll_log_to_end() -> void:
  	log_follow_queued=false
  
  func _refresh() -> void:
@@ -7918,7 +7998,7 @@ index 542300b..1477df6 100644
  	# v149.29: a death ends the story (no succession); the life is told back,
  	# with what became of those left behind.
  	if float(world.s.health) <= 0 and not succession_running:
-@@ -1572,6 +1598,13 @@ func _refresh() -> void:
+@@ -1572,6 +1600,13 @@ func _refresh() -> void:
  		picture.texture = load("res://assets/photos/%s.jpg" % ending)
  		scene_view.ending = true
  		scene_view.queue_redraw()
@@ -7932,7 +8012,7 @@ index 542300b..1477df6 100644
  	if picture.texture == null:
  		# v149.29: snow on the streets; cold rooms without power.
  		var season := Cold.season_photo(world, location, str(world.s.profile.housing))
-@@ -1613,6 +1646,7 @@ func _on_command(raw: String) -> void:
+@@ -1613,6 +1648,7 @@ func _on_command(raw: String) -> void:
  		_append("物語は、ここで終わった。「記録を読み返す」か「新しい世界で始める」を選べる。")
  		_refresh()
  		return
@@ -7940,7 +8020,7 @@ index 542300b..1477df6 100644
  	var suggested := pending_local_action.duplicate()
  	pending_local_action.clear()
  	var encounter: Dictionary = Walkers.ensure(world).encounter
-@@ -1725,7 +1759,7 @@ func _suggestions() -> Array:
+@@ -1725,7 +1761,7 @@ func _suggestions() -> Array:
  	if float(world.s.health) <= 0 and bool(Chronicle.state(world).get("ended", false)):
  		return ["記録を読み返す", "新しい世界で始める"]
  	if not Walkers.ensure(world).encounter.is_empty():
@@ -7949,7 +8029,20 @@ index 542300b..1477df6 100644
  	if str(NeighborFate.state(world).stage) == "attack" and (Navigation.indoor(location) or location == str(NeighborFate._person(world).get("place", ""))):
  		return ["隣を助けに行く", "明かりを消す", "息をひそめる"]
  	if EarlyDays.visiting(world) and Navigation.indoor(location):
-@@ -2869,6 +2903,32 @@ func _raid_command(cmd: String) -> bool:
+@@ -1867,6 +1903,12 @@ func _suggestions() -> Array:
+ 		out.append("窓から外を見る" if location in ["寝室", "居間"] else "周囲を見る")
+ 	else:
+ 		out.append("周囲を見る")
++		# Stage 6: a fallen walker here not yet searched; a lead that ends here.
++		if not Remains.unsearched(world, location).is_empty():
++			out.push_front("死体を調べる")
++		var leads: Array = Remains.open_leads(world, location)
++		if not leads.is_empty():
++			out.push_front({"house_key": "隣の家の鍵を使う", "key": "鍵を使う", "memo": "メモの場所を調べる"}.get(str(leads[0].item), "鍵を使う"))
+ 		if Cold.BLANKET_PLACES.has(_site()) and Cold.outdoor(world) < 12.0 and int(Cold.peek(world).get("found", {}).get(_site(), 0)) < int(Cold.BLANKET_PLACES[_site()]) and (_site() != "デパート" or bool(world.s.district.sites["デパート"].vacant)) and not (_site() == "避難所" and Shelter.status(world) in ["open", "school"]):
+ 			out.push_front("毛布を探す")
+ 		for mate in world.s.household_members:
+@@ -2869,6 +2911,40 @@ func _raid_command(cmd: String) -> bool:
  
  ## v149.27: the shelter's ration and notice board.
  ## v149.29: the cold: a gas heater, blankets.
@@ -7958,7 +8051,15 @@ index 542300b..1477df6 100644
 +	if PlayerIntents.negated(cmd):
 +		return false
 +	var line := ""
-+	if NPCMemory._mentions(cmd, ["武器を探", "武器になる", "武器を集", "防具を探"]):
++	if NPCMemory._mentions(cmd, ["死体を調べ", "遺体を調べ", "所持品を調べ", "ポケットを探", "持ち物を調べ", "死体を探"]):
++		line = "今は、調べている余裕はない。" if Combat.active(world) else Remains.search(world, location)
++	elif NPCMemory._mentions(cmd, ["鍵を使", "鍵で開け", "メモの場所", "ロッカーを開け", "倉庫を調べ", "隣の家の鍵", "鍵の合う"]):
++		if not Remains.open_leads(world, location).is_empty():
++			line = Remains.follow(world, location)
++		else:
++			var elsewhere: Array = Remains.state(world).leads.filter(func(l): return not bool(l.done))
++			line = "ここではない。手がかりの場所は、%sだ。" % "、".join(elsewhere.map(func(l): return "%s（%s）" % [l.place, l.what])) if not elsewhere.is_empty() else "鍵やメモの手がかりは、今は持っていない。"
++	elif NPCMemory._mentions(cmd, ["武器を探", "武器になる", "武器を集", "防具を探"]):
 +		line = Weapons.search(world, _site() if not _site().is_empty() else location)
 +	elif cmd.contains("釘バット") and NPCMemory._mentions(cmd, ["作", "改造"]):
 +		line = Weapons.craft(world, "nailbat", Navigation.indoor(location))
@@ -7982,7 +8083,7 @@ index 542300b..1477df6 100644
  func _cold_command(cmd: String) -> bool:
  	if PlayerIntents.negated(cmd):
  		return false
-@@ -3068,7 +3128,7 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3068,7 +3144,7 @@ func _comfort_command(cmd: String) -> bool:
  
  ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
  func _care_command(cmd: String) -> bool:
@@ -7991,23 +8092,36 @@ index 542300b..1477df6 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -3134,30 +3194,96 @@ func _check_walkers(previous: String) -> bool:
+@@ -3134,30 +3210,100 @@ func _check_walkers(previous: String) -> bool:
  func _encounter_turn(cmd: String) -> void:
  	var w := Walkers.ensure(world)
  	var enc: Dictionary = w.encounter
 -	var kind := "" if PlayerIntents.negated(cmd) else Walkers.intent(cmd)
 -	if kind.is_empty() and local_model.available() and not PlayerIntents.negated(cmd):
 -		# v149.24: free wording the fixed words miss goes to the local model.
+-		_set_local_inference(true)
+-		var verdict := await local_model.ask(self, {"状況": "感染者が近くにいる", "発言": cmd}, false, PlayerIntents.ENCOUNTER_INSTRUCTIONS)
+-		_set_local_inference(false)
+-		var canonical := PlayerIntents.command(verdict, cmd, true)
+-		if not canonical.is_empty() and not cancel_requested:
+-			kind = Walkers.intent(canonical)
+-			_append("（「%s」として行動）" % canonical)
+-	if kind.is_empty():
+-		_append("近くに感染者がいる。今は「隠れる」「逃げる」「物を投げて気をそらす」「戦う」「様子を見る」のどれかを選んでほしい。何も実行していません。")
 +	var negated := PlayerIntents.negated(cmd)
++	if NPCMemory._mentions(cmd, ["死体を調べ", "遺体を調べ", "所持品を調べ", "ポケットを探", "持ち物を調べ"]):
++		_append("今は、調べている余裕はない。まだ近くに感染者がいる。")
+ 		_refresh()
+ 		return
 +	# Looking at one's gear or changing weapons is allowed mid-fight.
 +	if NPCMemory._mentions(cmd, ["装備を確認", "装備を見", "武器を確認", "武器を見", "けがを確認", "傷を確認"]) or (NPCMemory._mentions(cmd, ["に持ち替え", "を構え", "を手に取", "を持つ"]) and not Weapons.named_in(cmd).is_empty() and not NPCMemory._mentions(cmd, ["殴", "叩", "刺", "狙", "払"])):
 +		if _weapon_command(cmd):
 +			return
-+	var present: Array = []
-+	for i in world.s.household_members.size():
-+		var person: Dictionary = world.s.household_members[i]
-+		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
-+			present.append(i)
+ 	var present: Array = []
+ 	for i in world.s.household_members.size():
+ 		var person: Dictionary = world.s.household_members[i]
+ 		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
+ 			present.append(i)
 +	Combat.sync(world)
 +	Allies.ensure(world, present)
 +	var xp_start: Dictionary = Walkers.ensure(world).encounter.get("xp_start", {})
@@ -8027,27 +8141,18 @@ index 542300b..1477df6 100644
 +		_refresh()
 +		return
 +	if steps.is_empty() and local_model.available() and not negated:
- 		_set_local_inference(true)
- 		var verdict := await local_model.ask(self, {"状況": "感染者が近くにいる", "発言": cmd}, false, PlayerIntents.ENCOUNTER_INSTRUCTIONS)
- 		_set_local_inference(false)
- 		var canonical := PlayerIntents.command(verdict, cmd, true)
- 		if not canonical.is_empty() and not cancel_requested:
--			kind = Walkers.intent(canonical)
--			_append("（「%s」として行動）" % canonical)
--	if kind.is_empty():
--		_append("近くに感染者がいる。今は「隠れる」「逃げる」「物を投げて気をそらす」「戦う」「様子を見る」のどれかを選んでほしい。何も実行していません。")
++		_set_local_inference(true)
++		var verdict := await local_model.ask(self, {"状況": "感染者が近くにいる", "発言": cmd}, false, PlayerIntents.ENCOUNTER_INSTRUCTIONS)
++		_set_local_inference(false)
++		var canonical := PlayerIntents.command(verdict, cmd, true)
++		if not canonical.is_empty() and not cancel_requested:
 +			steps = CombatIntent.parse(canonical)
 +			if not steps.is_empty():
 +				_append("（「%s」として行動）" % canonical)
 +	if steps.is_empty():
 +		_append("近くに感染者がいる。どう動くか書くか、候補からどれかを選んでほしい（例：脚を払う／頭を狙って振り下ろす／突き飛ばす／下がる／逃げる／隠れる／物を投げて気をそらす）。何も実行していません。")
- 		_refresh()
- 		return
--	var present: Array = []
--	for i in world.s.household_members.size():
--		var person: Dictionary = world.s.household_members[i]
--		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
--			present.append(i)
++		_refresh()
++		return
  	var back := str(enc.get("from", ""))
 -	var result := Walkers.resolve(world, kind, Walkers.weapon_bonus(world.s.inventory), present.size(), present)
 -	world.advance_safe(int(result.minutes))
@@ -8104,7 +8209,7 @@ index 542300b..1477df6 100644
  		var destination := back if not back.is_empty() and back != location else ("屋外" if location != "屋外" else "建物前")
  		var path := Navigation.route(location, destination, str(world.s.profile.housing))
  		if path.size() >= 2:
-@@ -3168,12 +3294,13 @@ func _encounter_turn(cmd: String) -> void:
+@@ -3168,12 +3314,13 @@ func _encounter_turn(cmd: String) -> void:
  				world.s.household_members[i].activity = "在宅" if Navigation.indoor(destination) else "外出"
  			world.advance_safe(Navigation.duration(path[0], path[1]))
  			_append("%sまで戻った。" % (location if present.is_empty() else location + "まで、一緒に"))
@@ -8124,7 +8229,7 @@ index 542300b..1477df6 100644
  	_refresh()
  
  func _report_household_errands() -> void:
-@@ -3393,6 +3520,7 @@ func _execute_command(cmd: String) -> String:
+@@ -3393,6 +3540,7 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("包帯") or cmd.contains("手当て"):
  		var response := world.action("bandage")
  		if response.begins_with("傷を手当て"):
@@ -8132,7 +8237,20 @@ index 542300b..1477df6 100644
  			world.advance(10)
  		return response
  	if cmd.contains("配送状況") or cmd.contains("注文履歴"):
-@@ -3777,7 +3905,7 @@ func _read_news(command: String) -> String:
+@@ -3609,6 +3757,12 @@ func _look(inspect_details: bool = true) -> String:
+ 	var observed := _observe("sight")
+ 	if inspect_details or observed != "新しく確認できた出来事はない。":
+ 		paragraphs.append(observed)
++	# Stage 6: how safe it is here, once the city has broken down.
++	if inspect_details and not Navigation.indoor(location) and str(world.s.society) in ["disrupted", "emergency"]:
++		paragraphs.append(AreaSafety.line(world, location))
++		var bodies: Array = Remains.unsearched(world, location)
++		if not bodies.is_empty():
++			paragraphs.append("地面に、倒した感染者が%s横たわっている。まだ持ち物は調べていない。" % ("" if bodies.size() == 1 else "%d人" % bodies.size()))
+ 	return "\n\n".join(paragraphs)
+ 
+ ## v149.25: the department store's food hall belongs to the same site as its
+@@ -3777,7 +3931,7 @@ func _read_news(command: String) -> String:
  	visual_focus="news"
  	return "情報源：%s\n%s%s"%[{"tv":"テレビ","sns":"スマートフォン・SNS","radio":"ラジオ"}[channel],"新しい報道はない。前回確認した内容：\n" if report=="新しく確認できた出来事はない。" and observed_news!="新しい報道は確認できない。" else "",observed_news]
  func _inventory_text() -> String:
@@ -8141,6 +8259,229 @@ index 542300b..1477df6 100644
  	var labels:Dictionary={"wood":"木材","parts":"部品","seeds":"種","bandage":"包帯","planter":"未使用プランター","harvest":"累積収穫量"}
  	for id in labels:lines.append("%s：%s"%[labels[id],str(world.s.inventory[id])])
  	lines.append("栽培中：%d鉢"%world.s.plots.size())
+diff --git a/scripts/remains.gd b/scripts/remains.gd
+new file mode 100644
+index 0000000..36b4baa
+--- /dev/null
++++ b/scripts/remains.gd
+@@ -0,0 +1,217 @@
++extends RefCounted
++## v149.33 (combat stage 6): the dead had lives. Each walker carries what
++## that person carried — decided when it is first seen, from who it was (a
++## survivor met earlier, the neighbour, a housemate who rose, or someone
++## from the town), never made up after the fight. What it carried is found
++## only by searching the body, once. Some things lead somewhere: a key with
++## an address tag, a memo about a locker, a phone's last message.
++##
++## s.remains = {bodies: {place: [{id, who, name, items, searched, at}]},
++##              leads: [{place, what, food, water, parts, bandage, text, done}],
++##              known: [{name, place, kind}], claimed: [name]}
++
++const Survivors = preload("res://scripts/survivors.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
++const Mood = preload("res://scripts/mood.gd")
++
++const ITEMS := {
++	"wallet": "財布", "phone": "携帯電話", "key": "住所のタグがついた鍵", "memo": "折りたたんだメモ",
++	"medicine": "常備薬と包帯", "tools": "小さな工具", "bag": "小さなリュック", "cigarettes": "タバコ",
++	"photo": "一枚の写真", "house_key": "隣の家の鍵",
++}
++## Who the town's dead were, and what such a person carries.
++const LIVES := [
++	["スーツ姿の男", ["wallet", "phone", "key"]], ["制服の高校生", ["phone", "bag"]], ["エプロン姿の女", ["key", "wallet"]],
++	["作業着の男", ["tools", "cigarettes", "key"]], ["パジャマ姿の老人", ["medicine", "wallet"]], ["ジャージの若者", ["bag", "phone"]],
++	["配達員の制服の男", ["memo", "bag"]], ["看護師の服の女", ["medicine", "memo"]], ["コートの女", ["wallet", "phone"]],
++]
++const BODY_CAP := 6
++const BODY_DAYS := 20
++## Where a key or a memo may lead (a place on the map, and what is there).
++const LEAD_PLACES := {
++	"key": [["近所の空き家", "鍵の合う勝手口"], ["住宅街", "タグの住所の家"]],
++	"memo": [["駅前", "コインロッカー"], ["商店通り", "閉まった店の裏の倉庫"], ["コンビニ", "バックヤードの棚の奥"]],
++}
++
++static func state(world) -> Dictionary:
++	if not world.s.get("remains") is Dictionary:
++		world.s.remains = {"bodies": {}, "leads": [], "known": [], "claimed": []}
++	var st: Dictionary = world.s.remains
++	for key in ["bodies"]:
++		if not st.get(key) is Dictionary:
++			st[key] = {}
++	for key in ["leads", "known", "claimed"]:
++		if not st.get(key) is Array:
++			st[key] = []
++	return st
++
++static func valid(value: Variant) -> bool:
++	if not value is Dictionary:
++		return false
++	if value.has("bodies") and not value.bodies is Dictionary:
++		return false
++	for key in ["leads", "known", "claimed"]:
++		if value.has(key) and not value[key] is Array:
++			return false
++	for place in value.get("bodies", {}):
++		if not value.bodies[place] is Array or value.bodies[place].size() > 50:
++			return false
++	return true
++
++## A housemate who died and rose is remembered where they rose.
++static func remember(world, name: String, place: String, kind: String) -> void:
++	state(world).known.append({"name": name, "place": place, "kind": kind})
++
++## Who a newly seen walker at this place was. Known people first (once
++## each), then someone from the town, from the world's dice.
++static func life_for(world, place: String, serial: int) -> Dictionary:
++	var st := state(world)
++	var claimed: Array = st.claimed
++	for k in st.known:
++		if str(k.place) == place and not str(k.name) in claimed:
++			claimed.append(str(k.name))
++			return {"who": str(k.name), "name": str(k.name), "items": ["photo"] if str(k.kind) == "mate" else ["wallet"], "kind": str(k.kind)}
++	var people: Dictionary = world.s.get("survivors", {}).get("people", {})
++	for id in people:
++		var p: Dictionary = people[id]
++		if str(p.get("status", "")) != "dead" or str(p.get("place", "")) != place or str(p.get("cause", "")) not in ["bitten", "turned"] or str(p.name) in claimed:
++			continue
++		claimed.append(str(p.name))
++		var items: Array = ["wallet"]
++		if bool(p.get("neighbor", false)):
++			items.append("house_key")
++		else:
++			for offer in p.get("offers", []):
++				var mapped: String = {"bandage": "medicine", "cigarettes": "cigarettes", "food": "bag", "water": "bag", "wood": "tools", "parts": "tools"}.get(str(offer), "")
++				if not mapped.is_empty():
++					items.append(mapped)
++					break
++		return {"who": str(p.label), "name": str(p.name), "items": items, "kind": "neighbor" if bool(p.get("neighbor", false)) else "survivor"}
++	var minute := int(world.s.minute)
++	var life: Array = LIVES[world.draw(minute, serial * 29 + place.hash() % 97, "life", LIVES.size())]
++	var items: Array = []
++	for item in life[1]:
++		if world.draw(minute, serial * 31 + str(item).hash() % 89, "life-item", 100) < 55:
++			items.append(item)
++	return {"who": str(life[0]), "name": "", "items": items, "kind": "town"}
++
++## A walker that fell stays where it fell, with what it carried.
++static func add_body(world, place: String, z: Dictionary) -> void:
++	var st := state(world)
++	var life: Dictionary = z.get("life", {})
++	if not st.bodies.has(place):
++		st.bodies[place] = []
++	var list: Array = st.bodies[place]
++	list.append({"id": str(z.get("id", "")), "who": str(life.get("who", "見知らぬ人")), "name": str(life.get("name", "")), "items": life.get("items", []).duplicate(), "kind": str(life.get("kind", "town")), "searched": false, "at": int(world.s.minute)})
++	while list.size() > BODY_CAP:
++		list.pop_front()
++
++## Read-only: looking does not create the record.
++static func _peek(world) -> Dictionary:
++	return world.s.get("remains") if world.s.get("remains") is Dictionary else {}
++
++static func unsearched(world, place: String) -> Array:
++	var now := int(world.s.minute)
++	var bodies: Dictionary = _peek(world).get("bodies", {})
++	return bodies.get(place, []).filter(func(b): return not bool(b.searched) and now - int(b.at) < BODY_DAYS * 1440)
++
++## Searching the most recent body here. Returns the lines.
++static func search(world, place: String) -> String:
++	var bodies := unsearched(world, place)
++	if bodies.is_empty():
++		return "ここには、調べていない遺体はない。"
++	var body: Dictionary = bodies[-1]
++	body.searched = true
++	world.advance_safe(10)
++	var lines: Array = []
++	var who := str(body.who)
++	if str(body.kind) in ["survivor", "neighbor", "mate"]:
++		lines.append("倒れているのは、%sだった。" % who)
++	else:
++		lines.append("%sのポケットと持ち物を調べた。（10分）" % who)
++	if body.items.is_empty():
++		lines.append("何も持っていなかった。")
++	for item in body.items:
++		lines.append(_take(world, str(item), body, place))
++	if str(body.kind) in ["survivor", "neighbor", "mate"]:
++		Chronicle.note(world, "%sの遺体を見つけ、持ち物を調べた。" % who, "remains", str(body.name))
++	return "\n".join(lines)
++
++static func _take(world, item: String, body: Dictionary, place: String) -> String:
++	var minute := int(world.s.minute)
++	var salt := str(body.id).hash() % 997 + item.hash() % 101
++	match item:
++		"wallet":
++			var cash: int = 1000 * (1 + world.draw(minute, salt, "wallet", 8))
++			world.s.cash = int(world.s.get("cash", 0)) + cash
++			if not str(body.name).is_empty():
++				return "財布の中の免許証に、%sの名前があった。（現金%d円）" % [body.name, cash]
++			return "財布に、現金が%d円。免許証の顔写真は、知らない誰かの穏やかな笑顔だった。" % cash
++		"phone":
++			var horde: Dictionary = world.s.get("walkers", {}).get("horde", {})
++			if not horde.is_empty():
++				return "携帯電話の画面に、最後のメッセージが残っていた。「%sの方、ものすごい数。近づくな」" % str(horde.get("place", "駅前"))
++			return "携帯電話は、もう電池が切れていた。待ち受けの写真だけが、一瞬だけ光った。"
++		"medicine":
++			world.s.inventory.bandage = int(world.s.inventory.get("bandage", 0)) + 1
++			return "ポーチに、常備薬と包帯が入っていた。（包帯 +1）"
++		"tools":
++			world.s.inventory.parts = int(world.s.inventory.get("parts", 0)) + 1
++			return "腰の袋に、小さな工具が入っていた。（部品 +1）"
++		"cigarettes":
++			world.s.cigarettes = int(world.s.get("cigarettes", 0)) + 6
++			return "胸ポケットに、タバコが半分ほど残った箱。（タバコ +6本）"
++		"bag":
++			var bag: Dictionary = world.s.district.bag
++			bag.food = minf(4.0, float(bag.get("food", 0.0)) + 0.5)
++			bag.water = minf(8.0, float(bag.get("water", 0.0)) + 0.5)
++			return "小さなリュックに、菓子パンと水のペットボトル。（持ち出し袋に 食料0.5・水0.5L）"
++		"photo":
++			Mood.change(world.s, -4.0)
++			return "ポケットから、写真が一枚出てきた。みんなで笑っている写真だ。……持って帰ることにした。"
++		"house_key":
++			return _lead(world, "house_key", "住宅街", "隣の家", {"food": 3.0, "water": 6.0, "bandage": 1}, "%sの家の鍵だ。隣の家には、まだ食べ物が残っているかもしれない。（住宅街で「隣の家の鍵を使う」）" % str(body.name))
++		"key", "memo":
++			var options: Array = LEAD_PLACES[item]
++			var pick: Array = options[world.draw(minute, salt, "lead-" + item, options.size())]
++			var what := str(pick[1])
++			if item == "key":
++				return _lead(world, item, str(pick[0]), what, {"food": 1.5, "water": 3.0}, "鍵に、住所を書いたタグがついている。%sの、%sのものらしい。（%sで「鍵を使う」）" % [pick[0], what, pick[0]])
++			return _lead(world, item, str(pick[0]), what, {"food": 2.0, "water": 4.0, "parts": 1}, "メモに、走り書きがある。「%s　%s　水と缶詰」（%sで「メモの場所を調べる」）" % [pick[0], what, pick[0]])
++	return ""
++
++static func _lead(world, item: String, place: String, what: String, goods: Dictionary, text: String) -> String:
++	var st := state(world)
++	var lead := {"item": item, "place": place, "what": what, "done": false}
++	lead.merge(goods)
++	st.leads.append(lead)
++	return text
++
++static func open_leads(world, place: String) -> Array:
++	return _peek(world).get("leads", []).filter(func(l): return not bool(l.done) and str(l.place) == place)
++
++## Following a lead at its place: what was there goes into the bag.
++static func follow(world, place: String) -> String:
++	var leads := open_leads(world, place)
++	if leads.is_empty():
++		return ""
++	var lead: Dictionary = leads[0]
++	lead.done = true
++	world.advance_safe(15)
++	var bag: Dictionary = world.s.district.bag
++	var food := float(lead.get("food", 0.0))
++	var water := float(lead.get("water", 0.0))
++	var took_food := minf(food, maxf(0.0, 4.0 - float(bag.get("food", 0.0))))
++	var took_water := minf(water, maxf(0.0, 8.0 - float(bag.get("water", 0.0))))
++	bag.food = float(bag.get("food", 0.0)) + took_food
++	bag.water = float(bag.get("water", 0.0)) + took_water
++	var extra := ""
++	if int(lead.get("parts", 0)) > 0:
++		world.s.inventory.parts = int(world.s.inventory.get("parts", 0)) + int(lead.parts)
++		extra += "、部品%d" % int(lead.parts)
++	if int(lead.get("bandage", 0)) > 0:
++		world.s.inventory.bandage = int(world.s.inventory.get("bandage", 0)) + int(lead.bandage)
++		extra += "、包帯%d" % int(lead.bandage)
++	var left := (food - took_food) + (water - took_water)
++	var opener: String = {"house_key": "鍵を回すと、隣の家の玄関が開いた。台所の戸棚に、手つかずの食料が残っていた。", "key": "鍵は、%sに合った。中は荒らされていなかった。" % str(lead.what), "memo": "メモの通り、%sに物資が隠してあった。" % str(lead.what)}.get(str(lead.item), "")
++	return "%s（15分。持ち出し袋に 食料%.1f・水%.1fL%s%s）" % [opener, took_food, took_water, extra, "。袋に入りきらない分は置いてきた" if left > 0.05 else ""]
 diff --git a/scripts/skills.gd b/scripts/skills.gd
 new file mode 100644
 index 0000000..e19e987
@@ -8329,16 +8670,55 @@ index 0000000..e19e987
 +		parts.append("%s Lv.%d" % [SKILLS[s], lv(world, s)])
 +	return " ・ ".join(parts)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
-index 157969d..04d263c 100644
+index 157969d..ea15a29 100644
 --- a/scripts/walkers.gd
 +++ b/scripts/walkers.gd
-@@ -1,4 +1,5 @@
+@@ -1,4 +1,6 @@
  extends RefCounted
 +const Weapons = preload("res://scripts/weapons.gd")
++const Remains = preload("res://scripts/remains.gd")
  ## v149.24: the risen dead, counted per place (see ZOMBIE_DESIGN.md).
  ## Slow walkers; a bite infects and kills over days; fighting is possible but
  ## risky. All randomness goes through world.draw so results are reproducible.
-@@ -630,7 +631,7 @@ static func _caught(world, enc: Dictionary, n: int, near: bool, lead: String, pr
+@@ -94,6 +96,7 @@ static func hourly(world) -> void:
+ 			_add(world, str(p.place), 1)
+ 			if p.has("name"):
+ 				w.risen_mates.append({"name": str(p.name), "place": str(p.place), "minute": minute})
++				Remains.remember(world, str(p.name), str(p.place), "mate")
+ 		else:
+ 			still.append(p)
+ 	w.pending = still
+@@ -112,6 +115,16 @@ static func hourly(world) -> void:
+ 			for place in w.places.keys():
+ 				if world.draw(minute, place.hash(), "walker-decay", 100) < 1 * int(w.places[place]):
+ 					_add(world, place, -1)
++	# Stage 6: where people live, there is noise now and then.
++	if str(world.s.get("society", "normal")) in ["disrupted", "emergency"] and world.s.get("survivors") is Dictionary:
++		var living := {}
++		for id in world.s.survivors.get("people", {}):
++			var person: Dictionary = world.s.survivors.people[id]
++			if str(person.get("status", "")) == "alive" and str(person.get("place", "")) != "避難所":
++				living[str(person.place)] = int(living.get(str(person.place), 0)) + 1
++		for spot in living:
++			if int(living[spot]) >= 2 and world.draw(minute, str(spot).hash(), "people-noise", 100) < 10:
++				w.noise[spot] = maxi(int(w.noise.get(spot, -1)), minute + 30)
+ 	# Drift between neighbouring outdoor places, toward recent noise.
+ 	var graph: Dictionary = Navigation.graph(str(world.s.profile.housing))
+ 	var moves: Array = []
+@@ -143,6 +156,12 @@ static func hourly(world) -> void:
+ 			for next in options:
+ 				if int(w.noise.get(next, -1)) >= minute:
+ 					target = next
++			# Stage 6: fallen shelves and fortified bases keep most of them out.
++			var sites: Dictionary = world.s.get("district", {}).get("sites", {})
++			if int(w.get("blocks", {}).get(target, -1)) > minute and world.draw(minute, place.hash() + i, "walker-blocked", 100) < 70:
++				continue
++			if sites.has(target) and int(sites[target].get("level", 0)) >= 2 and world.draw(minute, place.hash() + i, "walker-fort", 100) < 50:
++				continue
+ 			moves.append([place, target])
+ 	for m in moves:
+ 		_add(world, m[0], -1)
+@@ -630,7 +649,7 @@ static func _caught(world, enc: Dictionary, n: int, near: bool, lead: String, pr
  	if world.draw(minute, n * 13, "walker-bite", 100) < chance:
  		return _bite(world, enc, lead)
  	world.s.health = maxf(0.0, float(world.s.health) - 6.0)
@@ -8347,7 +8727,7 @@ index 157969d..04d263c 100644
  	ensure(world).encounter = {}
  	return {"text": lead + "爪が服を裂き、腕に引っかき傷ができた。歯は届かなかった。振りほどいて距離をとった。", "bitten": false, "ended": true, "minutes": 5}
  
-@@ -676,12 +677,12 @@ static func housemates_hourly(world) -> Array:
+@@ -676,12 +695,12 @@ static func housemates_hourly(world) -> Array:
  		w.notices.append(line)
  	return lines
  
@@ -8700,18 +9080,19 @@ index 0000000..7d3ce29
 +		lines.append("身についてきたこと：%s" % "、".join(learned))
 +	return "\n".join(lines)
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 9c580cb..88000da 100644
+index 9c580cb..c9e22c6 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
-@@ -5,6 +5,7 @@ const HouseholdSmalltalk = preload("res://scripts/household_smalltalk.gd")
+@@ -5,6 +5,8 @@ const HouseholdSmalltalk = preload("res://scripts/household_smalltalk.gd")
  const HouseholdDialogue = preload("res://scripts/household_dialogue.gd")
  const HouseholdErrands = preload("res://scripts/household_errands.gd")
  const Walkers = preload("res://scripts/walkers.gd")
 +const Weapons = preload("res://scripts/weapons.gd")
++const Remains = preload("res://scripts/remains.gd")
  const Mood = preload("res://scripts/mood.gd")
  const OutbreakNews = preload("res://scripts/outbreak_news.gd")
  const Survivors = preload("res://scripts/survivors.gd")
-@@ -98,6 +99,7 @@ func step(sleeping: bool) -> void:
+@@ -98,6 +100,7 @@ func step(sleeping: bool) -> void:
  		Chronicle.hourly(self)
  		Requests.hourly(self)
  		Cold.hourly(self)
@@ -8719,11 +9100,13 @@ index 9c580cb..88000da 100644
  		WorldTraits.hourly(self)
  		WorldTraits.restore(self)
  		Shelter.hourly(self)
-@@ -438,6 +440,8 @@ func validate_state(data: Dictionary) -> bool:
+@@ -438,6 +441,10 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("cold") and not Cold.valid(data.cold):
  		return false
 +	if data.has("combat") and not Weapons.valid(data.combat):
++		return false
++	if data.has("remains") and not Remains.valid(data.remains):
 +		return false
  	for person in data.household_members:
  		if person.has("tastes") and not HouseholdSmalltalk.valid_preferences(person.tastes):
@@ -9623,6 +10006,168 @@ index 0000000..9c23a93
 +	check(is_equal_approx(float(w.s.combat.skills.strike), xp), "skills are saved")
 +	check(not Weapons.valid({"skills": {"strike": -5}}), "a negative skill in a save is refused")
 +	print("v149.33 combat stage 5 checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_combat6_149_33.gd b/tests/test_combat6_149_33.gd
+new file mode 100644
+index 0000000..52e40fd
+--- /dev/null
++++ b/tests/test_combat6_149_33.gd
+@@ -0,0 +1,156 @@
++extends SceneTree
++## v149.33 combat stage 6: what the dead carried (decided by who they were,
++## found only by searching the body, once), leads to other places, and how
++## safe a place is from what is actually around it.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Combat = preload("res://scripts/combat.gd")
++const Remains = preload("res://scripts/remains.gd")
++const AreaSafety = preload("res://scripts/area_safety.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++
++var failures := 0
++
++func _initialize() -> void:
++	call_deferred("run")
++
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++func fight(w, place: String, count: int) -> void:
++	w.s.walkers.places[place] = count
++	w.s.walkers.encounter = {"place": place, "count": count, "near": true, "since": int(w.s.minute), "from": "屋外"}
++	Combat.sync(w)
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 66
++	p.cohabitants = 0
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.household_members = []
++	w.s.society = "emergency"
++	w.s.minute = 2 * 60
++
++	# Every walker has a life the moment it is seen; it does not change.
++	fight(w, "商店通り", 3)
++	var lives: Array = Combat.zombies(w).map(func(z): return z.life.duplicate(true))
++	check(lives.all(func(l): return not str(l.who).is_empty() and l.items is Array), "each walker was someone, with what they carried")
++	Combat.sync(w)
++	check(Combat.zombies(w).map(func(z): return z.life) == lives, "who they were does not change once seen")
++
++	# A kill leaves a body with those things; nothing is made up after.
++	var front: Dictionary = Combat.front(w)
++	var carried: Array = front.life.items.duplicate()
++	Combat._kill(w, front)
++	var bodies: Array = Remains.unsearched(w, "商店通り")
++	check(bodies.size() == 1 and bodies[0].items == carried, "the body holds exactly what that person carried")
++	check(int(w.s.cash) >= 0 and Remains.search(w, "商店通り").length() > 0 and Remains.unsearched(w, "商店通り").is_empty(), "searching takes what is there")
++	check(Remains.search(w, "商店通り").contains("調べていない遺体はない"), "a body is searched once")
++
++	# Known people keep who they were: a survivor who died, the neighbour.
++	var people: Dictionary = Survivors.ensure(w).people
++	var nb: Dictionary = people.neighbor_0
++	nb.status = "dead"
++	nb.cause = "turned"
++	w.s.walkers.encounter = {}
++	fight(w, str(nb.place), 1)
++	var z: Dictionary = Combat.front(w)
++	check(str(z.life.name) == str(nb.name) and "house_key" in z.life.items, "the neighbour who turned is the neighbour, with their house key")
++	Combat._kill(w, z)
++	var found := Remains.search(w, str(nb.place))
++	check(found.contains(str(nb.label)) and found.contains("隣の家の鍵"), "searching them: who it was, and the key")
++	check(not Remains.open_leads(w, str(nb.place)).is_empty(), "the key is a lead")
++	w.s.district.bag = {"food": 0.0, "water": 0.0}
++	var opened := Remains.follow(w, str(nb.place))
++	check(opened.contains("隣の家") and float(w.s.district.bag.food) > 0.0 and Remains.open_leads(w, str(nb.place)).is_empty(), "the key opens the house next door, once")
++	# The same person is not two walkers.
++	w.s.walkers.encounter = {}
++	fight(w, str(nb.place), 2)
++	check(not Combat.zombies(w).any(func(x): return str(x.life.name) == str(nb.name)), "the neighbour is not met a second time")
++
++	# A housemate who rose is remembered where they rose.
++	Remains.remember(w, "詩音", "駅前", "mate")
++	w.s.walkers.encounter = {}
++	fight(w, "駅前", 1)
++	check(str(Combat.front(w).life.name) == "詩音" and "photo" in Combat.front(w).life.items, "a housemate who rose is met again, with a photo in their pocket")
++
++	# Leads from town walkers: a memo or a key points somewhere on the map.
++	var leads_before: int = Remains.state(w).leads.size()
++	var body := {"id": "test", "who": "配達員の制服の男", "name": "", "items": ["memo"], "kind": "town", "searched": false, "at": int(w.s.minute)}
++	Remains.state(w).bodies["屋外"] = [body]
++	var memo := Remains.search(w, "屋外")
++	var lead: Dictionary = Remains.state(w).leads[-1]
++	check(Remains.state(w).leads.size() == leads_before + 1 and memo.contains(str(lead.place)), "a memo names a place: " + str(lead.place))
++
++	# Played through: after a fight, the chips offer a search; the look says how safe it is.
++	w.s.walkers.encounter = {}
++	g.location = "商店通り"
++	g._sync_player_position()
++	Remains.add_body(w, "商店通り", {"id": "z-chip", "life": {"who": "作業着の男", "items": ["tools"], "kind": "town"}})
++	check("死体を調べる" in g._suggestions(), "a body not yet searched is offered")
++	var parts := int(w.s.inventory.get("parts", 0))
++	await g._on_command("死体を調べる")
++	check(int(w.s.inventory.parts) == parts + 1, "「死体を調べる」 takes what is there")
++	fight(w, "商店通り", 1)
++	await g._on_command("死体を調べる")
++	check(g.log_entries[-1].contains("余裕はない") or str(g.log_entries.slice(-3)).contains("余裕はない"), "not in the middle of a fight")
++	w.s.walkers.encounter = {}
++
++	# Safety follows what is actually there.
++	w.s.walkers.places = {"商店通り": 0, "住宅街": 0, "屋外": 0, "駅前": 0}
++	w.s.walkers.noise = {}
++	var quiet := AreaSafety.assess(w, "商店通り")
++	w.s.walkers.places["住宅街"] = 4
++	var next_door := AreaSafety.assess(w, "商店通り")
++	w.s.walkers.places["商店通り"] = 2
++	var here := AreaSafety.assess(w, "商店通り")
++	check(int(quiet.score) > int(next_door.score) and int(next_door.score) > int(here.score), "safety drops with the dead next door, and more with them here (%d, %d, %d)" % [quiet.score, next_door.score, here.score])
++	Walkers.make_noise(w, "商店通り")
++	check(int(AreaSafety.assess(w, "商店通り").score) < int(here.score) and str(AreaSafety.line(w, "商店通り")).contains("物音"), "a recent noise makes it worse, and says why")
++	# Clearing a street helps only while nothing drifts back: walkers drift
++	# into a cleared street over the hours.
++	w.s.walkers.places = {"商店通り": 0, "住宅街": 8, "屋外": 0, "駅前": 0}
++	w.s.walkers.noise = {}
++	var drifted := 0
++	for h in 24:
++		w.s.minute += 60
++		Walkers.hourly(w)
++		drifted = maxi(drifted, Walkers.count(w, "商店通り"))
++	check(drifted > 0, "the dead drift back into a cleared street")
++	# A fallen shelf keeps most of them out of a shop.
++	w.s.walkers.places = {"商店通り": 10, "コンビニ": 0}
++	var into_open := 0
++	for h in 48:
++		w.s.minute += 60
++		w.s.walkers.places["商店通り"] = 10
++		w.s.walkers.places["コンビニ"] = 0
++		Walkers.hourly(w)
++		into_open += Walkers.count(w, "コンビニ")
++	AreaSafety.block(w, "コンビニ", 10)
++	var into_blocked := 0
++	for h in 48:
++		w.s.minute += 60
++		w.s.walkers.places["商店通り"] = 10
++		w.s.walkers.places["コンビニ"] = 0
++		Walkers.hourly(w)
++		into_blocked += Walkers.count(w, "コンビニ")
++	check(into_blocked < into_open, "a blocked doorway lets fewer in (%d vs %d)" % [into_blocked, into_open])
++
++	# Saved; a broken record is refused.
++	g._save()
++	var leads_n: int = Remains.state(w).leads.size()
++	w.s.remains = {}
++	g._load()
++	w = g.world
++	check(Remains.state(w).leads.size() == leads_n, "bodies and leads are saved")
++	check(not Remains.valid({"bodies": []}), "a broken record is refused")
++	print("v149.33 combat stage 6 checks failed: %d" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
 index eb15563..f3920ba 100644
