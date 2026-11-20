@@ -8349,7 +8349,7 @@ index 0000000..8f1daef
 @@ -0,0 +1 @@
 +uid://c6wh22ompt6km
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 8eae35a..95f48c8 100644
+index 8eae35a..a5e8ad8 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
 @@ -8,6 +8,12 @@ const DIR := "res://assets/actions/"
@@ -8365,16 +8365,17 @@ index 8eae35a..95f48c8 100644
  	["eat", "^(しっかり)?食事を取った", "食事をした。"],
  	["eat", "^軽くつまんだ", "少しだけ口にした。"],
  	["cook", "^台所で、.*温かい食事を作って食べた", "温かい食事を作った。"],
-@@ -37,7 +43,7 @@ const KINDS := [
+@@ -37,7 +43,8 @@ const KINDS := [
  	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
  	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
  	["watch", "^4時間、校門と受付の見張りに立った", "見張りに立った。"],
 -	["fight", "^(力いっぱい打ちつけた|打ちかかった|扉を開け放ち、武器を振り上げて飛び出した)", "力いっぱい振り下ろした。"],
++	["loot", "^([^【\\n]{1,20}のポケットと持ち物を調べた|倒れているのは、)", "持ち物を調べた。"],
 +	["fight", "^扉を開け放ち、武器を振り上げて飛び出した", "武器を手に飛び出した。"],
  	["flee", "^背を向けて、来た道を足早に引き返した", "走って逃げた。"],
  	["rescue", "^(【危険】)?隣の家に飛び込んだ", "隣の家へ走った。"],
  	["raid_pay", "^扉の隙間から食料（1人日分）を差し出すと", "扉の隙間から食料を渡した。"],
-@@ -104,7 +110,16 @@ static func _find(base: String) -> String:
+@@ -104,7 +111,16 @@ static func _find(base: String) -> String:
  	return ""
  
  ## The picture for this action now, or "" if none has been made yet.
