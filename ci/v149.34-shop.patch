@@ -4692,6 +4692,57 @@ index 0000000..501b3b2
 +++ b/qa/autoplay.gd.uid
 @@ -0,0 +1 @@
 +uid://dstdboihbso3
+diff --git a/qa/economy_long.gd b/qa/economy_long.gd
+new file mode 100644
+index 0000000..09972d2
+--- /dev/null
++++ b/qa/economy_long.gd
+@@ -0,0 +1,45 @@
++extends SceneTree
++## Sixty days of the survivors living on their own goods: nothing negative,
++## nothing growing without end; prints a summary per ten days.
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const Trade = preload("res://scripts/trade.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var bad := 0
++	for day in 60:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.advance_safe(60)
++		var people: Dictionary = Survivors.ensure(w).people
++		var alive := 0
++		var food := 0.0
++		var water := 0.0
++		var cash := 0
++		for id in people:
++			var q: Dictionary = people[id]
++			if str(q.status) != "alive":
++				continue
++			alive += 1
++			var gd: Dictionary = Trade.goods(w, str(id))
++			for k in gd:
++				if float(gd[k]) < 0.0 or float(gd[k]) > 500.0 or is_nan(float(gd[k])):
++					bad += 1
++			if int(q.cash) < 0:
++				bad += 1
++			food += float(gd.get("food", 0.0))
++			water += float(gd.get("water", 0.0))
++			cash += int(q.cash)
++		if day % 10 == 9:
++			print("DAY %d %s alive=%d food=%.0f water=%.0f cash=%d bad=%d" % [day + 1, w.s.society, alive, food, water, cash, bad])
++	print("END bad=%d" % bad)
++	quit()
 diff --git a/qa/fight_stats.gd.uid b/qa/fight_stats.gd.uid
 new file mode 100644
 index 0000000..ae5e88f
@@ -4776,6 +4827,26 @@ index 0000000..359a931
 +++ b/qa/shop_shot.gd.uid
 @@ -0,0 +1 @@
 +uid://cojg7yiy4p0f6
+diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
+index 78c1030..35febbb 100644
+--- a/scripts/action_photos.gd
++++ b/scripts/action_photos.gd
+@@ -40,6 +40,7 @@ const KINDS := [
+ 	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
+ 	["lock", "^玄関を閉めて施錠した", "鍵を閉めた。"],
+ 	["pack", "^(自宅から持ち出した|拠点の備蓄から持ち出した)", "荷物を詰めた。"],
++	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
+ 	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
+ 	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
+ 	["watch", "^4時間、校門と受付の見張りに立った", "見張りに立った。"],
+@@ -52,7 +53,6 @@ const KINDS := [
+ 	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
+ 	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
+ 	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
+-	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
+ 	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
+ 	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
+ 	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
 index a2f0e0b..2c13ef6 100644
 --- a/scripts/action_plan.gd
@@ -4790,18 +4861,19 @@ index a2f0e0b..2c13ef6 100644
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 79d10bf..746f72f 100644
+index 79d10bf..73c2dcf 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -15,6 +15,7 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
+@@ -15,6 +15,8 @@ const GestureScroll = preload("res://scripts/gesture_scroll.gd")
  const TitleScreen = preload("res://scripts/title_screen.gd")
  const SceneView = preload("res://scripts/scene_view.gd")
  const ActionPhotos = preload("res://scripts/action_photos.gd")
 +const ShopWindow = preload("res://scripts/shop_window.gd")
++const Trade = preload("res://scripts/trade.gd")
  const Combat = preload("res://scripts/combat.gd")
  const CombatIntent = preload("res://scripts/combat_intent.gd")
  const Weapons = preload("res://scripts/weapons.gd")
-@@ -139,6 +140,9 @@ var vitals_values: Dictionary = {}
+@@ -139,6 +141,9 @@ var vitals_values: Dictionary = {}
  var warning_label: Label
  var scene_view: Control
  var action_card: PanelContainer
@@ -4811,7 +4883,7 @@ index 79d10bf..746f72f 100644
  var combat_panel: PanelContainer
  ## The street right after the last one fell: shown until the next command.
  var combat_after := false
-@@ -1352,6 +1356,9 @@ func _action_card_for(line: String) -> void:
+@@ -1352,6 +1357,9 @@ func _action_card_for(line: String) -> void:
  		forced_action_kind = ""
  	if hit.is_empty():
  		return
@@ -4821,7 +4893,7 @@ index 79d10bf..746f72f 100644
  	var path: String = ActionPhotos.path(world, str(hit.kind))
  	if path.is_empty():
  		return
-@@ -1413,6 +1420,28 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1413,6 +1421,28 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	action_tween.tween_property(action_card, "modulate:a", 0.0, 0.4)
  	action_tween.tween_callback(func(): action_card.visible = false)
  
@@ -4850,7 +4922,7 @@ index 79d10bf..746f72f 100644
  func _hide_action_card() -> void:
  	if action_card == null:
  		return
-@@ -1542,6 +1571,7 @@ func _scroll_log_to_end() -> void:
+@@ -1542,6 +1572,7 @@ func _scroll_log_to_end() -> void:
  
  func _refresh() -> void:
  	_refresh_combat_panel()
@@ -4858,7 +4930,31 @@ index 79d10bf..746f72f 100644
  	# v149.29: a death ends the story (no succession); the life is told back,
  	# with what became of those left behind.
  	if float(world.s.health) <= 0 and not succession_running:
-@@ -1932,7 +1962,9 @@ func _suggestions() -> Array:
+@@ -1794,12 +1825,21 @@ func _suggestions() -> Array:
+ 	if not survivor_partner.is_empty():
+ 		var sd: Dictionary = Survivors.person(world, survivor_partner)
+ 		var chips: Array = []
++		# v149.34: terms on the table come first.
++		if Survivors.has_pending(world, survivor_partner):
++			chips.append("それで交換する")
++			for o in sd.pending.options:
++				if o.give.has("cash"):
++					chips.append("お金で払う")
++			chips.append("やめておく")
++			return chips
+ 		# v149.28: on ordinary days a neighbour is someone to chat with.
+ 		if not Survivors.active(world):
+ 			return ["最近どうですか？", "ニュース見ました？", "このへんは長いんですか？", "会話を終える"]
+ 		for need in sd.needs:
+-			chips.append("%sを渡す" % Survivors.ITEM_LABEL[need])
+-		if not sd.offers.is_empty():
++			if Survivors.ITEM_LABEL.has(need):
++				chips.append("%sを渡す" % Survivors.ITEM_LABEL[need])
++		if not Trade.spare(world, survivor_partner).is_empty():
+ 			chips.append("交換できるものを聞く")
+ 		chips.append("何か知っていることはないか聞く")
+ 		if bool(sd.joinable):
+@@ -1932,7 +1972,9 @@ func _suggestions() -> Array:
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
  		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
@@ -4869,7 +4965,24 @@ index 79d10bf..746f72f 100644
  		out.append("家に帰る")
  	return out.slice(0, 6)
  
-@@ -3426,7 +3458,7 @@ func _canonical_command(raw: String) -> String:
+@@ -2783,9 +2825,14 @@ func _survivor_command(cmd: String) -> bool:
+ 				break
+ 		if result.is_empty():
+ 			result = "何を渡すか書いてほしい（例：水を渡す／食料を渡す／包帯を渡す）。何も実行していません。"
+-	elif not negated and NPCMemory._mentions(text, ["交換できる", "何と交換", "何がある", "持ってるもの", "持っているもの"]):
++	elif Survivors.has_pending(world, id) and NPCMemory._mentions(text, ["やめ", "いらない", "やっぱり", "遠慮", "高い", "無理"]) and Trade.read_items(text).is_empty():
++		Survivors.person(world, id).erase("pending")
++		result = "%s「そう。気が変わったら言って」" % name
++	elif Survivors.has_pending(world, id) and NPCMemory._mentions(text, ["それで", "いいよ", "いいね", "お願い", "交換する", "乗った", "決まり", "オーケー", "OK", "ok", "うん", "はい", "払う", "それにする", "そうする"]):
++		result = Survivors.accept(world, id, text)
++	elif not negated and NPCMemory._mentions(text, ["交換できる", "何と交換", "何がある", "持ってるもの", "持っているもの", "何か売って", "売れるもの", "手放せる"]):
+ 		result = Survivors.offers_text(world, id)
+-	elif not negated and NPCMemory._mentions(text, ["交換", "取引", "と換え", "トレード"]):
++	elif not negated and (NPCMemory._mentions(text, ["交換", "取引", "と換え", "トレード", "売って", "譲って", "ゆずって", "買いたい", "買わせて", "いくら", "分けてくれ", "分けてもら"]) or (NPCMemory._mentions(text, ["くれない", "ほしい", "欲しい", "ちょうだい"]) and not Trade.read_items(text).is_empty())):
+ 		result = Survivors.trade(world, id, text)
+ 	elif not negated and NPCMemory._mentions(text, ["知ってる", "知って", "情報", "噂", "教えて"]):
+ 		result = Survivors.ask(world, id)
+@@ -3426,7 +3473,7 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -4878,7 +4991,7 @@ index 79d10bf..746f72f 100644
  	if cmd in exact: return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3479,7 +3511,10 @@ func _interpret(raw: String) -> String:
+@@ -3479,7 +3526,10 @@ func _interpret(raw: String) -> String:
  		if world.s.health<=0:return "死亡している。"
  		return world.work_at_home()
  	if clean in ["ニュースを見る","テレビを見る","SNSを見る","スマホでニュースを見る","ラジオを聞く"]: return _read_news(clean)
@@ -5161,6 +5274,671 @@ index 0000000..2bc31f2
 +++ b/scripts/shop_window.gd.uid
 @@ -0,0 +1 @@
 +uid://yuu7k0ry8ktf
+diff --git a/scripts/survivors.gd b/scripts/survivors.gd
+index e977521..5ea74f7 100644
+--- a/scripts/survivors.gd
++++ b/scripts/survivors.gd
+@@ -12,6 +12,7 @@ const Mood = preload("res://scripts/mood.gd")
+ const Parts = preload("res://scripts/survivor_parts.gd")
+ const Navigation = preload("res://scripts/navigation.gd")
+ const Chronicle = preload("res://scripts/chronicle.gd")
++const Trade = preload("res://scripts/trade.gd")
+ 
+ const ITEM_LABEL := {"food": "食料", "water": "水", "bandage": "包帯"}
+ const JOIN_TRUST := 60
+@@ -469,6 +470,9 @@ static func give(world, id: String, item: String) -> String:
+ 		return "包帯を持っていない。" if item == "bandage" else "持ち歩いている%sが足りない。（家の備蓄は「物資を持っていく」で持ち出せる）" % ITEM_LABEL[item]
+ 	_take(world, item, amount)
+ 	var p := person(world, id)
++	# v149.34: what is given becomes theirs (it no longer just disappears).
++	var their := Trade.goods(world, id)
++	their[item] = float(their.get(item, 0.0)) + amount
+ 	p.given = int(p.given) + 1
+ 	Chronicle.deed(world, "gave")
+ 	change_trust(world, id, 20 if item in p.needs else 8)
+@@ -479,75 +483,137 @@ static func give(world, id: String, item: String) -> String:
+ 	world.advance_safe(3)
+ 	return "%sを渡した。%s" % [_amount_text(item, amount), str(THANKS[str(p.voice)]) % str(p.name)]
+ 
++## v149.34: what this person could part with now, what they are short of.
++## No blanket refusal for low trust: caution shows in their terms instead.
+ static func offers_text(world, id: String) -> String:
+-	var p := person(world, id)
+-	var items: Array = []
+-	for key in p.offers:
+-		if key in p.traded:
+-			continue
+-		var offer: Dictionary = Parts.OFFERS[key]
+-		var costs: Array = []
+-		for k in offer.cost:
+-			costs.append(_amount_text(k, float(offer.cost[k])))
+-		items.append("%s（%sと交換）" % [offer.label, "・".join(costs)])
+-	if items.is_empty():
+-		return "%sには、今は交換できるものがない。" % call_name(world, id)
+-	if int(p.trust) < 25:
+-		return "%sはまだこちらを警戒していて、交換の話に乗ってこない。何か渡して、信用してもらうのが先だ。" % call_name(world, id)
+-	return "交換できるもの：" + "、".join(items)
+-
++	var spare := Trade.spare(world, id)
++	var short := Trade.short_of(world, id)
++	var name := call_name(world, id)
++	var lines: Array = []
++	if spare.is_empty():
++		lines.append("%sには、今は手放せる物がなさそうだ。" % name)
++	else:
++		var items: Array = []
++		for item in spare:
++			items.append(Trade.amount_text(item, float(spare[item])) if not bool(Trade.ITEMS[item].get("tool", false)) else str(Trade.ITEMS[item].label))
++		lines.append("%sが手放せそうな物：%s" % [name, "、".join(items)])
++	if not short.is_empty():
++		lines.append("（%sに困っているようだ）" % "と".join(short.map(func(i): return str(Trade.ITEMS[i].label))))
++	if Trade.cash_trust(world, id) < 0.15:
++		lines.append("（お金は、もうあてにしていない様子だ）")
++	if int(person(world, id).trust) < 25:
++		lines.append("（まだこちらを警戒している。条件は厳しめになりそうだ）")
++	return "\n".join(lines)
++
++## v149.34: a trade in the player's words. What is wanted and what is offered
++## are read from the line; the person names their terms or answers an offer.
++const WANT_WORDS := ["くれ", "売って", "ほしい", "欲しい", "譲って", "ゆずって", "分けて", "ちょうだい", "もらえ", "買いたい", "買わせて", "いくら"]
+ static func trade(world, id: String, text: String) -> String:
+ 	var p := person(world, id)
+-	if int(p.trust) < 25:
+-		return offers_text(world, id)
+-	var open: Array = p.offers.filter(func(k): return not k in p.traded)
+-	var chosen := ""
+-	for key in open:
+-		var word := str(Parts.OFFERS[key].label).get_slice("（", 0).get_slice("と", 0)
+-		if text.contains(word) or open.size() == 1:
+-			chosen = key
+-	if chosen.is_empty():
++	var name := call_name(world, id)
++	var said: Array = Trade.read_items(text)
++	var spare := Trade.spare(world, id)
++	var give := {}
++	var want := {}
++	var wants_something := false
++	for w in WANT_WORDS:
++		wants_something = wants_something or text.contains(w)
++	for pair in said:
++		var item := str(pair[0])
++		var qty := float(pair[1])
++		if item == "cash":
++			give["cash"] = qty
++			continue
++		var theirs: bool = Trade.goods(world, id).get(item, 0.0) > 0.0
++		var mine: bool = Trade.held(world, item) > 0.0
++		# The thing asked for is theirs; what the player carries is the offer.
++		if theirs and (not mine or (wants_something and want.is_empty() and not give.has(item))):
++			want[item] = qty if qty > 0.0 else float(Trade.ITEMS[item].step)
++		elif mine:
++			give[item] = qty if qty > 0.0 else float(Trade.ITEMS[item].step)
++		else:
++			want[item] = qty if qty > 0.0 else float(Trade.ITEMS[item].step)
++	if want.is_empty() and give.is_empty():
+ 		return offers_text(world, id)
+-	var offer: Dictionary = Parts.OFFERS[chosen]
+-	for k in offer.cost:
+-		if _held(world, k) < float(offer.cost[k]):
+-			return "%sと交換するには、%sが足りない。" % [offer.label, ITEM_LABEL[k]]
+-	for k in offer.cost:
+-		_take(world, k, float(offer.cost[k]))
+-	p.traded.append(chosen)
+-	change_trust(world, id, 6)
++	if want.is_empty():
++		return "%s「それと何を替えたいの？」\n%s" % [name, offers_text(world, id)]
++	for item in want:
++		if float(Trade.goods(world, id).get(item, 0.0)) < float(want[item]):
++			return "%s「%sは、そんなに持ってない」" % [name, Trade.ITEMS[item].label]
++	if give.is_empty():
++		var item: String = want.keys()[0]
++		var options: Array = Trade.asking(world, id, item, float(want[item]))
++		if options.is_empty():
++			return "%s「……悪いけど、それは手放せない。あんたの持ってる物じゃ釣り合わない」" % name
++		p.pending = {"options": options, "at": int(world.s.minute)}
++		var said_terms: Array = options.map(func(o): return Trade.side_text(o.give))
++		return "%s「%sなら、%sとなら替えてもいい」（「それで交換する」で決まる）" % [name, Trade.amount_text(item, float(want[item])), "か、".join(said_terms)]
++	return close(world, id, {"give": give, "get": want})
++
++## Finishes a deal: checks, moves everything at once, and says how it went.
++static func close(world, id: String, deal: Dictionary) -> String:
++	var p := person(world, id)
++	var name := call_name(world, id)
++	var verdict := Trade.judge(world, id, deal)
++	if not bool(verdict.ok):
++		match str(verdict.reason):
++			"player_lacks":
++				return "%sが足りない。（持ち歩いている分だけ渡せる）" % Trade.ITEMS.get(str(verdict.item), {"label": "お金"}).label
++			"npc_lacks":
++				return "%s「%sは、そんなに持ってない」" % [name, Trade.ITEMS.get(str(verdict.item), {"label": "お金"}).label]
++			"no_room":
++				return "これ以上は持ちきれない。（食料4人日分・水8Lまで）"
++		var item: String = deal.get.keys()[0]
++		var options: Array = Trade.asking(world, id, item, float(deal.get[item]))
++		if options.is_empty():
++			return "%sは首を横に振った。「それじゃ割に合わない」" % name
++		p.pending = {"options": options, "at": int(world.s.minute)}
++		return "%sは首を横に振った。「それじゃ足りない。%sとなら」（「それで交換する」で決まる）" % [name, "か、".join(options.map(func(o): return Trade.side_text(o.give)))]
++	var failed := Trade.execute(world, id, deal)
++	if not failed.is_empty():
++		return "取引はまとまらなかった。"
++	p.erase("pending")
++	var generous := float(verdict.got) >= float(verdict.get("need", 0.0)) * 1.5
++	change_trust(world, id, 8 if generous else 4)
+ 	world.advance_safe(5)
+-	return "%sを受け取った。%s" % [offer.label, _receive(world, chosen)]
++	var effect := ""
++	for item in deal.get("get", {}):
++		effect += _receive(world, str(item))
++	return "%sを受け取った。%sを渡した。%s" % [Trade.side_text(deal.get), Trade.side_text(deal.give), effect]
++
++## Says yes to the terms the person named (or picks one by its words).
++static func accept(world, id: String, text: String) -> String:
++	var p := person(world, id)
++	var pending: Dictionary = p.get("pending", {})
++	if pending.is_empty() or int(world.s.minute) - int(pending.get("at", 0)) > 60:
++		p.erase("pending")
++		return ""
++	var options: Array = pending.options
++	var chosen: Dictionary = options[0]
++	var by_cash := text.contains("円") or text.contains("お金") or text.contains("現金") or text.contains("払う")
++	for o in options:
++		if by_cash and o.give.has("cash"):
++			chosen = o
++			break
++		for pair in Trade.read_items(text):
++			if o.give.has(str(pair[0])):
++				chosen = o
++	return close(world, id, chosen)
+ 
+-static func _receive(world, key: String) -> String:
+-	match key:
++static func has_pending(world, id: String) -> bool:
++	var pending: Dictionary = person(world, id).get("pending", {})
++	return not pending.is_empty() and int(world.s.minute) - int(pending.get("at", 0)) <= 60
++
++static func _receive(world, item: String) -> String:
++	match item:
+ 		"flashlight":
+-			world.s.equipment.flashlight = true
+ 			return "暗い場所でも足元が見える。"
+ 		"radio":
+-			world.s.radio = true
+ 			return "「ラジオを聞く」で、停電しても放送が聞ける。"
+ 		"cigarettes":
+-			world.s.cigarettes = int(world.s.get("cigarettes", 0)) + 40
+ 			return "手持ちのタバコは%d本。" % int(world.s.cigarettes)
+-		"rice", "food_pack":
+-			world.s.district.bag.food = minf(4.0, float(world.s.district.bag.food) + 2.0)
+-			return "持ち歩く食料が増えた。"
+-		"bandages":
+-			world.s.inventory.bandage = int(world.s.inventory.get("bandage", 0)) + 3
++		"bandage":
+ 			return "包帯は%dつになった。" % int(world.s.inventory.bandage)
+-		"materials":
+-			world.s.inventory.wood = int(world.s.inventory.wood) + 2
+-			world.s.inventory.parts = int(world.s.inventory.parts) + 2
+-			return "玄関の補強や修理に使える。"
+-		"info_horde":
+-			var w: Dictionary = world.s.get("walkers", {})
+-			var next := int(w.get("horde_next", -1))
+-			if next < 0:
+-				return "「今はまだ、群れは見てない。数が増えたら、駅前に集まり始める」"
+-			return "「次の群れは、だいたい%d時間後だ。駅前から住宅街を抜けて、あんたの家の前の通りを通る」" % maxi(1, (next - int(world.s.minute)) / 60)
+-		"info_shelter":
+-			return "「区立小学校の避難所は、もういっぱい。行くなら食べ物を持っていかないと、入れてもらえない」"
+ 	return ""
+ 
+ static func ask(world, id: String) -> String:
+@@ -627,6 +693,12 @@ static func _join(world, id: String) -> String:
+ 		mate.hidden_bite_at = int(world.s.minute) + rng.randi_range(18, 40) * 60
+ 	if str(p.tag) == "injured" and not bool(p.get("treated", false)):
+ 		mate.health = 70.0
++	# v149.34: what they own comes into the house with them.
++	var their := Trade.goods(world, id)
++	world.s.food = float(world.s.food) + float(their.get("food", 0.0))
++	world.s.water = float(world.s.water) + float(their.get("water", 0.0))
++	world.s.inventory.bandage = int(world.s.inventory.get("bandage", 0)) + int(their.get("bandage", 0.0))
++	p.goods = {}
+ 	world.s.household_members.append(mate)
+ 	world.s.profile.cohabitants = int(world.s.profile.cohabitants) + 1
+ 	var names_list: Array = world.s.profile.get("companion_names", [])
+@@ -646,6 +718,10 @@ static func _join(world, id: String) -> String:
+ # Time passing.
+ 
+ static func daily(world, walkers_at: Callable) -> Array:
++	# v149.34: everyone eats, drinks and goes for supplies from their own goods.
++	for pid in ensure(world).people:
++		if str(ensure(world).people[pid].get("status", "")) == "alive":
++			Trade.daily(world, str(pid))
+ 	if not active(world):
+ 		return []
+ 	var minute := int(world.s.minute)
+diff --git a/scripts/trade.gd b/scripts/trade.gd
+new file mode 100644
+index 0000000..b76af42
+--- /dev/null
++++ b/scripts/trade.gd
+@@ -0,0 +1,400 @@
++extends RefCounted
++## v149.34: one trade engine for everyone — cash, barter, both mixed, gifts.
++##
++## Each survivor holds real goods (p.goods {item: qty}) and cash (p.cash),
++## made once from who they are (role, situation, what they used to offer) and
++## then changed only by what happens: eating, drinking, finding, trading.
++## What a thing is worth to them is worked out from a common base value and
++## their own state: how much they hold, how many mouths they feed, what they
++## lack, how far they trust cash and the person in front of them. The rules
++## decide; the words only describe. Nothing is created by a trade: both sides
++## are checked first, then everything moves at once.
++##
++## A proposal from the player's side: {"give": {item: qty, "cash": yen},
++## "get": {item: qty, "cash": yen}}. Items: food (人日分), water (L),
++## bandage, cigarettes (箱), wood, parts, gas_cans (本), flashlight, radio.
++
++const Parts = preload("res://scripts/survivor_parts.gd")
++
++const ITEMS := {
++	"food": {"label": "食料", "unit": "人日分", "base": 600, "step": 1},
++	"water": {"label": "水", "unit": "L", "base": 60, "step": 2},
++	"bandage": {"label": "包帯", "unit": "つ", "base": 300, "step": 1},
++	"cigarettes": {"label": "タバコ", "unit": "箱", "base": 600, "step": 1},
++	"wood": {"label": "木材", "unit": "つ", "base": 500, "step": 1},
++	"parts": {"label": "部品", "unit": "つ", "base": 800, "step": 1},
++	"gas_cans": {"label": "カセットボンベ", "unit": "本", "base": 150, "step": 1},
++	"flashlight": {"label": "懐中電灯", "unit": "つ", "base": 2000, "step": 1, "tool": true},
++	"radio": {"label": "携帯ラジオ", "unit": "つ", "base": 3000, "step": 1, "tool": true},
++}
++## Words that name each item in what the player writes.
++const WORDS := {
++	"food": ["食料", "食べ物", "食糧", "缶詰", "米", "ご飯", "ごはん"],
++	"water": ["水", "飲み水", "ペットボトル"],
++	"bandage": ["包帯", "ほうたい"],
++	"cigarettes": ["タバコ", "たばこ", "煙草"],
++	"wood": ["木材", "角材", "板"],
++	"parts": ["部品", "釘", "ネジ", "金具"],
++	"gas_cans": ["ボンベ", "ガス缶"],
++	"flashlight": ["懐中電灯", "ライト"],
++	"radio": ["ラジオ"],
++}
++## What an old fixed offer stands for in goods (for people made before v149.34).
++const FROM_OFFER := {
++	"flashlight": {"flashlight": 1}, "radio": {"radio": 1}, "cigarettes": {"cigarettes": 2},
++	"food_pack": {"food": 2}, "bandages": {"bandage": 3}, "rice": {"food": 2},
++	"materials": {"wood": 2, "parts": 2},
++}
++## A person eats one portion and drinks 2 L a day.
++const DAILY := {"food": 1.0, "water": 2.0}
++
++# ---------------------------------------------------------------------------
++# Holdings.
++
++static func _hash(id: String, salt: String) -> int:
++	return absi(hash([id, salt]))
++
++## The survivor's goods, made on first need (old saves too) and kept.
++static func goods(world, id: String) -> Dictionary:
++	var people: Dictionary = world.s.get("survivors", {}).get("people", {})
++	var p: Dictionary = people.get(id, {})
++	if p.is_empty():
++		return {}
++	if p.get("goods") is Dictionary:
++		return p.goods
++	var g := {"food": float(1 + _hash(id, "food") % 3), "water": float(2 * (1 + _hash(id, "water") % 3))}
++	match str(p.get("tag", "")):
++		"hoarder":
++			g.food += 6.0
++			g.water += 8.0
++		"hungry", "lost":
++			g.food = 0.0
++	for key in p.get("offers", []):
++		if key in p.get("traded", []):
++			continue
++		for item in FROM_OFFER.get(str(key), {}):
++			g[item] = float(g.get(item, 0.0)) + float(FROM_OFFER[key][item])
++	p.goods = g
++	if not p.has("cash"):
++		var base := {"office": 30000, "elder": 20000, "teacher": 15000, "nurse": 12000, "cook": 10000, "carpenter": 12000, "homemaker": 9000, "student": 3000, "child": 500, "tourist": 40000, "veteran": 8000}
++		p.cash = int(base.get(str(p.get("role", "")), 8000)) / 2 + (_hash(id, "cash") % 10) * 1000
++	if not p.has("dependents"):
++		p.dependents = 1 if str(p.get("situation", "")) in ["family"] or str(p.get("role", "")) == "elder" else 0
++	return g
++
++## What the player has on them, in the same units.
++static func held(world, item: String) -> float:
++	var s = world.s
++	match item:
++		"food": return float(s.district.bag.food)
++		"water": return float(s.district.bag.water)
++		"bandage": return float(s.inventory.get("bandage", 0))
++		"cigarettes": return float(int(s.get("cigarettes", 0)) / 20)
++		"wood": return float(s.inventory.get("wood", 0))
++		"parts": return float(s.inventory.get("parts", 0))
++		"gas_cans": return floorf(float(s.get("gas_cans", 0.0)))
++		"flashlight": return 1.0 if bool(s.get("equipment", {}).get("flashlight", false)) else 0.0
++		"radio": return 1.0 if bool(s.get("radio", false)) else 0.0
++		"cash": return float(s.get("cash", 0))
++	return 0.0
++
++static func _add_player(world, item: String, amount: float) -> void:
++	var s = world.s
++	match item:
++		"food": s.district.bag.food = float(s.district.bag.food) + amount
++		"water": s.district.bag.water = float(s.district.bag.water) + amount
++		"bandage": s.inventory.bandage = int(s.inventory.get("bandage", 0)) + int(amount)
++		"cigarettes": s.cigarettes = int(s.get("cigarettes", 0)) + int(amount) * 20
++		"wood": s.inventory.wood = int(s.inventory.get("wood", 0)) + int(amount)
++		"parts": s.inventory.parts = int(s.inventory.get("parts", 0)) + int(amount)
++		"gas_cans": s.gas_cans = float(s.get("gas_cans", 0.0)) + amount
++		"flashlight": s.equipment.flashlight = amount > 0
++		"radio": s.radio = amount > 0
++		"cash": s.cash = int(s.get("cash", 0)) + int(amount)
++
++## Room left to carry food and water by hand.
++static func room(world, item: String) -> float:
++	match item:
++		"food": return 4.0 - float(world.s.district.bag.food)
++		"water": return 8.0 - float(world.s.district.bag.water)
++	return 1000.0
++
++# ---------------------------------------------------------------------------
++# Value.
++
++## The town's state for trade: normal, alert, disrupted, emergency, and
++## "devastated" a year into the emergency (when the photos turn overgrown).
++static func phase(world) -> String:
++	var society := str(world.s.get("society", "normal"))
++	if society == "emergency" and int(world.s.minute) / 1440 >= 365:
++		return "devastated"
++	return society
++
++const SCARCITY := {"normal": 1.0, "alert": 1.2, "disrupted": 1.8, "emergency": 3.0, "devastated": 4.0}
++
++## How far this person still trusts cash (0 = worthless to them). Never just
++## the town's state: shops still open, their own habits and their hopes count.
++static func cash_trust(world, id: String) -> float:
++	var p: Dictionary = world.s.survivors.people.get(id, {})
++	var base: float = {"normal": 1.0, "alert": 0.95, "disrupted": 0.6, "emergency": 0.25, "devastated": 0.08}.get(phase(world), 1.0)
++	var sites: Dictionary = world.s.get("district", {}).get("sites", {})
++	var open := 0
++	for place in ["コンビニ", "デパート"]:
++		if sites.has(place) and not bool(sites[place].get("vacant", true)):
++			open += 1
++	base += 0.1 * open
++	if str(p.get("role", "")) in ["office", "elder", "tourist"]:
++		base += 0.12
++	base -= (float(p.get("traits", {}).get("suspicion", 50)) - 50.0) / 400.0
++	base += float(_hash(str(id), "cash-faith") % 21 - 10) / 100.0
++	return clampf(base, 0.02, 1.2)
++
++static func reserve(world, id: String, item: String) -> float:
++	var p: Dictionary = world.s.survivors.people[id]
++	var mouths := 1.0 + float(p.get("dependents", 0))
++	if DAILY.has(item):
++		return float(DAILY[item]) * mouths * 2.0
++	if item == "bandage" and str(p.get("tag", "")) == "injured" and not bool(p.get("treated", false)):
++		return 1.0
++	return 0.0
++
++static func _unit_base(world, item: String) -> float:
++	var scarce: float = SCARCITY.get(phase(world), 1.0)
++	if bool(ITEMS[item].get("tool", false)):
++		scarce = 1.0 + (scarce - 1.0) * 0.5
++	if item == "cigarettes":
++		scarce = 1.0 + (scarce - 1.0) * 0.6
++	return float(ITEMS[item].base) * scarce
++
++## What giving away qty of item costs this person, in yen of today.
++static func give_cost(world, id: String, item: String, qty: float) -> float:
++	if item == "cash":
++		return qty * cash_trust(world, id)
++	var g := goods(world, id)
++	var have := float(g.get(item, 0.0))
++	var keep := reserve(world, id, item)
++	var unit := _unit_base(world, item)
++	var cost := 0.0
++	for i in int(ceil(qty)):
++		var after := have - float(i) - 1.0
++		# What they need to live is worth far more to them than its price.
++		cost += unit * (4.0 if after < keep else 1.0)
++	return cost
++
++## What receiving qty of item is worth to this person.
++static func receive_value(world, id: String, item: String, qty: float) -> float:
++	if item == "cash":
++		return qty * cash_trust(world, id)
++	var p: Dictionary = world.s.survivors.people[id]
++	var g := goods(world, id)
++	var have := float(g.get(item, 0.0))
++	var keep := reserve(world, id, item)
++	var unit := _unit_base(world, item)
++	var value := 0.0
++	for i in int(ceil(qty)):
++		var now := have + float(i)
++		var f := 1.0
++		if now < keep:
++			f = 1.8
++		elif keep > 0.0 and now > keep * 3.0:
++			f = 0.5
++		if bool(ITEMS[item].get("tool", false)) and now >= 1.0:
++			f = 0.2   # a second torch is little use
++		value += unit * f
++	var needs: Array = p.get("needs", [])
++	if item in needs or (item == "bandage" and "bandage" in needs):
++		value *= 1.5
++	return value
++
++## How much more than even they want, from how far they trust this player.
++static func margin(world, id: String) -> float:
++	var p: Dictionary = world.s.survivors.people[id]
++	var trust := float(p.get("trust", 30))
++	var m := (50.0 - trust) / 150.0 + (float(p.get("traits", {}).get("suspicion", 50)) - 50.0) / 300.0
++	return clampf(m, -0.1, 0.45)
++
++# ---------------------------------------------------------------------------
++# Deciding and doing.
++
++## Checks a proposal against both sides' holdings and the person's judgement.
++## Returns {ok, reason, got, gave} (got/gave: value to them).
++static func judge(world, id: String, deal: Dictionary) -> Dictionary:
++	var g := goods(world, id)
++	var p: Dictionary = world.s.survivors.people[id]
++	for item in deal.get("give", {}):
++		if held(world, item) < float(deal.give[item]):
++			return {"ok": false, "reason": "player_lacks", "item": item}
++	for item in deal.get("get", {}):
++		var have := float(p.get("cash", 0)) if item == "cash" else float(g.get(item, 0.0))
++		if have < float(deal.get[item]):
++			return {"ok": false, "reason": "npc_lacks", "item": item}
++		if item in ["food", "water"] and room(world, item) < float(deal.get[item]):
++			return {"ok": false, "reason": "no_room", "item": item}
++	var got := 0.0
++	for item in deal.get("give", {}):
++		got += receive_value(world, id, item, float(deal.give[item]))
++	var gave := 0.0
++	for item in deal.get("get", {}):
++		gave += give_cost(world, id, item, float(deal.get[item]))
++	if gave <= 0.0:
++		return {"ok": true, "reason": "gift", "got": got, "gave": 0.0}
++	var need := gave * (1.0 + margin(world, id))
++	return {"ok": got >= need, "reason": "fair" if got >= need else "short", "got": got, "gave": gave, "need": need}
++
++## Moves everything at once, after checking. Returns "" or why it failed.
++static func execute(world, id: String, deal: Dictionary) -> String:
++	var verdict := judge(world, id, deal)
++	if not bool(verdict.ok):
++		return str(verdict.reason)
++	var p: Dictionary = world.s.survivors.people[id]
++	var g := goods(world, id)
++	for item in deal.get("give", {}):
++		var q := float(deal.give[item])
++		_add_player(world, item, -q)
++		if item == "cash":
++			p.cash = int(p.get("cash", 0)) + int(q)
++		else:
++			g[item] = float(g.get(item, 0.0)) + q
++	for item in deal.get("get", {}):
++		var q := float(deal.get[item])
++		if item == "cash":
++			p.cash = int(p.get("cash", 0)) - int(q)
++		else:
++			g[item] = float(g.get(item, 0.0)) - q
++		_add_player(world, item, q)
++	var log: Array = p.get("trades", [])
++	log.append({"at": int(world.s.minute), "give": deal.get("give", {}).duplicate(), "get": deal.get("get", {}).duplicate()})
++	while log.size() > 12:
++		log.pop_front()
++	p.trades = log
++	return ""
++
++## What this person would want for qty of item: up to two ways to pay from
++## what the player actually carries (one kind of goods, or cash). [] if none.
++static func asking(world, id: String, item: String, qty: float) -> Array:
++	var cost := give_cost(world, id, item, qty) * (1.0 + margin(world, id))
++	var options: Array = []
++	for pay in ITEMS:
++		if pay == item:
++			continue
++		var have := held(world, pay)
++		if have <= 0.0:
++			continue
++		var step := float(ITEMS[pay].step)
++		var n := step
++		while n <= have and receive_value(world, id, pay, n) < cost:
++			n += step
++		if n <= have and receive_value(world, id, pay, n) >= cost:
++			options.append({"give": {pay: n}, "get": {item: qty}, "base": float(ITEMS[pay].base) * n})
++	options.sort_custom(func(a, b): return float(a.base) < float(b.base))
++	options = options.slice(0, 1)
++	var trust_cash := cash_trust(world, id)
++	if trust_cash >= 0.1:
++		var yen := int(ceil(cost / trust_cash / 100.0)) * 100
++		if yen <= int(held(world, "cash")):
++			options.append({"give": {"cash": yen}, "get": {item: qty}})
++	return options
++
++# ---------------------------------------------------------------------------
++# Time.
++
++## A day for the survivors who live on their own: they eat and drink what
++## they have (with those they feed), and find a little by going out.
++static func daily(world, id: String) -> void:
++	var p: Dictionary = world.s.survivors.people.get(id, {})
++	if p.is_empty() or str(p.get("status", "")) != "alive":
++		return
++	var g := goods(world, id)
++	var mouths := 1.0 + float(p.get("dependents", 0))
++	var day := int(world.s.minute) / 1440
++	for item in DAILY:
++		var need := float(DAILY[item]) * mouths
++		g[item] = maxf(0.0, float(g.get(item, 0.0)) - need)
++	# Going out for supplies: the braver find more, less as the town empties.
++	var courage := float(p.get("traits", {}).get("courage", 50))
++	var luck := _hash(id, "forage-%d" % day) % 100
++	var town: float = {"normal": 2.0, "alert": 1.6, "disrupted": 1.2, "emergency": 0.8, "devastated": 0.5}.get(phase(world), 1.0)
++	if str(world.s.get("society", "normal")) in ["normal", "alert"]:
++		# Shops still sell: they buy what they eat, while their money lasts.
++		var bill := int(mouths * 720.0)
++		if int(p.get("cash", 0)) >= bill:
++			p.cash = int(p.cash) - bill
++			g.food = float(g.food) + mouths
++			g.water = float(g.water) + 2.0 * mouths
++		return
++	if float(luck) < courage * town * 0.6:
++		g.food = float(g.get("food", 0.0)) + 1.0
++	if float(luck) < courage * town * 0.9:
++		g.water = float(g.get("water", 0.0)) + 2.0
++
++# ---------------------------------------------------------------------------
++# Words.
++
++static func amount_text(item: String, qty: float) -> String:
++	if item == "cash":
++		return "%d円" % int(qty)
++	var spec: Dictionary = ITEMS[item]
++	if item == "water":
++		return "水%dL" % int(qty)
++	if item == "food":
++		return "食料%d人日分" % int(qty)
++	if bool(spec.get("tool", false)) and qty <= 1.0:
++		return str(spec.label)
++	return "%s%d%s" % [spec.label, int(qty), spec.unit]
++
++static func side_text(side: Dictionary) -> String:
++	var parts: Array = []
++	for item in side:
++		parts.append(amount_text(item, float(side[item])))
++	return "と".join(parts)
++
++## What they could part with now, and what they are short of.
++static func spare(world, id: String) -> Dictionary:
++	var g := goods(world, id)
++	var out := {}
++	for item in g:
++		if not ITEMS.has(item):
++			continue
++		var free := floorf(float(g[item]) - reserve(world, id, item))
++		if item == "water":
++			free = floorf(free / 2.0) * 2.0
++		if free >= float(ITEMS[item].step):
++			out[item] = free
++	return out
++
++static func short_of(world, id: String) -> Array:
++	var g := goods(world, id)
++	var out: Array = []
++	for item in DAILY:
++		if float(g.get(item, 0.0)) < reserve(world, id, item):
++			out.append(item)
++	var p: Dictionary = world.s.survivors.people[id]
++	for item in p.get("needs", []):
++		if ITEMS.has(str(item)) and not str(item) in out:
++			out.append(str(item))
++	return out
++
++## Reads an item and a number written in the player's words, in order.
++## Returns [[item, qty], ...]; qty 0 when no number was written. "cash" for 円.
++static func read_items(text: String) -> Array:
++	var found: Array = []
++	var re := RegEx.new()
++	re.compile("([0-9]+)\\s*円")
++	for m in re.search_all(text):
++		found.append([m.get_start(), "cash", float(m.get_string(1))])
++	for item in WORDS:
++		for word in WORDS[item]:
++			var at := text.find(word)
++			if at < 0:
++				continue
++			var qty := 0.0
++			var num := RegEx.new()
++			num.compile("^[をがはも]?\\s*([0-9]+|ひと|ふた|一|二|三|四|五)\\s*(L|リットル|ℓ|人日分?|食分?|つ|個|箱|本|巻|束|袋|日分)?")
++			var m = num.search(text.substr(at + word.length()))
++			if m != null and not m.get_string(1).is_empty():
++				var t := m.get_string(1)
++				qty = float({"ひと": 1, "一": 1, "ふた": 2, "二": 2, "三": 3, "四": 4, "五": 5}.get(t, int(t)))
++			found.append([at, item, qty])
++			break
++	found.sort_custom(func(a, b): return int(a[0]) < int(b[0]))
++	return found.map(func(f): return [f[1], f[2]])
+diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
+index b6631e0..7be9f4a 100644
+--- a/tests/test_action_play149_32.gd
++++ b/tests/test_action_play149_32.gd
+@@ -115,7 +115,13 @@ func more_scenes(family: Dictionary) -> void:
+ 			w.s.inventory.wood = 10
+ 			w.s.inventory.parts = 10
+ 			g.survivor_partner = id
+-			await play(g, str(sp.place), "交換したい", "trade")
++			# v149.34: ask for something they can spare, hear the terms, agree.
++			var their: Dictionary = load("res://scripts/trade.gd").goods(w, id)
++			their.food = 9.0
++			w.s.district.bag.food = 0.0
++			g.location = str(sp.place)
++			await g._on_command("食料を1人日分ゆずってほしい")
++			await play(g, str(sp.place), "それで交換する", "trade")
+ 			g.survivor_partner = ""
+ 			break
+ 	# The shelter.
 diff --git a/tests/test_playthrough149_33.gd.uid b/tests/test_playthrough149_33.gd.uid
 new file mode 100644
 index 0000000..4147eed
@@ -5245,3 +6023,199 @@ index 0000000..ff593f5
 +++ b/tests/test_shop149_34.gd.uid
 @@ -0,0 +1 @@
 +uid://tuo2fsx34bnb
+diff --git a/tests/test_survivors149_26.gd b/tests/test_survivors149_26.gd
+index 5aee241..424a484 100644
+--- a/tests/test_survivors149_26.gd
++++ b/tests/test_survivors149_26.gd
+@@ -93,10 +93,15 @@ func run() -> void:
+ 	check(int(p.trust) == mini(100, trust0 + 20) and bool(p.known_name), "what they need wins real trust, and their name")
+ 	p.trust = 55
+ 	await g._on_command("交換できるものを聞く")
+-	check(g.log_entries[-1].begins_with("交換できるもの："), "they say what they will trade")
+-	var offer: Dictionary = Parts.OFFERS[p.offers[0]]
+-	await g._on_command("%sと交換する" % str(offer.label).get_slice("（", 0))
+-	check(p.traded.size() == 1, "a trade happens: " + g.log_entries[-1])
++	check(g.log_entries[-1].contains("手放せそうな物") or g.log_entries[-1].contains("手放せる物がなさそう"), "they say what they could part with")
++	# v149.34: terms come from what they hold and need; the player agrees.
++	var Trade = load("res://scripts/trade.gd")
++	var spare: Dictionary = Trade.spare(w, target)
++	if not spare.is_empty():
++		var item: String = spare.keys()[0]
++		await g._on_command("%sを譲ってほしい" % Trade.ITEMS[item].label)
++		await g._on_command("それで交換する")
++	check(spare.is_empty() or p.get("trades", []).size() == 1, "a trade happens: " + g.log_entries[-1])
+ 	await g._on_command("何か知っていることはないか聞く")
+ 	check(g.log_entries[-1].contains(p.info.left(6)), "with trust, they share what they know")
+ 	p.trust = 70
+diff --git a/tests/test_trade149_34.gd b/tests/test_trade149_34.gd
+new file mode 100644
+index 0000000..4984036
+--- /dev/null
++++ b/tests/test_trade149_34.gd
+@@ -0,0 +1,166 @@
++extends SceneTree
++## v149.34 stage ①: one trade engine — cash, barter, mixed, gifts — on real
++## holdings. Nothing is made or lost; nobody gives what they need to live for
++## nothing; terms follow need, trust and how far cash is still believed in.
++const Main = preload("res://main.tscn")
++const Survivors = preload("res://scripts/survivors.gd")
++const Trade = preload("res://scripts/trade.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++
++## Everything that exists, player and the person together.
++func total(w, id: String) -> Dictionary:
++	var out := {}
++	var g: Dictionary = Trade.goods(w, id)
++	for item in Trade.ITEMS:
++		out[item] = Trade.held(w, item) + float(g.get(item, 0.0))
++	out["cash"] = Trade.held(w, "cash") + float(Survivors.person(w, id).cash)
++	return out
++
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 77
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.society = "disrupted"
++	var people: Dictionary = Survivors.ensure(w).people
++	var id := ""
++	for k in people:
++		if str(people[k].status) == "alive" and str(people[k].tag) != "hidden_bite":
++			id = str(k)
++			break
++	var npc: Dictionary = people[id]
++	var their: Dictionary = Trade.goods(w, id)
++	their.food = 8.0
++	their.water = 12.0
++	their.flashlight = 1.0
++	npc.dependents = 0
++	npc.trust = 40
++	w.s.district.bag.food = 0.0
++	w.s.district.bag.water = 8.0
++	w.s.inventory.bandage = 2
++	w.s.cash = 20000
++
++	# Holdings are real and kept.
++	check(Trade.goods(w, id) == their, "a person's goods are kept, not remade")
++	var before := total(w, id)
++
++	# Asking for a torch: they name terms from what the player carries.
++	var terms: Array = Trade.asking(w, id, "flashlight", 1.0)
++	check(not terms.is_empty() and terms.all(func(o): return o.get.has("flashlight")), "they name a price for the torch")
++	# A deal too small is refused, and nothing moves.
++	var cheap := {"give": {"water": 2.0}, "get": {"flashlight": 1.0}}
++	var verdict: Dictionary = Trade.judge(w, id, cheap)
++	var moved := Trade.execute(w, id, cheap)
++	check(not bool(verdict.ok) and moved == "short" and total(w, id) == before and Trade.held(w, "flashlight") == 0.0, "a lopsided offer is refused and nothing changes")
++	# Their terms work, and everything is conserved.
++	var deal: Dictionary = terms[0]
++	check(Trade.execute(w, id, deal) == "", "their own terms are accepted")
++	check(total(w, id) == before and Trade.held(w, "flashlight") == 1.0, "the torch and its price changed hands; nothing made or lost")
++
++	# Nothing the player does not carry can be traded.
++	var bluff := {"give": {"bandage": 9.0}, "get": {"food": 1.0}}
++	check(Trade.execute(w, id, bluff) == "player_lacks" and total(w, id) == before, "what the player does not carry cannot be given")
++	var greedy := {"give": {"cash": 1000.0}, "get": {"radio": 1.0}}
++	check(Trade.execute(w, id, greedy) == "npc_lacks", "what they do not have cannot be had")
++
++	# They keep what they need to live: food below their reserve costs far more.
++	their.food = 2.0
++	var spare_cost := Trade.give_cost(w, id, "food", 1.0)
++	their.food = 8.0
++	var plenty_cost := Trade.give_cost(w, id, "food", 1.0)
++	check(spare_cost > plenty_cost * 3.0, "food they need is worth far more to them (%.0f vs %.0f)" % [spare_cost, plenty_cost])
++	# Water to someone short of it is worth more than to someone with plenty.
++	their.water = 0.0
++	var thirsty := Trade.receive_value(w, id, "water", 2.0)
++	their.water = 30.0
++	var sated := Trade.receive_value(w, id, "water", 2.0)
++	check(thirsty > sated * 2.0, "water matters more to the thirsty (%.0f vs %.0f)" % [thirsty, sated])
++	their.water = 12.0
++
++	# Trading again with the same person works (no once-only rule).
++	var again: Array = Trade.asking(w, id, "food", 1.0)
++	check(not again.is_empty() and Trade.execute(w, id, again[0]) == "", "the same person trades again")
++
++	# Low trust is caution, not a wall.
++	npc.trust = 5
++	var wary: Array = Trade.asking(w, id, "food", 1.0)
++	npc.trust = 80
++	var friendly: Array = Trade.asking(w, id, "food", 1.0)
++	check(not wary.is_empty(), "a stranger can still trade")
++	var wary_cash := 0.0
++	var friendly_cash := 0.0
++	for o in wary:
++		if o.give.has("cash"): wary_cash = float(o.give.cash)
++	for o in friendly:
++		if o.give.has("cash"): friendly_cash = float(o.give.cash)
++	check(wary_cash > friendly_cash and friendly_cash > 0.0, "but on harder terms (%d yen vs %d yen)" % [wary_cash, friendly_cash])
++
++	# Cash: worth less as things fall apart, never made worthless at a stroke.
++	w.s.society = "normal"
++	var normal_faith := Trade.cash_trust(w, id)
++	w.s.society = "emergency"
++	var emergency_faith := Trade.cash_trust(w, id)
++	check(normal_faith > emergency_faith and emergency_faith > 0.0, "cash is trusted less in an emergency, but not zero (%.2f → %.2f)" % [normal_faith, emergency_faith])
++	var faiths: Array = []
++	for k in people:
++		faiths.append(snappedf(Trade.cash_trust(w, str(k)), 0.01))
++	check(faiths.max() - faiths.min() >= 0.1, "people differ in how far they trust cash")
++
++	# A mixed offer (goods and cash together).
++	w.s.society = "disrupted"
++	npc.trust = 50
++	var mixed := {"give": {"water": 2.0, "cash": 3000.0}, "get": {"food": 1.0}}
++	var m: Dictionary = Trade.judge(w, id, mixed)
++	check(bool(m.ok), "goods and cash together can pay")
++
++	# In words: ask, hear the terms, agree.
++	g.survivor_partner = id
++	g.location = str(npc.place)
++	var food_before := Trade.held(w, "food")
++	await g._on_command("食料を1人日分ゆずってくれない？")
++	check(Survivors.has_pending(w, id) and g._suggestions().has("それで交換する"), "asking in words brings their terms, and a chip to agree: " + g.log_entries[-1])
++	await g._on_command("それで交換する")
++	check(Trade.held(w, "food") == food_before + 1.0 and not Survivors.has_pending(w, id), "agreeing closes the deal: " + g.log_entries[-1])
++	await g._on_command("食料を1人日分ゆずってくれない？")
++	await g._on_command("やっぱりやめておく")
++	check(not Survivors.has_pending(w, id), "declining leaves things as they were")
++
++	# A gift becomes theirs.
++	var had := float(their.get("water", 0.0))
++	Survivors.give(w, id, "water")
++	check(float(their.water) == had + 2.0, "a gift becomes theirs")
++
++	# Days pass: they live on their goods.
++	var food_then := float(their.food)
++	w.s.society = "emergency"
++	Trade.daily(w, id)
++	check(float(their.food) <= food_then, "a day without shops is eaten from their own stores")
++
++	# Save and load keep holdings and the history.
++	g._save()
++	g._load()
++	w = g.world
++	var again_npc: Dictionary = Survivors.person(w, id)
++	check(again_npc.goods.has("flashlight") and again_npc.get("trades", []).size() >= 3 and int(again_npc.cash) > 0, "holdings and the trade history survive a reload")
++
++	# The same state gives the same terms.
++	check(JSON.stringify(Trade.asking(w, id, "food", 1.0)) == JSON.stringify(Trade.asking(w, id, "food", 1.0)), "terms are reproducible")
++
++	# Joining brings their goods into the house.
++	var home_food := float(w.s.food)
++	var bring := float(Trade.goods(w, id).get("food", 0.0))
++	Survivors._join(w, id)
++	check(float(w.s.food) == home_food + bring, "joining brings their food home")
++	print("v149.34 trade checks failed: %d" % failures)
++	quit(1 if failures > 0 else 0)
