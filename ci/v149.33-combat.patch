@@ -6335,10 +6335,10 @@ index 0000000..f176467
 +	quit()
 diff --git a/qa/skill_curve.gd b/qa/skill_curve.gd
 new file mode 100644
-index 0000000..68a3cc0
+index 0000000..10ec64e
 --- /dev/null
 +++ b/qa/skill_curve.gd
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,57 @@
 +extends SceneTree
 +## How skill grows over many ordinary fights (3 a day), and from grinding.
 +const Main = preload("res://main.tscn")
@@ -6361,8 +6361,9 @@ index 0000000..68a3cc0
 +	w.s.household_members = []
 +	w.s.society = "emergency"
 +	w.s.combat = {"weapons": [{"type": "pipe", "wear": 99999}], "held": "pipe", "found": {}, "armor": ["leather"], "magazine_left": 0, "wounds": [], "stuck": ""}
++	w.s.combat.skills = {"strike": 0.0, "blade": 0.0, "agility": 0.0}
 +	var actions := 0
-+	for day in 120:
++	for day in 365:
 +		for f in 3:
 +			w.s.health = 100.0
 +			w.s.fatigue = 10.0
@@ -6380,7 +6381,8 @@ index 0000000..68a3cc0
 +					actions += 1
 +					if not Combat.active(w): break
 +			w.s.walkers.encounter = {}
-+		if day in [0, 6, 29, 59, 119]:
++		w.s.combat.wounds = []
++		if day in [0, 6, 29, 59, 119, 179, 364]:
 +			print("day %d: actions %d  strike Lv.%d  agility Lv.%d  aim %.0f calm %.0f  head odds %s" % [day + 1, actions, Skills.lv(w, "strike"), Skills.lv(w, "agility"), Skills.tech(w, "aim"), Skills.tech(w, "calm"), str(Combat.hit_chance(w, "head", {"state": "standing", "dist": 1.0, "hurt": {}})) + " nerve " + str(load("res://scripts/mood.gd").nerve_penalty(w.s))])
 +	# Grinding: a lone walker, down, hit over and over.
 +	var before := float(w.s.combat.skills.strike)
@@ -8141,10 +8143,10 @@ index 542300b..1477df6 100644
  	lines.append("栽培中：%d鉢"%world.s.plots.size())
 diff --git a/scripts/skills.gd b/scripts/skills.gd
 new file mode 100644
-index 0000000..9d51346
+index 0000000..e19e987
 --- /dev/null
 +++ b/scripts/skills.gd
-@@ -0,0 +1,176 @@
+@@ -0,0 +1,181 @@
 +extends RefCounted
 +## v149.33 (combat stage 5): getting better at it.
 +## Three skills, Lv.1-100: strike (bats, pipes, fists), blade (knives,
@@ -8168,13 +8170,13 @@ index 0000000..9d51346
 +}
 +## Which techniques an experience feeds.
 +const FEEDS := {"strike": ["aim", "efficient", "stamina"], "blade": ["aim", "efficient"], "agility": ["range", "parry", "calm"]}
-+const DAILY_SOFT_CAP := 45
++const DAILY_SOFT_CAP := 35
 +
 +## A past the player brings, one per world (from the world's seed).
 +const BACKGROUNDS := [
-+	{"id": "baseball", "skill": "strike", "xp": 400, "intro": "玄関の傘立てには、高校の野球部で使っていた金属バットが、今も立てかけてある。", "bat": true},
-+	{"id": "cook", "skill": "blade", "xp": 400, "intro": "料理だけは好きで、台所の包丁は毎週自分で研いでいる。", "bat": false},
-+	{"id": "runner", "skill": "agility", "xp": 400, "intro": "運動は得意ではないが、昔から逃げ足だけは速かった。", "bat": false},
++	{"id": "baseball", "skill": "strike", "xp": 80, "intro": "玄関の傘立てには、高校の野球部で使っていた金属バットが、今も立てかけてある。", "bat": true},
++	{"id": "cook", "skill": "blade", "xp": 80, "intro": "料理だけは好きで、台所の包丁は毎週自分で研いでいる。", "bat": false},
++	{"id": "runner", "skill": "agility", "xp": 80, "intro": "運動は得意ではないが、昔から逃げ足だけは速かった。", "bat": false},
 +	{"id": "dojo", "skill": "", "xp": 0, "intro": "子どもの頃、近所の道場に少しだけ通っていた。体の動かし方は、まだどこかで覚えている。", "bat": false},
 +	{"id": "none", "skill": "", "xp": 0, "intro": "", "bat": false},
 +]
@@ -8182,11 +8184,16 @@ index 0000000..9d51346
 +static func background_for(seed: int) -> Dictionary:
 +	return BACKGROUNDS[absi(hash([seed, "background"])) % BACKGROUNDS.size()]
 +
++## Lv = 1 + (xp / K)^(1/EXP). Tuned with qa/skill_curve.gd: three fights a
++## day reach about Lv.25 in a month, Lv.45 in four, Lv.70 in about a year.
++const K := 1.3
++const EXP := 2.3
++
 +static func level(xp: float) -> int:
-+	return clampi(1 + int(floor(sqrt(maxf(0.0, xp) / 2.0))), 1, 100)
++	return clampi(1 + int(floor(pow(maxf(0.0, xp) / K, 1.0 / EXP) + 0.0001)), 1, 100)
 +
 +static func xp_for(lv: int) -> float:
-+	return 2.0 * pow(float(lv - 1), 2.0)
++	return K * pow(float(lv - 1), EXP)
 +
 +static func ensure(st: Dictionary, seed: int) -> void:
 +	if not st.get("skills") is Dictionary:
@@ -8195,8 +8202,8 @@ index 0000000..9d51346
 +		if not str(bg.skill).is_empty():
 +			st.skills[str(bg.skill)] = float(bg.xp)
 +		elif str(bg.id) == "dojo":
-+			st.skills.strike = 160.0
-+			st.skills.agility = 160.0
++			st.skills.strike = 35.0
++			st.skills.agility = 35.0
 +	if not st.get("tech") is Dictionary:
 +		st.tech = {}
 +		for t in TECH:
@@ -8270,7 +8277,7 @@ index 0000000..9d51346
 +	st.day_xp[skill] = float(st.day_xp.get(skill, 0.0)) + amount
 +	for t in FEEDS.get(skill, []):
 +		var now := float(st.tech.get(t, 0.0))
-+		st.tech[t] = minf(100.0, now + amount * 0.035 * (1.0 - now / 120.0))
++		st.tech[t] = minf(100.0, now + amount * 0.025 * (1.0 - now / 120.0))
 +	return amount
 +
 +## Lines for the end of a fight: what was learned (from xp before → now).
@@ -9455,7 +9462,7 @@ index 0000000..180a3d7
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_combat5_149_33.gd b/tests/test_combat5_149_33.gd
 new file mode 100644
-index 0000000..9d0ff57
+index 0000000..9c23a93
 --- /dev/null
 +++ b/tests/test_combat5_149_33.gd
 @@ -0,0 +1,158 @@
@@ -9521,7 +9528,7 @@ index 0000000..9d0ff57
 +	w.s.society = "emergency"
 +	w.s.minute = 2 * 60
 +	w.s.erase("combat")
-+	check(Weapons.owns(w, "bat") and Skills.lv(w, "strike") > 10, "an old baseball player has a bat by the door and some skill with it")
++	check(Weapons.owns(w, "bat") and Skills.lv(w, "strike") >= 5 and Skills.lv(w, "strike") <= 8, "an old baseball player has a bat by the door and some skill with it")
 +
 +	# Levels.
 +	check(Skills.level(0) == 1 and Skills.level(Skills.xp_for(50)) == 50 and Skills.level(1e9) == 100, "levels run from 1 to 100")
