@@ -7950,10 +7950,10 @@ index 0000000..5743d53
 +	quit()
 diff --git a/qa/smart_bot.gd b/qa/smart_bot.gd
 new file mode 100644
-index 0000000..abcfad2
+index 0000000..977c4b1
 --- /dev/null
 +++ b/qa/smart_bot.gd
-@@ -0,0 +1,311 @@
+@@ -0,0 +1,314 @@
 +extends SceneTree
 +## A stronger player, played automatically for DCJ_DAYS days (DCJ_SEED), with
 +## only the commands a player can type. It stocks up while money still buys
@@ -8012,8 +8012,11 @@ index 0000000..abcfad2
 +		var noticed := bool(s().walkers.encounter.get("noticed", s().walkers.encounter.get("near", false)))
 +		var chips: Array = g._suggestions()
 +		var cmd := "脚を払って、倒れたら頭を叩く"
-+		if not noticed and n == 1:
-+			# Not seen yet: draw them off with a thrown stone.
++		if not noticed and n == 1 and "そっと通り過ぎる" in chips:
++			# Not seen yet: keep to the far side and carry on.
++			cmd = "そっと通り過ぎる"
++		elif not noticed and n <= 2:
++			# Or draw them off with a thrown stone.
 +			cmd = "物を投げて気をそらす"
 +		elif not noticed and "隠れる" in chips:
 +			cmd = "隠れる"
@@ -8337,9 +8340,18 @@ index 2c13ef6..edc9470 100644
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/combat.gd b/scripts/combat.gd
-index 0db5457..1a3b07e 100644
+index 0db5457..f0184e0 100644
 --- a/scripts/combat.gd
 +++ b/scripts/combat.gd
+@@ -27,7 +27,7 @@ const CRAWL_SPEED := 0.3
+ ## A noticed walker stops at arm's reach; the grab itself is walkers.gd's.
+ const REACH := 0.6
+ ## Base seconds for each encounter action (before body and place).
+-const BASE_SECONDS := {"look": 2.0, "fight": 2.0, "distract": 3.0, "hide": 4.0, "flee": 4.0}
++const BASE_SECONDS := {"look": 2.0, "fight": 2.0, "distract": 3.0, "hide": 4.0, "flee": 4.0, "sneak": 3.0}
+ 
+ static func active(world) -> bool:
+ 	return not Walkers.ensure(world).encounter.is_empty()
 @@ -135,6 +135,9 @@ static func queue_up(world) -> void:
  ## Where the fight happens, from the place.
  static func terrain(world, place: String = "") -> String:
@@ -8350,6 +8362,54 @@ index 0db5457..1a3b07e 100644
  	if place.is_empty() and bool(enc.get("siege", false)):
  		return "stairs" if bool(enc.get("house", {}).get("upstairs", false)) else "corridor"
  	if place.is_empty():
+@@ -322,7 +325,7 @@ const PART_NAMES := {"head": "頭", "legs": "脚", "arms": "腕", "torso": "胴"
+ const PART_BASE := {"head": 22, "legs": 55, "arms": 45, "torso": 70, "": 60}
+ ## Seconds of each act before body and place (stage 3 adds weapon weight).
+ const ACT_SECONDS := {"rescue": 2.0, "spray": 2.0, "attack": 2.0, "push": 2.0, "retreat": 3.0, "approach": 2.0, "wait": 2.0, "close_door": 2.0, "obstacle": 5.0,
+-	"look": 2.0, "flee": 4.0, "hide": 4.0, "distract": 3.0}
++	"look": 2.0, "flee": 4.0, "hide": 4.0, "distract": 3.0, "sneak": 3.0}
+ const PLAYER_SPEED := 1.5
+ 
+ ## Kept for the legacy rules (raiders, the neighbour): the weapon in hand as
+@@ -446,7 +449,7 @@ static func act(world, step: Dictionary, present: Array = []) -> Dictionary:
+ 	var close_before := close_count(world, 2.0)
+ 	var close_ids: Array = zombies(world).filter(func(x): return float(x.dist) <= 2.0).map(func(x): return str(x.id))
+ 	match kind:
+-		"flee", "hide", "distract", "look":
++		"flee", "hide", "distract", "look", "sneak":
+ 			# Sneaking, running and throwing keep their v149.24 rules; the
+ 			# legacy `near` means noticed and within two and a half metres.
+ 			enc.near = noticed(world) and float(z.get("dist", 9.0)) <= 2.5
+@@ -455,7 +458,7 @@ static func act(world, step: Dictionary, present: Array = []) -> Dictionary:
+ 			var held_allies := Allies.held(world)
+ 			var r := Walkers.resolve(world, kind, weapon(world), present.size(), [])
+ 			out.lines.append(str(r.text))
+-			if kind in ["flee", "hide", "distract"] and bool(r.ended) and not bool(r.bitten):
++			if kind in ["flee", "hide", "distract", "sneak"] and bool(r.ended) and not bool(r.bitten):
+ 				Skills.gain(world, "agility", 4.0 if noticed(world) else 2.0, 50, noticed(world), kind)
+ 			if kind == "flee" and bool(r.ended) and not bool(r.bitten) and not held_allies.is_empty():
+ 				Walkers.ensure(world).encounter = enc
+@@ -877,7 +880,7 @@ static func chips(world) -> Array:
+ 	if not holding.is_empty():
+ 		return ["%sを助ける" % Allies.mate(world, str(holding[0])).name, "脚を払う", "逃げる"]
+ 	if not noticed(world):
+-		return ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"]
++		return ["そっと通り過ぎる", "隠れる", "逃げる", "物を投げて気をそらす", "戦う"]
+ 	if not z.is_empty() and str(z.state) in ["downed", "crawling", "pinned"] and float(z.dist) <= reach(world) + 2.6:
+ 		return ["頭を狙って振り下ろす", "逃げる", "下がる"]
+ 	if not z.is_empty() and float(z.dist) <= 1.3:
+diff --git a/scripts/combat_intent.gd b/scripts/combat_intent.gd
+index 2b63b02..ad9e84c 100644
+--- a/scripts/combat_intent.gd
++++ b/scripts/combat_intent.gd
+@@ -23,6 +23,7 @@ const ACTS := [
+ 	["upstairs", ["二階へ", "二階に上", "階段を上", "階段の上", "上の階"]],
+ 	["rescue", ["を助け", "助けに", "引きはが", "引き剥が", "を放せ", "を離せ", "から離れろ", "を救"]],
+ 	["close_door", ["ドアを閉め", "扉を閉め", "戸を閉め", "シャッターを閉め", "ドアを押さえ", "扉を押さえ"]],
++	["sneak", ["通り過ぎ", "通りすぎ", "避けて通", "よけて通", "すり抜け", "そっと進", "静かに進", "迂回", "回り込んで進", "道の反対側"]],
+ 	["flee", ["逃げ", "走って帰", "家に帰", "引き返"]],
+ 	["hide", ["隠れ", "やり過ご", "息を殺", "身を伏せ", "物陰", "しゃが", "潜"]],
+ 	["distract", ["投げ", "気をそら", "注意をそら", "おとり", "囮", "音を出", "鳴らし", "気を引"]],
 diff --git a/scripts/communities.gd b/scripts/communities.gd
 new file mode 100644
 index 0000000..9ef7f24
@@ -9813,7 +9873,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..39d0782 100644
+index 0f2add4..5d19a17 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,29 @@ func _refresh() -> void:
@@ -10182,7 +10242,22 @@ index 0f2add4..39d0782 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3943,6 +4160,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4145,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 		if elapsed<=0 or world.s.health<=0:break
+ 		# v149.24: the dead on the way stop the walk there.
+ 		if location != path[-1] and Walkers.count(world, location) > 0:
+-			auto_steps.append("%sで感染者を見かけて足を止めた" % location)
+-			break
++			if Walkers.blocks_passing(world, location):
++				auto_steps.append("%sで感染者を見かけて足を止めた" % location)
++				break
++			# v149.38: far down the street: skirted, and on we go.
++			world.advance_safe(2)
++			auto_steps.append("%sの先に人影が見えたので、道の反対側を通って距離をとった" % location)
+ 	visual_focus=""
+ 	event_visual=""
+ 	selected_event.clear()
+@@ -3943,6 +4164,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -10195,7 +10270,7 @@ index 0f2add4..39d0782 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4181,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4185,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -10206,7 +10281,7 @@ index 0f2add4..39d0782 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4264,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4268,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -13008,7 +13083,7 @@ index 0000000..67d58c7
 @@ -0,0 +1 @@
 +uid://bkba3o5cmowq5
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
-index 1e90817..403a6b6 100644
+index 1e90817..de6f6d1 100644
 --- a/scripts/walkers.gd
 +++ b/scripts/walkers.gd
 @@ -9,9 +9,12 @@ const Mood = preload("res://scripts/mood.gd")
@@ -13042,6 +13117,72 @@ index 1e90817..403a6b6 100644
  		# Long after the collapse the dead slowly fall apart.
  		if day >= 60:
  			for place in w.places.keys():
+@@ -513,6 +516,10 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
+ 		return {}
+ 	if not w.encounter.is_empty() and str(w.encounter.place) == place:
+ 		return w.encounter
++	# v149.38: just slipped past (or hid from) the ones here.
++	var passed: Dictionary = w.get("passed", {})
++	if str(passed.get("place", "")) == place and int(world.s.minute) < int(passed.get("until", 0)):
++		return {}
+ 	var hour: float = world.hour_of_day()
+ 	var night := hour < 6.0 or hour >= 18.0
+ 	var per := (12 if night else 8) + (30 if loud else 0)
+@@ -526,6 +533,26 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
+ 	w.encounter = {"place": place, "count": n, "near": noticed, "since": int(world.s.minute), "from": from}
+ 	return w.encounter
+ 
++## v149.38: a street only passed through on the way somewhere. The dead far
++## down it are skirted (the far pavement, a side alley) and the walk goes on;
++## it stops only when one is close enough to matter. Returns true to stop.
++static func blocks_passing(world, place: String) -> bool:
++	var n := count(world, place)
++	if n <= 0:
++		return false
++	var passed: Dictionary = ensure(world).get("passed", {})
++	if str(passed.get("place", "")) == place and int(world.s.minute) < int(passed.get("until", 0)):
++		return false
++	# The porch and the corridor outside the door are no length at all.
++	if horde_at(world, place) > 0 or place in ["建物前", "共用廊下", "玄関"]:
++		return true
++	var hour: float = world.hour_of_day()
++	var night := hour < 6.0 or hour >= 18.0
++	var per := 18 if night else 12
++	var nearby := mini(n, 3) + maxi(0, n - 3) / 4
++	var chance := 100 - int(100.0 * pow(1.0 - per / 100.0, nearby))
++	return world.draw(int(world.s.minute), place.hash() + 17, "walker-close", 100) < chance
++
+ ## A glance does not give a number: one, a few, many, a horde. An exact
+ ## count needs a careful look (`counted`, valid while the number holds).
+ static func estimate(n: int, counted: int = -1) -> String:
+@@ -618,12 +645,26 @@ static func resolve(world, kind: String, weapon: int = 0, allies: int = 0, prese
+ 			enc.near = true
+ 			return {"text": "投げた石は、すぐ近くに落ちた。かえってこちらの居場所を知らせてしまった。", "bitten": false, "ended": false, "minutes": 2}
+ 		"hide":
+-			var chance := (80 if not near else 45) - 6 * (mini(n, 6) - 1) - Mood.nerve_penalty(world.s)
++			# v149.38: only the ones close by matter (as for being noticed).
++			var chance := (80 if not near else 45) - 6 * (mini(n, 3) - 1) - Mood.nerve_penalty(world.s)
+ 			if roll < chance:
+ 				w.encounter = {}
++				w.passed = {"place": str(enc.place), "until": minute + 40}
+ 				return {"text": "物陰に身を潜めて息を殺した。足音とうめき声が、やがて遠ざかっていった。", "bitten": false, "ended": true, "minutes": 20}
+ 			enc.near = true
+ 			return {"text": "隠れようとしたが、物音を立ててしまった。こちらに向かってくる。", "bitten": false, "ended": false, "minutes": 5}
++		"sneak":
++			# v149.38: not seen yet: keep to the far side, behind the parked
++			# cars, and carry on. Only the nearest few matter.
++			if near:
++				return {"text": "もう気づかれている。そっと通り過ぎるのは無理だ。", "bitten": false, "ended": false, "minutes": 0}
++			var chance := 85 - 6 * (mini(n, 3) - 1) - Mood.nerve_penalty(world.s)
++			if roll < chance:
++				w.encounter = {}
++				w.passed = {"place": str(enc.place), "until": minute + 40}
++				return {"text": "道の反対側に寄り、止まった車の陰を伝って、そっと通り過ぎた。うめき声は、こちらを向かないまま遠ざかった。", "bitten": false, "ended": true, "minutes": 4}
++			enc.near = true
++			return {"text": "通り過ぎようとしたところで、足元の空き缶を蹴ってしまった。濁った目が、こちらを向いた。", "bitten": false, "ended": false, "minutes": 2}
+ 		"flee":
+ 			var chance := (95 if not near else 75) - 5 * (mini(n, 6) - 1) - Mood.nerve_penalty(world.s)
+ 			if roll < chance:
 diff --git a/scripts/wanderers.gd b/scripts/wanderers.gd
 new file mode 100644
 index 0000000..7ed7a5b
@@ -14021,6 +14162,109 @@ index 0000000..0d06d68
 +++ b/tests/test_npc_life149_35.gd.uid
 @@ -0,0 +1 @@
 +uid://litrtaov1upn
+diff --git a/tests/test_passing149_38.gd b/tests/test_passing149_38.gd
+new file mode 100644
+index 0000000..6b9b019
+--- /dev/null
++++ b/tests/test_passing149_38.gd
+@@ -0,0 +1,97 @@
++extends SceneTree
++## v149.38: getting about a town full of the dead.
++## 1. Walkers that have not noticed you can be slipped past (and you carry on).
++## 2. Hiding depends on the few close by, not on everyone down the street.
++## 3. A street only passed through stops you only when one is close.
++const Main = preload("res://main.tscn")
++const Walkers = preload("res://scripts/walkers.gd")
++const Combat = preload("res://scripts/combat.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func new_game():
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 9
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	return g
++func run() -> void:
++	var g = await new_game()
++	var w = g.world
++	w.s.society = "emergency"
++	w.s.mood = 60.0
++	# 1. Slipping past: offered while unnoticed, and it can work.
++	var slipped := 0
++	var tries := 0
++	for t in 40:
++		g.location = "屋外"
++		g._sync_player_position()
++		w.s.walkers.places = {"商店通り": 2}
++		w.s.walkers.encounter = {}
++		w.s.walkers.erase("passed")
++		w.s.minute = int(w.s.minute) + 37
++		await g._on_command("商店通りへ行く")
++		if not Combat.active(w) or bool(w.s.walkers.encounter.get("near", false)) or Combat.noticed(w):
++			continue
++		tries += 1
++		if t == 0 or tries == 1:
++			check(g._suggestions().has("そっと通り過ぎる"), "slipping past is offered while they have not noticed")
++		g.log_entries.clear()
++		await g._on_command("そっと通り過ぎる")
++		if OS.get_environment("DBG") == "1":
++			print("DBG ", str(g.log_entries).left(200))
++		if not Combat.active(w):
++			slipped += 1
++			if slipped == 1:
++				check(Walkers.check(w, "商店通り").is_empty(), "having slipped past, the same ones do not stop you again at once")
++	check(tries > 5 and slipped >= tries / 2, "slipping past unnoticed walkers mostly works (%d of %d)" % [slipped, tries])
++	# 2. Hiding: twenty down the street are not twenty behind the wall.
++	var hid_few := 0
++	var hid_many := 0
++	for t in 60:
++		for n in [3, 20]:
++			w.s.walkers.places = {"商店通り": n}
++			w.s.walkers.erase("passed")
++			w.s.walkers.encounter = {"place": "商店通り", "count": n, "near": false, "since": int(w.s.minute), "from": ""}
++			w.s.minute = int(w.s.minute) + 13
++			var r: Dictionary = Walkers.resolve(w, "hide")
++			if bool(r.ended):
++				if n == 3: hid_few += 1
++				else: hid_many += 1
++	check(absi(hid_few - hid_many) <= 15, "hiding depends on those close by (3 down the street: %d/60, 20: %d/60)" % [hid_few, hid_many])
++	# 3. Passing through: a street on the way stops you only sometimes; the porch always.
++	var stopped := 0
++	for t in 60:
++		w.s.minute = int(w.s.minute) + 61
++		w.s.walkers.erase("passed")
++		w.s.walkers.places = {"商店通り": 2}
++		if Walkers.blocks_passing(w, "商店通り"):
++			stopped += 1
++	check(stopped > 0 and stopped < 40, "two far down a street on the way stop you only sometimes (%d/60)" % stopped)
++	w.s.walkers.places = {"建物前": 1}
++	check(Walkers.blocks_passing(w, "建物前"), "one at your own porch always stops you")
++	# A walk through a street with walkers far down it carries on to the end.
++	var through := 0
++	for t in 30:
++		g.location = "屋外"
++		g._sync_player_position()
++		w.s.walkers.places = {"商店通り": 1}
++		w.s.walkers.encounter = {}
++		w.s.walkers.erase("passed")
++		w.s.minute = int(w.s.minute) + 61
++		await g._on_command("南の住宅街へ行く")
++		if g.location == "南の住宅街":
++			through += 1
++			if through == 1:
++				check(str(g.log_entries.slice(-4)).contains("道の反対側を通って"), "skirting them is said")
++	check(through >= 15, "most walks past one far down a street get through (%d/30)" % through)
++	print("TOTAL FAILURES ", failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_residents149_38.gd b/tests/test_residents149_38.gd
 new file mode 100644
 index 0000000..561d5c8
@@ -14426,6 +14670,19 @@ index 4b8afa0..eae24ab 100644
  	for i in 200:
  		w3.s.minute += 61
  		if (w3.hour_of_day() < 6.0 or w3.hour_of_day() >= 18.0):
+diff --git a/tests/test_solo149_28.gd b/tests/test_solo149_28.gd
+index b7e1ec5..2f08c24 100644
+--- a/tests/test_solo149_28.gd
++++ b/tests/test_solo149_28.gd
+@@ -89,7 +89,7 @@ func run() -> void:
+ 	check(str(g2.log_entries.slice(-4)).contains("寝る前に食事"), "eats before sleeping when hungry")
+ 	check(g2._routine_news("学校の授業。通学と授業が行われている。") and not g2._routine_news("都内の救急病院が、相次いで受け入れを停止。"), "routine life is not news")
+ 	w2.s.society = "disrupted"
+-	w2.s.walkers.places["屋外"] = 1
++	w2.s.walkers.places["建物前"] = 1   # (v149.38: the porch always stops you; a far one on the street can be skirted)
+ 	g2.location = "住宅街"
+ 	await g2._on_command("家に帰る")
+ 	check(not str(g2.log_entries.slice(-3)).contains("玄関の鍵を閉めた"), "the door is not said to be locked when the walk stopped short")
 diff --git a/tests/test_town149_36.gd b/tests/test_town149_36.gd
 new file mode 100644
 index 0000000..ab28243
@@ -14711,3 +14968,16 @@ index 0000000..f2eee53
 +++ b/tests/test_trade149_34.gd.uid
 @@ -0,0 +1 @@
 +uid://bwh7o2c3smk65
+diff --git a/tests/test_walkers149_24.gd b/tests/test_walkers149_24.gd
+index 54f2002..6143dbf 100644
+--- a/tests/test_walkers149_24.gd
++++ b/tests/test_walkers149_24.gd
+@@ -61,7 +61,7 @@ func run() -> void:
+ 	var enc: Dictionary = world.s.walkers.encounter
+ 	check(not enc.is_empty() and str(enc.place) == "商店通り" and game.log_entries[-1].begins_with("【危険】"), "arriving where walkers are shows them")
+ 	check(game.danger_label.text == "感染者 数人" and not game.log_entries[-1].contains("2"), "a glance shows a rough number, not a count")
+-	check(game._suggestions() == ["隠れる", "逃げる", "物を投げて気をそらす", "戦う", "様子を見る"], "the suggestions turn into encounter choices")
++	check(game._suggestions() == ["そっと通り過ぎる", "隠れる", "逃げる", "物を投げて気をそらす", "戦う"], "the suggestions turn into encounter choices")
+ 	world.s.walkers.encounter.near = false
+ 	var looked := Walkers.resolve(world, "look")
+ 	game._refresh()
