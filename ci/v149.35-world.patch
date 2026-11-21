@@ -203837,7 +203837,7 @@ index 0000000..87375ab
 +uid://b8scaaj2y4f6a
 diff --git a/qa/residents_watch.gd b/qa/residents_watch.gd
 new file mode 100644
-index 0000000..b66e212
+index 0000000..adb4f51
 --- /dev/null
 +++ b/qa/residents_watch.gd
 @@ -0,0 +1,35 @@
@@ -203864,7 +203864,7 @@ index 0000000..b66e212
 +			w.advance_safe(60)
 +		var c: Dictionary = Residents.census(w)
 +		var sh: Dictionary = w.s.get("shelter", {})
-+		print("DAY %3d %-9s people %4d | home %3d holed %3d shelter %3d away %3d gone %3d dead %3d turned %3d | shelter %s pop %s | cm %d | walkers %d" % [day + 1, w.s.society, c.people, c.home, c.holed, c.shelter, c.away, c.gone, c.dead, c.turned, sh.get("status", "-"), "%s(o%s cap%s st%.0f ord%.0f)" % [sh.get("pop", "-"), sh.get("outsiders", "-"), sh.get("capacity", "-"), float(sh.get("stock", 0)), float(sh.get("order", 0))], load("res://scripts/communities.gd").all(w).values().filter(func(c): return not bool(c.ended)).size(), load("res://scripts/walkers.gd").total(w)])
++		print("DAY %3d %-9s people %4d | home %3d holed %3d shelter %3d away %3d gone %3d dead %3d turned %3d looter %3d | shelter %s pop %s | cm %d gangs %s | walkers %d" % [day + 1, w.s.society, c.people, c.home, c.holed, c.shelter, c.away, c.gone, c.dead, c.turned, c.looter, sh.get("status", "-"), "%s(o%s cap%s st%.0f ord%.0f)" % [sh.get("pop", "-"), sh.get("outsiders", "-"), sh.get("capacity", "-"), float(sh.get("stock", 0)), float(sh.get("order", 0))], load("res://scripts/communities.gd").all(w).values().filter(func(c): return not bool(c.ended)).size(), str(load("res://scripts/gangs.gd").active(w).map(func(gg): return "%s:%d/%.0f" % [gg.lair, load("res://scripts/gangs.gd").people(w, gg), float(gg.store)])), load("res://scripts/walkers.gd").total(w)])
 +	var cm = w.s.residents.get("cm", {})
 +	for k in cm:
 +		var c = cm[k]
@@ -203872,7 +203872,7 @@ index 0000000..b66e212
 +	print("MS ", Time.get_ticks_msec() - t0, " SAVE ", JSON.stringify(w.s).length(), " RES ", JSON.stringify(w.s.residents).length())
 +	for a in w.s.district.houses_by:
 +		print("POOL ", a, " ", w.s.district.houses_by[a])
-+	for e in w.s.survivors.get("history", []).slice(-12):
++	for e in w.s.survivors.get("history", []).filter(func(e): return str(e.kind) in ["raid", "gang", "gang_end"]).slice(-14):
 +		print("  * d", e.day, " ", e.text)
 +	print("SIGNS ", Residents.signs(w, "団地"))
 +	quit()
@@ -204601,10 +204601,10 @@ index 31c6246..cd97e3b 100644
  	var amount := float(quantity) * (1.0 if item == "food" else 2.0)
 diff --git a/scripts/dwellings.gd b/scripts/dwellings.gd
 new file mode 100644
-index 0000000..ea73497
+index 0000000..a6de336
 --- /dev/null
 +++ b/scripts/dwellings.gd
-@@ -0,0 +1,395 @@
+@@ -0,0 +1,398 @@
 +extends RefCounted
 +## v149.37: homes searched one at a time. Every home in a residential area
 +## (a block of the estate, a flat in the tower, a house on the street) is
@@ -204711,6 +204711,9 @@ index 0000000..ea73497
 +				out.note = "居間の床に、走り書きの紙。「噛まれた。もう出られない。ごめん」" if _h(world, area, i, "note-gone") % 3 == 0 else ""
 +			"dead", "turned":
 +				out.locked = lock < 70
++				out.note = ""
++			"looter":
++				out.locked = lock < 50
 +				out.note = ""
 +			_:
 +				out.locked = true
@@ -205007,6 +205010,327 @@ index 0000000..9bf6866
 +++ b/scripts/dwellings.gd.uid
 @@ -0,0 +1 @@
 +uid://cs02iqkrnmci1
+diff --git a/scripts/gangs.gd b/scripts/gangs.gd
+new file mode 100644
+index 0000000..ecf3d23
+--- /dev/null
++++ b/scripts/gangs.gd
+@@ -0,0 +1,315 @@
++extends RefCounted
++## v149.38 stage 4: looters. Nobody is born one. A household holed up alone,
++## out of food, with someone able-bodied and not much given to kindness — or
++## one that was itself robbed — may stop asking and start taking. They find
++## others like them and set up somewhere defensible (the warehouses, the home
++## centre, the petrol station, the police box), and live off what they take:
++## lone households first (the ones that have food and nobody to fight), then
++## the neighbourhoods behind barricades when they are strong enough, and the
++## player's home when a light shows at night (raiders.gd answers at the door).
++## Every raid can cost them too; hunger breaks them up; success draws more.
++##
++## s.residents.gangs = {id: {lair, since, store, hungry, ended, last_raid,
++##   leader: [area, i], homes: [[area, i], ...]}}   household path "looter"
++
++const Residents = preload("res://scripts/residents.gd")
++const Communities = preload("res://scripts/communities.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const LAIRS := ["倉庫街", "ホームセンター", "ガソリンスタンド", "交番"]
++const MAX_SIZE := 24
++
++static func all(world) -> Dictionary:
++	if not Residents.ready(world):
++		return {}
++	if not world.s.residents.get("gangs") is Dictionary:
++		world.s.residents.gangs = {}
++	return world.s.residents.gangs
++
++static func _peek(world) -> Dictionary:
++	var st = world.s.get("residents")
++	return st.get("gangs", {}) if st is Dictionary and st.get("gangs") is Dictionary else {}
++
++static func active(world) -> Array:
++	return _peek(world).values().filter(func(g): return not bool(g.ended))
++
++static func people(world, g: Dictionary) -> int:
++	var n := 0
++	for h in g.homes:
++		var r := Residents.row(world, str(h[0]), int(h[1]))
++		if str(r[Residents.P_PATH]) == "looter":
++			n += Residents.living(r)
++	return n
++
++static func fighters(world, g: Dictionary) -> int:
++	var n := 0
++	for h in g.homes:
++		var r := Residents.row(world, str(h[0]), int(h[1]))
++		if str(r[Residents.P_PATH]) != "looter":
++			continue
++		var w := Residents.who(world, str(h[0]), int(h[1]))
++		for k in w.people.size():
++			if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able):
++				n += 1
++	return n
++
++static func at(world, place: String) -> Dictionary:
++	for g in active(world):
++		if str(g.lair) == place:
++			return g
++	return {}
++
++## A desperate household turns to taking: called by residents.gd when one is
++## about to give up. True if they did.
++static func recruit(world, area: String, i: int, r: Array, day: int) -> bool:
++	if str(world.s.get("society", "normal")) != "emergency":
++		return false
++	var w := Residents.who(world, area, i)
++	var able := false
++	for k in w.people.size():
++		if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able):
++			able = true
++	if not able:
++		return false
++	var wronged := int(r[Residents.P_FLAGS]) & (Residents.F_ROBBED | Residents.F_HOSTILE) != 0
++	var hard := int(w.kindness) < 35 or (wronged and int(w.kindness) < 60)
++	if not hard or Residents._roll(world, area, i, day, "turn-looter", 100) >= 25 + int(w.courage) / 4:
++		return false
++	var gangs := all(world)
++	var join: Dictionary = {}
++	for g in active(world):
++		if people(world, g) + Residents.living(r) <= MAX_SIZE and (join.is_empty() or people(world, g) > people(world, join)):
++			join = g
++	if join.is_empty() or (people(world, join) >= 10 and Residents._roll(world, area, i, day, "own-gang", 100) < 30):
++		var taken: Array = active(world).map(func(g): return str(g.lair))
++		var free: Array = LAIRS.filter(func(p): return not p in taken)
++		if free.is_empty():
++			if join.is_empty():
++				return false
++		else:
++			var id := "gang_%d_%s_%d" % [day, area, i]
++			join = {"id": id, "lair": free[Residents._roll(world, area, i, day, "lair", free.size())], "since": day,
++				"store": 0.0, "hungry": 0, "ended": false, "last_raid": -1, "leader": [area, i], "homes": []}
++			gangs[id] = join
++			Residents._news(world, "gang", str(join.lair), "%sに、物騒な連中が住みついたらしい。夜になると、焚き火のまわりに男たちが集まっているという。" % join.lair)
++	join.homes.append([area, i])
++	join.store = float(join.store) + float(r[Residents.P_FOOD])
++	r[Residents.P_FOOD] = 0.0
++	r[Residents.P_PATH] = "looter"
++	r[Residents.P_SINCE] = day
++	if int(r[Residents.P_FLAGS]) & Communities.F_COMM:
++		r[Residents.P_FLAGS] = int(r[Residents.P_FLAGS]) & ~Communities.F_COMM
++	return true
++
++# ------------------------------------------------------------------ each day
++
++static func daily(world, day: int) -> void:
++	for g in active(world):
++		var n := people(world, g)
++		if n == 0:
++			_end(world, g, day, "gone")
++			continue
++		# A raid when the store runs low.
++		if float(g.store) < 6.0 * n and int(g.last_raid) < day:
++			_raid(world, g, day)
++		n = people(world, g)
++		if n == 0:
++			_end(world, g, day, "gone")
++			continue
++		var need := 0.8 * float(n)
++		g.hungry = 0 if float(g.store) >= need * 0.6 else int(g.hungry) + 1
++		g.store = maxf(0.0, float(g.store) - need)
++		if int(g.hungry) >= 5:
++			_end(world, g, day, "hunger")
++
++## Who to hit: what they have against what it will cost.
++static func _raid(world, g: Dictionary, day: int) -> void:
++	g.last_raid = day
++	var power := fighters(world, g)
++	if power == 0:
++		return
++	var salt := absi(hash([int(world.s.seed), str(g.id), day]))
++	# A neighbourhood behind a barricade: worth it only in numbers.
++	var best: Dictionary = {}
++	for key in Communities.all(world):
++		var c: Dictionary = Communities.all(world)[key]
++		if bool(c.ended) or float(c.store) < 15.0:
++			continue
++		if best.is_empty() or float(c.store) > float(best.store):
++			best = c
++	var desperate := int(g.hungry) >= 2
++	if not best.is_empty() and (float(power) * 2.0 > _defense(world, best) * 0.8 or desperate) and salt % 100 < (70 if desperate else 40):
++		_hit_community(world, g, best, day, salt)
++		return
++	# A lone household that still has food and nobody much to fight.
++	var target: Array = []
++	var most := 2.0
++	var tries := 0
++	while tries < 40:
++		tries += 1
++		var areas: Array = Residents.areas()
++		var area: String = areas[(salt + tries * 7) % areas.size()]
++		var rows: Array = world.s.residents.hh[area]
++		var i := (salt / 13 + tries * 31) % rows.size()
++		var r: Array = rows[i]
++		if str(r[Residents.P_PATH]) == "holed" and not Communities.member(r) and float(r[Residents.P_FOOD]) > most:
++			most = float(r[Residents.P_FOOD])
++			target = [area, i]
++	if not target.is_empty():
++		_hit_home(world, g, str(target[0]), int(target[1]), day, salt)
++	elif not best.is_empty():
++		# Nobody alone has anything left: the barricades, then.
++		_hit_community(world, g, best, day, salt)
++
++static func _defense(world, c: Dictionary) -> float:
++	var able := 0
++	for i in Communities.members(world, c):
++		var r := Residents.row(world, str(c.area), i)
++		var w := Residents.who(world, str(c.area), i)
++		for k in w.people.size():
++			if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able):
++				able += 1
++	return float(c.wall) / 10.0 + float(able) * 1.5
++
++static func _hit_home(world, g: Dictionary, area: String, i: int, day: int, salt: int) -> void:
++	var r := Residents.row(world, area, i)
++	var w := Residents.who(world, area, i)
++	_seen(world, area, salt)
++	var fighter := -1
++	for k in w.people.size():
++		if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able) and int(w.courage) >= 55:
++			fighter = k
++	if fighter >= 0 and (salt / 7) % 100 < 35:
++		# Driven off at the door; it costs one of them.
++		if (salt / 11) % 100 < 40:
++			_lose(world, g, day, salt)
++		Residents._news(world, "raid", area, "%sの%sさんの家に略奪者が押し入ろうとして、追い返されたらしい。" % [Residents._where(area, i), w.surname])
++		return
++	var take := float(r[Residents.P_FOOD])
++	r[Residents.P_FOOD] = 0.0
++	g.store = float(g.store) + take
++	r[Residents.P_FLAGS] = int(r[Residents.P_FLAGS]) | Residents.F_ROBBED
++	if fighter >= 0 and (salt / 17) % 100 < 30:
++		r[Residents.P_ALIVE] = int(r[Residents.P_ALIVE]) & ~(1 << fighter)
++		if Residents.living(r) == 0:
++			r[Residents.P_PATH] = "dead"
++			r[Residents.P_FLAGS] = int(r[Residents.P_FLAGS]) | Residents.F_DIED_HOME
++		Residents._news(world, "raid", area, "%sの%sさんの家が略奪者に襲われ、抵抗した人が殺されたらしい。" % [Residents._where(area, i), w.surname])
++	else:
++		Residents._news(world, "raid", area, "%sの%sさんの家が略奪者に襲われ、食べ物を根こそぎ持っていかれたらしい。" % [Residents._where(area, i), w.surname])
++
++static func _hit_community(world, g: Dictionary, c: Dictionary, day: int, salt: int) -> void:
++	var area := str(c.area)
++	_seen(world, area, salt)
++	var attack := float(fighters(world, g)) * 2.0 * (0.6 + float(salt % 80) / 100.0)
++	var name: String = Communities.block_name(area, int(c.block))
++	if attack > _defense(world, c):
++		var take := float(c.store) * 0.6
++		c.store = float(c.store) - take
++		g.store = float(g.store) + take
++		c.wall = maxf(0.0, float(c.wall) - 25.0)
++		var mem: Array = Communities.members(world, c)
++		if not mem.is_empty() and (salt / 3) % 100 < 50:
++			var i: int = mem[(salt / 5) % mem.size()]
++			var r := Residents.row(world, area, i)
++			var w := Residents.who(world, area, i)
++			for k in w.people.size():
++				if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able):
++					r[Residents.P_ALIVE] = int(r[Residents.P_ALIVE]) & ~(1 << k)
++					break
++		Residents._news(world, "raid", area, "%sのバリケードが略奪者に破られ、蓄えの多くを奪われたらしい。" % name)
++	else:
++		_lose(world, g, day, salt)
++		c.wall = maxf(0.0, float(c.wall) - 8.0)
++		Residents._news(world, "raid", area, "%sに略奪者が押し寄せたが、住人たちが追い返したらしい。" % name)
++
++## One of them does not come back.
++static func _lose(world, g: Dictionary, day: int, salt: int) -> void:
++	for h in g.homes:
++		var r := Residents.row(world, str(h[0]), int(h[1]))
++		if str(r[Residents.P_PATH]) != "looter":
++			continue
++		var w := Residents.who(world, str(h[0]), int(h[1]))
++		for k in w.people.size():
++			if int(r[Residents.P_ALIVE]) & (1 << k) and bool(w.people[k].able):
++				r[Residents.P_ALIVE] = int(r[Residents.P_ALIVE]) & ~(1 << k)
++				if Residents.living(r) == 0:
++					r[Residents.P_PATH] = "dead"
++				return
++
++## They are seen going about it.
++static func _seen(world, area: String, salt: int) -> void:
++	var out: Array = world.s.residents.get("gang_out", [])
++	var from := 18 + salt % 5
++	out.append([area, from, from + 2])
++	world.s.residents.gang_out = out.slice(maxi(0, out.size() - 20))
++
++static func _end(world, g: Dictionary, day: int, why: String) -> void:
++	g.ended = true
++	g.ended_day = day
++	for h in g.homes:
++		var r := Residents.row(world, str(h[0]), int(h[1]))
++		if str(r[Residents.P_PATH]) == "looter":
++			r[Residents.P_PATH] = "gone" if Residents.living(r) > 0 else "dead"
++			r[Residents.P_SINCE] = day
++	Residents._news(world, "gang_end", str(g.lair), "%sにいた連中は、%s" % [g.lair, "食べる物にも困って、町を出ていったらしい。" if why == "hunger" else "もういないらしい。"])
++
++# ------------------------------------------------------------------ the player
++
++## The player's home, when a light shows at night: the strongest of them
++## come knocking (raiders.gd). Returns the gang's size, 0 if no one comes.
++static func raiders_for_player(world) -> int:
++	var best: Dictionary = {}
++	for g in active(world):
++		if best.is_empty() or fighters(world, g) > fighters(world, best):
++			best = g
++	if best.is_empty():
++		return 0
++	world.s.residents.raiding = str(best.id)
++	return clampi(fighters(world, best), 1, 6)
++
++## What was taken from the player goes to their store; a fight can cost them.
++static func took_from_player(world, food: float) -> void:
++	var g: Dictionary = _peek(world).get(str(world.s.residents.get("raiding", "")), {})
++	if not g.is_empty():
++		g.store = float(g.store) + food
++
++static func driven_off(world, hurt: bool) -> void:
++	var g: Dictionary = _peek(world).get(str(world.s.residents.get("raiding", "")), {})
++	if not g.is_empty() and hurt:
++		_lose(world, g, Residents._day(world), int(world.s.minute))
++
++## Walking up to their lair.
++static func confront(world, place: String) -> String:
++	var g := at(world, place)
++	if g.is_empty():
++		return ""
++	var st: Dictionary = world.s.residents
++	if int(st.get("confronted_at", -10000)) > int(world.s.minute) - 240:
++		return ""
++	st.confronted_at = int(world.s.minute)
++	var bag: Dictionary = world.s.district.bag
++	var armed: bool = load("res://scripts/walkers.gd").weapon_bonus(world.s.inventory) > 0
++	var n := fighters(world, g)
++	if armed and absi(hash([int(world.s.seed), int(world.s.minute), "lair"])) % 100 < 45:
++		return "【危険】%sの奥から、男が%s出てきた。こちらの手の武器を見て、「……さっさと消えな」と吐き捨てた。" % [place, "何人か" if n >= 3 else "二人"]
++	var food := float(bag.food)
++	var water := float(bag.water)
++	bag.food = 0.0
++	bag.water = 0.0
++	var cash := mini(int(world.s.cash), 5000)
++	world.s.cash = int(world.s.cash) - cash
++	g.store = float(g.store) + food
++	return "【危険】%sの奥から、男たちが%s出てきて取り囲んだ。「荷物を置いていけ」　逆らえる人数ではなかった。持ち出し袋の食料と水%sを取り上げられ、突き飛ばされた。" % [place, "何人も" if n >= 4 else "二、三人", "、現金%d円" % cash if cash > 0 else ""]
++
++static func signs(world, place: String) -> String:
++	var g := at(world, place)
++	if g.is_empty():
++		return ""
++	return "奥にドラム缶の焚き火の跡があり、鉄パイプが立てかけてある。誰かがこちらを見張っている気配がする。……住みついた連中の縄張りだ。"
++
++static func street_signs(world, area: String) -> String:
++	var hour := int(world.hour_of_day())
++	for o in world.s.residents.get("gang_out", []):
++		if str(o[0]) == area and hour >= int(o[1]) and hour < int(o[2]):
++			return "バールを手にした男たちが数人、家々のドアを確かめながら歩いていった。"
++	return ""
 diff --git a/scripts/home_life.gd b/scripts/home_life.gd
 index a4b03a2..70dde13 100644
 --- a/scripts/home_life.gd
@@ -205023,7 +205347,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..5a707f9 100644
+index 0f2add4..a7bf87c 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,27 @@ func _refresh() -> void:
@@ -205331,12 +205655,15 @@ index 0f2add4..5a707f9 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4037,15 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4037,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
 +	# v149.38: the people behind the doors of a residential area.
 +	var lived: String = load("res://scripts/residents.gd").signs(world, location)
++	var den: String = load("res://scripts/gangs.gd").signs(world, _site())
++	if not den.is_empty():
++		lived = (lived + " " + den).strip_edges()
 +	if not lived.is_empty():
 +		paragraphs.append(lived)
  	if inspect_details and not Navigation.indoor(location) and str(world.s.society) in ["disrupted", "emergency"]:
@@ -205347,7 +205674,7 @@ index 0f2add4..5a707f9 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4061,8 @@ func _site() -> String:
+@@ -3875,6 +4064,8 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -205356,7 +205683,7 @@ index 0f2add4..5a707f9 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3943,6 +4131,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4134,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -205369,7 +205696,18 @@ index 0f2add4..5a707f9 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -4037,6 +4231,11 @@ func _read_news(command: String) -> String:
+@@ -3958,6 +4155,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
+ 	if world.s.health <= 0:
+ 		return result
++	# v149.38: walking into a gang's lair.
++	var lair: String = load("res://scripts/gangs.gd").confront(world, _site())
++	if not lair.is_empty():
++		result += "\n\n" + lair
+ 	return result + "\n\n" + _look(false)
+ func _door_action(command: String) -> String:
+ 	if world.s.health<=0:return "死亡している。"
+@@ -4037,6 +4238,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -206372,12 +206710,50 @@ index 0000000..b95515d
 +++ b/scripts/npc_life.gd.uid
 @@ -0,0 +1 @@
 +uid://v0rn482gqrkl
+diff --git a/scripts/raiders.gd b/scripts/raiders.gd
+index 8dd4800..22af019 100644
+--- a/scripts/raiders.gd
++++ b/scripts/raiders.gd
+@@ -30,7 +30,14 @@ static func hourly(world) -> void:
+ 			return
+ 		if world.draw(minute, 31, "raid", 100) >= 6:
+ 			return
+-		world.s.raid = {"at": minute, "size": 2 + world.draw(minute, 32, "raid-size", 3)}
++		var size: int = 2 + world.draw(minute, 32, "raid-size", 3)
++		# v149.38: once the town's people are lived out, those who come are
++		# one of the town's gangs — and only if there is one.
++		if load("res://scripts/residents.gd").ready(world):
++			size = load("res://scripts/gangs.gd").raiders_for_player(world)
++			if size <= 0:
++				return
++		world.s.raid = {"at": minute, "size": size}
+ 		world.s.walkers.alarm = true
+ 		Mood.everyone(world, -4.0)
+ 		notices.append("【危険】玄関の外で、人の声がする。「おい、明かりがついてるぞ。誰かいる」……感染者ではない。人間だ。%d人はいる。" % int(world.s.raid.size))
+@@ -60,6 +67,8 @@ static func _rob(world, lead: String) -> String:
+ 	world.s.food = float(world.s.food) - food
+ 	world.s.water = float(world.s.water) - water
+ 	world.s.cash = int(world.s.cash) - cash
++	if load("res://scripts/residents.gd").ready(world):
++		load("res://scripts/gangs.gd").took_from_player(world, food)
+ 	Mood.everyone(world, -10.0)
+ 	Chronicle.note(world, "略奪者に押し入られ、食料と水を奪われた。", "raid")
+ 	return "【危険】%s台所の食料%.1f人日分、水%.0fL、現金%d円を奪って、走り去った。" % [lead, food, water, cash]
+@@ -100,6 +109,8 @@ static func answer(world, kind: String, weapon: int = 0) -> String:
+ 			if roll < chance:
+ 				world.s.raid = {}
+ 				world.s.health = maxf(1.0, float(world.s.health) - 10.0)
++				if load("res://scripts/residents.gd").ready(world):
++					load("res://scripts/gangs.gd").driven_off(world, roll < 30)
+ 				Chronicle.note(world, "夜、押し入ろうとした略奪者と戦い、追い払った。", "raid")
+ 				Chronicle.deed(world, "repelled")
+ 				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/residents.gd b/scripts/residents.gd
 new file mode 100644
-index 0000000..86cf69c
+index 0000000..e714c23
 --- /dev/null
 +++ b/scripts/residents.gd
-@@ -0,0 +1,827 @@
+@@ -0,0 +1,836 @@
 +extends RefCounted
 +## v149.38: the people who live in the town's homes — every household in the
 +## estate, the tower block and the three streets of houses (790 homes). Who
@@ -206408,7 +206784,7 @@ index 0000000..86cf69c
 +const Walkers = preload("res://scripts/walkers.gd")
 +const WorldTraits = preload("res://scripts/world_traits.gd")
 +
-+const PATHS := ["home", "holed", "shelter", "away", "gone", "dead", "turned"]
++const PATHS := ["home", "holed", "shelter", "away", "gone", "dead", "turned", "looter"]
 +const P_PATH := 0
 +const P_FOOD := 1
 +const P_WATER := 2
@@ -206552,6 +206928,7 @@ index 0000000..86cf69c
 +		return
 +	st.day = day
 +	st.out = []
++	st.gang_out = []
 +	daily(world, day)
 +
 +static func daily(world, day: int) -> void:
@@ -206569,8 +206946,8 @@ index 0000000..86cf69c
 +			var r: Array = rows[i]
 +			r[P_FLAGS] = int(r[P_FLAGS]) & ~F_GAVE
 +			var path := str(r[P_PATH])
-+			if path in ["away", "gone"]:
-+				continue
++			if path in ["away", "gone", "looter"]:
++				continue   # (looters live with their gang: gangs.gd)
 +			if path in ["dead", "turned"]:
 +				_shut_in(world, area, i, r)
 +				continue
@@ -206596,6 +206973,7 @@ index 0000000..86cf69c
 +							shelter_room -= living(r)
 +			_deaths(world, area, i, r, day, society)
 +	load("res://scripts/communities.gd").daily(world, day)
++	load("res://scripts/gangs.gd").daily(world, day)
 +
 +static func _normal(world, area: String, i: int, r: Array) -> void:
 +	var n := living(r)
@@ -206712,6 +207090,10 @@ index 0000000..86cf69c
 +	# With nothing left: the shelter if it takes them; if not, those who can
 +	# walk set out for somewhere that still has food. The rest wait.
 +	var Shelter = load("res://scripts/shelter.gd")
++	if float(r[P_FOOD]) < 0.5 * n and int(r[P_HUNGRY]) >= 2:
++		# Some stop asking and start taking (gangs.gd).
++		if load("res://scripts/gangs.gd").recruit(world, area, i, r, day):
++			return
 +	if float(r[P_FOOD]) < 0.5 * n and int(r[P_HUNGRY]) >= 3:
 +		if Shelter.is_open(world):
 +			var sh: Dictionary = Shelter.state(world)
@@ -207015,7 +207397,7 @@ index 0000000..86cf69c
 +		st.news_day = today
 +		st.news_n = 0
 +	st.news_n = int(st.get("news_n", 0)) + 1
-+	if int(st.news_n) <= 3 or kind in ["robbery", "kindness"]:
++	if int(st.news_n) <= 3 or kind in ["robbery", "kindness", "raid", "gang", "gang_end", "group_found", "group_end"]:
 +		load("res://scripts/town_news.gd").record(world, kind, place, text)
 +
 +# ---------------------------------------------------------------- what is seen
@@ -207060,6 +207442,9 @@ index 0000000..86cf69c
 +	var together: String = load("res://scripts/communities.gd").signs(world, place)
 +	if not together.is_empty():
 +		lines.append(together)
++	var prowling: String = load("res://scripts/gangs.gd").street_signs(world, place)
++	if not prowling.is_empty():
++		lines.append(prowling)
 +	var share := float(occupied_n) / float(maxi(1, rows.size()))
 +	var night := hour < 6 or hour >= 18
 +	if occupied_n == 0:
@@ -208837,10 +209222,10 @@ index 0000000..0d06d68
 +uid://litrtaov1upn
 diff --git a/tests/test_residents149_38.gd b/tests/test_residents149_38.gd
 new file mode 100644
-index 0000000..cbb4760
+index 0000000..c3eca83
 --- /dev/null
 +++ b/tests/test_residents149_38.gd
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,284 @@
 +extends SceneTree
 +## v149.38: the town's households live their own lives — every home has its
 +## family from the seed; each morning they decide (stay, stock up, leave town,
@@ -209046,6 +209431,81 @@ index 0000000..cbb4760
 +	for d in 6:
 +		C._live(w, cmn, 500 + d)
 +	check(C.members(w, cmn).size() < n0 or bool(cmn.ended), "with nothing to eat, families leave the store (%d → %d)" % [n0, C.members(w, cmn).size()])
++	# Stage 4: the desperate and hard turn to taking, and set up in a lair.
++	var Gangs = load("res://scripts/gangs.gd")
++	w.s.society = "emergency"
++	var hard := -1
++	for i in Dwellings.count("団地"):
++		var rr: Array = Residents.row(w, "団地", i)
++		var ww: Dictionary = Residents.who(w, "団地", i)
++		if int(ww.kindness) < 20 and int(ww.courage) > 60 and ww.people.any(func(p): return bool(p.able)) and str(rr[Residents.P_PATH]) in ["holed", "home", "shelter", "away", "gone"]:
++			hard = i
++			break
++	var hr2: Array = Residents.row(w, "団地", hard)
++	hr2[Residents.P_PATH] = "holed"
++	hr2[Residents.P_ALIVE] = (1 << Residents.who(w, "団地", hard).people.size()) - 1
++	hr2[Residents.P_FLAGS] = 0
++	var turned := false
++	for d in 30:
++		hr2[Residents.P_FOOD] = 0.0
++		if Gangs.recruit(w, "団地", hard, hr2, 600 + d):
++			turned = true
++			break
++	var gang: Dictionary = Gangs.active(w)[0] if not Gangs.active(w).is_empty() else {}
++	check(turned and str(hr2[Residents.P_PATH]) == "looter" and not gang.is_empty() and str(gang.lair) in Gangs.LAIRS, "a hard, hungry household turns to looting and sets up in a lair")
++	var kind := -1
++	for i in Dwellings.count("団地"):
++		if int(Residents.who(w, "団地", i).kindness) > 80:
++			kind = i
++			break
++	var kr: Array = Residents.row(w, "団地", kind)
++	kr[Residents.P_PATH] = "holed"
++	kr[Residents.P_FOOD] = 0.0
++	kr[Residents.P_FLAGS] = 0
++	var kind_turned := false
++	for d in 30:
++		if Gangs.recruit(w, "団地", kind, kr, 700 + d):
++			kind_turned = true
++	check(not kind_turned, "a kind household does not")
++	# A raid on a lone household with food.
++	gang.store = 0.0
++	var victim2 := -1
++	for i in Dwellings.count("南の住宅街"):
++		var vr2: Array = Residents.row(w, "南の住宅街", i)
++		if str(vr2[Residents.P_PATH]) == "holed" and not load("res://scripts/communities.gd").member(vr2):
++			victim2 = i
++			break
++	for area2 in Residents.areas():
++		for rr in w.s.residents.hh[area2]:
++			if str(rr[Residents.P_PATH]) == "holed":
++				rr[Residents.P_FOOD] = minf(float(rr[Residents.P_FOOD]), 1.0)
++	var v2: Array = Residents.row(w, "南の住宅街", victim2)
++	v2[Residents.P_FOOD] = 30.0
++	Gangs._hit_home(w, gang, "南の住宅街", victim2, 800, 12345)
++	check(float(v2[Residents.P_FOOD]) == 0.0 or float(v2[Residents.P_FOOD]) == 30.0, "a raid takes everything, or is driven off at the door")
++	# The player's home, when a light shows: they are the ones who come.
++	check(Gangs.raiders_for_player(w) >= 1, "a gang can come to the player's door")
++	Gangs.took_from_player(w, 3.0)
++	check(float(gang.store) >= 3.0, "and what they take from the player feeds them")
++	# Walking into the lair.
++	w.s.district.bag.food = 3.0
++	w.s.inventory.erase("bat"); w.s.inventory.erase("bar"); w.s.inventory.erase("pipe")
++	var met: String = Gangs.confront(w, str(gang.lair))
++	check(met.contains("荷物を置いていけ") or met.contains("消えな"), "walking into their lair, you are robbed or warned off: " + met.left(60))
++	check(not Gangs.signs(w, str(gang.lair)).is_empty(), "the lair shows what it is")
++	# Hunger breaks them up.
++	gang.store = 0.0
++	for h in gang.homes:
++		var gr: Array = Residents.row(w, str(h[0]), int(h[1]))
++		gr[Residents.P_FOOD] = 0.0
++	for area2 in Residents.areas():
++		for rr in w.s.residents.hh[area2]:
++			rr[Residents.P_FOOD] = 0.0
++	for key in load("res://scripts/communities.gd").all(w):
++		load("res://scripts/communities.gd").all(w)[key].store = 0.0
++	for d in 8:
++		Gangs.daily(w, 900 + d)
++	check(bool(gang.ended) and str(hr2[Residents.P_PATH]) in ["gone", "dead"], "with nothing left to take, they break up and leave")
 +	# Saved and loaded.
 +	check(Residents.valid(w.s.residents) and w.validate_state(w.s.duplicate(true)), "the residents' state saves and loads")
 +	print("TOTAL FAILURES ", failures)
