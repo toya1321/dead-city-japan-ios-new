@@ -411,10 +411,10 @@ index 31c6246..cd97e3b 100644
  	var amount := float(quantity) * (1.0 if item == "food" else 2.0)
 diff --git a/scripts/dwellings.gd b/scripts/dwellings.gd
 new file mode 100644
-index 0000000..7d9705c
+index 0000000..5b8b0ca
 --- /dev/null
 +++ b/scripts/dwellings.gd
-@@ -0,0 +1,307 @@
+@@ -0,0 +1,325 @@
 +extends RefCounted
 +## v149.37: homes searched one at a time. Every home in a residential area
 +## (a block of the estate, a flat in the tower, a house on the street) is
@@ -611,7 +611,8 @@ index 0000000..7d9705c
 +static func rooms_left(world, area: String, i: int) -> Array:
 +	var st := _peek_state(world, area, i)
 +	var done: Array = st.get("rooms_done", [])
-+	return home(world, area, i).rooms.filter(func(r): return not r in done)
++	var left: Dictionary = st.get("left", {})
++	return home(world, area, i).rooms.filter(func(r): return not r in done or left.has(r))
 +
 +## What one room holds (the same every time it is first opened).
 +static func _room_goods(world, area: String, i: int, room: String) -> Dictionary:
@@ -651,12 +652,19 @@ index 0000000..7d9705c
 +			return "まだ、部屋の中に動くものがいる。"
 +		st.cleared = true
 +		st.erase("walker_pending")
-+	if room in st.rooms_done:
++	var left_here: Dictionary = st.get("left", {}).get(room, {})
++	if room in st.rooms_done and left_here.is_empty():
 +		return "%sはもう調べた。" % room
-+	world.advance_safe(10)
-+	st.rooms_done.append(room)
++	world.advance_safe(10 if left_here.is_empty() else 3)
 +	var goods := _room_goods(world, area, i, room)
 +	var picked := ransacked(world, area, i)
++	if not left_here.is_empty():
++		# Coming back for what could not be carried the first time.
++		goods = left_here.duplicate()
++		picked = false
++	if not room in st.rooms_done:
++		st.rooms_done.append(room)
++	var leftover := {}
 +	var bag: Dictionary = world.s.district.bag
 +	var found: Array = []
 +	var pool: Dictionary = District.houses(world, area)
@@ -672,13 +680,15 @@ index 0000000..7d9705c
 +					pool.food = float(pool.food) - take
 +					found.append("食料%.0f人日分" % take)
 +				if float(v) > take:
-+					found.append("（持ちきれない食料が%.0f人日分残った）" % (float(v) - take))
++					leftover.food = float(v) - take
 +			"water":
 +				var take := minf(float(v), minf(District.WATER_LIMIT - float(bag.water), float(pool.water)))
 +				if take > 0.0:
 +					bag.water = float(bag.water) + take
 +					pool.water = float(pool.water) - take
 +					found.append("水%.0fL" % take)
++				if float(v) > take:
++					leftover.water = float(v) - take
 +			"bandage", "wood", "parts", "seeds":
 +				if int(v) > 0:
 +					world.s.inventory[item] = int(world.s.inventory.get(item, 0)) + int(v)
@@ -701,6 +711,14 @@ index 0000000..7d9705c
 +					var Weapons = load("res://scripts/weapons.gd")
 +					Weapons.state(world).weapons.append({"type": str(v), "wear": 60})
 +					found.append(Weapons.name_of(str(v)))
++	# What could not be carried stays in the room, to come back for.
++	var all_left: Dictionary = st.get("left", {})
++	if leftover.is_empty():
++		all_left.erase(room)
++	else:
++		all_left[room] = leftover
++		found.append("持ちきれなかった%sは、そのまま置いてきた（取りに戻れる）" % "と".join(leftover.keys().map(func(k): return "食料%.0f人日分" % float(leftover[k]) if k == "food" else "水%.0fL" % float(leftover[k]))))
++	st.left = all_left
 +	var left := rooms_left(world, area, i)
 +	var rest := "（残り：%s）" % "、".join(left) if not left.is_empty() else "（この家は、もう調べるところがない）"
 +	if found.is_empty():
@@ -2849,10 +2867,10 @@ index 0000000..b376f14
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_dwellings149_37.gd b/tests/test_dwellings149_37.gd
 new file mode 100644
-index 0000000..4a6de1a
+index 0000000..765f085
 --- /dev/null
 +++ b/tests/test_dwellings149_37.gd
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,100 @@
 +extends SceneTree
 +## v149.37: homes searched one at a time — the same home is the same every
 +## time, only what changed is saved, locked doors can be forced (noisily),
@@ -2906,8 +2924,18 @@ index 0000000..4a6de1a
 +	await g._on_command("台所を調べる")
 +	var got := float(w.s.district.bag.food) - food
 +	check(got > 0.0 and float(District.houses(w, "団地").food) == pool - got, "the kitchen gives food, taken from the area's store (shared with survivors)")
++	# What cannot be carried stays there to come back for.
++	w.s.district.bag.food = 4.0
++	var bedroom_i := open_i
++	var st0: Dictionary = Dwellings.state(w, "団地", open_i)
++	st0.left = {"台所": {"food": 2.0}}
 +	await g._on_command("台所を調べる")
-+	check(g.log_entries[-1].contains("もう調べた"), "a room searched stays searched")
++	check(g.log_entries[-1].contains("置いてきた"), "a full bag leaves food behind in the room: " + g.log_entries[-1].left(80))
++	w.s.district.bag.food = 0.0
++	await g._on_command("台所を調べる")
++	check(float(w.s.district.bag.food) == 2.0, "and it is still there when you come back")
++	await g._on_command("台所を調べる")
++	check(g.log_entries[-1].contains("もう調べた"), "a room searched and emptied stays searched")
 +	await g._on_command("部屋を出る")
 +	check(not Dwellings.inside(w), "leaving the flat")
 +	# A locked door: forced with a tool, loudly.
