@@ -203837,7 +203837,7 @@ index 0000000..87375ab
 +uid://b8scaaj2y4f6a
 diff --git a/qa/residents_watch.gd b/qa/residents_watch.gd
 new file mode 100644
-index 0000000..adb4f51
+index 0000000..8935c5b
 --- /dev/null
 +++ b/qa/residents_watch.gd
 @@ -0,0 +1,35 @@
@@ -203864,7 +203864,7 @@ index 0000000..adb4f51
 +			w.advance_safe(60)
 +		var c: Dictionary = Residents.census(w)
 +		var sh: Dictionary = w.s.get("shelter", {})
-+		print("DAY %3d %-9s people %4d | home %3d holed %3d shelter %3d away %3d gone %3d dead %3d turned %3d looter %3d | shelter %s pop %s | cm %d gangs %s | walkers %d" % [day + 1, w.s.society, c.people, c.home, c.holed, c.shelter, c.away, c.gone, c.dead, c.turned, c.looter, sh.get("status", "-"), "%s(o%s cap%s st%.0f ord%.0f)" % [sh.get("pop", "-"), sh.get("outsiders", "-"), sh.get("capacity", "-"), float(sh.get("stock", 0)), float(sh.get("order", 0))], load("res://scripts/communities.gd").all(w).values().filter(func(c): return not bool(c.ended)).size(), str(load("res://scripts/gangs.gd").active(w).map(func(gg): return "%s:%d/%.0f" % [gg.lair, load("res://scripts/gangs.gd").people(w, gg), float(gg.store)])), load("res://scripts/walkers.gd").total(w)])
++		print("DAY %3d %-9s people %4d | home %3d holed %3d shelter %3d away %3d gone %3d dead %3d turned %3d looter %3d wander %2d/npc %2d | shelter %s pop %s | cm %d gangs %s | walkers %d" % [day + 1, w.s.society, c.people, c.home, c.holed, c.shelter, c.away, c.gone, c.dead, c.turned, c.looter, c.wander, w.s.survivors.people.values().filter(func(q): return str(q.status) == "alive" and not bool(q.get("neighbor", false))).size(), sh.get("status", "-"), "%s(o%s cap%s st%.0f ord%.0f)" % [sh.get("pop", "-"), sh.get("outsiders", "-"), sh.get("capacity", "-"), float(sh.get("stock", 0)), float(sh.get("order", 0))], load("res://scripts/communities.gd").all(w).values().filter(func(c): return not bool(c.ended)).size(), str(load("res://scripts/gangs.gd").active(w).map(func(gg): return "%s:%d/%.0f" % [gg.lair, load("res://scripts/gangs.gd").people(w, gg), float(gg.store)])), load("res://scripts/walkers.gd").total(w)])
 +	var cm = w.s.residents.get("cm", {})
 +	for k in cm:
 +		var c = cm[k]
@@ -203872,7 +203872,7 @@ index 0000000..adb4f51
 +	print("MS ", Time.get_ticks_msec() - t0, " SAVE ", JSON.stringify(w.s).length(), " RES ", JSON.stringify(w.s.residents).length())
 +	for a in w.s.district.houses_by:
 +		print("POOL ", a, " ", w.s.district.houses_by[a])
-+	for e in w.s.survivors.get("history", []).filter(func(e): return str(e.kind) in ["raid", "gang", "gang_end"]).slice(-14):
++	for e in w.s.survivors.get("history", []).filter(func(e): return str(e.kind) in ["wander", "gang", "gang_end"]).slice(-14):
 +		print("  * d", e.day, " ", e.text)
 +	print("SIGNS ", Residents.signs(w, "団地"))
 +	quit()
@@ -204601,7 +204601,7 @@ index 31c6246..cd97e3b 100644
  	var amount := float(quantity) * (1.0 if item == "food" else 2.0)
 diff --git a/scripts/dwellings.gd b/scripts/dwellings.gd
 new file mode 100644
-index 0000000..a6de336
+index 0000000..48a5649
 --- /dev/null
 +++ b/scripts/dwellings.gd
 @@ -0,0 +1,398 @@
@@ -204706,7 +204706,7 @@ index 0000000..a6de336
 +			"shelter":
 +				out.locked = lock < 80
 +				out.note = "台所のテーブルに書き置きがあった。「先に避難所へ行きます。あとで来て」"
-+			"gone":
++			"gone", "wander":
 +				out.locked = lock < 15
 +				out.note = "居間の床に、走り書きの紙。「噛まれた。もう出られない。ごめん」" if _h(world, area, i, "note-gone") % 3 == 0 else ""
 +			"dead", "turned":
@@ -205012,10 +205012,10 @@ index 0000000..9bf6866
 +uid://cs02iqkrnmci1
 diff --git a/scripts/gangs.gd b/scripts/gangs.gd
 new file mode 100644
-index 0000000..ecf3d23
+index 0000000..dc8745f
 --- /dev/null
 +++ b/scripts/gangs.gd
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,318 @@
 +extends RefCounted
 +## v149.38 stage 4: looters. Nobody is born one. A household holed up alone,
 +## out of food, with someone able-bodied and not much given to kindness — or
@@ -205267,7 +205267,10 @@ index 0000000..ecf3d23
 +	for h in g.homes:
 +		var r := Residents.row(world, str(h[0]), int(h[1]))
 +		if str(r[Residents.P_PATH]) == "looter":
-+			r[Residents.P_PATH] = "gone" if Residents.living(r) > 0 else "dead"
++			if Residents.living(r) > 0:
++				Residents._gone(world, str(h[0]), int(h[1]), r, day, "gang")
++			else:
++				r[Residents.P_PATH] = "dead"
 +			r[Residents.P_SINCE] = day
 +	Residents._news(world, "gang_end", str(g.lair), "%sにいた連中は、%s" % [g.lair, "食べる物にも困って、町を出ていったらしい。" if why == "hunger" else "もういないらしい。"])
 +
@@ -206750,10 +206753,10 @@ index 8dd4800..22af019 100644
  				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/residents.gd b/scripts/residents.gd
 new file mode 100644
-index 0000000..e714c23
+index 0000000..dfd4b81
 --- /dev/null
 +++ b/scripts/residents.gd
-@@ -0,0 +1,836 @@
+@@ -0,0 +1,848 @@
 +extends RefCounted
 +## v149.38: the people who live in the town's homes — every household in the
 +## estate, the tower block and the three streets of houses (790 homes). Who
@@ -206784,7 +206787,7 @@ index 0000000..e714c23
 +const Walkers = preload("res://scripts/walkers.gd")
 +const WorldTraits = preload("res://scripts/world_traits.gd")
 +
-+const PATHS := ["home", "holed", "shelter", "away", "gone", "dead", "turned", "looter"]
++const PATHS := ["home", "holed", "shelter", "away", "gone", "dead", "turned", "looter", "wander"]
 +const P_PATH := 0
 +const P_FOOD := 1
 +const P_WATER := 2
@@ -206946,7 +206949,7 @@ index 0000000..e714c23
 +			var r: Array = rows[i]
 +			r[P_FLAGS] = int(r[P_FLAGS]) & ~F_GAVE
 +			var path := str(r[P_PATH])
-+			if path in ["away", "gone", "looter"]:
++			if path in ["away", "gone", "looter", "wander"]:
 +				continue   # (looters live with their gang: gangs.gd)
 +			if path in ["dead", "turned"]:
 +				_shut_in(world, area, i, r)
@@ -206974,6 +206977,7 @@ index 0000000..e714c23
 +			_deaths(world, area, i, r, day, society)
 +	load("res://scripts/communities.gd").daily(world, day)
 +	load("res://scripts/gangs.gd").daily(world, day)
++	load("res://scripts/wanderers.gd").sync(world)
 +
 +static func _normal(world, area: String, i: int, r: Array) -> void:
 +	var n := living(r)
@@ -207053,6 +207057,18 @@ index 0000000..e714c23
 +	r[P_FOOD] = float(r[P_FOOD]) - carried
 +	_leave_home(world, area, r, "shelter", 0.0)
 +
++## v149.38 stage 5: leaving home for good — out of town, or (for some) to
++## wander the town (wanderers.gd). True if they stayed to wander.
++static func _gone(world, area: String, i: int, r: Array, day: int, why: String) -> bool:
++	r[P_SINCE] = day
++	if load("res://scripts/wanderers.gd").maybe(world, area, i, r, day, why):
++		var pool := District.houses(world, area)
++		pool.food = float(pool.food) + float(r[P_FOOD])
++		r[P_FOOD] = 0.0
++		return true
++	_leave_home(world, area, r, "gone", 1.0)
++	return false
++
 +## Leaving: what is not carried stays in the cupboards for whoever comes.
 +static func _leave_home(world, area: String, r: Array, path: String, carry: float) -> void:
 +	var pool := District.houses(world, area)
@@ -207107,8 +207123,8 @@ index 0000000..e714c23
 +			if int(r[P_ALIVE]) & (1 << k) and bool(w.people[k].able):
 +				can_walk = true
 +		if can_walk and int(r[P_HUNGRY]) >= 5 and _roll(world, area, i, day, "set-out", 100) < 15 + int(w.courage) / 4:
-+			_leave_home(world, area, r, "gone", 1.0)
-+			r[P_SINCE] = day
++			if _gone(world, area, i, r, day, "robbed" if int(r[P_FLAGS]) & F_ROBBED else "hunger"):
++				return
 +			_news(world, "left", area, "%sの%sさん一家が、荷物をまとめて町を出ていったらしい。" % [_where(area, i), w.surname])
 +
 +## Someone goes out for food or water. Who: the most able. Where: the empty
@@ -207218,8 +207234,7 @@ index 0000000..e714c23
 +	r[P_SINCE] = day
 +	if living(r) > 0:
 +		# The living run from what their family has become.
-+		_leave_home(world, area, r, "gone", 0.5)
-+		r[P_ALIVE] = 0
++		_gone(world, area, i, r, day, "turned")
 +		_news(world, "turned", area, "%sの%sさんの家で、家族が感染者になったらしい。残りの人は逃げ出したそうだ。" % [_where(area, i), w.surname])
 +	else:
 +		r[P_PATH] = "turned"
@@ -207413,7 +207428,7 @@ index 0000000..e714c23
 +	for area in world.s.residents.hh:
 +		for r in world.s.residents.hh[area]:
 +			out[str(r[P_PATH])] += 1
-+			if str(r[P_PATH]) in ["home", "holed", "shelter"]:
++			if str(r[P_PATH]) in ["home", "holed", "shelter", "looter", "wander"]:
 +				out.people += living(r)
 +	return out
 +
@@ -207492,7 +207507,7 @@ index 0000000..e714c23
 +	match str(r[P_PATH]):
 +		"turned":
 +			return "ノックすると、ドアの向こうで何かが重くぶつかる音がした。うめくような声。……開けない方がいい。" if int(r[P_FLAGS]) & F_INSIDE else "返事はない。"
-+		"dead", "away", "gone", "shelter":
++		"dead", "away", "gone", "shelter", "wander", "looter":
 +			return "何度かノックしたが、返事はない。"
 +	var w := who(world, area, i)
 +	var n := living(r)
@@ -208389,6 +208404,122 @@ index 1e90817..403a6b6 100644
  		# Long after the collapse the dead slowly fall apart.
  		if day >= 60:
  			for place in w.places.keys():
+diff --git a/scripts/wanderers.gd b/scripts/wanderers.gd
+new file mode 100644
+index 0000000..7ed7a5b
+--- /dev/null
++++ b/scripts/wanderers.gd
+@@ -0,0 +1,110 @@
++extends RefCounted
++## v149.38 stage 5: wanderers. Not everyone who loses their home leaves the
++## town. Someone whose family turned, whose home was robbed bare, whose block
++## came apart or whose gang broke up may stay — moving from place to place,
++## searching empty buildings, sleeping where they can. They become one of the
++## town's survivors (survivors.gd / npc_life.gd): living hour by hour where the
++## player can meet them, talk, trade, travel together, and settle with others
++## (npc_groups.gd). People from other towns still drift in as before.
++##
++## The household's row keeps path "wander" and the one member who stays;
++## the survivor's id is "res_<area>_<i>".
++
++const Residents = preload("res://scripts/residents.gd")
++const Survivors = preload("res://scripts/survivors.gd")
++const Parts = preload("res://scripts/survivor_parts.gd")
++const MAX_WANDERING := 10
++
++static func id_of(area: String, i: int) -> String:
++	return "res_%s_%d" % [area, i]
++
++static func wandering(world) -> int:
++	if not world.s.get("survivors") is Dictionary:
++		return 0
++	var n := 0
++	for id in world.s.survivors.people:
++		var p: Dictionary = world.s.survivors.people[id]
++		if str(id).begins_with("res_") and str(p.status) == "alive":
++			n += 1
++	return n
++
++const WHY := {
++	"turned": "家族が感染者になり、家を飛び出した。",
++	"hunger": "家の食べ物が尽きて、町をさまよっている。",
++	"robbed": "家を略奪者に襲われ、何もかも持っていかれた。",
++	"apart": "一緒に暮らしていた近所の集まりが、ばらばらになった。",
++	"gang": "仲間とつるんでいたが、もう一人だ。",
++}
++
++## Someone from a household just leaving their home stays in town instead.
++static func maybe(world, area: String, i: int, r: Array, day: int, why: String) -> bool:
++	if not world.s.get("survivors") is Dictionary or wandering(world) >= MAX_WANDERING:
++		return false
++	var w := Residents.who(world, area, i)
++	var k := -1
++	for b in w.people.size():
++		if int(r[Residents.P_ALIVE]) & (1 << b) and bool(w.people[b].able):
++			k = b
++			break
++	if k < 0:
++		return false
++	# Families with children go together, and go; those alone more often stay.
++	var alone := Residents.living(r) <= 1
++	if Residents._roll(world, area, i, day, "wander", 100) >= (45 if alone else 15):
++		return false
++	var people: Dictionary = Survivors.ensure(world).people
++	var used := {}
++	for id in people:
++		used[str(people[id].name)] = true
++	var name := str(w.surname)
++	if used.has(name):
++		return false
++	var person: Dictionary = w.people[k]
++	var role_id := "office"
++	if str(person.band) == "young":
++		role_id = "clerk"
++	elif str(person.sex) == "f" and str(w.family) == "子どものいる家族":
++		role_id = "homemaker"
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([int(world.s.seed), area, i, "wanderer"])
++	var made: Dictionary = Survivors._make(rng, role_id, Parts.ROLES[role_id], str(person.sex) == "m", area, {})
++	if made.is_empty():
++		return false
++	var id := id_of(area, i)
++	made.name = name
++	made.id = id
++	made.arrived = day
++	made.resident = [area, i]
++	made.tag = ""
++	made.secret = ""
++	made.situation = "lost"
++	for key in ["deadline_day", "hunger_day", "turn_day"]:
++		made.erase(key)
++	made.background = "%s（%s）に住んでいた%s。%s" % [area, load("res://scripts/dwellings.gd").address(area, i), str(Parts.ROLES[role_id].job), WHY.get(why, WHY.hunger)]
++	made.intro = "%sが、物陰からこちらをうかがっている。近所で見かけたことのある顔だ。" % str(made.label)
++	people[id] = made
++	var goods: Dictionary = load("res://scripts/trade.gd").goods(world, id)
++	goods.food = minf(2.0, float(r[Residents.P_FOOD]) + 1.0)
++	r[Residents.P_ALIVE] = 1 << k
++	r[Residents.P_PATH] = "wander"
++	r[Residents.P_SINCE] = day
++	Residents._news(world, "wander", area, "%sの%sさんが、家を出て町をさまよっているらしい。" % [Residents._where(area, i), name])
++	return true
++
++## Each day: those of the town's own who were wandering and are no more.
++static func sync(world) -> void:
++	if not world.s.get("survivors") is Dictionary:
++		return
++	var people: Dictionary = world.s.survivors.people
++	for area in world.s.residents.hh:
++		var rows: Array = world.s.residents.hh[area]
++		for i in rows.size():
++			var r: Array = rows[i]
++			if str(r[Residents.P_PATH]) != "wander":
++				continue
++			var p: Dictionary = people.get(id_of(area, i), {})
++			if p.is_empty() or str(p.status) == "dead":
++				r[Residents.P_PATH] = "dead"
++				r[Residents.P_ALIVE] = 0
++			elif str(p.status) == "joined":
++				r[Residents.P_PATH] = "gone"   # went with the player's household
 diff --git a/scripts/weapons.gd b/scripts/weapons.gd
 index 1e93ac4..dfc1830 100644
 --- a/scripts/weapons.gd
@@ -209222,10 +209353,10 @@ index 0000000..0d06d68
 +uid://litrtaov1upn
 diff --git a/tests/test_residents149_38.gd b/tests/test_residents149_38.gd
 new file mode 100644
-index 0000000..c3eca83
+index 0000000..844a966
 --- /dev/null
 +++ b/tests/test_residents149_38.gd
-@@ -0,0 +1,284 @@
+@@ -0,0 +1,307 @@
 +extends SceneTree
 +## v149.38: the town's households live their own lives — every home has its
 +## family from the seed; each morning they decide (stay, stock up, leave town,
@@ -209506,6 +209637,29 @@ index 0000000..c3eca83
 +	for d in 8:
 +		Gangs.daily(w, 900 + d)
 +	check(bool(gang.ended) and str(hr2[Residents.P_PATH]) in ["gone", "dead"], "with nothing left to take, they break up and leave")
++	# Stage 5: someone who loses their home may stay to wander the town.
++	var Wand = load("res://scripts/wanderers.gd")
++	var lone := -1
++	for i in Dwellings.count("南の住宅街"):
++		var ww2: Dictionary = Residents.who(w, "南の住宅街", i)
++		if ww2.people.size() == 1 and bool(ww2.people[0].able) and not w.s.survivors.people.values().any(func(q): return str(q.name) == str(ww2.surname)):
++			lone = i
++			break
++	var lr2: Array = Residents.row(w, "南の住宅街", lone)
++	lr2[Residents.P_PATH] = "holed"
++	lr2[Residents.P_ALIVE] = 1
++	var stayed := false
++	for d in 40:
++		if Wand.maybe(w, "南の住宅街", lone, lr2, 1000 + d, "hunger"):
++			stayed = true
++			break
++	var wp: Dictionary = w.s.survivors.people.get(Wand.id_of("南の住宅街", lone), {})
++	check(stayed and str(lr2[Residents.P_PATH]) == "wander" and str(wp.get("status", "")) == "alive", "one who has lost their home can stay in town, as one of its survivors")
++	check(str(wp.get("place", "")) == "南の住宅街" and str(wp.get("background", "")).contains("住んでいた"), "they remember where they lived: " + str(wp.get("background", "")).left(60))
++	check(w.validate_state(w.s.duplicate(true)), "and the survivor record is a proper one")
++	wp.status = "dead"
++	Wand.sync(w)
++	check(str(lr2[Residents.P_PATH]) == "dead", "what becomes of them is the household's end too")
 +	# Saved and loaded.
 +	check(Residents.valid(w.s.residents) and w.validate_state(w.s.duplicate(true)), "the residents' state saves and loads")
 +	print("TOTAL FAILURES ", failures)
