@@ -1,0 +1,98 @@
+name: Build v149.35 native Qwen IPA
+
+on:
+  push:
+    branches: [build/ios-v14935]
+    paths:
+      - '.github/workflows/ios-native-v14935.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15-intel
+    timeout-minutes: 55
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and unpack v149.10 source
+        run: |
+          source_parts=(ci/v149.10-source/part-*)
+          test "${#source_parts[@]}" -eq 30
+          archive="$RUNNER_TEMP/deadcity-v149.10.zip"
+          cat "${source_parts[@]}" > "$archive"
+          printf '%s  %s\n' '36a2f709df872c42ed478b826816b12c34f79cd8ddaa8416711d6a37d76a9158' "$archive" | shasum -a 256 -c -
+          unzip -tq "$archive"
+          unzip -q "$archive" -d game
+          git apply --directory=game ci/v149.10-ios-build.patch
+          git apply --directory=game ci/v149.11-local-ai.patch
+          git apply --directory=game ci/v149.11-comparison.patch
+          git apply --directory=game ci/v149.16-npc-dialogue.patch
+          git apply --directory=game ci/v149.17-npc-retry.patch
+          git apply --directory=game ci/v149.18-npc-requests.patch
+          git apply --directory=game ci/v149.19-npc-shopping.patch
+          git apply --directory=game ci/v149.20-npc-reasons.patch
+          git apply --directory=game ci/v149.21-ui.patch
+          git apply --directory=game ci/v149.22-chips-scroll.patch
+          git apply --directory=game ci/v149.23-photos.patch
+          git apply --directory=game ci/v149.24-zombies.patch
+          git apply --directory=game ci/v149.25-life.patch
+          git apply --directory=game ci/v149.26-survivors.patch
+          git apply --directory=game ci/v149.27-photo-size.patch
+          git apply --directory=game ci/v149.28-solo.patch
+          git apply --directory=game ci/v149.29-bases.patch
+          git apply --directory=game ci/v149.30-winter.patch
+          git apply --directory=game ci/v149.31-faces.patch
+          git apply --directory=game ci/v149.32-action-photos.patch
+          git apply --directory=game ci/v149.33-combat.patch
+          git apply --directory=game ci/v149.34-shop.patch
+          git apply --directory=game ci/v149.35-world.patch
+          cp -R ci/v149.35-assets/assets/. game/assets/
+      - name: Set iOS version to 0.149.35 (182)
+        working-directory: game
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          for name, revisions in {
+              "export_presets.cfg": {
+                  'application/short_version="0.149.33"': 'application/short_version="0.149.35"',
+                  'application/version="181"': 'application/version="182"',
+              },
+              "build_scripts/build-ios-unsigned.sh": {
+                  "149.33": "149.35",
+                  "str(info['CFBundleVersion']) == '181'": "str(info['CFBundleVersion']) == '182'",
+              },
+          }.items():
+              path = Path(name)
+              contents = path.read_text()
+              for old, new in revisions.items():
+                  if old not in contents:
+                      raise SystemExit(f"{name}: version marker missing: {old}")
+                  contents = contents.replace(old, new)
+              path.write_text(contents)
+          PY
+      - name: Build and verify native unsigned arm64 IPA
+        working-directory: game
+        env:
+          DCJ_LOCAL_LLM: '1'
+        run: bash build_scripts/build-ios-unsigned.sh
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeadCityJapan-v149.35-local-llm-unsigned
+          path: |
+            game/build/DeadCityJapan-v149.35-local-llm-unsigned.ipa
+            game/build/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v149.35-ios-build-logs
+          path: game/build/*.log
+          if-no-files-found: ignore
