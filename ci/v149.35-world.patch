@@ -2151,7 +2151,7 @@ index 5ea74f7..976e230 100644
  		if cause.is_empty():
 diff --git a/scripts/town_map.gd b/scripts/town_map.gd
 new file mode 100644
-index 0000000..5a672c3
+index 0000000..4d190ad
 --- /dev/null
 +++ b/scripts/town_map.gd
 @@ -0,0 +1,121 @@
@@ -2172,7 +2172,7 @@ index 0000000..5a672c3
 +## ground: water, gardens). photo: the picture this place should have; until
 +## it exists, the picture frame shows the place's name in words.
 +
-+## place: {kind, area, links, minutes, pos, photo, fallback, aliases, text{normal,alert,collapse}, ...}
++## place: {kind, area, links, minutes, pos, photo, aliases, text{normal,alert,collapse}, ...}
 +const PLACES := {
 +	# --- 駅周辺 ---
 +	"駅のホーム": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(58, 34), "photo": "station_platform",
