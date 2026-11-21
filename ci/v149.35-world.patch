@@ -7948,6 +7948,323 @@ index 0000000..5743d53
 +		print("census a ", load("res://scripts/residents.gd").census(a.world))
 +		print("census c ", load("res://scripts/residents.gd").census(c.world))
 +	quit()
+diff --git a/qa/smart_bot.gd b/qa/smart_bot.gd
+new file mode 100644
+index 0000000..abcfad2
+--- /dev/null
++++ b/qa/smart_bot.gd
+@@ -0,0 +1,311 @@
++extends SceneTree
++## A stronger player, played automatically for DCJ_DAYS days (DCJ_SEED), with
++## only the commands a player can type. It stocks up while money still buys
++## food, keeps the house dark, slips out the back when the front is watched,
++## searches empty homes room by room where the streets are quietest, and once
++## the town has fallen, earns a place in a neighbourhood community and lives
++## there. Prints a line a day and what happened; nothing is cheated.
++const Main = preload("res://main.tscn")
++const Combat = preload("res://scripts/combat.gd")
++const Walkers = preload("res://scripts/walkers.gd")
++const District = preload("res://scripts/district.gd")
++const Communities = preload("res://scripts/communities.gd")
++const Residents = preload("res://scripts/residents.gd")
++const AREAS := ["住宅街", "北の住宅街", "南の住宅街", "団地", "駅前のマンション"]
++var g
++var steps := 0
++var fights := 0
++var bites := 0
++var joined_day := -1
++var target_area := ""
++var helped := 0
++var verbose := false
++func _initialize() -> void:
++	call_deferred("run")
++func w():
++	return g.world
++func s():
++	return g.world.s
++func do(cmd: String) -> String:
++	steps += 1
++	g.log_entries.clear()
++	await g._on_command(cmd)
++	while g.advancing:
++		await process_frame
++	var said := "\n".join(g.log_entries)
++	if verbose:
++		print("> ", cmd, " :: ", said.replace("\n", " / ").left(220))
++	else:
++		for line in g.log_entries:
++			var l := str(line)
++			if l.contains("噛まれ") or l.contains("【最期】") or l.contains("一緒に。") or l.contains("押し入") or l.contains("取り囲んだ"):
++				print("  %s %s [%s] %s | %s" % [g.day_label.text, g.clock_label.text, g.location, cmd, l.replace("\n", " / ").left(200)])
++	return said
++func hour() -> float:
++	return float(w().hour_of_day())
++func at_home() -> bool:
++	return g.location in ["寝室", "居間", "台所", "廊下", "玄関"]
++func society() -> String:
++	return str(s().society)
++func fight_out() -> void:
++	var n := 0
++	var idle := 0
++	while Combat.active(w()) and float(s().health) > 0 and n < 40:
++		n += 1
++		var count: int = Combat.zombies(w()).size()
++		var noticed := bool(s().walkers.encounter.get("noticed", s().walkers.encounter.get("near", false)))
++		var chips: Array = g._suggestions()
++		var cmd := "脚を払って、倒れたら頭を叩く"
++		if not noticed and n == 1:
++			# Not seen yet: draw them off with a thrown stone.
++			cmd = "物を投げて気をそらす"
++		elif not noticed and "隠れる" in chips:
++			cmd = "隠れる"
++		elif count == 1 and float(s().health) >= 60:
++			cmd = "脚を払って、倒れたら頭を叩く"
++		elif count >= 2 or float(s().health) < 50 or noticed:
++			cmd = "逃げる"
++		elif idle > 0:
++			# The last move did nothing (out of reach, too dark): take what is offered.
++			for c in ["待ち構える", "下がる", "逃げる"]:
++				if c in chips:
++					cmd = c
++					break
++		var said := await do(cmd)
++		idle = idle + 1 if said.contains("何もしていない") else 0
++		if idle >= 3:
++			await do("逃げる")
++			idle = 0
++	if n > 0:
++		fights += 1
++	if bool(s().get("bitten", false)) and bites == 0:
++		bites = 1
++		print("  %s BITTEN at %s" % [g.day_label.text, g.location])
++func walkers_at(place: String) -> int:
++	return Walkers.count(w(), place) + Walkers.horde_at(w(), place)
++func porch_watched() -> bool:
++	return walkers_at("建物前") > 0
++## The street itself (the back door comes out on it too).
++func street_busy() -> bool:
++	return walkers_at("屋外") > 5 or Walkers.horde_at(w(), "屋外") > 0 or Walkers.horde_at(w(), "住宅街") > 0
++var trouble := false
++func go(place: String) -> void:
++	var hp := float(s().health)
++	for leg in 4:
++		await do(place + "へ行く")
++		await fight_out()
++		if float(s().health) < hp - 0.5:
++			trouble = true
++			return
++		if g.location == place:
++			return
++func leave_house() -> void:
++	trouble = false
++	if porch_watched():
++		await do("裏口から外に出る")
++		await fight_out()
++	else:
++		await do("外に出る")
++		await fight_out()
++func go_home() -> void:
++	if joined_day >= 0 and target_area != "":
++		await go(target_area)
++		return
++	await do("家に帰る")
++	await fight_out()
++	if not at_home():
++		await do("裏口から家に入る")
++		await fight_out()
++func carried_food() -> float:
++	return float(s().district.bag.food)
++func stock_food() -> float:
++	return float(s().food) + carried_food()
++## While shops still sell: buy for two weeks.
++func shop_run() -> void:
++	var sites: Dictionary = s().district.sites
++	for shop in ["スーパー", "コンビニ", "食品店"]:
++		if not sites.has(shop) or bool(sites[shop].vacant) or int(s().cash) < 1500:
++			continue
++		if walkers_at(shop) >= 2:
++			continue
++		await go(shop)
++		if g.location != shop:
++			break
++		for n in [4, 3, 2, 1]:
++			var before := carried_food()
++			await do("食料を%d個買う" % n)
++			if carried_food() > before:
++				break
++		for n in [4, 2, 1]:
++			var bw := float(s().district.bag.water)
++			await do("水を%d本買う" % n)
++			if float(s().district.bag.water) > bw:
++				break
++		break
++	await go_home()
++## The quietest residential area with homes left to search.
++func quiet_area() -> String:
++	var best := ""
++	var least := 99999
++	for a in AREAS:
++		if not District.is_houses(a):
++			continue
++		var n := walkers_at(a)
++		if n < least and load("res://scripts/dwellings.gd").next_index(w(), a) >= 0:
++			least = n
++			best = a
++	return best if least < 8 else ""
++func search_homes() -> void:
++	var area := quiet_area()
++	if area.is_empty():
++		return
++	if at_home():
++		await leave_house()
++	await go(area)
++	if g.location != area or trouble:
++		return
++	for tries in 10:
++		if carried_food() >= 3.5 or float(s().health) < 45.0 or hour() >= 17.0:
++			break
++		var said := await do("次の部屋を探す")
++		await fight_out()
++		if said.contains("全部見て回った"):
++			break
++		var at: Dictionary = s().get("inside", {})
++		if at.is_empty() or bool(at.get("at_door", false)):
++			continue
++		for room in ["台所", "押し入れ", "風呂場", "居間", "寝室"]:
++			if carried_food() >= 3.5:
++				break
++			await do("%sを調べる" % room)
++			await fight_out()
++		await do("部屋を出る")
++## A community to join: the one whose block is in the quietest area.
++func find_community() -> String:
++	for a in AREAS:
++		if District.is_houses(a) and not Communities.here(w(), a).is_empty() and walkers_at(a) < 8:
++			return a
++	return ""
++func court_community() -> void:
++	if target_area.is_empty():
++		target_area = find_community()
++	if target_area.is_empty() or Communities.here(w(), target_area).is_empty():
++		target_area = ""
++		return
++	if at_home():
++		await leave_house()
++	await go(target_area)
++	if g.location != target_area or trouble:
++		await go_home()
++		return
++	await do("集まりを訪ねる")
++	if carried_food() >= 1.0 and helped % 2 == 0:
++		await do("食料を寄付する")
++	await do("手伝う")
++	helped += 1
++	var said := await do("仲間に入れてもらう")
++	if Communities.player_here(w(), target_area):
++		joined_day = int(s().minute) / 1440
++		print("  %s JOINED the community at %s (helped %d times)" % [g.day_label.text, target_area, helped])
++	elif said.contains("近づくな"):
++		target_area = ""
++	else:
++		await go_home()
++## A day living in the community.
++func community_day() -> void:
++	if not Communities.player_here(w(), target_area):
++		print("  %s the community at %s is gone; going home" % [g.day_label.text, target_area])
++		joined_day = -1
++		target_area = ""
++		await do("家に帰る")
++		await fight_out()
++		return
++	if g.location != target_area:
++		await go(target_area)
++		return
++	if hour() >= 21.0 or hour() < 6.0 or float(s().fatigue) > 70:
++		await do("寝る"); return
++	if float(s().hunger) > 50:
++		await do("食事する"); return
++	if float(s().thirst) > 45:
++		await do("水を飲む"); return
++	if hour() >= 8.0 and hour() < 12.0:
++		await do("手伝う"); return
++	if hour() >= 13.0 and hour() < 16.0 and carried_food() < 2.0 and quiet_area() != "":
++		await search_homes()
++		if g.location != target_area:
++			await go(target_area)
++		if carried_food() >= 1.0:
++			await do("食料を寄付する")
++		return
++	await do("1時間休息")
++func home_day(filled: Array) -> void:
++	var sv = s()
++	if not at_home():
++		var before: String = g.location
++		await go_home()
++		if g.location == before:
++			# Could not get back: wait out the danger where we are.
++			await do("1時間休息")
++		return
++	if not filled[0] and society() != "normal":
++		filled[0] = true
++		await do("浴槽に水をためる")
++	if not filled[1] and society() in ["disrupted", "emergency"]:
++		filled[1] = true
++		await do("家じゅうの窓をふさぐ")
++	if hour() >= 21.0 or hour() < 6.0 or float(sv.fatigue) > 70:
++		await do("寝る"); return
++	if float(sv.health) < 70 and sv.get("combat") is Dictionary and not sv.combat.get("wounds", []).is_empty() and float(sv.inventory.get("bandage", 0)) > 0:
++		await do("傷を手当てする")
++	if float(sv.hunger) > 50 and float(sv.food) >= 0.5:
++		await do("食事する"); return
++	var day_time := hour() >= 7.0 and hour() < 15.0 and not street_busy()
++	# Stock up while the shops still sell.
++	if day_time and society() in ["normal", "alert", "disrupted"] and float(sv.food) < 14.0 and int(sv.cash) >= 1500:
++		var any_open := false
++		for shop in ["スーパー", "コンビニ", "食品店"]:
++			if sv.district.sites.has(shop) and not bool(sv.district.sites[shop].vacant):
++				any_open = true
++		if any_open:
++			await leave_house()
++			await shop_run()
++			return
++	# After the fall: a community if there is one, else homes.
++	if day_time and society() == "emergency" and joined_day < 0 and float(sv.food) < 6.0 and find_community() != "" and float(sv.health) >= 60:
++		await court_community()
++		return
++	if day_time and float(sv.food) < 4.0 and float(sv.health) >= 50:
++		await search_homes()
++		await go_home()
++		return
++	await do("1時間休息")
++func run() -> void:
++	g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	if OS.get_environment("DCJ_HOUSING") != "":
++		p.housing = OS.get_environment("DCJ_HOUSING")
++	verbose = OS.get_environment("DCJ_VERBOSE") == "1"
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var days := int(OS.get_environment("DCJ_DAYS"))
++	var last_day := -1
++	var filled := [false, false]
++	while float(s().health) > 0 and int(s().minute) / 1440 < days and steps < int(OS.get_environment("DCJ_STEPS") if OS.get_environment("DCJ_STEPS") != "" else "20000"):
++		var day := int(s().minute) / 1440
++		if day != last_day:
++			last_day = day
++			print("DAY %3d %-9s %-8s | 体%3.0f 食(家)%4.1f 携%3.1f 現金%6d | 感染者 %3d | %s" % [day + 1, society(), g.location, float(s().health), float(s().food), carried_food(), int(s().cash), Walkers.total(w()), ("集落:" + target_area + (" (加入)" if joined_day >= 0 else "")) if target_area != "" else ""])
++		if Combat.active(w()):
++			await fight_out()
++			continue
++		if joined_day >= 0:
++			await community_day()
++		else:
++			await home_day(filled)
++	print("END day %d health %.0f bitten %s fights %d steps %d joined %s cause %s" % [int(s().minute) / 1440 + 1, float(s().health), str(s().get("bitten", false)), fights, steps, ("day %d" % (joined_day + 1)) if joined_day >= 0 else "no", str(load("res://scripts/chronicle.gd").state(w()).get("cause", "")) if float(s().health) <= 0 else "-"])
++	quit()
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
 index 35febbb..bcc6e67 100644
 --- a/scripts/action_photos.gd
