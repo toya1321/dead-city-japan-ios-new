@@ -7471,6 +7471,112 @@ index 9136871..f5d92d5 100644
  			await do("食事する"); continue
  		await do("1時間休息")
  	print("MATES ", w().s.household_members.map(func(m): return "%s:%s:%.0f" % [m.name, m.get("location", "?"), float(m.health)]))
+diff --git a/qa/chip_fuzz.gd b/qa/chip_fuzz.gd
+new file mode 100644
+index 0000000..f468d55
+--- /dev/null
++++ b/qa/chip_fuzz.gd
+@@ -0,0 +1,100 @@
++extends SceneTree
++## Presses every suggested chip, everywhere, in each period of the outbreak,
++## and reports chips the game does not understand or answers oddly.
++## (State is restored after each press.)  DCJ_SEED.
++const Main = preload("res://main.tscn")
++const TownMap = preload("res://scripts/town_map.gd")
++const BAD := ["処理できない", "正確に解釈できません", "正確に処理できない", "何も実行していません", "SCRIPT ERROR"]
++var issues := {}
++var pressed := 0
++func _initialize() -> void:
++	call_deferred("run")
++func live(w, days: int) -> void:
++	for d in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 10.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++func press_all(g, label: String) -> void:
++	var w = g.world
++	var chips: Array = g._suggestions()
++	if OS.get_environment("DCJ_SELFTEST") == "1":
++		chips = ["ほげほげをふがふがする"] + chips.slice(0, 1)
++	for chip in chips:
++		var keep: Dictionary = w.s.duplicate(true)
++		var keep_loc: String = g.location
++		g.log_entries.clear()
++		w.s.walkers.notices = []
++		var n: int = 0
++		await g._on_command(str(chip))
++		while g.advancing:
++			await process_frame
++		pressed += 1
++		var said := "\n".join(g.log_entries.slice(n))
++		if OS.get_environment("DCJ_DUMP") == "1" and str(chip) in ["ノックする", "食料を分ける", "集まりを訪ねる", "手伝う", "仲間に入れてもらう", "話を聞く", "避難所の様子を聞く", "掲示板を見る", "周囲を見る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "風呂場を調べる", "子ども部屋を調べる", "物置を調べる", "次の部屋を探す"]:
++			print("SAID ", label, " | ", chip, " => ", said.replace("\n", " / "))
++		for b in BAD:
++			if said.contains(b):
++				var key := "%s | %s" % [label, chip]
++				if not issues.has(key):
++					issues[key] = said.replace("\n", " / ").left(160)
++		if said.strip_edges().is_empty() or said.strip_edges() == "▶ " + str(chip):
++			issues["%s | %s" % [label, chip]] = "(no answer)"
++		w.s = keep
++		g.location = keep_loc
++		g._sync_player_position()
++		g.dialogue = load("res://scripts/household_dialogue.gd").new()
++		g.survivor_partner = ""
++func visit_all(g, period: String) -> void:
++	var w = g.world
++	var places: Array = ["寝室", "居間", "台所", "玄関", "屋外", "住宅街", "商店通り", "コンビニ", "食品店", "金物店", "薬局", "駅前", "避難所"] + TownMap.PLACES.keys()
++	for p in places:
++		w.s.walkers.places = {}
++		w.s.walkers.encounter = {}
++		w.s.inside = {}
++		g.location = p
++		g._sync_player_position()
++		w.set_meta("player_at_home", load("res://scripts/navigation.gd").indoor(p))
++		w.set_meta("player_place", p)
++		await press_all(g, "%s@%s" % [period, p])
++		# At a door / inside a flat, in the residential areas.
++		if load("res://scripts/district.gd").is_houses(p) and period != "normal":
++			var D = load("res://scripts/dwellings.gd")
++			for k in 3:
++				var i: int = D.next_index(w, p)
++				if i < 0:
++					break
++				g._enter_home(p, i + k * 7)
++				w.s.walkers.encounter = {}
++				await press_all(g, "%s@%s/home%d%s" % [period, p, i + k * 7, "(door)" if bool(w.s.get("inside", {}).get("at_door", false)) else ""])
++				w.s.inside = {}
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	await visit_all(g, "normal")
++	if OS.get_environment("DCJ_SELFTEST") == "1":
++		print("ISSUES ", issues.size(), " sample: ", issues.values().slice(0, 2))
++		quit()
++		return
++	while str(w.s.society) in ["normal"] and int(w.s.minute) < 30 * 1440:
++		live(w, 1)
++	await visit_all(g, str(w.s.society))
++	while str(w.s.society) != "emergency" and int(w.s.minute) < 40 * 1440:
++		live(w, 1)
++	live(w, 3)
++	await visit_all(g, "emergency-early")
++	live(w, 45)
++	w.s.walkers.notices = []
++	await visit_all(g, "emergency-late")
++	print("PRESSED ", pressed)
++	for k in issues:
++		print("ISSUE ", k, " => ", issues[k])
++	print("ISSUES ", issues.size())
++	quit()
 diff --git a/qa/economy_long.gd.uid b/qa/economy_long.gd.uid
 new file mode 100644
 index 0000000..049960c
@@ -7620,6 +7726,117 @@ index 24dd085..0283cb5 100644
  		if cmd.begins_with("#snap"):
  			await snap(g, cmd.split(" ")[1]); continue
  		if cmd.begins_with("#chip"):
+diff --git a/qa/residents_invariants.gd b/qa/residents_invariants.gd
+new file mode 100644
+index 0000000..3292cf3
+--- /dev/null
++++ b/qa/residents_invariants.gd
+@@ -0,0 +1,105 @@
++extends SceneTree
++## Lives the town for DCJ_DAYS days (seed DCJ_SEED) and checks, every day,
++## that nothing has got into a state that cannot be: households, the shelter,
++## communities, gangs, wanderers, the town's stores, and save/load.
++const Main = preload("res://main.tscn")
++const R = preload("res://scripts/residents.gd")
++const C = preload("res://scripts/communities.gd")
++const Gg = preload("res://scripts/gangs.gd")
++const Sh = preload("res://scripts/shelter.gd")
++var problems := {}
++func _initialize() -> void:
++	call_deferred("run")
++func bad(day: int, what: String) -> void:
++	if not problems.has(what):
++		problems[what] = day
++		print("PROBLEM day %d: %s" % [day, what])
++func check_world(w, day: int) -> void:
++	var st: Dictionary = w.s.residents
++	var looters := {}
++	var gangs: Dictionary = st.get("gangs", {})
++	for gid in gangs:
++		var g: Dictionary = gangs[gid]
++		for h in g.homes:
++			var key := "%s:%d" % [h[0], int(h[1])]
++			if looters.has(key):
++				bad(day, "household in two gangs %s" % key)
++			looters[key] = gid
++		if float(g.store) < -0.01: bad(day, "gang store negative")
++		if not bool(g.ended):
++			for h in g.homes:
++				var hr: Array = R.row(w, str(h[0]), int(h[1]))
++				if not str(hr[0]) in ["looter", "dead", "gone", "wander"]:
++					bad(day, "gang member household path %s" % hr[0])
++	var cms: Dictionary = st.get("cm", {})
++	for area in st.hh:
++		var rows: Array = st.hh[area]
++		for i in rows.size():
++			var r: Array = rows[i]
++			var who: Dictionary = R.who(w, area, i)
++			var n: int = who.people.size()
++			var full := (1 << n) - 1
++			var path := str(r[0])
++			if int(r[R.P_ALIVE]) & ~full: bad(day, "alive bits beyond family size")
++			if int(r[R.P_TURNED]) & ~full: bad(day, "turned bits beyond family size")
++			if int(r[R.P_ALIVE]) & int(r[R.P_TURNED]): bad(day, "someone both alive and turned")
++			if float(r[R.P_FOOD]) < -0.01: bad(day, "household food negative (%s)" % path)
++			if float(r[R.P_WATER]) < -0.01: bad(day, "household water negative")
++			if path == "dead" and R.living(r) > 0: bad(day, "dead household with living people")
++			if path == "turned" and int(r[R.P_TURNED]) == 0: bad(day, "turned household with nobody turned")
++			if path in ["home", "holed", "shelter", "looter", "wander"] and R.living(r) == 0:
++				bad(day, "%s household with nobody alive" % path)
++			if int(r[R.P_FLAGS]) & C.F_COMM:
++				if path != "holed": bad(day, "community member not holed (%s)" % path)
++				var ck := "%s:%d" % [area, C.block_of(area, i)]
++				if not cms.has(ck) or bool(cms[ck].ended): bad(day, "community member of no living community")
++			if path == "looter" and not looters.has("%s:%d" % [area, i]): bad(day, "looter in no gang")
++			if path == "wander":
++				var p: Dictionary = w.s.survivors.people.get("res_%s_%d" % [area, i], {})
++				if p.is_empty(): bad(day, "wanderer with no survivor record")
++	for key in cms:
++		var c: Dictionary = cms[key]
++		if float(c.store) < -0.01: bad(day, "community store negative")
++		if not bool(c.ended) and C.members(w, c).is_empty(): bad(day, "living community with no members")
++	# The shelter's count.
++	var sh: Dictionary = w.s.get("shelter", {})
++	if str(sh.get("status", "")) == "open":
++		var ours: int = R.in_shelter(w)
++		if int(sh.pop) != int(sh.get("outsiders", 0)) + ours:
++			bad(day, "shelter pop %d != outsiders %d + residents %d" % [int(sh.pop), int(sh.get("outsiders", 0)), ours])
++		if int(sh.pop) > Sh.capacity(w) + 5: bad(day, "shelter over capacity %d" % int(sh.pop))
++	elif R.in_shelter(w) > 0:
++		bad(day, "residents in a shelter that is %s" % sh.get("status", "?"))
++	# The town's stores.
++	for a in w.s.district.get("houses_by", {}):
++		var pool: Dictionary = w.s.district.houses_by[a]
++		if float(pool.food) < -0.01 or float(pool.water) < -0.01: bad(day, "house pool negative in %s" % a)
++	for site in w.s.district.sites:
++		if float(w.s.district.sites[site].food) < -0.01: bad(day, "site food negative %s" % site)
++	if float(st.get("beyond", 0.0)) < -0.01: bad(day, "beyond negative")
++	if not R.valid(st): bad(day, "residents state invalid")
++	if not w.validate_state(w.s.duplicate(true)): bad(day, "whole state fails validation")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var days := int(OS.get_environment("DCJ_DAYS"))
++	for day in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++		check_world(w, day + 1)
++		# Save and load mid-run: the same town comes back.
++		if day == days / 2:
++			var saved := JSON.stringify(w.s)
++			var parsed = JSON.parse_string(saved)
++			if not w.validate_state(parsed): bad(day + 1, "saved game does not load")
++	var c: Dictionary = R.census(w)
++	print("END day %d %s problems=%d" % [days, c, problems.size()])
++	quit()
 diff --git a/qa/residents_watch.gd b/qa/residents_watch.gd
 new file mode 100644
 index 0000000..33960f3
@@ -7672,6 +7889,65 @@ index 0000000..3196736
 +++ b/qa/residents_watch.gd.uid
 @@ -0,0 +1 @@
 +uid://mi67ncbm4rwv
+diff --git a/qa/saveload_same.gd b/qa/saveload_same.gd
+new file mode 100644
+index 0000000..5743d53
+--- /dev/null
++++ b/qa/saveload_same.gd
+@@ -0,0 +1,53 @@
++extends SceneTree
++## Two runs of the same seed: one lives DCJ_DAYS days straight; the other is
++## saved to JSON halfway, loaded into a fresh game, and lives the rest. The
++## town must come out the same (households, communities, gangs, shelter).
++const Main = preload("res://main.tscn")
++func _initialize() -> void:
++	call_deferred("run")
++func game(seed: int):
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	g._start_new_game(p)
++	g._finish_intro()
++	return g
++func live(w, days: int) -> void:
++	for d in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++func town(w) -> String:
++	var r: Dictionary = w.s.residents.duplicate(true)
++	r.erase("news_today")
++	return JSON.stringify({"res": r, "shelter": w.s.get("shelter", {}), "houses": w.s.district.get("houses_by", {})})
++func run() -> void:
++	var seed := int(OS.get_environment("DCJ_SEED"))
++	var days := int(OS.get_environment("DCJ_DAYS"))
++	var a = await game(seed)
++	live(a.world, days)
++	var b = await game(seed)
++	live(b.world, days / 2)
++	var path := "user://saveload_same_test.sav"
++	print("save: ", b.world.save_file(path))
++	b.queue_free()
++	var c = await game(seed)
++	print("load: ", c.world.load_file(path))
++	live(c.world, days - days / 2)
++	var ta := town(a.world)
++	var tc := town(c.world)
++	print("SAME ", ta == tc, " (", ta.length(), " / ", tc.length(), ")")
++	if ta != tc:
++		var ra: Dictionary = a.world.s.residents
++		var rc: Dictionary = c.world.s.residents
++		for area in ra.hh:
++			for i in ra.hh[area].size():
++				if JSON.stringify(ra.hh[area][i]) != JSON.stringify(rc.hh[area][i]):
++					print("first diff ", area, " ", i, " ", ra.hh[area][i], " vs ", rc.hh[area][i])
++					break
++		print("census a ", load("res://scripts/residents.gd").census(a.world))
++		print("census c ", load("res://scripts/residents.gd").census(c.world))
++	quit()
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
 index 35febbb..bcc6e67 100644
 --- a/scripts/action_photos.gd
@@ -7759,10 +8035,10 @@ index 0db5457..1a3b07e 100644
  	if place.is_empty():
 diff --git a/scripts/communities.gd b/scripts/communities.gd
 new file mode 100644
-index 0000000..7f83870
+index 0000000..9ef7f24
 --- /dev/null
 +++ b/scripts/communities.gd
-@@ -0,0 +1,428 @@
+@@ -0,0 +1,434 @@
 +extends RefCounted
 +## v149.38 stage 3: neighbours who band together. Once the town has broken
 +## down, the households still holed up in one block of the estate, one band
@@ -7926,6 +8202,9 @@ index 0000000..7f83870
 +		var w := Residents.who(world, area, i)
 +		if int(w.caution) >= 85 and float(r[Residents.P_FOOD]) >= 8.0 * Residents.living(r):
 +			continue
++		# A family that left when food ran short does not come straight back.
++		if day - int(c.get("left", {}).get(str(i), -100)) < 14:
++			continue
 +		r[Residents.P_FLAGS] = int(r[Residents.P_FLAGS]) | F_COMM
 +		c.store = float(c.store) + float(r[Residents.P_FOOD])
 +		c.water = float(c.water) + float(r[Residents.P_WATER])
@@ -7987,6 +8266,9 @@ index 0000000..7f83870
 +			var lr := Residents.row(world, area, leaving)
 +			lr[Residents.P_FLAGS] = int(lr[Residents.P_FLAGS]) & ~F_COMM
 +			lr[Residents.P_FOOD] = 0.0
++			var left: Dictionary = c.get("left", {})
++			left[str(leaving)] = day
++			c.left = left
 +	if int(c.hungry) >= 10 or able == 0 and float(c.store) <= 0.0:
 +		_end(world, c, day, "hunger")
 +	elif mem.size() < 2 and day - int(c.since) >= 7:
@@ -9214,7 +9496,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..6dc481a 100644
+index 0f2add4..39d0782 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,29 @@ func _refresh() -> void:
@@ -9339,7 +9621,7 @@ index 0f2add4..6dc481a 100644
  	if cmd in exact: return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3506,6 +3561,101 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3561,104 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -9411,6 +9693,9 @@ index 0f2add4..6dc481a 100644
 +				return "どの家にも、まだ人が暮らしている。"
 +			var next: int = Dwellings.next_index(world, location)
 +			if next < 0:
++				var Cm = load("res://scripts/communities.gd")
++				if not Cm.here(world, location).is_empty() and not Cm.player_here(world, location):
++					return "外から行ける家は、もう全部見て回った。残りは、住人たちがバリケードで囲っている。（「集まりを訪ねる」）"
 +				return "このあたりの家は、もう全部見て回った。"
 +			return _enter_home(location, next)
 +		var addressed: int = Dwellings.index_of(location, clean)
@@ -9441,7 +9726,7 @@ index 0f2add4..6dc481a 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3689,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3692,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -9450,7 +9735,7 @@ index 0f2add4..6dc481a 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3822,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3825,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -9463,7 +9748,7 @@ index 0f2add4..6dc481a 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3847,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3850,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -9473,7 +9758,7 @@ index 0f2add4..6dc481a 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3906,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3909,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -9488,7 +9773,7 @@ index 0f2add4..6dc481a 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3955,33 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +3958,33 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -9522,7 +9807,7 @@ index 0f2add4..6dc481a 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4025,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4028,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -9543,7 +9828,7 @@ index 0f2add4..6dc481a 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4058,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4061,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -9562,7 +9847,7 @@ index 0f2add4..6dc481a 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4085,8 @@ func _site() -> String:
+@@ -3875,6 +4088,8 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -9571,7 +9856,16 @@ index 0f2add4..6dc481a 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3943,6 +4155,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4121,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+ 		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
+ 			break
+ 		location=next_place
++		world.set_meta("player_at_home", Navigation.indoor(location))
++		world.set_meta("player_place", location)
+ 		_sync_player_position()
+ 		if not companion.is_empty():
+ 			companion.location = location
+@@ -3943,6 +4160,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -9584,7 +9878,7 @@ index 0f2add4..6dc481a 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4176,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4181,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -9595,7 +9889,7 @@ index 0f2add4..6dc481a 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4259,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4264,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -10651,10 +10945,10 @@ index 8dd4800..22af019 100644
  				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/residents.gd b/scripts/residents.gd
 new file mode 100644
-index 0000000..19c963b
+index 0000000..a9048ef
 --- /dev/null
 +++ b/scripts/residents.gd
-@@ -0,0 +1,926 @@
+@@ -0,0 +1,950 @@
 +extends RefCounted
 +## v149.38: the people who live in the town's homes — every household in the
 +## estate, the tower block and the three streets of houses (790 homes). Who
@@ -10880,6 +11174,21 @@ index 0000000..19c963b
 +	load("res://scripts/communities.gd").daily(world, day)
 +	load("res://scripts/gangs.gd").daily(world, day)
 +	load("res://scripts/wanderers.gd").sync(world)
++	_settle(world)
++
++## Bookkeeping after a day: a household no longer holed up is no longer in its
++## block's community, and a household with nobody left alive has ended.
++static func _settle(world) -> void:
++	var day := _day(world)
++	for area in world.s.residents.hh:
++		for r in world.s.residents.hh[area]:
++			var path := str(r[P_PATH])
++			if path != "holed":
++				r[P_FLAGS] = int(r[P_FLAGS]) & ~256
++			if path in ["home", "holed", "shelter"] and living(r) == 0:
++				r[P_PATH] = "turned" if int(r[P_TURNED]) != 0 and int(r[P_FLAGS]) & F_INSIDE else "dead"
++				r[P_FLAGS] = int(r[P_FLAGS]) & ~256
++				r[P_SINCE] = day
 +
 +static func _normal(world, area: String, i: int, r: Array) -> void:
 +	var n := living(r)
@@ -10953,6 +11262,7 @@ index 0000000..19c963b
 +static func _go_to_shelter(world, area: String, r: Array) -> void:
 +	var sh: Dictionary = load("res://scripts/shelter.gd").state(world)
 +	sh.res_in = int(sh.get("res_in", 0)) + living(r)
++	sh.pop = int(sh.get("pop", 0)) + living(r)
 +	# Two days' food goes with them, into the shelter's store.
 +	var carried := minf(float(r[P_FOOD]), 2.0 * living(r))
 +	sh.stock = float(sh.get("stock", 0.0)) + carried
@@ -11118,6 +11428,9 @@ index 0000000..19c963b
 +		# The shelter's own watch deals with it (counted as a hidden bite there).
 +		var sh: Dictionary = load("res://scripts/shelter.gd").state(world)
 +		sh.sick = int(sh.get("sick", 0)) + _count(turned_now)
++		if living(r) == 0:
++			r[P_PATH] = "dead"
++			r[P_SINCE] = day
 +		return
 +	var w := who(world, area, i)
 +	# Living with others: the night watch may stop it before it spreads.
@@ -11519,7 +11832,12 @@ index 0000000..19c963b
 +			bag.food = float(bag.food) + 1.0
 +			return "ドアの向こうで%sが少し迷ってから、隙間から缶詰をひとつ差し出してくれた。「これくらいしかできませんけど……気をつけて」（食料1人日分）" % name
 +	var Shelter = load("res://scripts/shelter.gd")
-+	var news := "「避難所は人でいっぱいだって聞きました。うちはここで頑張ります」" if Shelter.is_open(world) else "「外はどうなってますか。うちはまだ、なんとかやってます」"
++	var news := "「外はどうなってますか。うちはまだ、なんとかやってます」"
++	if Shelter.is_open(world):
++		var full: bool = int(Shelter.state(world).get("pop", 0)) >= Shelter.capacity(world) - 10
++		news = "「避難所は人でいっぱいだって聞きました。うちはここで頑張ります」" if full else "「避難所に行こうか迷ったんですけど……うちは、ここで頑張ります」"
++	elif str(Shelter.state(world).get("status", "school")) in ["overrun", "abandoned"]:
++		news = "「避難所、もうだめになったって本当ですか。……うちは、ここにいるしかないんです」"
 +	return "ドアの向こうから%sの声がした。%s" % [name, news]
 +
 +## Food handed through the door: remembered.
@@ -11589,7 +11907,7 @@ index 0000000..ce2a734
 @@ -0,0 +1 @@
 +uid://cvnherln0kmu8
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
-index 6de9c8d..8d018d3 100644
+index 6de9c8d..4679f23 100644
 --- a/scripts/scene_description.gd
 +++ b/scripts/scene_description.gd
 @@ -26,12 +26,18 @@ const DETAILS = {
@@ -11612,6 +11930,15 @@ index 6de9c8d..8d018d3 100644
  		detail += _outside_light(str(world.s.weather), world.hour_of_day())
  		if not world.visible_residents().is_empty():
  			detail += "近くに人影が見える。"
+@@ -76,7 +82,7 @@ static func _action_cue(world, place: String) -> String:
+ 				return "店は営業中。「品物を見る」で品ぞろえを確かめて、買う物を選べる。"
+ 			return "営業時間外だ。いまは買い物できない。"
+ 		if not District.prepared(world, place):
+-			var occupancy := "寝泊まりの支度はまだしていない。" if place == "近所の空き家" else "店は放棄されている。"
++			var occupancy := "寝泊まりの支度はまだしていない。" if place == "近所の空き家" else ("店は放棄されている。" if District.is_shop(place) or TownMap.PLACES.get(place, {}).has("opens") or place == "ガソリンスタンド" else "人の姿はない。")
+ 			return occupancy + "「物資を探索する」や「ここを拠点にする」と入力できる。"
+ 		var shelter := "入口は補強してある。" if int(site.level) == 2 else "ここは寝泊まりできるように整えてある。"
+ 		return shelter + "「ここで一晩過ごす」ことも、「拠点の状態を見る」こともできる。"
 diff --git a/scripts/scene_view.gd b/scripts/scene_view.gd
 index c95188d..8ef8723 100644
 --- a/scripts/scene_view.gd
@@ -11957,7 +12284,7 @@ index 5ea74f7..976e230 100644
  		if cause.is_empty():
 diff --git a/scripts/town_map.gd b/scripts/town_map.gd
 new file mode 100644
-index 0000000..4d190ad
+index 0000000..ffacc6d
 --- /dev/null
 +++ b/scripts/town_map.gd
 @@ -0,0 +1,121 @@
@@ -12027,7 +12354,7 @@ index 0000000..4d190ad
 +		"aliases": ["大橋", "川の橋", "隣町への橋"], "entry": true, "text": {"normal": "隣町へ渡る大きな橋。車の流れが途切れない。", "alert": "橋のたもとに警察の車両が止まり、検問をしている。", "collapse": "橋の上に車が何台も放置されている。向こう岸から、何かが歩いてくる。"}},
 +	# --- 南の住宅地 ---
 +	"南の住宅街": {"kind": "houses", "area": "南の住宅地", "links": ["商店通り", "公園", "倉庫街"], "minutes": 6, "pos": Vector2(30, -40), "photo": "residential_south",
-+		"aliases": ["南の住宅地", "線路の南の住宅街"], "households": 120, "text": {"normal": "商店街の裏手から続く、細い路地の多い住宅街。", "alert": "路地に人の気配がない。", "collapse": "路地の奥で、割れたガラスが日に光っている。"}},
++		"aliases": ["南の住宅地", "線路の南の住宅街"], "households": 120, "text": {"normal": "商店街の裏手から続く、細い路地の多い住宅街。", "alert": "路地に人の気配がない。", "collapse": "路地の奥に、割れた窓ガラスが散らばっている。"}},
 +	"公園": {"kind": "land", "area": "南の住宅地", "links": ["南の住宅街"], "minutes": 3, "pos": Vector2(40, -60), "photo": "park",
 +		"aliases": ["大きな公園", "区立公園", "管理棟"], "farmland": true, "water_source": true, "text": {"normal": "芝生広場と池のある区立公園。管理棟と公衆トイレがある。", "alert": "芝生広場に人がいない。管理棟が閉まっている。", "collapse": "芝生が伸びて、池のまわりの柵が倒れている。"}},
 +}
@@ -13889,6 +14216,177 @@ index 0000000..a1cd491
 +++ b/tests/test_town149_36.gd.uid
 @@ -0,0 +1 @@
 +uid://ijdjcue6vwva
+diff --git a/tests/test_town_invariants149_38.gd b/tests/test_town_invariants149_38.gd
+new file mode 100644
+index 0000000..218522a
+--- /dev/null
++++ b/tests/test_town_invariants149_38.gd
+@@ -0,0 +1,106 @@
++extends SceneTree
++## v149.38: lives the town for 45 days (seed 7) and checks, every day,
++## that nothing has got into a state that cannot be: households, the shelter,
++## communities, gangs, wanderers, the town's stores, and save/load.
++const Main = preload("res://main.tscn")
++const R = preload("res://scripts/residents.gd")
++const C = preload("res://scripts/communities.gd")
++const Gg = preload("res://scripts/gangs.gd")
++const Sh = preload("res://scripts/shelter.gd")
++var problems := {}
++func _initialize() -> void:
++	call_deferred("run")
++func bad(day: int, what: String) -> void:
++	if not problems.has(what):
++		problems[what] = day
++		print("PROBLEM day %d: %s" % [day, what])
++func check_world(w, day: int) -> void:
++	var st: Dictionary = w.s.residents
++	var looters := {}
++	var gangs: Dictionary = st.get("gangs", {})
++	for gid in gangs:
++		var g: Dictionary = gangs[gid]
++		for h in g.homes:
++			var key := "%s:%d" % [h[0], int(h[1])]
++			if looters.has(key):
++				bad(day, "household in two gangs %s" % key)
++			looters[key] = gid
++		if float(g.store) < -0.01: bad(day, "gang store negative")
++		if not bool(g.ended):
++			for h in g.homes:
++				var hr: Array = R.row(w, str(h[0]), int(h[1]))
++				if not str(hr[0]) in ["looter", "dead", "gone", "wander"]:
++					bad(day, "gang member household path %s" % hr[0])
++	var cms: Dictionary = st.get("cm", {})
++	for area in st.hh:
++		var rows: Array = st.hh[area]
++		for i in rows.size():
++			var r: Array = rows[i]
++			var who: Dictionary = R.who(w, area, i)
++			var n: int = who.people.size()
++			var full := (1 << n) - 1
++			var path := str(r[0])
++			if int(r[R.P_ALIVE]) & ~full: bad(day, "alive bits beyond family size")
++			if int(r[R.P_TURNED]) & ~full: bad(day, "turned bits beyond family size")
++			if int(r[R.P_ALIVE]) & int(r[R.P_TURNED]): bad(day, "someone both alive and turned")
++			if float(r[R.P_FOOD]) < -0.01: bad(day, "household food negative (%s)" % path)
++			if float(r[R.P_WATER]) < -0.01: bad(day, "household water negative")
++			if path == "dead" and R.living(r) > 0: bad(day, "dead household with living people")
++			if path == "turned" and int(r[R.P_TURNED]) == 0: bad(day, "turned household with nobody turned")
++			if path in ["home", "holed", "shelter", "looter", "wander"] and R.living(r) == 0:
++				bad(day, "%s household with nobody alive" % path)
++			if int(r[R.P_FLAGS]) & C.F_COMM:
++				if path != "holed": bad(day, "community member not holed (%s)" % path)
++				var ck := "%s:%d" % [area, C.block_of(area, i)]
++				if not cms.has(ck) or bool(cms[ck].ended): bad(day, "community member of no living community")
++			if path == "looter" and not looters.has("%s:%d" % [area, i]): bad(day, "looter in no gang")
++			if path == "wander":
++				var p: Dictionary = w.s.survivors.people.get("res_%s_%d" % [area, i], {})
++				if p.is_empty(): bad(day, "wanderer with no survivor record")
++	for key in cms:
++		var c: Dictionary = cms[key]
++		if float(c.store) < -0.01: bad(day, "community store negative")
++		if not bool(c.ended) and C.members(w, c).is_empty(): bad(day, "living community with no members")
++	# The shelter's count.
++	var sh: Dictionary = w.s.get("shelter", {})
++	if str(sh.get("status", "")) == "open":
++		var ours: int = R.in_shelter(w)
++		if int(sh.pop) != int(sh.get("outsiders", 0)) + ours:
++			bad(day, "shelter pop %d != outsiders %d + residents %d" % [int(sh.pop), int(sh.get("outsiders", 0)), ours])
++		if int(sh.pop) > Sh.capacity(w) + 5: bad(day, "shelter over capacity %d" % int(sh.pop))
++	elif R.in_shelter(w) > 0:
++		bad(day, "residents in a shelter that is %s" % sh.get("status", "?"))
++	# The town's stores.
++	for a in w.s.district.get("houses_by", {}):
++		var pool: Dictionary = w.s.district.houses_by[a]
++		if float(pool.food) < -0.01 or float(pool.water) < -0.01: bad(day, "house pool negative in %s" % a)
++	for site in w.s.district.sites:
++		if float(w.s.district.sites[site].food) < -0.01: bad(day, "site food negative %s" % site)
++	if float(st.get("beyond", 0.0)) < -0.01: bad(day, "beyond negative")
++	if not R.valid(st): bad(day, "residents state invalid")
++	if not w.validate_state(w.s.duplicate(true)): bad(day, "whole state fails validation")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 7
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var days := 45
++	for day in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++		check_world(w, day + 1)
++		# Save and load mid-run: the same town comes back.
++		if day == days / 2:
++			var saved := JSON.stringify(w.s)
++			var parsed = JSON.parse_string(saved)
++			if not w.validate_state(parsed): bad(day + 1, "saved game does not load")
++	var c: Dictionary = R.census(w)
++	print("END day %d %s problems=%d" % [days, c, problems.size()])
++	print(("PASS " if problems.is_empty() else "FAIL ") + "45 days of the town with nothing impossible in it")
++	quit(1 if not problems.is_empty() else 0)
+diff --git a/tests/test_town_saveload149_38.gd b/tests/test_town_saveload149_38.gd
+new file mode 100644
+index 0000000..b1b41f9
+--- /dev/null
++++ b/tests/test_town_saveload149_38.gd
+@@ -0,0 +1,53 @@
++extends SceneTree
++## Two runs of the same seed: one lives DCJ_DAYS days straight; the other is
++## saved to JSON halfway, loaded into a fresh game, and lives the rest. The
++## town must come out the same (households, communities, gangs, shelter).
++const Main = preload("res://main.tscn")
++func _initialize() -> void:
++	call_deferred("run")
++func game(seed: int):
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	g._start_new_game(p)
++	g._finish_intro()
++	return g
++func live(w, days: int) -> void:
++	for d in days:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++func town(w) -> String:
++	var r: Dictionary = w.s.residents.duplicate(true)
++	r.erase("news_today")
++	return JSON.stringify({"res": r, "shelter": w.s.get("shelter", {}), "houses": w.s.district.get("houses_by", {})})
++func run() -> void:
++	var seed := 21
++	var days := 40
++	var a = await game(seed)
++	live(a.world, days)
++	var b = await game(seed)
++	live(b.world, days / 2)
++	var path := "user://saveload_same_test.sav"
++	print("save: ", b.world.save_file(path))
++	b.queue_free()
++	var c = await game(seed)
++	print("load: ", c.world.load_file(path))
++	live(c.world, days - days / 2)
++	var ta := town(a.world)
++	var tc := town(c.world)
++	print(("PASS " if ta == tc else "FAIL ") + "saved halfway and loaded, the town comes out the same")
++	if ta != tc:
++		var ra: Dictionary = a.world.s.residents
++		var rc: Dictionary = c.world.s.residents
++		for area in ra.hh:
++			for i in ra.hh[area].size():
++				if JSON.stringify(ra.hh[area][i]) != JSON.stringify(rc.hh[area][i]):
++					print("first diff ", area, " ", i, " ", ra.hh[area][i], " vs ", rc.hh[area][i])
++					break
++		print("census a ", load("res://scripts/residents.gd").census(a.world))
++		print("census c ", load("res://scripts/residents.gd").census(c.world))
++	quit(0 if ta == tc else 1)
 diff --git a/tests/test_trade149_34.gd.uid b/tests/test_trade149_34.gd.uid
 new file mode 100644
 index 0000000..f2eee53
