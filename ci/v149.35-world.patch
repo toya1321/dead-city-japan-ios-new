@@ -738,10 +738,29 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..902335f 100644
+index 0f2add4..1a83b71 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -1844,6 +1844,8 @@ func _suggestions() -> Array:
+@@ -1649,8 +1649,16 @@ func _refresh() -> void:
+ 			picture.texture = scene_view.location_texture(location, season, "")
+ 	if picture.texture == null:
+ 		picture.texture = scene_view.location_texture(location,"apartment" if world.s.profile.housing=="集合住宅" and location=="建物前" else "", _visual_phase())
+-	district_card.visible = District.SITES.has(location) and picture.texture == null
+-	district_card.text = location + "\n" + str({"コンビニ":"棚の並ぶ店内","近所の空き家":"人のいない住宅","デパート":"広い売り場"}.get(location, ""))
++	# v149.37: no picture yet → the frame shows where you are, in words.
++	district_card.visible = picture.texture == null
++	var where_words := str({"コンビニ":"棚の並ぶ店内","近所の空き家":"人のいない住宅","デパート":"広い売り場"}.get(location, ""))
++	var town_place: Dictionary = load("res://scripts/town_map.gd").PLACES.get(location, {})
++	if not town_place.is_empty():
++		where_words = str(town_place.area)
++	var at_home: Dictionary = world.s.get("inside", {}) if world.s.get("inside") is Dictionary else {}
++	if not at_home.is_empty():
++		where_words = str(load("res://scripts/dwellings.gd").address(str(at_home.area), int(at_home.index))) + ("（ドアの前）" if bool(at_home.get("at_door", false)) else "（部屋の中）")
++	district_card.text = location + ("\n" + where_words if not where_words.is_empty() else "")
+ 	preview_button.visible = picture.texture != null
+ 	_refresh_scene_caption()
+ 	_update_scene_visibility()
+@@ -1844,6 +1852,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -750,7 +769,7 @@ index 0f2add4..902335f 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1971,6 +1973,26 @@ func _suggestions() -> Array:
+@@ -1971,6 +1981,26 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -777,7 +796,7 @@ index 0f2add4..902335f 100644
  		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else ("品物を見る" if not ShopWindow.offers(self).is_empty() else "食料を買う"))
  		if not "品物を見る" in out and not ShopWindow.offers(self).is_empty():
-@@ -2838,7 +2860,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2868,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -787,7 +806,7 @@ index 0f2add4..902335f 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3457,6 +3480,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3488,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -797,7 +816,7 @@ index 0f2add4..902335f 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,7 +3499,7 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,7 +3507,7 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -806,7 +825,7 @@ index 0f2add4..902335f 100644
  	if cmd in exact: return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3506,6 +3532,76 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3540,76 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -883,7 +902,7 @@ index 0f2add4..902335f 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3635,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3643,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -892,7 +911,7 @@ index 0f2add4..902335f 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3768,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3776,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -905,7 +924,7 @@ index 0f2add4..902335f 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3793,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3801,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -915,7 +934,7 @@ index 0f2add4..902335f 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3852,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3860,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -930,7 +949,7 @@ index 0f2add4..902335f 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3838,7 +3944,19 @@ func _scene_caption() -> String:
+@@ -3838,7 +3952,19 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -950,7 +969,7 @@ index 0f2add4..902335f 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3860,6 +3978,9 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3860,6 +3986,9 @@ func _look(inspect_details: bool = true) -> String:
  	# Stage 6: how safe it is here, once the city has broken down.
  	if inspect_details and not Navigation.indoor(location) and str(world.s.society) in ["disrupted", "emergency"]:
  		paragraphs.append(AreaSafety.line(world, location))
@@ -960,7 +979,7 @@ index 0f2add4..902335f 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +3996,8 @@ func _site() -> String:
+@@ -3875,6 +4004,8 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -969,7 +988,7 @@ index 0f2add4..902335f 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3943,6 +4066,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4074,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -982,7 +1001,7 @@ index 0f2add4..902335f 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -4037,6 +4166,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4174,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -2010,7 +2029,7 @@ index 6de9c8d..8d018d3 100644
  		if not world.visible_residents().is_empty():
  			detail += "近くに人影が見える。"
 diff --git a/scripts/scene_view.gd b/scripts/scene_view.gd
-index c95188d..a05ea8c 100644
+index c95188d..8ef8723 100644
 --- a/scripts/scene_view.gd
 +++ b/scripts/scene_view.gd
 @@ -1,7 +1,15 @@
@@ -2030,19 +2049,16 @@ index c95188d..a05ea8c 100644
  	"寝室":"bedroom","居間":"living","台所":"kitchen","廊下":"hall",
  	"玄関":"entrance","共用廊下":"corridor","建物前":"building",
  	"屋外":"street","商店通り":"shopping_street","住宅街":"residential","駅前":"station_front",
-@@ -28,7 +36,10 @@ func location_texture(location: String, override_name: String = "", phase: Strin
+@@ -28,6 +36,8 @@ func location_texture(location: String, override_name: String = "", phase: Strin
  	if file.is_empty():return null
  	# A place without its own photo yet borrows its surroundings'.
  	if not ResourceLoader.exists("res://assets/photos/"+file+".jpg"):
--		file = {"school":"residential"}.get(file, file)
-+		var stand_in := {"school":"residential"}
-+		for place in TownMap.PLACES:
-+			stand_in[str(TownMap.PLACES[place].photo)] = str(TownMap.PLACES[place].fallback)
-+		file = stand_in.get(file, file)
++		# v149.37: a place whose picture has not been made shows no picture
++		# (the frame shows its name instead), never someone else's photo.
+ 		file = {"school":"residential"}.get(file, file)
  		if not ResourceLoader.exists("res://assets/photos/"+file+".jpg"):return null
  	var stage := PHASES.find(phase)
- 	while stage > 0:
-@@ -45,7 +56,7 @@ func update_view(next_place:String,next_hour:float,next_weather:String,next_powe
+@@ -45,7 +55,7 @@ func update_view(next_place:String,next_hour:float,next_weather:String,next_powe
  	queue_redraw()
  func _draw()->void:
  	if ending:return
@@ -2135,7 +2151,7 @@ index 5ea74f7..976e230 100644
  		if cause.is_empty():
 diff --git a/scripts/town_map.gd b/scripts/town_map.gd
 new file mode 100644
-index 0000000..308cf13
+index 0000000..5a672c3
 --- /dev/null
 +++ b/scripts/town_map.gd
 @@ -0,0 +1,121 @@
@@ -2154,59 +2170,59 @@ index 0000000..308cf13
 +## kinds: street (outdoors, walked through), houses (many homes, searched as
 +## one store), site (a building: shop or empty, can be a base), land (open
 +## ground: water, gardens). photo: the picture this place should have; until
-+## it exists, `fallback` (an existing picture) is shown.
++## it exists, the picture frame shows the place's name in words.
 +
 +## place: {kind, area, links, minutes, pos, photo, fallback, aliases, text{normal,alert,collapse}, ...}
 +const PLACES := {
 +	# --- 駅周辺 ---
-+	"駅のホーム": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(58, 34), "photo": "station_platform", "fallback": "station_front",
++	"駅のホーム": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(58, 34), "photo": "station_platform",
 +		"aliases": ["ホーム", "駅の中", "改札", "駅構内"], "food": 2.0, "water": 6.0, "vacant": true,
 +		"text": {"normal": "私鉄の駅の上りホーム。数分おきに各駅停車が入ってくる。", "alert": "ホームの電光掲示板に「運転見合わせ」の文字が流れている。", "collapse": "止まったままの電車が、ドアを開けたままホームに並んでいる。車内に置き去りの荷物が見える。"}},
-+	"駅の北口": {"kind": "street", "area": "駅周辺", "links": ["駅前", "大通り"], "minutes": 4, "pos": Vector2(62, 44), "photo": "station_north", "fallback": "station_front",
++	"駅の北口": {"kind": "street", "area": "駅周辺", "links": ["駅前", "大通り"], "minutes": 4, "pos": Vector2(62, 44), "photo": "station_north",
 +		"aliases": ["北口", "バスターミナル", "バス停"], "text": {"normal": "駅の北口のバスロータリー。客待ちのタクシーが並んでいる。", "alert": "バス乗り場に長い列ができている。運転本数が減っているらしい。", "collapse": "ロータリーにバスが斜めに停まったまま、扉が開いている。"}},
-+	"スーパー": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(46, 38), "photo": "supermarket", "fallback": "grocer",
++	"スーパー": {"kind": "site", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(46, 38), "photo": "supermarket",
 +		"aliases": ["スーパーマーケット", "大きなスーパー"], "food": 220.0, "water": 300.0, "vacant": false, "opens": 9, "closes": 22, "sells": true, "closes_at": "disrupted",
 +		"specials": {"bandage": 4}, "text": {"normal": "駅前の大型スーパー。入口に特売のチラシが貼ってある。", "alert": "レジに長い列。棚の米と水がほとんど空になっている。", "collapse": "自動ドアがこじ開けられ、店内に商品が散乱している。"}},
-+	"駅前のマンション": {"kind": "houses", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(54, 24), "photo": "tower_apartment", "fallback": "apartment",
++	"駅前のマンション": {"kind": "houses", "area": "駅周辺", "links": ["駅前"], "minutes": 3, "pos": Vector2(54, 24), "photo": "tower_apartment",
 +		"aliases": ["マンション", "駅前マンション", "タワーマンション"], "households": 120, "text": {"normal": "駅前に建つ十数階建てのマンション。オートロックの玄関がある。", "alert": "エントランスに「不要な外出を控えて」と管理会社の掲示。", "collapse": "オートロックは電気が落ちて開いたまま。上の階の窓がいくつか割れている。"}},
 +	# --- 大通り（幹線道路） ---
-+	"大通り": {"kind": "street", "area": "大通り", "links": ["駅の北口", "北の住宅街", "ホームセンター", "ガソリンスタンド", "総合病院", "交番", "倉庫街"], "minutes": 6, "pos": Vector2(80, 60), "photo": "arterial_road", "fallback": "street",
++	"大通り": {"kind": "street", "area": "大通り", "links": ["駅の北口", "北の住宅街", "ホームセンター", "ガソリンスタンド", "総合病院", "交番", "倉庫街"], "minutes": 6, "pos": Vector2(80, 60), "photo": "arterial_road",
 +		"aliases": ["幹線道路", "国道", "大きな通り"], "text": {"normal": "片側二車線の幹線道路。トラックがひっきりなしに走っている。", "alert": "パトカーがサイレンを鳴らして何台も通り過ぎていく。", "collapse": "乗り捨てられた車が車線をふさいでいる。ドアの開いた車も多い。"}},
-+	"ホームセンター": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(92, 66), "photo": "home_center", "fallback": "hardware",
++	"ホームセンター": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(92, 66), "photo": "home_center",
 +		"aliases": ["ホムセン", "ホーム センター", "DIYの店"], "food": 6.0, "water": 30.0, "vacant": false, "opens": 9, "closes": 20, "sells": true, "closes_at": "disrupted",
 +		"specials": {"wood": 20, "parts": 15, "seeds": 10}, "text": {"normal": "広い駐車場のある大型のホームセンター。園芸と資材の売り場がある。", "alert": "発電機とカセットボンベの棚が空になっている。", "collapse": "入口のシャッターが半分壊れている。資材売り場の奥は暗くて見通せない。"}},
-+	"ガソリンスタンド": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 3, "pos": Vector2(86, 54), "photo": "gas_station", "fallback": "street",
++	"ガソリンスタンド": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 3, "pos": Vector2(86, 54), "photo": "gas_station",
 +		"aliases": ["スタンド", "給油所"], "food": 3.0, "water": 8.0, "vacant": true, "specials": {"parts": 3},
 +		"text": {"normal": "セルフ式のガソリンスタンド。併設の売店がある。", "alert": "給油待ちの車が道路まで並んでいる。", "collapse": "給油機は止まり、売店のガラスが割られている。"}},
-+	"総合病院": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(96, 50), "photo": "hospital", "fallback": "pharmacy",
++	"総合病院": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 4, "pos": Vector2(96, 50), "photo": "hospital",
 +		"aliases": ["病院", "大きな病院"], "food": 10.0, "water": 40.0, "vacant": true, "specials": {"bandage": 25}, "danger": 2,
 +		"text": {"normal": "大通り沿いの総合病院。救急車の出入り口がある。", "alert": "救急外来の前に救急車が何台も並び、入口に人があふれている。", "collapse": "救急外来の自動ドアの向こうで、何かが動いている。"}},
-+	"交番": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 2, "pos": Vector2(76, 64), "photo": "police_box", "fallback": "street",
++	"交番": {"kind": "site", "area": "大通り", "links": ["大通り"], "minutes": 2, "pos": Vector2(76, 64), "photo": "police_box",
 +		"aliases": ["警察", "派出所"], "food": 1.0, "water": 2.0, "vacant": true,
 +		"text": {"normal": "大通りの角の交番。警察官が立っている。", "alert": "「パトロール中」の札がかかったまま、誰もいない。", "collapse": "扉が開け放たれ、机の上の書類が床に散らばっている。"}},
-+	"倉庫街": {"kind": "site", "area": "大通り", "links": ["大通り", "南の住宅街"], "minutes": 5, "pos": Vector2(70, 80), "photo": "warehouses", "fallback": "street",
++	"倉庫街": {"kind": "site", "area": "大通り", "links": ["大通り", "南の住宅街"], "minutes": 5, "pos": Vector2(70, 80), "photo": "warehouses",
 +		"aliases": ["倉庫", "物流倉庫", "食品倉庫"], "food": 400.0, "water": 300.0, "vacant": true, "danger": 2,
 +		"text": {"normal": "物流会社の倉庫が並ぶ一角。フォークリフトが行き来している。", "alert": "トラックの出入りが止まり、門が閉じられている。", "collapse": "食品倉庫の搬入口が開いたまま。中は段ボールの山だ。"}},
 +	# --- 北の住宅地 ---
-+	"北の住宅街": {"kind": "houses", "area": "北の住宅地", "links": ["大通り", "住宅街", "団地", "中学校", "神社", "川沿いの土手"], "minutes": 6, "pos": Vector2(-30, 70), "photo": "residential_north", "fallback": "residential",
++	"北の住宅街": {"kind": "houses", "area": "北の住宅地", "links": ["大通り", "住宅街", "団地", "中学校", "神社", "川沿いの土手"], "minutes": 6, "pos": Vector2(-30, 70), "photo": "residential_north",
 +		"aliases": ["北の住宅地", "線路の北の住宅街"], "households": 150, "text": {"normal": "線路の北に広がる、古い一戸建ての多い住宅街。", "alert": "雨戸を閉め切った家が目立つ。", "collapse": "玄関の開いたままの家が並んでいる。洗濯物が干しっぱなしだ。"}},
-+	"団地": {"kind": "houses", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-50, 90), "photo": "danchi", "fallback": "apartment",
++	"団地": {"kind": "houses", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-50, 90), "photo": "danchi",
 +		"aliases": ["公営団地", "団地の棟", "集会所"], "households": 300, "danger": 1, "text": {"normal": "五階建ての棟がいくつも並ぶ大きな団地。中央に集会所と小さな公園がある。", "alert": "掲示板に「高齢の方の安否確認にご協力を」と貼り紙。", "collapse": "階段の踊り場から、うめき声が響いてくる。"}},
-+	"中学校": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-20, 92), "photo": "junior_high", "fallback": "school",
++	"中学校": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-20, 92), "photo": "junior_high",
 +		"aliases": ["中学", "第二中学校"], "food": 15.0, "water": 40.0, "vacant": true, "text": {"normal": "鉄筋の校舎とグラウンドのある区立の中学校。", "alert": "休校の張り紙。校門は閉ざされている。", "collapse": "校門は開いたまま。グラウンドに机がいくつも積まれている。"}},
-+	"神社": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 3, "pos": Vector2(-60, 66), "photo": "shrine", "fallback": "residential",
++	"神社": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 3, "pos": Vector2(-60, 66), "photo": "shrine",
 +		"aliases": ["お宮", "鎮守の森"], "food": 1.0, "water": 10.0, "vacant": true, "text": {"normal": "大きな楠の木に囲まれた、小さな神社。社務所がある。", "alert": "社務所に「当分の間、お休みします」の貼り紙。", "collapse": "境内は静かだ。手水舎に雨水がたまっている。"}},
 +	# --- 川沿い ---
-+	"川沿いの土手": {"kind": "land", "area": "川沿い", "links": ["北の住宅街", "住宅街", "河川敷のグラウンド", "橋"], "minutes": 6, "pos": Vector2(-80, 50), "photo": "river_embankment", "fallback": "street",
++	"川沿いの土手": {"kind": "land", "area": "川沿い", "links": ["北の住宅街", "住宅街", "河川敷のグラウンド", "橋"], "minutes": 6, "pos": Vector2(-80, 50), "photo": "river_embankment",
 +		"aliases": ["土手", "川", "川沿い", "河川敷"], "water_source": true, "text": {"normal": "川沿いの土手の上の遊歩道。ジョギングをする人が行き交う。", "alert": "人通りが減り、土手の上が妙に静かだ。", "collapse": "土手の草が伸び放題になっている。川の水は流れ続けている。"}},
-+	"河川敷のグラウンド": {"kind": "land", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 3, "pos": Vector2(-95, 58), "photo": "riverside_ground", "fallback": "street",
++	"河川敷のグラウンド": {"kind": "land", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 3, "pos": Vector2(-95, 58), "photo": "riverside_ground",
 +		"aliases": ["グラウンド", "野球場", "河川敷のグランド"], "farmland": true, "water_source": true, "text": {"normal": "河川敷の野球グラウンド。管理小屋とベンチがある。", "alert": "グラウンドに人影はない。", "collapse": "広い土の地面が、手つかずのまま広がっている。"}},
-+	"橋": {"kind": "street", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 4, "pos": Vector2(-100, 40), "photo": "bridge", "fallback": "street",
++	"橋": {"kind": "street", "area": "川沿い", "links": ["川沿いの土手"], "minutes": 4, "pos": Vector2(-100, 40), "photo": "bridge",
 +		"aliases": ["大橋", "川の橋", "隣町への橋"], "entry": true, "text": {"normal": "隣町へ渡る大きな橋。車の流れが途切れない。", "alert": "橋のたもとに警察の車両が止まり、検問をしている。", "collapse": "橋の上に車が何台も放置されている。向こう岸から、何かが歩いてくる。"}},
 +	# --- 南の住宅地 ---
-+	"南の住宅街": {"kind": "houses", "area": "南の住宅地", "links": ["商店通り", "公園", "倉庫街"], "minutes": 6, "pos": Vector2(30, -40), "photo": "residential_south", "fallback": "residential",
++	"南の住宅街": {"kind": "houses", "area": "南の住宅地", "links": ["商店通り", "公園", "倉庫街"], "minutes": 6, "pos": Vector2(30, -40), "photo": "residential_south",
 +		"aliases": ["南の住宅地", "線路の南の住宅街"], "households": 120, "text": {"normal": "商店街の裏手から続く、細い路地の多い住宅街。", "alert": "路地に人の気配がない。", "collapse": "路地の奥で、割れたガラスが日に光っている。"}},
-+	"公園": {"kind": "land", "area": "南の住宅地", "links": ["南の住宅街"], "minutes": 3, "pos": Vector2(40, -60), "photo": "park", "fallback": "residential",
++	"公園": {"kind": "land", "area": "南の住宅地", "links": ["南の住宅街"], "minutes": 3, "pos": Vector2(40, -60), "photo": "park",
 +		"aliases": ["大きな公園", "区立公園", "管理棟"], "farmland": true, "water_source": true, "text": {"normal": "芝生広場と池のある区立公園。管理棟と公衆トイレがある。", "alert": "芝生広場に人がいない。管理棟が閉まっている。", "collapse": "芝生が伸びて、池のまわりの柵が倒れている。"}},
 +}
 +
@@ -3361,10 +3377,10 @@ index 9df2ea7..48433d3 100644
  	return w
 diff --git a/tests/test_town149_36.gd b/tests/test_town149_36.gd
 new file mode 100644
-index 0000000..3fd019c
+index 0000000..d6c8a9d
 --- /dev/null
 +++ b/tests/test_town149_36.gd
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,88 @@
 +extends SceneTree
 +## v149.36: the wider town — reachable on foot, its shops and buildings work
 +## like the old ones, its houses can be searched, its walkers and survivors
@@ -3407,7 +3423,8 @@ index 0000000..3fd019c
 +	await g._on_command("団地へ行く")
 +	check(g.location == "団地" and int(w.s.minute) - 2 * 60 >= 15, "walking to the estate takes a while (%d min)" % (int(w.s.minute) - 2 * 60))
 +	check(g._look().contains("団地"), "and it is described")
-+	check(g.scene_view.location_texture("団地", "", "normal") != null, "with a picture (a stand-in until its own is made)")
++	# v149.37: no stand-in pictures: until its photo is made, the frame shows the name.
++	check(g.scene_view.location_texture("団地", "", "normal") == null and g.district_card.visible and g.district_card.text.begins_with("団地"), "with no borrowed picture: the frame shows its name")
 +	# The supermarket sells; the home centre sells timber and fittings.
 +	await g._on_command("スーパーへ行く")
 +	var names: Array = ShopWindow.offers(g).map(func(o): return str(o.name))
