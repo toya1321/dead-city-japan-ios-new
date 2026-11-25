@@ -7453,7 +7453,7 @@ index d9eac4a..702dccd 100644
  mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
 diff --git a/data/resident_faces.json b/data/resident_faces.json
 new file mode 100644
-index 0000000..b669679
+index 0000000..aa98c63
 --- /dev/null
 +++ b/data/resident_faces.json
 @@ -0,0 +1,9774 @@
@@ -16070,7 +16070,7 @@ index 0000000..b669679
 +},
 +{
 +"id": "r1231",
-+"sex": "f",
++"sex": "m",
 +"age": 26,
 +"look": "赤茶のウルフカット、水色のコーデュロイシャツ",
 +"src": "5995a694-image.png"
