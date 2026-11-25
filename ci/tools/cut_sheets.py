@@ -2,7 +2,7 @@
 import sys, json, os
 from PIL import Image
 import numpy as np
-G='/tmp/claude-0/w/game2'
+G=os.environ.get('G','/tmp/faces')
 reg_path=G+'/data/resident_faces.json'
 reg=json.load(open(reg_path)) if os.path.exists(reg_path) else []
 batch=json.load(open(sys.argv[1]))
