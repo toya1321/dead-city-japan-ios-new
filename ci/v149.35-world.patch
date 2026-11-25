@@ -7427,6 +7427,502 @@ index 0000000..aea636c
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
+index d9eac4a..702dccd 100644
+--- a/build_scripts/build-ios-unsigned.sh
++++ b/build_scripts/build-ios-unsigned.sh
+@@ -88,15 +88,15 @@ from pathlib import Path
+ p=Path(sys.argv[1]);info=plistlib.loads((p/'Info.plist').read_bytes())
+ assert info['CFBundleSupportedPlatforms']==['iPhoneOS']
+ assert info['CFBundleIdentifier']=='com.deadcityjapan.prototype'
+-assert str(info['CFBundleVersion']) == '181'
+-assert info['CFBundleShortVersionString'] == '0.149.33'
++assert str(info['CFBundleVersion']) == '182'
++assert info['CFBundleShortVersionString'] == '0.149.35'
+ assert info['UISupportedInterfaceOrientations'] == ['UIInterfaceOrientationPortrait'], info['UISupportedInterfaceOrientations']
+ assert any(p.rglob('*.pck')), 'Missing game data'
+ PY
+ ditto "$APP" "$STAGE/Payload/DeadCityJapan.app"
+-OUTPUT="$PWD/build/DeadCityJapan-v149.33-local-llm-unsigned.ipa"
++OUTPUT="$PWD/build/DeadCityJapan-v149.35-local-llm-unsigned.ipa"
+ if [[ "$NATIVE_LLM" != 1 ]]; then
+-  OUTPUT="$PWD/build/DeadCityJapan-v149.33-rules-only-unsigned.ipa"
++  OUTPUT="$PWD/build/DeadCityJapan-v149.35-rules-only-unsigned.ipa"
+ fi
+ (cd "$STAGE" && zip -qry DeadCityJapan.ipa Payload)
+ mv "$STAGE/DeadCityJapan.ipa" "$OUTPUT"
+diff --git a/data/resident_faces.json b/data/resident_faces.json
+new file mode 100644
+index 0000000..f6195f5
+--- /dev/null
++++ b/data/resident_faces.json
+@@ -0,0 +1,450 @@
++[
++{
++"id": "r0001",
++"sex": "f",
++"age": 80,
++"look": "白髪のショート、紫のカーディガン",
++"src": "664ee4bc-image.png"
++},
++{
++"id": "r0002",
++"sex": "m",
++"age": 30,
++"look": "角刈り、チェックのジャケット",
++"src": "664ee4bc-image.png"
++},
++{
++"id": "r0003",
++"sex": "f",
++"age": 16,
++"look": "黒髪ボブ、赤いジャージ",
++"src": "664ee4bc-image.png"
++},
++{
++"id": "r0004",
++"sex": "m",
++"age": 55,
++"look": "白髪まじりの癖毛、生成りのジャケット",
++"src": "664ee4bc-image.png"
++},
++{
++"id": "r0005",
++"sex": "f",
++"age": 25,
++"look": "ピンクの巻き髪、紺のワークシャツ",
++"src": "30ea5213-image.png"
++},
++{
++"id": "r0006",
++"sex": "m",
++"age": 66,
++"look": "白髪、ニットベスト",
++"src": "30ea5213-image.png"
++},
++{
++"id": "r0007",
++"sex": "m",
++"age": 12,
++"look": "少年、青緑のトレーナー",
++"src": "30ea5213-image.png"
++},
++{
++"id": "r0008",
++"sex": "f",
++"age": 45,
++"look": "ひっつめ髪、からし色のブラウス",
++"src": "30ea5213-image.png"
++},
++{
++"id": "r0009",
++"sex": "f",
++"age": 42,
++"look": "お団子、赤いエプロン",
++"src": "a30a8579-image.png"
++},
++{
++"id": "r0010",
++"sex": "m",
++"age": 76,
++"look": "白髪、チェックのシャツ",
++"src": "a30a8579-image.png"
++},
++{
++"id": "r0011",
++"sex": "f",
++"age": 22,
++"look": "黒髪ボブ、緑のセーター",
++"src": "a30a8579-image.png"
++},
++{
++"id": "r0012",
++"sex": "m",
++"age": 30,
++"look": "癖毛、デニムジャケット",
++"src": "a30a8579-image.png"
++},
++{
++"id": "r0013",
++"sex": "m",
++"age": 60,
++"look": "恰幅がいい、ラベンダーのポロシャツ",
++"src": "c86fe0ae-image.png"
++},
++{
++"id": "r0014",
++"sex": "f",
++"age": 25,
++"look": "短い巻き髪、からし色のジャケット",
++"src": "c86fe0ae-image.png"
++},
++{
++"id": "r0015",
++"sex": "f",
++"age": 85,
++"look": "白髪、花柄のブラウス",
++"src": "c86fe0ae-image.png"
++},
++{
++"id": "r0016",
++"sex": "m",
++"age": 18,
++"look": "巻き毛、パーカー",
++"src": "c86fe0ae-image.png"
++},
++{
++"id": "r0017",
++"sex": "m",
++"age": 85,
++"look": "白髪、紫のフリース",
++"src": "d54018bc-image.png"
++},
++{
++"id": "r0018",
++"sex": "f",
++"age": 45,
++"look": "茶髪のミディアム、生成りのジャケット",
++"src": "d54018bc-image.png"
++},
++{
++"id": "r0019",
++"sex": "m",
++"age": 12,
++"look": "坊主の少年、オレンジのトレーナー",
++"src": "d54018bc-image.png"
++},
++{
++"id": "r0020",
++"sex": "f",
++"age": 30,
++"look": "三つ編み、緑のジャージ",
++"src": "d54018bc-image.png"
++},
++{
++"id": "r0021",
++"sex": "f",
++"age": 65,
++"look": "白髪の三つ編み、黄色のカーディガン",
++"src": "906c6415-image.png"
++},
++{
++"id": "r0022",
++"sex": "m",
++"age": 42,
++"look": "短髪、オリーブのベスト",
++"src": "906c6415-image.png"
++},
++{
++"id": "r0023",
++"sex": "f",
++"age": 26,
++"look": "青い長髪、ピンクのチェックシャツ",
++"src": "906c6415-image.png"
++},
++{
++"id": "r0024",
++"sex": "m",
++"age": 38,
++"look": "赤茶の巻き毛、赤いポロシャツ",
++"src": "906c6415-image.png"
++},
++{
++"id": "r0025",
++"sex": "m",
++"age": 58,
++"look": "白髪まじり、黄色の雨合羽",
++"src": "65129ed9-image.png"
++},
++{
++"id": "r0026",
++"sex": "m",
++"age": 24,
++"look": "赤い短髪、ボーダーのポロシャツ",
++"src": "65129ed9-image.png"
++},
++{
++"id": "r0027",
++"sex": "f",
++"age": 75,
++"look": "白髪のショート、紫のチェック",
++"src": "65129ed9-image.png"
++},
++{
++"id": "r0028",
++"sex": "f",
++"age": 17,
++"look": "ポニーテール、灰色のフリース",
++"src": "65129ed9-image.png"
++},
++{
++"id": "r0029",
++"sex": "f",
++"age": 64,
++"look": "白髪まじりのボブ、藤色のセーター",
++"src": "b27741e4-image.png"
++},
++{
++"id": "r0030",
++"sex": "m",
++"age": 23,
++"look": "金髪、黒いデニムジャケット",
++"src": "b27741e4-image.png"
++},
++{
++"id": "r0031",
++"sex": "f",
++"age": 11,
++"look": "おかっぱの少女、赤いフリース",
++"src": "b27741e4-image.png"
++},
++{
++"id": "r0032",
++"sex": "m",
++"age": 42,
++"look": "長い巻き毛を結んでいる、生成りのシャツ",
++"src": "b27741e4-image.png"
++},
++{
++"id": "r0033",
++"sex": "f",
++"age": 40,
++"look": "赤茶の巻き髪、コックコート",
++"src": "387d6d3e-image.png"
++},
++{
++"id": "r0034",
++"sex": "m",
++"age": 88,
++"look": "白髪の乱れ髪、灰色のカーディガン",
++"src": "387d6d3e-image.png"
++},
++{
++"id": "r0035",
++"sex": "f",
++"age": 21,
++"look": "青緑の髪、チェックのシャツ",
++"src": "387d6d3e-image.png"
++},
++{
++"id": "r0036",
++"sex": "m",
++"age": 38,
++"look": "緑の作業着",
++"src": "387d6d3e-image.png"
++},
++{
++"id": "r0037",
++"sex": "f",
++"age": 24,
++"look": "黄色の巻き髪、ピアス、赤いデニム",
++"src": "b05d1ecd-image.png"
++},
++{
++"id": "r0038",
++"sex": "m",
++"age": 85,
++"look": "白髪の角刈り、緑のカーディガン",
++"src": "b05d1ecd-image.png"
++},
++{
++"id": "r0039",
++"sex": "f",
++"age": 35,
++"look": "編み込み、デニムのエプロン",
++"src": "b05d1ecd-image.png"
++},
++{
++"id": "r0040",
++"sex": "m",
++"age": 13,
++"look": "少年、赤茶のトレーナー",
++"src": "b05d1ecd-image.png"
++},
++{
++"id": "r0041",
++"sex": "m",
++"age": 40,
++"look": "癖毛、緑のジャケット",
++"src": "561988d8-image.png"
++},
++{
++"id": "r0042",
++"sex": "f",
++"age": 82,
++"look": "白い巻き髪、水玉のブラウス",
++"src": "561988d8-image.png"
++},
++{
++"id": "r0043",
++"sex": "f",
++"age": 26,
++"look": "前髪、サーモンピンクのジャージ",
++"src": "561988d8-image.png"
++},
++{
++"id": "r0044",
++"sex": "m",
++"age": 35,
++"look": "紫の巻き毛、ベージュのパーカー",
++"src": "561988d8-image.png"
++},
++{
++"id": "r0045",
++"sex": "f",
++"age": 55,
++"look": "白髪まじりの長髪、青緑のダウン",
++"src": "4d16be6e-image.png"
++},
++{
++"id": "r0046",
++"sex": "m",
++"age": 20,
++"look": "金髪の短髪、えんじのセーター",
++"src": "4d16be6e-image.png"
++},
++{
++"id": "r0047",
++"sex": "m",
++"age": 80,
++"look": "白髪の乱れ髪、チェックのシャツ",
++"src": "4d16be6e-image.png"
++},
++{
++"id": "r0048",
++"sex": "f",
++"age": 17,
++"look": "黒髪ボブ、からし色のカーディガン",
++"src": "4d16be6e-image.png"
++},
++{
++"id": "r0049",
++"sex": "f",
++"age": 92,
++"look": "白髪、えんじのコート",
++"src": "02eb18bf-image.png"
++},
++{
++"id": "r0050",
++"sex": "m",
++"age": 40,
++"look": "眼鏡、オレンジの作業着",
++"src": "02eb18bf-image.png"
++},
++{
++"id": "r0051",
++"sex": "f",
++"age": 35,
++"look": "茶色の巻き髪、藤色のフリース",
++"src": "02eb18bf-image.png"
++},
++{
++"id": "r0052",
++"sex": "m",
++"age": 62,
++"look": "薄くなった白髪、紺のシャツ",
++"src": "02eb18bf-image.png"
++},
++{
++"id": "r0053",
++"sex": "f",
++"age": 25,
++"look": "ピンクのメッシュの巻き髪、白いトレーナー",
++"src": "516879d3-image.png"
++},
++{
++"id": "r0054",
++"sex": "m",
++"age": 68,
++"look": "白髪の短髪、茶色のベスト",
++"src": "516879d3-image.png"
++},
++{
++"id": "r0055",
++"sex": "m",
++"age": 14,
++"look": "少年、黄色いチェックのシャツ",
++"src": "516879d3-image.png"
++},
++{
++"id": "r0056",
++"sex": "f",
++"age": 48,
++"look": "赤茶のボブ、水色のエプロン",
++"src": "516879d3-image.png"
++},
++{
++"id": "r0057",
++"sex": "m",
++"age": 62,
++"look": "白髪まじりの巻き毛、茶色のエプロン",
++"src": "fc5af19f-image.png"
++},
++{
++"id": "r0058",
++"sex": "f",
++"age": 27,
++"look": "赤茶の髪を結んでいる、ボアのフリース",
++"src": "fc5af19f-image.png"
++},
++{
++"id": "r0059",
++"sex": "f",
++"age": 78,
++"look": "白髪の巻き毛、緑のブラウス",
++"src": "fc5af19f-image.png"
++},
++{
++"id": "r0060",
++"sex": "m",
++"age": 19,
++"look": "癖毛、えんじのセーター",
++"src": "fc5af19f-image.png"
++},
++{
++"id": "r0061",
++"sex": "f",
++"age": 68,
++"look": "銀髪のボブ、えんじのコート",
++"src": "b5303eab-image.png"
++},
++{
++"id": "r0062",
++"sex": "m",
++"age": 45,
++"look": "短髪、黄色のヤッケ",
++"src": "b5303eab-image.png"
++},
++{
++"id": "r0063",
++"sex": "f",
++"age": 26,
++"look": "ミント色のボブ、灰色のワークシャツ",
++"src": "b5303eab-image.png"
++},
++{
++"id": "r0064",
++"sex": "m",
++"age": 35,
++"look": "長髪を結んでいる、紺のトレーナー",
++"src": "b5303eab-image.png"
++}
++]
+\ No newline at end of file
+diff --git a/export_presets.cfg b/export_presets.cfg
+index 82fc247..b4e8407 100644
+--- a/export_presets.cfg
++++ b/export_presets.cfg
+@@ -21,8 +21,8 @@ custom_template/release=""
+ architectures/arm64=true
+ application/app_store_team_id="0000000000"
+ application/bundle_identifier="com.deadcityjapan.prototype"
+-application/short_version="0.149.33"
+-application/version="181"
++application/short_version="0.149.35"
++application/version="182"
+ application/export_project_only=true
+ application/delete_old_export_files_unconditionally=true
+ application/targeted_device_family=0
 diff --git a/qa/autoplay.gd b/qa/autoplay.gd
 index 9136871..f5d92d5 100644
 --- a/qa/autoplay.gd
