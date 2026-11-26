@@ -5771,6 +5771,190 @@ index 0000000..6f84acc
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_classroom.jpg.import b/assets/photos/junior_high_classroom.jpg.import
+new file mode 100644
+index 0000000..cd4f9c8
+--- /dev/null
++++ b/assets/photos/junior_high_classroom.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ba4tnc2u3req4"
++path="res://.godot/imported/junior_high_classroom.jpg-c97ad6562368e80677862159c405db90.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_classroom.jpg"
++dest_files=["res://.godot/imported/junior_high_classroom.jpg-c97ad6562368e80677862159c405db90.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_classroom_alert.jpg.import b/assets/photos/junior_high_classroom_alert.jpg.import
+new file mode 100644
+index 0000000..0812d07
+--- /dev/null
++++ b/assets/photos/junior_high_classroom_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://mcv6cyflies"
++path="res://.godot/imported/junior_high_classroom_alert.jpg-10d5a7dc11cc7077911c00af6b26567c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_classroom_alert.jpg"
++dest_files=["res://.godot/imported/junior_high_classroom_alert.jpg-10d5a7dc11cc7077911c00af6b26567c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_classroom_collapse.jpg.import b/assets/photos/junior_high_classroom_collapse.jpg.import
+new file mode 100644
+index 0000000..4564049
+--- /dev/null
++++ b/assets/photos/junior_high_classroom_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ninluhy7ow1l"
++path="res://.godot/imported/junior_high_classroom_collapse.jpg-dc41ef155701cac0502e6f285d1a72d8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_classroom_collapse.jpg"
++dest_files=["res://.godot/imported/junior_high_classroom_collapse.jpg-dc41ef155701cac0502e6f285d1a72d8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_classroom_overgrown.jpg.import b/assets/photos/junior_high_classroom_overgrown.jpg.import
+new file mode 100644
+index 0000000..145590b
+--- /dev/null
++++ b/assets/photos/junior_high_classroom_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://byavhwooyqm0"
++path="res://.godot/imported/junior_high_classroom_overgrown.jpg-61630814974f97eb725172ef389d4297.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_classroom_overgrown.jpg"
++dest_files=["res://.godot/imported/junior_high_classroom_overgrown.jpg-61630814974f97eb725172ef389d4297.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/photos/junior_high_collapse.jpg.import b/assets/photos/junior_high_collapse.jpg.import
 new file mode 100644
 index 0000000..5e1b24a
@@ -5817,6 +6001,190 @@ index 0000000..5e1b24a
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_nurse.jpg.import b/assets/photos/junior_high_nurse.jpg.import
+new file mode 100644
+index 0000000..c290053
+--- /dev/null
++++ b/assets/photos/junior_high_nurse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://datk6gmh546b8"
++path="res://.godot/imported/junior_high_nurse.jpg-0335a385506b84d854b8a099b4eab89a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_nurse.jpg"
++dest_files=["res://.godot/imported/junior_high_nurse.jpg-0335a385506b84d854b8a099b4eab89a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_nurse_alert.jpg.import b/assets/photos/junior_high_nurse_alert.jpg.import
+new file mode 100644
+index 0000000..3513685
+--- /dev/null
++++ b/assets/photos/junior_high_nurse_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://byetwfabpuvjq"
++path="res://.godot/imported/junior_high_nurse_alert.jpg-cf6d6adea62365a9d7ab7a25942f3ef0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_nurse_alert.jpg"
++dest_files=["res://.godot/imported/junior_high_nurse_alert.jpg-cf6d6adea62365a9d7ab7a25942f3ef0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_nurse_collapse.jpg.import b/assets/photos/junior_high_nurse_collapse.jpg.import
+new file mode 100644
+index 0000000..97dda0c
+--- /dev/null
++++ b/assets/photos/junior_high_nurse_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bvdxo5edoouun"
++path="res://.godot/imported/junior_high_nurse_collapse.jpg-3724ba4bde6d4b91256cb9d47e4f5ae1.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_nurse_collapse.jpg"
++dest_files=["res://.godot/imported/junior_high_nurse_collapse.jpg-3724ba4bde6d4b91256cb9d47e4f5ae1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_nurse_overgrown.jpg.import b/assets/photos/junior_high_nurse_overgrown.jpg.import
+new file mode 100644
+index 0000000..9c77071
+--- /dev/null
++++ b/assets/photos/junior_high_nurse_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c60p8wuy5k2hv"
++path="res://.godot/imported/junior_high_nurse_overgrown.jpg-e83d7b19b57be6b601be0b789e331adb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_nurse_overgrown.jpg"
++dest_files=["res://.godot/imported/junior_high_nurse_overgrown.jpg-e83d7b19b57be6b601be0b789e331adb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/photos/junior_high_overgrown.jpg.import b/assets/photos/junior_high_overgrown.jpg.import
 new file mode 100644
 index 0000000..0218e57
@@ -5837,6 +6205,190 @@ index 0000000..0218e57
 +
 +source_file="res://assets/photos/junior_high_overgrown.jpg"
 +dest_files=["res://.godot/imported/junior_high_overgrown.jpg-2a92232501b040a635c3277069243913.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_staff.jpg.import b/assets/photos/junior_high_staff.jpg.import
+new file mode 100644
+index 0000000..792b2b0
+--- /dev/null
++++ b/assets/photos/junior_high_staff.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c5ju6m2t1whi3"
++path="res://.godot/imported/junior_high_staff.jpg-b8be9d6640c1141fa2a3850b288b08b0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_staff.jpg"
++dest_files=["res://.godot/imported/junior_high_staff.jpg-b8be9d6640c1141fa2a3850b288b08b0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_staff_alert.jpg.import b/assets/photos/junior_high_staff_alert.jpg.import
+new file mode 100644
+index 0000000..0f35222
+--- /dev/null
++++ b/assets/photos/junior_high_staff_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ttrt6ok6aoy8"
++path="res://.godot/imported/junior_high_staff_alert.jpg-a437dd619bd5f3b5ca162b17fb98b915.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_staff_alert.jpg"
++dest_files=["res://.godot/imported/junior_high_staff_alert.jpg-a437dd619bd5f3b5ca162b17fb98b915.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_staff_collapse.jpg.import b/assets/photos/junior_high_staff_collapse.jpg.import
+new file mode 100644
+index 0000000..2dd574f
+--- /dev/null
++++ b/assets/photos/junior_high_staff_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dqyvqsbbua6xk"
++path="res://.godot/imported/junior_high_staff_collapse.jpg-1497c56dafaa4521a73e1036871ccb4b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_staff_collapse.jpg"
++dest_files=["res://.godot/imported/junior_high_staff_collapse.jpg-1497c56dafaa4521a73e1036871ccb4b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/junior_high_staff_overgrown.jpg.import b/assets/photos/junior_high_staff_overgrown.jpg.import
+new file mode 100644
+index 0000000..d3a4d2d
+--- /dev/null
++++ b/assets/photos/junior_high_staff_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cgfitk401rdb1"
++path="res://.godot/imported/junior_high_staff_overgrown.jpg-d1d786399f8998458b21f61cad7d0993.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/junior_high_staff_overgrown.jpg"
++dest_files=["res://.godot/imported/junior_high_staff_overgrown.jpg-d1d786399f8998458b21f61cad7d0993.ctex"]
 +
 +[params]
 +
@@ -7585,6 +8137,190 @@ index 0000000..9ad790d
 +
 +source_file="res://assets/photos/station_platform_collapse.jpg"
 +dest_files=["res://.godot/imported/station_platform_collapse.jpg-ff147359307c1f75373bcd1f9dfd7871.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_gate.jpg.import b/assets/photos/station_platform_gate.jpg.import
+new file mode 100644
+index 0000000..1060552
+--- /dev/null
++++ b/assets/photos/station_platform_gate.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dno0y8b7wejkm"
++path="res://.godot/imported/station_platform_gate.jpg-09ed17aea481a41781ccd17836d1b3aa.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_gate.jpg"
++dest_files=["res://.godot/imported/station_platform_gate.jpg-09ed17aea481a41781ccd17836d1b3aa.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_gate_alert.jpg.import b/assets/photos/station_platform_gate_alert.jpg.import
+new file mode 100644
+index 0000000..bae061c
+--- /dev/null
++++ b/assets/photos/station_platform_gate_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://hsw213373o35"
++path="res://.godot/imported/station_platform_gate_alert.jpg-b03be89a5be8d38fef3bad7764c7f18a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_gate_alert.jpg"
++dest_files=["res://.godot/imported/station_platform_gate_alert.jpg-b03be89a5be8d38fef3bad7764c7f18a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_gate_collapse.jpg.import b/assets/photos/station_platform_gate_collapse.jpg.import
+new file mode 100644
+index 0000000..5040fac
+--- /dev/null
++++ b/assets/photos/station_platform_gate_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cjn5oxywerdnp"
++path="res://.godot/imported/station_platform_gate_collapse.jpg-2e7269f49f624a007da4f752a91c7ef1.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_gate_collapse.jpg"
++dest_files=["res://.godot/imported/station_platform_gate_collapse.jpg-2e7269f49f624a007da4f752a91c7ef1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_gate_overgrown.jpg.import b/assets/photos/station_platform_gate_overgrown.jpg.import
+new file mode 100644
+index 0000000..c6e2877
+--- /dev/null
++++ b/assets/photos/station_platform_gate_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://wi5ia6gjy86o"
++path="res://.godot/imported/station_platform_gate_overgrown.jpg-6468964ece95299a6f602566941e012b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_gate_overgrown.jpg"
++dest_files=["res://.godot/imported/station_platform_gate_overgrown.jpg-6468964ece95299a6f602566941e012b.ctex"]
 +
 +[params]
 +
@@ -90975,7 +91711,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..8158056 100644
+index 0f2add4..d271150 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -91117,7 +91853,7 @@ index 0f2add4..8158056 100644
 +				if cmd == str(r.name) + verb:
 +					return str(r.name) + "に行く"
 +	if cmd == "入口に戻る": return cmd
-+	if cmd in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む"]: return "ベッドで休む"
++	if cmd in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む", "保健室で休む"]: return "ベッドで休む"
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
@@ -93935,10 +94671,10 @@ index 79480a1..dd84cbd 100644
  			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
 diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
 new file mode 100644
-index 0000000..0f58eb0
+index 0000000..d105199
 --- /dev/null
 +++ b/scripts/site_rooms.gd
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,286 @@
 +extends RefCounted
 +## v149.35: some of the town's buildings can be walked through room by room —
 +## each room has its own picture at every stage of the town (normal → alert →
@@ -93970,6 +94706,43 @@ index 0000000..0f58eb0
 +	],
 +}
 +
++## The lower secondary school: the classroom stands open, but teachers keep
++## people out of the staff room and the nurse's office until the town falls
++## apart. The nurse's office has beds and a first-aid cabinet; the staff room
++## the boxes of spare hygiene supplies laid in when the outbreak began.
++const JUNIOR_HIGH := {
++	"photo": "junior_high", "staff": "先生",
++	"rooms": [
++		{"name": "教室", "key": "classroom", "public": true, "food": 0.3, "water": 0.3, "bandage": 1,
++			"text": {"normal": "二階の教室。机と椅子が整然と並び、黒板の上で時計が時を刻んでいる。窓の外にグラウンドが見える。",
++				"alert": "教卓に消毒液とティッシュの箱が置かれ、教室の隅にマスクや手袋の入った段ボールが積まれている。",
++				"collapse": "机と椅子が倒れ、床にプリントやノートが散らばっている。誰かが慌てて出ていったあとだ。",
++				"overgrown": "天井がはがれ、壁に苔が這っている。机は錆び、黒板の文字は雨だれに流されて読めない。"}},
++		{"name": "保健室", "key": "nurse", "public": false, "bandage": 3, "bed": true, "food": 0.2, "water": 0.6,
++			"text": {"normal": "保健室。ピンクのカーテンで仕切られたベッドが二つ。ガラス戸棚に救急箱と包帯、ガーゼが並んでいる。",
++				"alert": "保健室の机にマスクの箱と消毒液、体温計が並び、床に「衛生用品（予備）」の箱が積まれている。",
++				"collapse": "保健室の戸棚はほとんど空だ。開いた段ボールと破れた包装が床に散らばり、丸椅子が倒れている。",
++				"overgrown": "ベッドの布団は湿って黒ずみ、カーテンは裂けている。戸棚の奥に、まだ包帯の箱が残っている。"}},
++		{"name": "職員室", "key": "staff", "public": false, "bandage": 2, "food": 0.8, "water": 1.0,
++			"text": {"normal": "職員室。先生たちの机が二列に並び、ノートパソコンと書類の山が載っている。",
++				"alert": "職員室の机に手指消毒液とマスクの箱、「衛生用品（予備）」の段ボールが置かれている。",
++				"collapse": "職員室の引き出しは開けっ放しで、床に書類が散らばり、椅子が一脚倒れている。",
++				"overgrown": "職員室の天井から染みが垂れ、窓の鉢植えは枯れている。机の上のパソコンは埃に埋もれている。"}},
++	],
++}
++
++## The station: through the ticket gates to the platforms.
++const STATION := {
++	"photo": "station_platform", "staff": "駅員",
++	"rooms": [
++		{"name": "改札口", "key": "gate", "public": true, "food": 0.3, "water": 0.3,
++			"text": {"normal": "駅の改札口。自動改札機の向こうに、ホームへ上がる階段が見える。脇に駅員の窓口と券売機。",
++				"alert": "改札の脇に手指消毒液が置かれ、券売機の前にロープが張られている。駅員の窓口は閉まっている。",
++				"collapse": "改札機の表示は消え、ロープの支柱が倒れている。床に誰かの旅行かばんが置き去りにされている。",
++				"overgrown": "改札機は錆びつき、階段は苔に覆われている。天井から蔦が垂れ、置き去りのかばんにも落ち葉が積もっている。"}},
++	],
++}
++
 +const SITES := {
 +	"総合病院": {
 +		"photo": "hospital",
@@ -93984,7 +94757,7 @@ index 0000000..0f58eb0
 +					"alert": "診察室に救急カートと点滴台が持ち込まれ、棚には手袋とマスクの箱がぎっしり詰まっている。",
 +					"collapse": "診察室の棚は開けっ放しで、空き箱ばかりが残っている。机の上にカルテが散らばっている。",
 +					"overgrown": "診察室の壁紙がはがれ、窓から蔦が入りこんでいる。ガラス戸棚の奥に、まだ薬の箱が見える。"}},
-+			{"name": "病室", "key": "ward", "public": false, "bandage": 2,
++			{"name": "病室", "key": "ward", "public": false, "bandage": 2, "bed": true,
 +				"text": {"normal": "二人部屋の病室。窓の外に住宅街と、向こうの山が見える。",
 +					"alert": "病室に点滴台と処置用のワゴンが置かれ、いつでも患者を受け入れられるようになっている。",
 +					"collapse": "病室のベッドから、シーツが床まで垂れ下がっている。引き出しは開いたまま。床に空の注射器の袋が落ちている。",
@@ -93997,6 +94770,8 @@ index 0000000..0f58eb0
 +		],
 +	},
 +	"スーパー": SUPERMARKET,
++	"中学校": JUNIOR_HIGH,
++	"駅のホーム": STATION,
 +}
 +
 +static func has(place: String) -> bool:
@@ -94031,7 +94806,7 @@ index 0000000..0f58eb0
 +const WARD := "病室"
 +
 +static func rest(world, place: String) -> String:
-+	if current(world, place) != WARD:
++	if not bool(_room_def(place, current(world, place)).get("bed", false)):
 +		return "ここには横になれるベッドがない。"
 +	if float(world.s.health) <= 0.0:
 +		return "死亡しているため行動できない。"
@@ -94042,7 +94817,7 @@ index 0000000..0f58eb0
 +		world.s.longplay.morale = minf(100.0, float(world.s.longplay.get("morale", 50.0)) + 1.0)
 +	var healed := float(world.s.health) - before
 +	var stage := phase(world)
-+	var lead := "病室のベッドに横になり、カーテンを引いて3時間眠った。"
++	var lead := "%sのベッドに横になり、カーテンを引いて3時間眠った。" % current(world, place)
 +	if stage == "overgrown":
 +		lead = "湿ったマットレスに横になり、雨の音を聞きながら3時間眠った。"
 +	var rng := RandomNumberGenerator.new()
@@ -94117,14 +94892,14 @@ index 0000000..0f58eb0
 +			if current(world, place) == name:
 +				return "すでに%sにいる。" % name
 +			if not bool(r.public) and not _open_to_all(world):
-+				return "「関係者以外立ち入り禁止」の札がかかっている。%sに止められ、%sには入れなかった。" % ["職員" if place == "総合病院" else "店員", name]
++				return "「関係者以外立ち入り禁止」の札がかかっている。%sに止められ、%sには入れなかった。" % [str(SITES[place].get("staff", "職員" if place == "総合病院" else "店員")), name]
 +			world.advance_safe(2)
 +			_put(world, place, name)
 +			var seen := describe(world, place, phase(world))
 +			if name == WARD:
 +				seen += patient(world, place)
 +			return seen
-+	if command in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む"]:
++	if command in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む", "保健室で休む"]:
 +		return rest(world, place)
 +	if command in ["入口に戻る", "外に出る", "建物を出る"] and not current(world, place).is_empty():
 +		_put(world, place, "")
@@ -94181,7 +94956,7 @@ index 0000000..0f58eb0
 +	for r in rooms(place):
 +		if str(r.name) != here and (bool(r.public) or _open_to_all(world)):
 +			out.append("%sに行く" % r.name)
-+	if here == WARD:
++	if bool(_room_def(place, here).get("bed", false)):
 +		out.push_front("ベッドで休む")
 +	if not here.is_empty():
 +		out.append("入口に戻る")
@@ -94500,7 +95275,7 @@ index 5ea74f7..cd89262 100644
  		if cause.is_empty():
 diff --git a/scripts/town_map.gd b/scripts/town_map.gd
 new file mode 100644
-index 0000000..ffacc6d
+index 0000000..e9c81d7
 --- /dev/null
 +++ b/scripts/town_map.gd
 @@ -0,0 +1,121 @@
@@ -94558,7 +95333,7 @@ index 0000000..ffacc6d
 +	"団地": {"kind": "houses", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-50, 90), "photo": "danchi",
 +		"aliases": ["公営団地", "団地の棟", "集会所"], "households": 300, "danger": 1, "text": {"normal": "五階建ての棟がいくつも並ぶ大きな団地。中央に集会所と小さな公園がある。", "alert": "掲示板に「高齢の方の安否確認にご協力を」と貼り紙。", "collapse": "階段の踊り場から、うめき声が響いてくる。"}},
 +	"中学校": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 4, "pos": Vector2(-20, 92), "photo": "junior_high",
-+		"aliases": ["中学", "第二中学校"], "food": 15.0, "water": 40.0, "vacant": true, "text": {"normal": "鉄筋の校舎とグラウンドのある区立の中学校。", "alert": "休校の張り紙。校門は閉ざされている。", "collapse": "校門は開いたまま。グラウンドに机がいくつも積まれている。"}},
++		"aliases": ["中学", "第二中学校"], "food": 15.0, "water": 40.0, "vacant": true, "specials": {"bandage": 8}, "text": {"normal": "鉄筋の校舎とグラウンドのある区立の中学校。", "alert": "休校の張り紙。校門は閉ざされている。", "collapse": "校門は開いたまま。グラウンドに机がいくつも積まれている。"}},
 +	"神社": {"kind": "site", "area": "北の住宅地", "links": ["北の住宅街"], "minutes": 3, "pos": Vector2(-60, 66), "photo": "shrine",
 +		"aliases": ["お宮", "鎮守の森"], "food": 1.0, "water": 10.0, "vacant": true, "text": {"normal": "大きな楠の木に囲まれた、小さな神社。社務所がある。", "alert": "社務所に「当分の間、お休みします」の貼り紙。", "collapse": "境内は静かだ。手水舎に雨水がたまっている。"}},
 +	# --- 川沿い ---
@@ -95653,10 +96428,10 @@ index 0000000..69af088
 +uid://ci3mo5q7a6ln4
 diff --git a/tests/test_hospital_rooms149_35.gd b/tests/test_hospital_rooms149_35.gd
 new file mode 100644
-index 0000000..602d018
+index 0000000..0337bf0
 --- /dev/null
 +++ b/tests/test_hospital_rooms149_35.gd
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,110 @@
 +extends SceneTree
 +## v149.35: the general hospital can be walked room by room — lobby, exam
 +## room, ward, store room — each with its own picture at every stage of the
@@ -95737,6 +96512,33 @@ index 0000000..602d018
 +				kinds[str(k[0])] = true
 +				break
 +	check(kinds.has("draw_river") and kinds.has("draw_pond") and kinds.has("boil"), "river, pond and boiling each show their picture")
++	# The lower secondary school and the station gates work the same way.
++	var more_ok := true
++	for site in [["中学校", "junior_high"], ["駅のホーム", "station_platform"]]:
++		for r in SiteRooms.rooms(site[0]):
++			for ph in ["", "_alert", "_collapse", "_overgrown"]:
++				if not ResourceLoader.exists("res://assets/photos/%s_%s%s.jpg" % [site[1], r.key, ph]):
++					more_ok = false
++	check(more_ok and SiteRooms.rooms("中学校").size() == 3 and SiteRooms.rooms("駅のホーム").size() == 1, "school rooms and station gates have their pictures")
++	w.s.society = "normal"
++	w.s.regional_cases = 0
++	g._move_to("北の住宅街")
++	g.location = "中学校"
++	g._sync_player_position()
++	await g._on_command("職員室に行く")
++	check(SiteRooms.current(w, "中学校").is_empty() and g.log_entries[-1].contains("先生"), "teachers keep you out of the staff room")
++	await g._on_command("教室に行く")
++	check(SiteRooms.current(w, "中学校") == "教室" and SiteRooms.photo(w, "中学校", "normal").ends_with("junior_high_classroom.jpg"), "the classroom is open, with its picture")
++	w.s.society = "emergency"
++	w.s.regional_cases = 500
++	await g._on_command("保健室に行く")
++	check(SiteRooms.current(w, "中学校") == "保健室" and SiteRooms.chips(w, "中学校").has("ベッドで休む"), "the nurse's office has beds to rest on")
++	check(SiteRooms.photo(w, "中学校", SiteRooms.phase(w)).ends_with("junior_high_nurse_collapse.jpg"), "the nurse's office after the collapse")
++	g._move_to("駅前")
++	g.location = "駅のホーム"
++	g._sync_player_position()
++	await g._on_command("改札口に行く")
++	check(SiteRooms.current(w, "駅のホーム") == "改札口" and SiteRooms.photo(w, "駅のホーム", "overgrown").ends_with("station_platform_gate_overgrown.jpg"), "through the station's ticket gates")
 +	g.queue_free()
 +	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 +	quit(1 if failures else 0)
