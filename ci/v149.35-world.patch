@@ -839,6 +839,52 @@ index 0000000..1bcb73d
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_reversi.jpg.import b/assets/actions/act_reversi.jpg.import
+new file mode 100644
+index 0000000..3495fff
+--- /dev/null
++++ b/assets/actions/act_reversi.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bjt04el83nroy"
++path="res://.godot/imported/act_reversi.jpg-0e830f45ce4b4c5f1f9f97882e4b1e45.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_reversi.jpg"
++dest_files=["res://.godot/imported/act_reversi.jpg-0e830f45ce4b4c5f1f9f97882e4b1e45.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/faces/README.md b/assets/faces/README.md
 index c4c7331..1dfd0fb 100644
 --- a/assets/faces/README.md
@@ -79739,6 +79785,236 @@ index 0000000..0910d53
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/reversi/black.png.import b/assets/reversi/black.png.import
+new file mode 100644
+index 0000000..821c5ea
+--- /dev/null
++++ b/assets/reversi/black.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ymwixyfw73es"
++path="res://.godot/imported/black.png-400f157fb32e3805006c785aeda86eb4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/reversi/black.png"
++dest_files=["res://.godot/imported/black.png-400f157fb32e3805006c785aeda86eb4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/reversi/board.png.import b/assets/reversi/board.png.import
+new file mode 100644
+index 0000000..0997057
+--- /dev/null
++++ b/assets/reversi/board.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dt5q22chqr1dq"
++path="res://.godot/imported/board.png-03aefce386e49330291d861273d676d6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/reversi/board.png"
++dest_files=["res://.godot/imported/board.png-03aefce386e49330291d861273d676d6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/reversi/last_move.png.import b/assets/reversi/last_move.png.import
+new file mode 100644
+index 0000000..afdc4e3
+--- /dev/null
++++ b/assets/reversi/last_move.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://7ixd4u7oi34b"
++path="res://.godot/imported/last_move.png-23e83b68816a99fb1840642e20a2d03e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/reversi/last_move.png"
++dest_files=["res://.godot/imported/last_move.png-23e83b68816a99fb1840642e20a2d03e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/reversi/legal_move.png.import b/assets/reversi/legal_move.png.import
+new file mode 100644
+index 0000000..05b6904
+--- /dev/null
++++ b/assets/reversi/legal_move.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b60gwev7cficu"
++path="res://.godot/imported/legal_move.png-b1d09eaf3050ac66b1d4f0481cae98bb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/reversi/legal_move.png"
++dest_files=["res://.godot/imported/legal_move.png-b1d09eaf3050ac66b1d4f0481cae98bb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/reversi/white.png.import b/assets/reversi/white.png.import
+new file mode 100644
+index 0000000..9f364c6
+--- /dev/null
++++ b/assets/reversi/white.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cuwn22lx4r1h3"
++path="res://.godot/imported/white.png-c1b0aa82c6505f942ab7d97b11783307.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/reversi/white.png"
++dest_files=["res://.godot/imported/white.png-c1b0aa82c6505f942ab7d97b11783307.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
 index d9eac4a..702dccd 100644
 --- a/build_scripts/build-ios-unsigned.sh
@@ -91193,20 +91469,21 @@ index 0000000..2c112a7
 @@ -0,0 +1 @@
 +uid://bdaqf6pdnjf73
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..6abfc45 100644
+index 35febbb..ddfe877 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -16,7 +16,9 @@ const KINDS := [
+@@ -16,7 +16,10 @@ const KINDS := [
  	["fight_miss", "^打ちかかった", "空を切った。"],
  	["eat", "^(しっかり)?食事を取った", "食事をした。"],
  	["eat", "^軽くつまんだ", "少しだけ口にした。"],
 +	["cook_home", "^台所で、(ガスコンロ|電気のコンロ)で.*温かい食事を作って食べた", "温かい食事を作った。"],
  	["cook", "^台所で、.*温かい食事を作って食べた", "温かい食事を作った。"],
++	["reversi", "^[^【「（\\n]{1,12}とリバーシを打った（", "リバーシを打った。"],
 +	["laundry", "^(洗濯機を回し|たらいに水を張って)", "洗濯物を干した。"],
  	["smoke", "^(換気扇の下で|窓を少し開けて、)?タバコに火をつけ", "一服した。"],
  	["drink", "^水を飲んだ", "水を飲んだ。"],
  	["bandage", "^傷を手当てした", "傷に包帯を巻いた。"],
-@@ -34,12 +36,17 @@ const KINDS := [
+@@ -34,12 +37,17 @@ const KINDS := [
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
@@ -91226,7 +91503,7 @@ index 35febbb..6abfc45 100644
  	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
  	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
  	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
-@@ -53,6 +60,11 @@ const KINDS := [
+@@ -53,6 +61,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -91238,7 +91515,7 @@ index 35febbb..6abfc45 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -112,7 +124,7 @@ static func _find(base: String) -> String:
+@@ -112,7 +125,7 @@ static func _find(base: String) -> String:
  
  ## The picture for this action now, or "" if none has been made yet.
  ## A moment with no picture of its own borrows a broader one.
@@ -91247,7 +91524,7 @@ index 35febbb..6abfc45 100644
  
  static func path(world, kind: String) -> String:
  	var found := _path(world, kind)
-@@ -120,8 +132,28 @@ static func path(world, kind: String) -> String:
+@@ -120,8 +133,28 @@ static func path(world, kind: String) -> String:
  		found = _path(world, str(FALLBACK[kind]))
  	return found
  
@@ -91276,7 +91553,7 @@ index 35febbb..6abfc45 100644
  	if kind == "eat" and not world.s.household_members.is_empty():
  		options.append("act_eat_together")
  	if crisis(world):
-@@ -130,5 +162,9 @@ static func _path(world, kind: String) -> String:
+@@ -130,5 +163,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -92994,7 +93271,7 @@ index a4b03a2..daa7343 100644
 +	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
 +	return _done(game, lead + feel)
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..9e7f8a2 100644
+index 0f2add4..6f65797 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -93042,7 +93319,18 @@ index 0f2add4..9e7f8a2 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1910,6 +1934,8 @@ func _suggestions() -> Array:
+@@ -1899,6 +1923,10 @@ func _suggestions() -> Array:
+ 			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
+ 				out.append("映画を観る")
+ 			out.append("本を読む")
++		# v149.35: a game of reversi with someone at home and awake.
++		var partner := _reversi_partner("")
++		if partner >= 0 and (Mood.of(world.s) < 60.0 or Mood.of(world.s.household_members[partner]) < 50.0):
++			out.append("%sとリバーシをする" % str(world.s.household_members[partner].name))
+ 	if location == "避難所" and Shelter.is_open(world):
+ 		out.append("配給を受け取る")
+ 		out.append("避難所の様子を聞く")
+@@ -1910,6 +1938,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -93051,7 +93339,7 @@ index 0f2add4..9e7f8a2 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,10 +1997,38 @@ func _suggestions() -> Array:
+@@ -1971,10 +2001,38 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -93090,7 +93378,7 @@ index 0f2add4..9e7f8a2 100644
  		out.append("家に帰る")
  	return out.slice(0, 6)
  
-@@ -2838,7 +2892,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2896,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -93100,7 +93388,7 @@ index 0f2add4..9e7f8a2 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3134,6 +3189,10 @@ func _shelter_command(cmd: String) -> bool:
+@@ -3134,6 +3193,10 @@ func _shelter_command(cmd: String) -> bool:
  		_append(Shelter.ration(world))
  		_refresh()
  		return true
@@ -93111,7 +93399,110 @@ index 0f2add4..9e7f8a2 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3457,6 +3516,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3211,8 +3274,102 @@ func _comfort_command(cmd: String) -> bool:
+ 		return true
+ 	return false
+ 
++## v149.35: reversi with a housemate ("詩音とリバーシをする", "オセロしよう").
++const REVERSI_WORDS := ["リバーシ", "オセロ"]
++var reversi_layer: Control = null
++
++## Someone at home, awake and well enough to play (named in `cmd`, or the
++## first such person). -1 if nobody.
++func _reversi_partner(cmd: String) -> int:
++	var first := -1
++	for i in world.s.household_members.size():
++		var p: Dictionary = world.s.household_members[i]
++		if float(p.health) <= 20.0 or bool(p.get("bitten", false)) or str(p.get("activity", "")) in ["睡眠", "外出"] or not Navigation.indoor(str(p.location)):
++			continue
++		if not cmd.is_empty() and cmd.contains(str(p.name)):
++			return i
++		if first < 0:
++			first = i
++	return first
++
++func _reversi_command(cmd: String) -> bool:
++	if not NPCMemory._mentions(cmd, REVERSI_WORDS) or PlayerIntents.negated(cmd):
++		return false
++	if reversi_layer != null and is_instance_valid(reversi_layer):
++		return true
++	if not Navigation.indoor(location) or (world.s.get("inside") is Dictionary and not world.s.inside.is_empty()):
++		_append("リバーシの盤は家にある。家に帰ってから誘おう。何も実行していません。")
++		_refresh()
++		return true
++	if Combat.active(world):
++		return false
++	var index := _reversi_partner(cmd)
++	if index < 0:
++		_append("一緒に打てる相手が、今は家にいない。何も実行していません。")
++		_refresh()
++		return true
++	var person: Dictionary = world.s.household_members[index]
++	if location != str(person.location):
++		_append(_move_to(str(person.location)))
++	reversi_layer = load("res://scripts/reversi_game.gd").new()
++	add_child(reversi_layer)
++	reversi_layer.setup(self, index)
++	return true
++
++## The game is over (or put away): time passes, both feel a little better,
++## and it goes into the chronicle.
++func _reversi_finished(index: int, prof: Dictionary, results: Array, said: String, moves_played: int) -> void:
++	reversi_layer = null
++	if index < 0 or index >= world.s.household_members.size():
++		return
++	var person: Dictionary = world.s.household_members[index]
++	var Reversi = load("res://scripts/reversi.gd")
++	if results.is_empty():
++		world.advance_safe(maxi(5, moves_played))
++		_append("%sとリバーシを打ちかけたが、途中で盤を片づけた（%d分）。" % [person.name, maxi(5, moves_played)])
++		_refresh()
++		return
++	var minutes := 35 * results.size()
++	world.advance_safe(minutes)
++	var record: Dictionary = world.s.get("reversi_record", {}) if world.s.get("reversi_record") is Dictionary else {}
++	var mine: Dictionary = record.get(str(person.name), {"won": 0, "lost": 0, "drawn": 0})
++	var parts: Array = []
++	Mood.ensure(world)
++	for r in results:
++		var b := int(r.black)
++		var w := int(r.white)
++		parts.append("黒%d・白%d" % [b, w])
++		if b > w:
++			mine.won = int(mine.won) + 1
++		elif w > b:
++			mine.lost = int(mine.lost) + 1
++		else:
++			mine.drawn = int(mine.drawn) + 1
++		var close := absi(b - w) <= 8
++		Mood.change(world.s, 4.0 + (2.0 if close else 0.0))
++		# A sore loser enjoys it less when beaten; a granted take-back pleases them.
++		var theirs := 6.0
++		if b > w and int(prof.get("temper", 50)) >= 60:
++			theirs = 2.0
++		if int(r.get("wait", 0)) == 1:
++			theirs += 2.0
++		elif int(r.get("wait", 0)) == -1:
++			theirs -= 1.0
++		Mood.change(person, theirs)
++	record[str(person.name)] = mine
++	world.s.reversi_record = record
++	var last: Dictionary = results[-1]
++	var outcome := "あなたの勝ち" if int(last.black) > int(last.white) else ("%sの勝ち" % person.name if int(last.white) > int(last.black) else "引き分け")
++	var games := "" if results.size() == 1 else "%d局打ち、" % results.size()
++	var tally := "通算%d勝%d敗%s" % [int(mine.won), int(mine.lost), ("%d分け" % int(mine.drawn)) if int(mine.drawn) > 0 else ""]
++	var quote := ("%sは「%s」と言った。" % [person.name, said]) if not said.is_empty() else ""
++	_append("%sとリバーシを打った（%d分）。%s%sは%s。最後は%s、%s。%s（%s）" % [person.name, minutes, games, person.name, Reversi.manner(prof), "・".join(parts.slice(-1)), outcome, quote, tally])
++	_refresh()
++
+ ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
+ func _care_command(cmd: String) -> bool:
++	if _reversi_command(cmd):
++		return true
+ 	if _weapon_command(cmd) or _cold_command(cmd) or _request_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
+ 		return true
+ 	for index in world.s.household_members.size():
+@@ -3457,6 +3614,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -93121,7 +93512,7 @@ index 0f2add4..9e7f8a2 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3535,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3633,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -93140,7 +93531,7 @@ index 0f2add4..9e7f8a2 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,6 +3565,12 @@ func _district_map() -> String:
+@@ -3494,6 +3663,12 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -93153,7 +93544,7 @@ index 0f2add4..9e7f8a2 100644
  	var target := Navigation.destination(clean)
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
-@@ -3506,6 +3583,107 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3681,107 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -93261,7 +93652,7 @@ index 0f2add4..9e7f8a2 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3717,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3815,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -93270,7 +93661,7 @@ index 0f2add4..9e7f8a2 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3850,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3948,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -93283,7 +93674,7 @@ index 0f2add4..9e7f8a2 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3875,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3973,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -93293,7 +93684,7 @@ index 0f2add4..9e7f8a2 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3934,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4032,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -93308,7 +93699,7 @@ index 0f2add4..9e7f8a2 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3983,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4081,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -93349,7 +93740,7 @@ index 0f2add4..9e7f8a2 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4060,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4158,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -93370,7 +93761,7 @@ index 0f2add4..9e7f8a2 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4093,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4191,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -93389,7 +93780,7 @@ index 0f2add4..9e7f8a2 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4120,9 @@ func _site() -> String:
+@@ -3875,6 +4218,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -93399,7 +93790,7 @@ index 0f2add4..9e7f8a2 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4154,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4252,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -93408,7 +93799,7 @@ index 0f2add4..9e7f8a2 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4178,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4276,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -93423,7 +93814,7 @@ index 0f2add4..9e7f8a2 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4197,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4295,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -93436,7 +93827,7 @@ index 0f2add4..9e7f8a2 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4218,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4316,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -93447,7 +93838,7 @@ index 0f2add4..9e7f8a2 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4301,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4399,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -95637,6 +96028,609 @@ index 0000000..ce2a734
 +++ b/scripts/residents.gd.uid
 @@ -0,0 +1 @@
 +uid://cvnherln0kmu8
+diff --git a/scripts/reversi.gd b/scripts/reversi.gd
+new file mode 100644
+index 0000000..ae989a5
+--- /dev/null
++++ b/scripts/reversi.gd
+@@ -0,0 +1,231 @@
++extends RefCounted
++## v149.35: reversi with a housemate. The rules, and how each housemate plays:
++## the way they play comes from who they are.
++##   bold / quick-tempered → grabs as many discs as it can (greedy)
++##   wary                   → corners, edges, leaves you few moves (careful)
++##   kind (and ahead)       → eases off so you can catch up (gentle)
++##   a child                → plays for the fun of flipping lots, often loosely
++##   otherwise              → plain positional play
++## How strong they are comes from age and work (a child is loose, a teacher
++## or an office worker reads ahead). A housemate who is not very honest may
++## ask for a take-back once, after you seize a corner ("待った"); one with a
++## temper sulks when losing and wants a rematch.
++## board: Array of 64 ints — 0 empty, 1 black (you, first), 2 white (them).
++
++const EMPTY := 0
++const BLACK := 1
++const WHITE := 2
++const DIRS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
++const CORNERS := [0, 7, 56, 63]
++## Classic square weights: corners prized, the squares next to them feared.
++const WEIGHTS := [
++	100, -20, 10, 5, 5, 10, -20, 100,
++	-20, -40, -2, -2, -2, -2, -40, -20,
++	10, -2, 1, 1, 1, 1, -2, 10,
++	5, -2, 1, 0, 0, 1, -2, 5,
++	5, -2, 1, 0, 0, 1, -2, 5,
++	10, -2, 1, 1, 1, 1, -2, 10,
++	-20, -40, -2, -2, -2, -2, -40, -20,
++	100, -20, 10, 5, 5, 10, -20, 100,
++]
++
++static func new_board() -> Array:
++	var b: Array = []
++	b.resize(64)
++	b.fill(EMPTY)
++	b[27] = WHITE
++	b[28] = BLACK
++	b[35] = BLACK
++	b[36] = WHITE
++	return b
++
++static func other(side: int) -> int:
++	return WHITE if side == BLACK else BLACK
++
++## The discs this move would turn (empty if the move is not allowed).
++static func flips(board: Array, cell: int, side: int) -> Array:
++	var out: Array = []
++	if cell < 0 or cell > 63 or int(board[cell]) != EMPTY:
++		return out
++	var x := cell % 8
++	var y := cell / 8
++	for d in DIRS:
++		var run: Array = []
++		var cx: int = x + d.x
++		var cy: int = y + d.y
++		while cx >= 0 and cx < 8 and cy >= 0 and cy < 8 and int(board[cy * 8 + cx]) == other(side):
++			run.append(cy * 8 + cx)
++			cx += d.x
++			cy += d.y
++		if not run.is_empty() and cx >= 0 and cx < 8 and cy >= 0 and cy < 8 and int(board[cy * 8 + cx]) == side:
++			out.append_array(run)
++	return out
++
++static func moves(board: Array, side: int) -> Array:
++	var out: Array = []
++	for cell in 64:
++		if int(board[cell]) == EMPTY and not flips(board, cell, side).is_empty():
++			out.append(cell)
++	return out
++
++## A new board with the move played (the original is left as it was).
++static func play(board: Array, cell: int, side: int) -> Array:
++	var b := board.duplicate()
++	var turned := flips(board, cell, side)
++	if turned.is_empty():
++		return b
++	b[cell] = side
++	for c in turned:
++		b[c] = side
++	return b
++
++static func count(board: Array, side: int) -> int:
++	var n := 0
++	for v in board:
++		if int(v) == side:
++			n += 1
++	return n
++
++static func over(board: Array) -> bool:
++	return moves(board, BLACK).is_empty() and moves(board, WHITE).is_empty()
++
++# --- Who they are at the board -------------------------------------------
++
++## How a housemate plays: {style, skill (0..1), honest, temper, kind, polite,
++## first_person, child}. From the survivor they were, or (a housemate from the
++## start) from a stable roll on their name.
++static func profile(world, mate: Dictionary) -> Dictionary:
++	var t: Dictionary = {}
++	var kind := -1
++	var survivors: Variant = world.s.get("survivors")
++	var sid := str(mate.get("survivor", ""))
++	if survivors is Dictionary and survivors.get("people", {}).has(sid):
++		var p: Dictionary = survivors.people[sid]
++		t = p.get("traits", {})
++		kind = int(p.get("kindness", -1))
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([str(mate.get("name", "")), "reversi"])
++	for key in ["courage", "temper", "loyalty", "suspicion", "honesty"]:
++		if not t.has(key):
++			t[key] = rng.randi_range(20, 80)
++	if mate.has("honesty"):
++		t.honesty = int(mate.honesty)
++	if kind < 0:
++		kind = int(t.get("loyalty", 50))
++	var age := int(mate.get("age", 30))
++	var job := str(mate.get("job", ""))
++	var skill := 0.5 + rng.randf_range(-0.1, 0.1)
++	if age < 10:
++		skill = 0.12
++	elif age < 15:
++		skill = 0.32
++	elif job in ["教師", "会社員", "薬剤師", "看護師", "医師", "エンジニア", "大学生", "公務員"]:
++		skill += 0.2
++	elif age >= 65:
++		skill += 0.12
++	var style := "steady"
++	if age < 13:
++		style = "child"
++	elif int(t.courage) >= 65 or int(t.temper) >= 65:
++		style = "greedy"
++	elif int(t.suspicion) >= 60:
++		style = "careful"
++	elif kind >= 70:
++		style = "gentle"
++	var speech: Dictionary = mate.get("speech", {}) if mate.get("speech") is Dictionary else {}
++	return {"style": style, "skill": clampf(skill, 0.05, 0.95), "honest": int(t.honesty), "temper": int(t.temper),
++		"kind": kind, "polite": bool(speech.get("polite", false)), "child": age < 13,
++		"first_person": str(speech.get("first_person", "私" if age >= 13 else "ぼく"))}
++
++## A rough worth of a board for `side` in this player's eyes.
++static func _value(board: Array, side: int, prof: Dictionary) -> float:
++	var style := str(prof.style)
++	var mine := 0.0
++	var theirs := 0.0
++	for cell in 64:
++		var v := int(board[cell])
++		if v == side:
++			mine += WEIGHTS[cell]
++		elif v == other(side):
++			theirs += WEIGHTS[cell]
++	var pos := mine - theirs
++	var discs := float(count(board, side) - count(board, other(side)))
++	var mob := float(moves(board, side).size() - moves(board, other(side)).size())
++	match style:
++		"greedy":
++			return discs * 4.0 + pos * 0.4 + mob * 1.0
++		"careful":
++			return pos * 1.2 + mob * 6.0 + discs * 0.3
++		"child":
++			return discs * 3.0 + pos * 0.1
++	return pos * 1.0 + mob * 3.0 + discs * 0.6
++
++## Their move (or -1 to pass). `rng` decides how loosely they play.
++static func choose(board: Array, side: int, prof: Dictionary, rng: RandomNumberGenerator, exclude: int = -1) -> int:
++	var options := moves(board, side)
++	if exclude >= 0 and options.size() > 1:
++		options.erase(exclude)
++	if options.is_empty():
++		return -1
++	var skill := float(prof.skill)
++	var scored: Array = []
++	for cell in options:
++		var after := play(board, cell, side)
++		var v := _value(after, side, prof)
++		# Reading ahead: the strong expect your best answer.
++		if skill >= 0.6:
++			var replies := moves(after, other(side))
++			if not replies.is_empty():
++				var worst := INF
++				for r in replies:
++					worst = minf(worst, _value(play(after, r, other(side)), side, prof))
++				v = worst
++		v += rng.randf_range(-1.0, 1.0) * (1.0 - skill) * 60.0
++		scored.append([v, cell])
++	scored.sort_custom(func(a, b): return a[0] > b[0])
++	# The kind, when well ahead, take a modest move and let you back in.
++	if str(prof.style) == "gentle" and count(board, side) - count(board, other(side)) >= 8 and scored.size() >= 3:
++		return int(scored[scored.size() / 2][1])
++	return int(scored[0][1])
++
++# --- What they say --------------------------------------------------------
++
++const LINES := {
++	"start": {"casual": ["よし、やろうか。手加減しないよ", "リバーシか、久しぶりだな", "先に打っていいよ"], "polite": ["よろしくお願いします。先にどうぞ", "久しぶりです、こういうの", "お手柔らかにお願いしますね"], "child": ["やったー！ ぼく、白ね！", "負けないもんね！"]},
++	"they_corner": {"casual": ["角、もらった", "ここはいただき", "へへ、角だ"], "polite": ["角、いただきますね", "失礼して、ここに"], "child": ["かどー！ ぼくの！"]},
++	"you_corner": {"casual": ["あっ、そこか……", "うわ、角取られた", "やるなあ"], "polite": ["あっ……そこでしたか", "さすがですね"], "child": ["あー！ ずるい！"]},
++	"they_ahead": {"casual": ["いい流れだな", "このまま行けそうだ"], "polite": ["今日は調子がいいみたいです"], "child": ["ぼくのほうが多い！"]},
++	"they_behind": {"casual": ["うーん、まずいな", "ちょっと考えさせて"], "polite": ["困りましたね……", "うーん、どうしましょう"], "child": ["むー……"]},
++	"sulk": {"casual": ["……今のなし、とは言わないけどさ", "くそっ、もう一回だ、もう一回"], "polite": ["……ちょっと、悔しいですね"], "child": ["もうやだ！……うそ、もう一回！"]},
++	"gentle": {"casual": ["ほら、そこ空いてるよ", "急がなくていいからね"], "polite": ["ゆっくり考えてくださいね"], "child": ["ここ、置けるよ"]},
++	"they_pass": {"casual": ["置くとこないや。パス"], "polite": ["打てる所がありません。パスです"], "child": ["おけないー。パス！"]},
++	"you_pass": {"casual": ["そっちは置けないね。もう一回打つよ"], "polite": ["打てる所がないようですね。続けて打ちます"], "child": ["おけないの？ じゃあぼくね！"]},
++	"wait_ask": {"casual": ["あっ、待った！ 今のなし、なしで！", "ちょ、待った！ さっきの手、打ち直させて"], "polite": ["あの……待った、していいですか。さっきの手、間違えました"], "child": ["まったー！ いまのなし！"]},
++	"wait_yes": {"casual": ["悪いな、助かる", "へへ、ありがと"], "polite": ["すみません、ありがとうございます"], "child": ["やったー！"]},
++	"wait_no": {"casual": ["ちぇっ。わかったよ", "ケチだなあ"], "polite": ["……そうですよね。失礼しました"], "child": ["ぶー"]},
++	"they_win": {"casual": ["よし、勝ち！ またやろう", "ふう、勝った。いい勝負だった"], "polite": ["勝たせてもらいました。楽しかったです", "ありがとうございました。またぜひ"], "child": ["かったー！ もう一回やろ！"]},
++	"they_lose": {"casual": ["負けた！ 強いな", "参った。次は負けないぞ"], "polite": ["負けました。お強いですね", "参りました。楽しかったです"], "child": ["まけたー……。でもたのしかった！"]},
++	"they_lose_sore": {"casual": ["……もう一回だ。今のは調子が悪かっただけだ", "くそっ。次は絶対勝つ"], "polite": ["……次は、負けませんから"], "child": ["もう一回！ もう一回やる！"]},
++	"draw": {"casual": ["引き分けか。そんなこともあるな"], "polite": ["引き分けですね。いい勝負でした"], "child": ["おんなじ！ すごい！"]},
++}
++
++static func line(prof: Dictionary, situation: String, rng: RandomNumberGenerator) -> String:
++	var set: Dictionary = LINES.get(situation, {})
++	var voice := "child" if bool(prof.child) else ("polite" if bool(prof.polite) else "casual")
++	var pool: Array = set.get(voice, set.get("casual", []))
++	if pool.is_empty():
++		return ""
++	return str(pool[rng.randi_range(0, pool.size() - 1)])
++
++## A short word on how they play, for the narration.
++static func manner(prof: Dictionary) -> String:
++	match str(prof.style):
++		"greedy":
++			return "一度にたくさん返せる手ばかり選んで、盤面をにぎやかにした"
++		"careful":
++			return "角と端をじっくり狙い、こちらの打てる所を少しずつ減らしてきた"
++		"gentle":
++			return "差がつくと、わざと緩い手を打ってくれているようだった"
++		"child":
++			return "石がひっくり返るたびに声を上げて喜んだ"
++	return "落ち着いて、堅実に打ってきた"
+diff --git a/scripts/reversi.gd.uid b/scripts/reversi.gd.uid
+new file mode 100644
+index 0000000..62e4b10
+--- /dev/null
++++ b/scripts/reversi.gd.uid
+@@ -0,0 +1 @@
++uid://bxrkik0nbnmag
+diff --git a/scripts/reversi_game.gd b/scripts/reversi_game.gd
+new file mode 100644
+index 0000000..36b8d16
+--- /dev/null
++++ b/scripts/reversi_game.gd
+@@ -0,0 +1,346 @@
++extends Control
++## v149.35: the reversi table — a full-screen layer over the game. You play
++## black and go first; the housemate plays white the way they are
++## (scripts/reversi.gd). Game time stands still while you play; when the game
++## ends (or you put it away) main._reversi_finished() writes it down.
++
++const Reversi = preload("res://scripts/reversi.gd")
++const UI = preload("res://scripts/ui_kit.gd")
++const Portraits = preload("res://scripts/portraits.gd")
++const DIR := "res://assets/reversi/"
++## board.png: 1152 px square, the 8×8 grid from 64 px with 128 px cells.
++const GRID_FROM := 64.0 / 1152.0
++const CELL := 128.0 / 1152.0
++
++var game                       # main.gd
++var index := -1                # which housemate
++var mate: Dictionary = {}
++var prof: Dictionary = {}
++var rng := RandomNumberGenerator.new()
++var board: Array = []
++var turn := Reversi.BLACK
++var last := -1
++var before_their_move: Array = []   # for a take-back ("待った")
++var their_last := -1
++var wait_used := false
++var wait_pending := false
++var wait_asked := 0            # 0 none, 1 granted, -1 refused
++var done := false
++var think := 0.7               # seconds they take over a move (tests: 0)
++var moves_played := 0
++var said_ahead := false
++var said_behind := false
++
++var view: Control
++var speech: Label
++var score: Label
++var status: Label
++var buttons: HBoxContainer
++var column: VBoxContainer
++
++var tex_board: Texture2D
++var tex_black: Texture2D
++var tex_white: Texture2D
++var tex_legal: Texture2D
++var tex_last: Texture2D
++
++func setup(main_game, mate_index: int) -> void:
++	game = main_game
++	index = mate_index
++	mate = game.world.s.household_members[index]
++	prof = Reversi.profile(game.world, mate)
++	rng.seed = hash([int(game.world.s.seed), int(game.world.s.minute), "reversi", str(mate.name)])
++	board = Reversi.new_board()
++	tex_board = load(DIR + "board.png")
++	tex_black = load(DIR + "black.png")
++	tex_white = load(DIR + "white.png")
++	tex_legal = load(DIR + "legal_move.png")
++	tex_last = load(DIR + "last_move.png")
++	_build()
++	_say(Reversi.line(prof, "start", rng))
++	_update()
++
++func _build() -> void:
++	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	mouse_filter = Control.MOUSE_FILTER_STOP
++	var shade := ColorRect.new()
++	shade.color = UI.BG
++	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	add_child(shade)
++	var center := CenterContainer.new()
++	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	add_child(center)
++	column = VBoxContainer.new()
++	column.add_theme_constant_override("separation", 10)
++	center.add_child(column)
++	# Who you are playing, and what they just said.
++	var head := HBoxContainer.new()
++	head.add_theme_constant_override("separation", 10)
++	column.add_child(head)
++	head.add_child(Portraits.avatar(Portraits.housemate_face(game.world, index), str(mate.name).left(1), 52, UI.PANEL_2, UI.TEXT))
++	var bubble := PanelContainer.new()
++	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	bubble.add_theme_stylebox_override("panel", UI.box(UI.NPC, UI.EDGE, 12, 12, 8))
++	head.add_child(bubble)
++	var inner := VBoxContainer.new()
++	bubble.add_child(inner)
++	var who := Label.new()
++	who.text = "%s（白）" % str(mate.name)
++	who.add_theme_font_size_override("font_size", 14)
++	who.add_theme_color_override("font_color", UI.MUTED)
++	inner.add_child(who)
++	speech = Label.new()
++	speech.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	speech.add_theme_font_size_override("font_size", 18)
++	speech.add_theme_color_override("font_color", UI.TEXT)
++	inner.add_child(speech)
++	view = Control.new()
++	view.mouse_filter = Control.MOUSE_FILTER_STOP
++	view.draw.connect(_draw_board)
++	view.gui_input.connect(_on_board_input)
++	column.add_child(view)
++	score = Label.new()
++	score.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	score.add_theme_font_size_override("font_size", 18)
++	score.add_theme_color_override("font_color", UI.BODY)
++	column.add_child(score)
++	status = Label.new()
++	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	status.add_theme_font_size_override("font_size", 15)
++	status.add_theme_color_override("font_color", UI.MUTED)
++	column.add_child(status)
++	buttons = HBoxContainer.new()
++	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
++	buttons.add_theme_constant_override("separation", 10)
++	column.add_child(buttons)
++	_buttons([["やめる", _quit]])
++	resized.connect(_fit)
++	_fit()
++
++func _fit() -> void:
++	var w := (size.x if size.x > 0 else 400.0) - 24.0
++	var h := (size.y if size.y > 0 else 800.0) - 260.0
++	var side := clampf(minf(w, h), 200.0, 640.0)
++	view.custom_minimum_size = Vector2(side, side)
++	column.custom_minimum_size.x = side
++	view.queue_redraw()
++
++func _buttons(list: Array) -> void:
++	for child in buttons.get_children():
++		child.queue_free()
++	for item in list:
++		var b := Button.new()
++		b.text = str(item[0])
++		b.custom_minimum_size = Vector2(120, 44)
++		b.add_theme_font_size_override("font_size", 17)
++		b.pressed.connect(item[1])
++		buttons.add_child(b)
++
++func _say(text: String) -> void:
++	if not text.is_empty() and speech != null:
++		speech.text = "「%s」" % text
++
++# --- Drawing --------------------------------------------------------------
++
++func _cell_rect(cell: int) -> Rect2:
++	var s := view.size.x
++	var c := s * CELL
++	var o := s * GRID_FROM
++	return Rect2(Vector2(o + (cell % 8) * c, o + (cell / 8) * c), Vector2(c, c))
++
++func _draw_board() -> void:
++	var s := view.size.x
++	view.draw_texture_rect(tex_board, Rect2(Vector2.ZERO, Vector2(s, s)), false)
++	var legal: Array = Reversi.moves(board, Reversi.BLACK) if turn == Reversi.BLACK and not done and not wait_pending else []
++	for cell in 64:
++		var r := _cell_rect(cell)
++		var v := int(board[cell])
++		if v == Reversi.BLACK:
++			view.draw_texture_rect(tex_black, r, false)
++		elif v == Reversi.WHITE:
++			view.draw_texture_rect(tex_white, r, false)
++		elif cell in legal:
++			view.draw_texture_rect(tex_legal, r, false)
++		if cell == last:
++			view.draw_texture_rect(tex_last, r, false)
++
++func _update() -> void:
++	var b := Reversi.count(board, Reversi.BLACK)
++	var w := Reversi.count(board, Reversi.WHITE)
++	score.text = "あなた（黒）%d　―　%d %s（白）" % [b, w, str(mate.name)]
++	if done:
++		pass
++	elif wait_pending:
++		status.text = "%sが「待った」と言っている。" % str(mate.name)
++	elif turn == Reversi.BLACK:
++		status.text = "あなたの番（黒）。光っている所に置ける。"
++	else:
++		status.text = "%sが考えている……" % str(mate.name)
++	if view != null:
++		view.queue_redraw()
++
++# --- Your move ------------------------------------------------------------
++
++func _on_board_input(event: InputEvent) -> void:
++	var at := Vector2(-1, -1)
++	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
++		at = event.position
++	elif event is InputEventScreenTouch and event.pressed:
++		at = event.position
++	if at.x < 0:
++		return
++	var s := view.size.x
++	var o := s * GRID_FROM
++	var c := s * CELL
++	var x := int(floor((at.x - o) / c))
++	var y := int(floor((at.y - o) / c))
++	if x < 0 or x > 7 or y < 0 or y > 7:
++		return
++	place(y * 8 + x)
++
++## You put a black disc on `cell`. Returns whether it was allowed.
++func place(cell: int) -> bool:
++	if done or wait_pending or turn != Reversi.BLACK:
++		return false
++	if Reversi.flips(board, cell, Reversi.BLACK).is_empty():
++		return false
++	board = Reversi.play(board, cell, Reversi.BLACK)
++	last = cell
++	moves_played += 1
++	turn = Reversi.WHITE
++	if cell in Reversi.CORNERS:
++		_say(Reversi.line(prof, "you_corner", rng))
++		# Not so honest: once a game, they ask to take back the move that gave it away.
++		if int(prof.honest) < 30 and not wait_used and their_last >= 0 and rng.randf() < 0.75:
++			wait_used = true
++			wait_pending = true
++			_say(Reversi.line(prof, "wait_ask", rng))
++			_buttons([["いいよ", _grant_wait], ["だめ", _refuse_wait]])
++			_update()
++			return true
++	_update()
++	_their_turn()
++	return true
++
++func _grant_wait() -> void:
++	wait_pending = false
++	wait_asked = 1
++	_say(Reversi.line(prof, "wait_yes", rng))
++	board = before_their_move.duplicate()
++	var avoid := their_last
++	last = -1
++	turn = Reversi.WHITE
++	moves_played = maxi(0, moves_played - 2)
++	_buttons([["やめる", _quit]])
++	_update()
++	_their_turn(avoid)
++
++func _refuse_wait() -> void:
++	wait_pending = false
++	wait_asked = -1
++	_say(Reversi.line(prof, "wait_no", rng))
++	_buttons([["やめる", _quit]])
++	_update()
++	_their_turn()
++
++# --- Their move -----------------------------------------------------------
++
++func _their_turn(avoid: int = -1) -> void:
++	if done:
++		return
++	if think > 0.0 and is_inside_tree():
++		await get_tree().create_timer(think).timeout
++	if done or not is_inside_tree() and think > 0.0:
++		return
++	var options := Reversi.moves(board, Reversi.WHITE)
++	if options.is_empty():
++		if Reversi.over(board):
++			_finish()
++			return
++		_say(Reversi.line(prof, "they_pass", rng))
++		turn = Reversi.BLACK
++		_update()
++		return
++	var cell := Reversi.choose(board, Reversi.WHITE, prof, rng, avoid)
++	before_their_move = board.duplicate()
++	their_last = cell
++	board = Reversi.play(board, cell, Reversi.WHITE)
++	last = cell
++	moves_played += 1
++	_comment(cell)
++	if Reversi.over(board):
++		_finish()
++		return
++	if Reversi.moves(board, Reversi.BLACK).is_empty():
++		_say(Reversi.line(prof, "you_pass", rng))
++		_update()
++		_their_turn()
++		return
++	turn = Reversi.BLACK
++	_update()
++
++func _comment(cell: int) -> void:
++	var diff := Reversi.count(board, Reversi.WHITE) - Reversi.count(board, Reversi.BLACK)
++	if cell in Reversi.CORNERS:
++		_say(Reversi.line(prof, "they_corner", rng))
++	elif moves_played > 20 and diff >= 10 and not said_ahead:
++		said_ahead = true
++		_say(Reversi.line(prof, "gentle" if str(prof.style) == "gentle" else "they_ahead", rng))
++	elif moves_played > 20 and diff <= -10 and not said_behind:
++		said_behind = true
++		_say(Reversi.line(prof, "sulk" if int(prof.temper) >= 60 else "they_behind", rng))
++
++# --- The end --------------------------------------------------------------
++
++func _finish() -> void:
++	done = true
++	turn = 0
++	var b := Reversi.count(board, Reversi.BLACK)
++	var w := Reversi.count(board, Reversi.WHITE)
++	var situation := "draw"
++	if w > b:
++		situation = "they_win"
++	elif b > w:
++		situation = "they_lose_sore" if int(prof.temper) >= 60 else "they_lose"
++	var said := Reversi.line(prof, situation, rng)
++	_say(said)
++	status.text = "%s（黒%d・白%d）" % ["あなたの勝ち" if b > w else ("%sの勝ち" % str(mate.name) if w > b else "引き分け"), b, w]
++	_update()
++	_buttons([["もう一回", _again], ["終わる", _close.bind(said)]])
++
++func _again() -> void:
++	_record()
++	board = Reversi.new_board()
++	turn = Reversi.BLACK
++	last = -1
++	their_last = -1
++	wait_used = false
++	wait_pending = false
++	wait_asked = 0
++	done = false
++	moves_played = 0
++	said_ahead = false
++	said_behind = false
++	_buttons([["やめる", _quit]])
++	_say(Reversi.line(prof, "start", rng))
++	_update()
++
++## A finished game counts for the record and the mood (several in a sitting).
++var results: Array = []
++
++func _record() -> void:
++	results.append({"black": Reversi.count(board, Reversi.BLACK), "white": Reversi.count(board, Reversi.WHITE), "wait": wait_asked})
++
++func _close(said: String) -> void:
++	_record()
++	_leave(said)
++
++func _quit() -> void:
++	_leave("")
++
++func _leave(said: String) -> void:
++	done = true
++	if game != null and game.has_method("_reversi_finished"):
++		game._reversi_finished(index, prof, results, said, moves_played)
++	queue_free()
+diff --git a/scripts/reversi_game.gd.uid b/scripts/reversi_game.gd.uid
+new file mode 100644
+index 0000000..5970b4a
+--- /dev/null
++++ b/scripts/reversi_game.gd.uid
+@@ -0,0 +1 @@
++uid://ccorwen5r1bsx
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
 index 6de9c8d..4679f23 100644
 --- a/scripts/scene_description.gd
@@ -98918,6 +99912,155 @@ index 0000000..e47b33f
 +++ b/tests/test_residents149_38.gd.uid
 @@ -0,0 +1 @@
 +uid://cqknkm1y6fj70
+diff --git a/tests/test_reversi149_35.gd b/tests/test_reversi149_35.gd
+new file mode 100644
+index 0000000..eae5200
+--- /dev/null
++++ b/tests/test_reversi149_35.gd
+@@ -0,0 +1,136 @@
++extends SceneTree
++## v149.35: reversi with a housemate — the rules, how personalities play,
++## a game played through the table to its end, and what it leaves behind.
++const Main = preload("res://main.tscn")
++const Reversi = preload("res://scripts/reversi.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	# Rules.
++	var b := Reversi.new_board()
++	check(Reversi.moves(b, Reversi.BLACK).size() == 4 and Reversi.count(b, Reversi.BLACK) == 2, "the opening: four moves for black")
++	var after := Reversi.play(b, 19, Reversi.BLACK)
++	check(Reversi.count(after, Reversi.BLACK) == 4 and Reversi.count(after, Reversi.WHITE) == 1, "a move turns the discs between")
++	check(Reversi.flips(b, 0, Reversi.BLACK).is_empty(), "a move that turns nothing is not allowed")
++	# Personalities.
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	p.cohabitants = 1
++	p.companion_names = ["詩音"]
++	p.companion_genders = ["女性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var kid := Reversi.profile(w, {"name": "結人", "age": 8, "job": "小学生"})
++	var teacher := Reversi.profile(w, {"name": "佐伯", "age": 45, "job": "教師"})
++	check(str(kid.style) == "child" and float(kid.skill) < 0.3, "a child plays loosely: %s" % str(kid))
++	check(float(teacher.skill) > float(kid.skill) + 0.3, "a teacher reads ahead")
++	var rng := RandomNumberGenerator.new()
++	rng.seed = 3
++	# Greedy grabs discs; careful takes a corner over a big capture.
++	var greedy := {"style": "greedy", "skill": 0.95, "honest": 50, "temper": 50, "kind": 50, "polite": false, "child": false, "first_person": "俺"}
++	var careful := {"style": "careful", "skill": 0.95, "honest": 50, "temper": 50, "kind": 50, "polite": true, "child": false, "first_person": "私"}
++	# A position where white may take the corner (0) or a long row.
++	var pos: Array = []
++	pos.resize(64)
++	pos.fill(0)
++	pos[9] = Reversi.BLACK
++	pos[18] = Reversi.WHITE
++	for c in [33, 34, 35, 36, 37, 38]:
++		pos[c] = Reversi.BLACK
++	pos[39] = Reversi.WHITE
++	pos[27] = Reversi.WHITE
++	check(Reversi.choose(pos, Reversi.WHITE, careful, rng) == 0, "the careful take the corner")
++	check(Reversi.choose(pos, Reversi.WHITE, greedy, rng) == 32, "the greedy take the long row")
++	# Full games between styles always end properly.
++	var ends := true
++	for style in ["greedy", "careful", "gentle", "child", "steady"]:
++		var pr := {"style": style, "skill": 0.5, "honest": 50, "temper": 50, "kind": 80, "polite": false, "child": style == "child", "first_person": "私"}
++		var bd := Reversi.new_board()
++		var side := Reversi.BLACK
++		for t in 130:
++			if Reversi.over(bd):
++				break
++			var m := Reversi.choose(bd, side, pr, rng)
++			if m >= 0:
++				bd = Reversi.play(bd, m, side)
++			side = Reversi.other(side)
++		ends = ends and Reversi.over(bd)
++	check(ends, "games between every style run to the end")
++	# Playing at the table.
++	g.location = "居間"
++	g._sync_player_position()
++	var mate: Dictionary = w.s.household_members[0]
++	mate.location = "居間"
++	mate.activity = "在宅"
++	var minute := int(w.s.minute)
++	await g._on_command("%sとリバーシをする" % mate.name)
++	var table = g.reversi_layer
++	check(table != null and is_instance_valid(table), "the board comes out")
++	table.think = 0.0
++	var guard := 0
++	while not table.done and guard < 80:
++		guard += 1
++		var options := Reversi.moves(table.board, Reversi.BLACK)
++		if table.wait_pending:
++			table._refuse_wait()
++			continue
++		if options.is_empty():
++			break
++		table.place(int(options[0]))
++		await process_frame
++	check(table.done and Reversi.over(table.board), "a whole game played through (%d moves)" % table.moves_played)
++	check(int(w.s.minute) == minute or int(w.s.minute) - minute < 5, "time stands still at the table")
++	var mood_before: float = float(w.s.household_members[0].get("mood", 50.0))
++	table._close("楽しかった")
++	await process_frame
++	var line: String = str(g.log_entries[-1])
++	check(line.begins_with("%sとリバーシを打った（35分）" % mate.name) and line.contains("通算"), "it goes in the chronicle: " + line.left(90))
++	check(int(w.s.minute) - minute >= 35, "the game took its time")
++	check(float(w.s.household_members[0].mood) > mood_before - 0.01, "they enjoyed it")
++	check(load("res://scripts/action_photos.gd").detect(line).get("kind", "") == "reversi", "with its picture")
++	# A take-back, asked by someone not so honest.
++	await g._on_command("リバーシしよう")
++	table = g.reversi_layer
++	table.think = 0.0
++	table.prof.honest = 10
++	var bd2: Array = []
++	bd2.resize(64)
++	bd2.fill(0)
++	bd2[9] = Reversi.WHITE
++	bd2[18] = Reversi.BLACK
++	bd2[27] = Reversi.WHITE
++	bd2[36] = Reversi.BLACK
++	table.board = bd2
++	table.before_their_move = bd2.duplicate()
++	table.their_last = 27
++	table.rng.seed = 1
++	var asked := false
++	for s in 20:
++		table.board = bd2.duplicate()
++		table.turn = Reversi.BLACK
++		table.wait_used = false
++		table.rng.seed = s
++		table.place(0)
++		if table.wait_pending:
++			asked = true
++			break
++	check(asked and table.speech.text.contains("待った") or asked and table.speech.text.contains("まった"), "after you take a corner, they ask for a take-back")
++	table._grant_wait()
++	await process_frame
++	check(not table.wait_pending and table.wait_asked == 1, "you let them")
++	table._quit()
++	await process_frame
++	check(str(g.log_entries[-1]).contains("途中で盤を片づけた"), "putting it away half-way")
++	g.queue_free()
++	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
++	quit(1 if failures else 0)
+diff --git a/tests/test_reversi149_35.gd.uid b/tests/test_reversi149_35.gd.uid
+new file mode 100644
+index 0000000..de50c5d
+--- /dev/null
++++ b/tests/test_reversi149_35.gd.uid
+@@ -0,0 +1 @@
++uid://c3g7ko0t31w05
 diff --git a/tests/test_revision21_events.gd b/tests/test_revision21_events.gd
 index 9df2ea7..48433d3 100644
 --- a/tests/test_revision21_events.gd
