@@ -53,11 +53,14 @@
 
 残りの作業:
 1. ~~顔シートの受け取りと切り出し~~（完了）
-2. 名簿 `data/residents.json` を作る。
-   - 年代と性別から家族を組み、790 世帯の部屋（`residents.gd` の AREAS と `District.homes_in`）に割り当てる。
-   - 名前・性格・短い身の上を付ける。
-   - ユーザーが確認できる一覧（Artifact）を出す。
-3. `residents.gd` の `who()` を、seed から計算する方式から名簿を読む方式に切り替える。顔は `portraits.gd` で `assets/residents/<id>.jpg` を使う。テストを直す。
+2. ~~名簿 `data/residents.json` を作る~~（完了・2026-11-26）
+   - `ci/tools/make_roster.py <game dir>` で作る（乱数は固定なので、何度作っても同じ）。790 世帯・1,396 人。既存の顔 104 人は外の生存者・同居人に使われているので、住人には使っていない。
+   - 確認用ページ「住人名簿 v149.35」（Artifact）を出してある。ユーザーの直しが来たら、スクリプトか JSON を直して作り直す。
+3. ~~`who()` を名簿読みに切り替える~~（完了）
+   - `Residents.roster()` / `listed()` で読み、`dwellings.home()` の家族も名簿に合わせる。名簿にない家は従来どおり seed から決まる。
+   - 顔は `Portraits.resident_face(id)`。放浪者になった住人は `face`・名前・年齢・身の上を引き継ぎ、同居人になっても顔はそのまま。
+   - テスト `tests/test_roster149_35.gd` を追加し、177 件すべて合格。
+   - 作業ツリーは `/tmp/w/g18`（ベース）と `/tmp/w/game2`。`mkpatch.sh` のパスはこれに合わせて直した。
 4. その後に IPA をビルドする。
    - v149.33 のワークフローをもとに v149.35 用を作り、パッチの後に画像コピーの手順を足す。
    - 成果物（artifact）のダウンロード URL をユーザーに渡す。
