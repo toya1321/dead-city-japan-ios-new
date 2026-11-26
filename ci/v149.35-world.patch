@@ -11,6 +11,52 @@ index 59ce0d1..0aa088d 100644
  （どれも _crisis を付けた崩壊後の版を置ける）
  
  崩壊後（街が disrupted / emergency）は _crisis があればそれ、無ければ平常の写真。ファイルを消せばその行動では何も出ない。
+diff --git a/assets/actions/act_boil.jpg.import b/assets/actions/act_boil.jpg.import
+new file mode 100644
+index 0000000..f4b3e3f
+--- /dev/null
++++ b/assets/actions/act_boil.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://3r41tjvq73q4"
++path="res://.godot/imported/act_boil.jpg-86a058cf55e69d780aa89fd1c3a0fe31.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_boil.jpg"
++dest_files=["res://.godot/imported/act_boil.jpg-86a058cf55e69d780aa89fd1c3a0fe31.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_break_in.jpg.import b/assets/actions/act_break_in.jpg.import
 new file mode 100644
 index 0000000..5d2d2ce
@@ -31,6 +77,98 @@ index 0000000..5d2d2ce
 +
 +source_file="res://assets/actions/act_break_in.jpg"
 +dest_files=["res://.godot/imported/act_break_in.jpg-3e69bcbb3b66027b3e804bebeefbddf2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_draw_pond.jpg.import b/assets/actions/act_draw_pond.jpg.import
+new file mode 100644
+index 0000000..2fb75c9
+--- /dev/null
++++ b/assets/actions/act_draw_pond.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dqecag2qoe3sv"
++path="res://.godot/imported/act_draw_pond.jpg-2c10a1f93812559aaa3dfc8e492bcc62.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_draw_pond.jpg"
++dest_files=["res://.godot/imported/act_draw_pond.jpg-2c10a1f93812559aaa3dfc8e492bcc62.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_draw_river.jpg.import b/assets/actions/act_draw_river.jpg.import
+new file mode 100644
+index 0000000..0753773
+--- /dev/null
++++ b/assets/actions/act_draw_river.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c62axojxyjt02"
++path="res://.godot/imported/act_draw_river.jpg-bd7a64643d20c83eab1d7a543d1c1057.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_draw_river.jpg"
++dest_files=["res://.godot/imported/act_draw_river.jpg-bd7a64643d20c83eab1d7a543d1c1057.ctex"]
 +
 +[params]
 +
@@ -7565,6 +7703,190 @@ index 0000000..9a0b2bd
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_aisle.jpg.import b/assets/photos/supermarket_aisle.jpg.import
+new file mode 100644
+index 0000000..ecbe35c
+--- /dev/null
++++ b/assets/photos/supermarket_aisle.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://d3ns7a6s57hmq"
++path="res://.godot/imported/supermarket_aisle.jpg-d362f5cc0d12cac4d5691ef9ffe9f4a0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_aisle.jpg"
++dest_files=["res://.godot/imported/supermarket_aisle.jpg-d362f5cc0d12cac4d5691ef9ffe9f4a0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_aisle_alert.jpg.import b/assets/photos/supermarket_aisle_alert.jpg.import
+new file mode 100644
+index 0000000..3422b3e
+--- /dev/null
++++ b/assets/photos/supermarket_aisle_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dv34ni04irk1g"
++path="res://.godot/imported/supermarket_aisle_alert.jpg-5b23faf909ca07bbb9aae845b910ff10.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_aisle_alert.jpg"
++dest_files=["res://.godot/imported/supermarket_aisle_alert.jpg-5b23faf909ca07bbb9aae845b910ff10.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_aisle_collapse.jpg.import b/assets/photos/supermarket_aisle_collapse.jpg.import
+new file mode 100644
+index 0000000..28a0bae
+--- /dev/null
++++ b/assets/photos/supermarket_aisle_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c4j4dbxsmvvrq"
++path="res://.godot/imported/supermarket_aisle_collapse.jpg-f429a4984522e1791ede9158020db172.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_aisle_collapse.jpg"
++dest_files=["res://.godot/imported/supermarket_aisle_collapse.jpg-f429a4984522e1791ede9158020db172.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_aisle_overgrown.jpg.import b/assets/photos/supermarket_aisle_overgrown.jpg.import
+new file mode 100644
+index 0000000..e7acb8d
+--- /dev/null
++++ b/assets/photos/supermarket_aisle_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://3opx7pmuy8pi"
++path="res://.godot/imported/supermarket_aisle_overgrown.jpg-4c6645b51b95e32a7d95b11e29166942.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_aisle_overgrown.jpg"
++dest_files=["res://.godot/imported/supermarket_aisle_overgrown.jpg-4c6645b51b95e32a7d95b11e29166942.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/photos/supermarket_alert.jpg.import b/assets/photos/supermarket_alert.jpg.import
 new file mode 100644
 index 0000000..c4ae3b7
@@ -7585,6 +7907,374 @@ index 0000000..c4ae3b7
 +
 +source_file="res://assets/photos/supermarket_alert.jpg"
 +dest_files=["res://.godot/imported/supermarket_alert.jpg-d6cc8069f82d6aee817b34f75d01f469.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_backyard.jpg.import b/assets/photos/supermarket_backyard.jpg.import
+new file mode 100644
+index 0000000..a12bc9c
+--- /dev/null
++++ b/assets/photos/supermarket_backyard.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cawppytyhc1pm"
++path="res://.godot/imported/supermarket_backyard.jpg-fbf28e85bbf22b7f393aacdfca13adb5.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_backyard.jpg"
++dest_files=["res://.godot/imported/supermarket_backyard.jpg-fbf28e85bbf22b7f393aacdfca13adb5.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_backyard_alert.jpg.import b/assets/photos/supermarket_backyard_alert.jpg.import
+new file mode 100644
+index 0000000..25bff75
+--- /dev/null
++++ b/assets/photos/supermarket_backyard_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dr2ng7ao3ferk"
++path="res://.godot/imported/supermarket_backyard_alert.jpg-b6b511605a4ee9ce4496f20a971a155e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_backyard_alert.jpg"
++dest_files=["res://.godot/imported/supermarket_backyard_alert.jpg-b6b511605a4ee9ce4496f20a971a155e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_backyard_collapse.jpg.import b/assets/photos/supermarket_backyard_collapse.jpg.import
+new file mode 100644
+index 0000000..ec250eb
+--- /dev/null
++++ b/assets/photos/supermarket_backyard_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bwpl4wwdrhk6s"
++path="res://.godot/imported/supermarket_backyard_collapse.jpg-cb7547847484143d32493ef1646a6e8d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_backyard_collapse.jpg"
++dest_files=["res://.godot/imported/supermarket_backyard_collapse.jpg-cb7547847484143d32493ef1646a6e8d.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_backyard_overgrown.jpg.import b/assets/photos/supermarket_backyard_overgrown.jpg.import
+new file mode 100644
+index 0000000..ab7a9be
+--- /dev/null
++++ b/assets/photos/supermarket_backyard_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://crjkstdgr07ls"
++path="res://.godot/imported/supermarket_backyard_overgrown.jpg-9fc633439c5e3c716fd8f86962c91c4f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_backyard_overgrown.jpg"
++dest_files=["res://.godot/imported/supermarket_backyard_overgrown.jpg-9fc633439c5e3c716fd8f86962c91c4f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_chilled.jpg.import b/assets/photos/supermarket_chilled.jpg.import
+new file mode 100644
+index 0000000..e053344
+--- /dev/null
++++ b/assets/photos/supermarket_chilled.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://gyggnukuk7b1"
++path="res://.godot/imported/supermarket_chilled.jpg-ff853854d23bd7d8b40aac8d799e3ff2.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_chilled.jpg"
++dest_files=["res://.godot/imported/supermarket_chilled.jpg-ff853854d23bd7d8b40aac8d799e3ff2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_chilled_alert.jpg.import b/assets/photos/supermarket_chilled_alert.jpg.import
+new file mode 100644
+index 0000000..7fb855b
+--- /dev/null
++++ b/assets/photos/supermarket_chilled_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dnp4s3aghn06q"
++path="res://.godot/imported/supermarket_chilled_alert.jpg-c8a655ab4cb8cc06d92cf11dae8015c6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_chilled_alert.jpg"
++dest_files=["res://.godot/imported/supermarket_chilled_alert.jpg-c8a655ab4cb8cc06d92cf11dae8015c6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_chilled_collapse.jpg.import b/assets/photos/supermarket_chilled_collapse.jpg.import
+new file mode 100644
+index 0000000..9b80789
+--- /dev/null
++++ b/assets/photos/supermarket_chilled_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bw040hxy1gw5t"
++path="res://.godot/imported/supermarket_chilled_collapse.jpg-d7106e249ff8d9891edf59e5317a239d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_chilled_collapse.jpg"
++dest_files=["res://.godot/imported/supermarket_chilled_collapse.jpg-d7106e249ff8d9891edf59e5317a239d.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/supermarket_chilled_overgrown.jpg.import b/assets/photos/supermarket_chilled_overgrown.jpg.import
+new file mode 100644
+index 0000000..7ee7cc5
+--- /dev/null
++++ b/assets/photos/supermarket_chilled_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dogyer0t4sct4"
++path="res://.godot/imported/supermarket_chilled_overgrown.jpg-99890d568cc911d5a1df09bc02104490.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/supermarket_chilled_overgrown.jpg"
++dest_files=["res://.godot/imported/supermarket_chilled_overgrown.jpg-99890d568cc911d5a1df09bc02104490.ctex"]
 +
 +[params]
 +
@@ -88617,19 +89307,23 @@ index 0000000..2c112a7
 @@ -0,0 +1 @@
 +uid://bdaqf6pdnjf73
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..bcc6e67 100644
+index 35febbb..0f0ed46 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -35,7 +35,7 @@ const KINDS := [
+@@ -34,8 +34,11 @@ const KINDS := [
+ 	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
++	["draw_river", "^川べりにしゃがみ、空のポリタンクに水", "川の水を汲んだ。"],
++	["draw_pond", "^池のほとりにかがみ、空のポリタンクに水", "池の水を汲んだ。"],
++	["boil", "^ためておいた水[0-9]+Lを鍋で煮沸し", "水を煮沸した。"],
  	["purify", "^(雨水1Lを浄水器に通し|浴槽から水を汲んで)", "水をきれいにした。"],
 -	["plant", "^植え付けた", "種をまいた。"],
 +	["plant", "^([^【「（\\n]{1,10}を)?植え付けた", "種をまいた。"],
  	["harvest", "^収穫した", "収穫した。"],
  	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
  	["lock", "^玄関を閉めて施錠した", "鍵を閉めた。"],
-@@ -53,6 +53,11 @@ const KINDS := [
+@@ -53,6 +56,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -88641,7 +89335,7 @@ index 35febbb..bcc6e67 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -130,5 +135,9 @@ static func _path(world, kind: String) -> String:
+@@ -130,5 +138,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -89284,7 +89978,7 @@ index 0000000..a8649be
 @@ -0,0 +1 @@
 +uid://dca3j1sct27tw
 diff --git a/scripts/district.gd b/scripts/district.gd
-index 31c6246..5a43a9c 100644
+index 31c6246..0b1583d 100644
 --- a/scripts/district.gd
 +++ b/scripts/district.gd
 @@ -1,6 +1,14 @@
@@ -89358,12 +90052,16 @@ index 31c6246..5a43a9c 100644
  static func can_enter(world, place: String) -> bool:
  	var site: Dictionary = world.s.district.sites[place]
  	var hours: Dictionary = SITES[place]
-@@ -145,7 +177,24 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -145,7 +177,28 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  		return "営業中や管理中の建物では実行できない。"
  	match command:
  		"物資を探索する":
 -			return _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, 2.0, 4.0), "残っていた物資を回収した")
-+			var found := _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, 2.0, 4.0), "残っていた物資を回収した")
++			# v149.35: in a building walked room by room, what turns up depends on the room.
++			var Rooms = load("res://scripts/site_rooms.gd")
++			var food_step: float = 2.0 * (Rooms.share(world, place, "food") if Rooms.has(place) else 1.0)
++			var water_step: float = 4.0 * (Rooms.share(world, place, "water") if Rooms.has(place) else 1.0)
++			var found := _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, food_step, water_step), "残っていた物資を回収した")
 +			# v149.36: and what else the place holds, a few at a time.
 +			var more: Array = []
 +			var stock := extras(world, place)
@@ -89384,7 +90082,7 @@ index 31c6246..5a43a9c 100644
  		"ここを拠点にする":
  			if site.level >= 1:
  				return "ここはすでに寝泊まりできる。"
-@@ -172,10 +221,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -172,10 +225,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  			return _transfer_text(world, _transfer(site.cache, bag, FOOD_LIMIT, WATER_LIMIT, FOOD_LIMIT, WATER_LIMIT), "拠点の備蓄から持ち出した")
  	return "ここでは実行できない。"
  
@@ -90277,7 +90975,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..9f355c7 100644
+index 0f2add4..8158056 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -90436,7 +91134,7 @@ index 0f2add4..9f355c7 100644
  	var target := Navigation.destination(clean)
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
-@@ -3506,6 +3583,106 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3583,107 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -90450,7 +91148,8 @@ index 0f2add4..9f355c7 100644
 +		world.advance_safe(15)
 +		Walkers.make_noise(world, location, 20)
 +		world.s.raw_carry = float(world.s.get("raw_carry", 0.0)) + floorf(room)
-+		return "空のペットボトルに、水を%.0fL汲んだ。濁っているので、このままでは飲めない。（家に持ち帰ると、ためておく水のタンクに入る）" % floorf(room)
++		var spot := "池のほとりにかがみ、" if location.contains("公園") else "川べりにしゃがみ、"
++		return "%s空のポリタンクに水を%.0fL汲んだ。濁っているので、このままでは飲めない。（家に持ち帰ると、ためておく水のタンクに入る）" % [spot, floorf(room)]
 +	if clean in ["水を煮沸する", "煮沸する", "水を沸かす"]:
 +		if location != "台所":
 +			return "台所で煮沸する。"
@@ -90543,7 +91242,7 @@ index 0f2add4..9f355c7 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3716,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3717,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -90552,7 +91251,7 @@ index 0f2add4..9f355c7 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3849,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3850,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -90565,7 +91264,7 @@ index 0f2add4..9f355c7 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3874,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3875,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -90575,7 +91274,7 @@ index 0f2add4..9f355c7 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3933,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3934,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -90590,7 +91289,7 @@ index 0f2add4..9f355c7 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3982,33 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +3983,33 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -90624,7 +91323,7 @@ index 0f2add4..9f355c7 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4052,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4053,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -90645,7 +91344,7 @@ index 0f2add4..9f355c7 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4085,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4086,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -90664,7 +91363,7 @@ index 0f2add4..9f355c7 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4112,9 @@ func _site() -> String:
+@@ -3875,6 +4113,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -90674,7 +91373,7 @@ index 0f2add4..9f355c7 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4146,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4147,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -90683,7 +91382,7 @@ index 0f2add4..9f355c7 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4170,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4171,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -90698,7 +91397,7 @@ index 0f2add4..9f355c7 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4189,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4190,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -90711,7 +91410,7 @@ index 0f2add4..9f355c7 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4210,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4211,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -90722,7 +91421,7 @@ index 0f2add4..9f355c7 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4293,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4294,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -93236,16 +93935,40 @@ index 79480a1..dd84cbd 100644
  			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
 diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
 new file mode 100644
-index 0000000..92e85e2
+index 0000000..0f58eb0
 --- /dev/null
 +++ b/scripts/site_rooms.gd
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,247 @@
 +extends RefCounted
 +## v149.35: some of the town's buildings can be walked through room by room —
 +## each room has its own picture at every stage of the town (normal → alert →
 +## collapse → overgrown) and its own share of what is left. Arriving, you are
 +## at the entrance (the building's own picture); "<room>に行く" goes in.
 +## world.s.site_room = {"place": where, "room": which room ("" at the entrance)}.
++
++## The station supermarket: the shop floor is open to anyone while it trades;
++## the back room only once it has been abandoned. Food and water found depend
++## on the room (the back room keeps cases of drinks, the chilled aisle spoils).
++const SUPERMARKET := {
++	"photo": "supermarket",
++	"rooms": [
++		{"name": "売り場", "key": "aisle", "public": true, "food": 1.0, "water": 0.6,
++			"text": {"normal": "缶詰と乾麺の通路。棚にツナ缶やさば缶、袋麺、調味料がぎっしり並び、奥に青果売り場が見える。",
++				"alert": "缶詰とカップ麺の棚に、ところどころ穴が空いている。買いだめの客が来たあとだ。",
++				"collapse": "棚はほとんど空だ。床に買い物かごが転がり、踏まれたスナック菓子の袋が散らばっている。",
++				"overgrown": "錆びた棚に落ち葉が積もり、蜘蛛の巣が張っている。青果売り場の窓は蔦に覆われている。"}},
++		{"name": "バックヤード", "key": "backyard", "public": false, "food": 1.3, "water": 2.0,
++			"text": {"normal": "搬入口のシャッターの前に、段ボールと飲み物のケースが天井近くまで積まれている。",
++				"alert": "バックヤードの棚がだいぶ空いてきた。台車に、最後の入荷分の箱が載っている。",
++				"collapse": "バックヤードは荒らされ、潰れた段ボールと空のペットボトルの包装が散らばっている。シャッターの下から光が漏れている。",
++				"overgrown": "錆びた棚に、湿って崩れかけた段ボールが残っている。シャッターの隙間から草が入りこんでいる。"}},
++		{"name": "冷蔵売り場", "key": "chilled", "public": true, "food": 0.4, "water": 0.4,
++			"text": {"normal": "牛乳、卵、豆腐の冷蔵棚と、冷凍食品のガラス扉が並ぶ。",
++				"alert": "冷蔵棚の牛乳と卵が減り、冷凍庫の扉の向こうにも隙間が目立つ。",
++				"collapse": "電気が止まり、冷凍庫の霜が溶けて床が水浸しになっている。落ちた冷凍食品の袋が、もう柔らかい。",
++				"overgrown": "冷凍庫のガラス扉は割れ、錆が浮いている。天窓の下に蔦が垂れ下がっている。"}},
++	],
++}
 +
 +const SITES := {
 +	"総合病院": {
@@ -93273,6 +93996,7 @@ index 0000000..92e85e2
 +					"overgrown": "薬品庫の棚は錆びて蜘蛛の巣に覆われているが、奥の箱にはまだ手つかずの物がありそうだ。"}},
 +		],
 +	},
++	"スーパー": SUPERMARKET,
 +}
 +
 +static func has(place: String) -> bool:
@@ -93393,7 +94117,7 @@ index 0000000..92e85e2
 +			if current(world, place) == name:
 +				return "すでに%sにいる。" % name
 +			if not bool(r.public) and not _open_to_all(world):
-+				return "「関係者以外立ち入り禁止」の札がかかっている。職員に止められ、%sには入れなかった。" % name
++				return "「関係者以外立ち入り禁止」の札がかかっている。%sに止められ、%sには入れなかった。" % ["職員" if place == "総合病院" else "店員", name]
 +			world.advance_safe(2)
 +			_put(world, place, name)
 +			var seen := describe(world, place, phase(world))
@@ -93444,6 +94168,11 @@ index 0000000..92e85e2
 +static func bandage_take(world, place: String) -> int:
 +	var r := _room_def(place, current(world, place))
 +	return int(r.get("bandage", 3)) if not r.is_empty() else 3
++
++## How much of the food and water a search turns up in this room (1.0 = as usual).
++static func share(world, place: String, item: String) -> float:
++	var r := _room_def(place, current(world, place))
++	return float(r.get(item, 1.0)) if not r.is_empty() else 1.0
 +
 +## The rooms to offer as next moves.
 +static func chips(world, place: String) -> Array:
@@ -94924,10 +95653,10 @@ index 0000000..69af088
 +uid://ci3mo5q7a6ln4
 diff --git a/tests/test_hospital_rooms149_35.gd b/tests/test_hospital_rooms149_35.gd
 new file mode 100644
-index 0000000..55ec481
+index 0000000..602d018
 --- /dev/null
 +++ b/tests/test_hospital_rooms149_35.gd
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,83 @@
 +extends SceneTree
 +## v149.35: the general hospital can be walked room by room — lobby, exam
 +## room, ward, store room — each with its own picture at every stage of the
@@ -94986,6 +95715,28 @@ index 0000000..55ec481
 +	check(float(w.s.health) > 60.0 and g.log_entries.slice(-15).any(func(e): return str(e).contains("体力 +")), "resting in a ward bed heals (%.0f)" % float(w.s.health))
 +	g._move_to("大通り")
 +	check(SiteRooms.current(w, "総合病院").is_empty(), "leaving, you come back in at the entrance")
++	# The supermarket works the same way, and its back room holds the drinks.
++	var sm_ok := true
++	for r in SiteRooms.rooms("スーパー"):
++		for ph in ["", "_alert", "_collapse", "_overgrown"]:
++			if not ResourceLoader.exists("res://assets/photos/supermarket_%s%s.jpg" % [r.key, ph]):
++				sm_ok = false
++	check(sm_ok and SiteRooms.rooms("スーパー").size() == 3, "the supermarket's three rooms have their pictures")
++	w.s.site_room = {"place": "スーパー", "room": "バックヤード"}
++	var back: float = SiteRooms.share(w, "スーパー", "water")
++	w.s.site_room = {"place": "スーパー", "room": "冷蔵売り場"}
++	check(back > SiteRooms.share(w, "スーパー", "water"), "more water in the back room than in the chilled aisle")
++	# Drawing and boiling water have their own pictures.
++	var AP = load("res://scripts/action_photos.gd")
++	var kinds := {}
++	for line in ["川べりにしゃがみ、空のポリタンクに水を8L汲んだ。", "池のほとりにかがみ、空のポリタンクに水を8L汲んだ。", "ためておいた水4Lを鍋で煮沸し、冷まして飲み水にした（30分）。"]:
++		for k in AP.KINDS:
++			var re := RegEx.new()
++			re.compile(str(k[1]))
++			if re.search(line) != null:
++				kinds[str(k[0])] = true
++				break
++	check(kinds.has("draw_river") and kinds.has("draw_pond") and kinds.has("boil"), "river, pond and boiling each show their picture")
 +	g.queue_free()
 +	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 +	quit(1 if failures else 0)
