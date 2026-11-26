@@ -83765,6 +83765,52 @@ index 0000000..59bf5e2
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/photo_strip_frame.png.import b/assets/ui/dcj_ui/photo_strip_frame.png.import
+new file mode 100644
+index 0000000..8d63279
+--- /dev/null
++++ b/assets/ui/dcj_ui/photo_strip_frame.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://4mhtsh2la8ka"
++path="res://.godot/imported/photo_strip_frame.png-cd18dd7118e53b39d6d4e931a6a9fec7.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/photo_strip_frame.png"
++dest_files=["res://.godot/imported/photo_strip_frame.png-cd18dd7118e53b39d6d4e931a6a9fec7.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/ui/dcj_ui/player.png.import b/assets/ui/dcj_ui/player.png.import
 new file mode 100644
 index 0000000..093eed6
@@ -98907,7 +98953,7 @@ index a4b03a2..daa7343 100644
 +	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
 +	return _done(game, lead + feel)
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..53a2a30 100644
+index 0f2add4..156cecf 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -222,7 +222,7 @@ func _ready() -> void:
@@ -98980,7 +99026,7 @@ index 0f2add4..53a2a30 100644
  		var bar:=UI.bar(100.0, UI.VITAL_COLORS[key], 5);column.add_child(bar);vitals_bars[key]=bar
  	danger_label = UI.tag("街：平常", true)
  	danger_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-@@ -352,7 +359,8 @@ func _build_ui() -> void:
+@@ -352,15 +359,24 @@ func _build_ui() -> void:
  	district_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
  	picture.add_child(district_card)
  	var shade := PanelContainer.new()
@@ -98990,7 +99036,15 @@ index 0f2add4..53a2a30 100644
  	shade.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
  	shade.grow_vertical = Control.GROW_DIRECTION_BEGIN
  	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-@@ -360,7 +368,7 @@ func _build_ui() -> void:
+ 	picture.add_child(shade)
++	# v149.35: the photo's frame (the UI kit's), drawn over the picture.
++	var strip := UI.skin("photo_strip_frame", Vector4(14, 14, 14, 14), Vector4(0, 0, 0, 0))
++	if strip != null:
++		var framing := Panel.new()
++		framing.add_theme_stylebox_override("panel", strip)
++		framing.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		framing.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++		picture.add_child(framing)
  	var shade_row := HBoxContainer.new()
  	shade_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
  	shade.add_child(shade_row)
@@ -98999,7 +99053,7 @@ index 0f2add4..53a2a30 100644
  	scene_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  	scene_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
  	shade_row.add_child(scene_caption)
-@@ -383,7 +391,7 @@ func _build_ui() -> void:
+@@ -383,7 +399,7 @@ func _build_ui() -> void:
  
  	# Conversation strip with an explicit way out.
  	convo_bar = PanelContainer.new()
@@ -99008,7 +99062,7 @@ index 0f2add4..53a2a30 100644
  	convo_bar.visible = false
  	base.add_child(convo_bar)
  	var convo_row := HBoxContainer.new()
-@@ -393,14 +401,14 @@ func _build_ui() -> void:
+@@ -393,14 +409,14 @@ func _build_ui() -> void:
  	convo_avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  	convo_avatar.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
  	convo_avatar.custom_minimum_size = Vector2(28, 28)
@@ -99025,7 +99079,7 @@ index 0f2add4..53a2a30 100644
  	convo_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  	convo_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  	convo_row.add_child(convo_label)
-@@ -423,9 +431,9 @@ func _build_ui() -> void:
+@@ -423,9 +439,9 @@ func _build_ui() -> void:
  	progress_label=UI.label("", 18, UI.ACCENT);progress_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;progress_row.add_child(progress_label)
  	cancel_button=UI.button("中断", false, 48, 15);cancel_button.custom_minimum_size.x=100;cancel_button.pressed.connect(_cancel_action);progress_row.add_child(cancel_button)
  	entry_row=HBoxContainer.new();entry_row.add_theme_constant_override("separation",10);base.add_child(entry_row)
@@ -99037,7 +99091,7 @@ index 0f2add4..53a2a30 100644
  	command_input.add_theme_font_size_override("font_size", 16)
  	send_button=UI.button("送信", true, 96, 16);send_button.custom_minimum_size.x=96;send_button.pressed.connect(_submit_command);entry_row.add_child(send_button)
  	input_mode_label=UI.label("文章入力 / オフライン解析 · 長期待機は飲食・睡眠を含み、危険時に中断", 13, UI.FAINT, false);base.add_child(input_mode_label)
-@@ -665,7 +673,7 @@ func _build_status_tab() -> void:
+@@ -665,7 +681,7 @@ func _build_status_tab() -> void:
  		var cell := VBoxContainer.new()
  		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  		grid.add_child(cell)
@@ -99046,7 +99100,7 @@ index 0f2add4..53a2a30 100644
  		cell.add_child(UI.bar(values[key], UI.VITAL_COLORS[key], 6))
  	var warning := Vitals.warning(world.s)
  	if not warning.is_empty():
-@@ -680,7 +688,7 @@ func _build_status_tab() -> void:
+@@ -680,7 +696,7 @@ func _build_status_tab() -> void:
  		c.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
  		c.add_child(UI.label(spec[0], 12, UI.MUTED, false))
  		c.add_child(UI.label(spec[1], 20, UI.TEXT, false))
@@ -99055,7 +99109,7 @@ index 0f2add4..53a2a30 100644
  	var utilities := HFlowContainer.new()
  	utilities.add_theme_constant_override("h_separation", 6)
  	utilities.add_theme_constant_override("v_separation", 6)
-@@ -708,7 +716,7 @@ func _build_status_tab() -> void:
+@@ -708,7 +724,7 @@ func _build_status_tab() -> void:
  		row.add_child(UI.label("%s　%s · %s" % [person.name, person.location, HouseholdDialogue._condition(person)], 14, UI.TEXT))
  		var order: Dictionary = person.get("water_errand", {})
  		if str(order.get("phase", "")) in ["queued", "carrying"]:
@@ -99064,7 +99118,7 @@ index 0f2add4..53a2a30 100644
  	var files := HBoxContainer.new()
  	files.add_theme_constant_override("separation", 10)
  	tab_content.add_child(files)
-@@ -806,7 +814,7 @@ func _build_people_tab() -> void:
+@@ -806,7 +822,7 @@ func _build_people_tab() -> void:
  		var c := UI.card(tab_content, "")
  		var head := HBoxContainer.new()
  		head.add_theme_constant_override("separation", 10)
@@ -99073,7 +99127,7 @@ index 0f2add4..53a2a30 100644
  		var name_label := UI.label(str(person.name), 17, UI.TEXT, false)
  		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  		head.add_child(name_label)
-@@ -815,7 +823,7 @@ func _build_people_tab() -> void:
+@@ -815,7 +831,7 @@ func _build_people_tab() -> void:
  		c.add_child(UI.label(NPCMind.relationship(npc_memory, person, dialogue.recent(index).size()), 13, UI.BODY))
  		var order: Dictionary = person.get("water_errand", {})
  		if str(order.get("phase", "")) in ["quantity", "queued", "carrying", "returning"]:
@@ -99082,7 +99136,7 @@ index 0f2add4..53a2a30 100644
  	# v149.28: survivors met outside, with their faces.
  	var met: Array = []
  	var people: Dictionary = world.s.get("survivors", {}).get("people", {}) if world.s.get("survivors") is Dictionary else {}
-@@ -832,7 +840,7 @@ func _build_people_tab() -> void:
+@@ -832,7 +848,7 @@ func _build_people_tab() -> void:
  		var head := HBoxContainer.new()
  		head.add_theme_constant_override("separation", 10)
  		var shown_name := Survivors.call_name(world, id)
@@ -99091,7 +99145,7 @@ index 0f2add4..53a2a30 100644
  		var name_label := UI.label(shown_name, 16, UI.TEXT, false)
  		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  		head.add_child(name_label)
-@@ -879,11 +887,11 @@ func _build_map_tab() -> void:
+@@ -879,11 +895,11 @@ func _build_map_tab() -> void:
  	var k := width / 358.0
  	var area := Panel.new()
  	area.custom_minimum_size = Vector2(width, 476.0 * k)
@@ -99105,7 +99159,7 @@ index 0f2add4..53a2a30 100644
  		r.position = Vector2(line[0], line[1]) * k
  		r.size = Vector2(maxf(2, line[2] * k), maxf(2, line[3] * k))
  		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-@@ -898,8 +906,8 @@ func _build_map_tab() -> void:
+@@ -898,8 +914,8 @@ func _build_map_tab() -> void:
  		b.position = Vector2(spec[0], spec[1]) * k
  		b.size = Vector2(spec[2], spec[3]) * k
  		b.add_theme_font_size_override("font_size", 13)
@@ -99116,7 +99170,7 @@ index 0f2add4..53a2a30 100644
  		b.add_theme_stylebox_override("normal", UI.box(fill, edge, 10, 4, 2))
  		b.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.06), edge, 10, 4, 2))
  		b.add_theme_stylebox_override("pressed", UI.box(fill.lightened(0.1), edge, 10, 4, 2))
-@@ -951,7 +959,7 @@ func _mark_font_buttons() -> void:
+@@ -951,7 +967,7 @@ func _mark_font_buttons() -> void:
  	for size in font_buttons:
  		var b: Button = font_buttons[size]
  		b.set_pressed_no_signal(size == ui_font_size)
@@ -99125,7 +99179,7 @@ index 0f2add4..53a2a30 100644
  
  func _set_photo_folded(folded: bool) -> void:
  	photo_folded = folded
-@@ -967,7 +975,7 @@ func _update_scene_visibility() -> void:
+@@ -967,7 +983,7 @@ func _update_scene_visibility() -> void:
  
  func _build_image_preview() -> void:
  	image_preview = ColorRect.new()
@@ -99134,7 +99188,7 @@ index 0f2add4..53a2a30 100644
  	image_preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  	image_preview.hide()
  	add_child(image_preview)
-@@ -1215,14 +1223,14 @@ func _show_intro() -> void:
+@@ -1215,14 +1231,14 @@ func _show_intro() -> void:
  	intro_layer.mouse_filter = Control.MOUSE_FILTER_STOP
  	add_child(intro_layer)
  	var shade := ColorRect.new()
@@ -99151,7 +99205,7 @@ index 0f2add4..53a2a30 100644
  	intro_margin.add_child(panel)
  	var column := VBoxContainer.new()
  	column.add_theme_constant_override("separation", 14)
-@@ -1372,7 +1380,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1372,7 +1388,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		var card_style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 10, 10)
  		card_style.shadow_color = Color(0, 0, 0, 0.6)
  		card_style.shadow_size = 18
@@ -99162,7 +99216,7 @@ index 0f2add4..53a2a30 100644
  		action_card.mouse_filter = Control.MOUSE_FILTER_STOP
  		action_card.gui_input.connect(func(event):
  			if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
-@@ -1392,7 +1402,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1392,7 +1410,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		label.name = "Caption"
  		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -99173,7 +99227,7 @@ index 0f2add4..53a2a30 100644
  		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
  		column.add_child(label)
  		add_child(action_card)
-@@ -1405,7 +1417,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1405,7 +1425,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	photo_rect.custom_minimum_size = Vector2(width - 20.0, (width - 20.0) * 0.75)
  	caption_label.text = caption
  	caption_label.add_theme_font_size_override("font_size", ui_font_size)
@@ -99182,7 +99236,7 @@ index 0f2add4..53a2a30 100644
  	action_card.size = Vector2(width, 0)
  	action_card.reset_size()
  	action_card.call_deferred("reset_size")
-@@ -1476,6 +1488,18 @@ func _member_names() -> Array:
+@@ -1476,6 +1496,18 @@ func _member_names() -> Array:
  	names.append_array(Survivors.names(world))
  	return names
  
@@ -99201,7 +99255,7 @@ index 0f2add4..53a2a30 100644
  ## One chronicle entry, styled by what it is.
  func _make_entry(entry: String) -> Control:
  	var info := UI.kind(entry, _member_names())
-@@ -1487,9 +1511,9 @@ func _make_entry(entry: String) -> Control:
+@@ -1487,9 +1519,9 @@ func _make_entry(entry: String) -> Control:
  			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  			row.add_child(spacer)
  			var bubble := PanelContainer.new()
@@ -99213,7 +99267,7 @@ index 0f2add4..53a2a30 100644
  			bubble.add_child(text)
  			log_bubbles.append([text, str(info.text), 0.78])
  			_fit_bubble(text, str(info.text), 0.78)
-@@ -1509,7 +1533,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1509,7 +1541,7 @@ func _make_entry(entry: String) -> Control:
  			var line := HBoxContainer.new()
  			column.add_child(line)
  			var bubble := PanelContainer.new()
@@ -99222,7 +99276,7 @@ index 0f2add4..53a2a30 100644
  			line.add_child(bubble)
  			var text := UI.label(str(info.text), size, UI.TEXT)
  			bubble.add_child(text)
-@@ -1518,7 +1542,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1518,7 +1550,7 @@ func _make_entry(entry: String) -> Control:
  			return column
  		"fail":
  			var panel := PanelContainer.new()
@@ -99231,7 +99285,7 @@ index 0f2add4..53a2a30 100644
  			var body := VBoxContainer.new()
  			body.add_theme_constant_override("separation", 6)
  			panel.add_child(body)
-@@ -1529,7 +1553,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1529,7 +1561,7 @@ func _make_entry(entry: String) -> Control:
  			return panel
  		"news", "notice":
  			var note := UI.label(str(info.text), size - 2, UI.WARN_TEXT if str(info.kind) == "notice" else UI.BODY)
@@ -99240,7 +99294,7 @@ index 0f2add4..53a2a30 100644
  			return note
  	var block := VBoxContainer.new()
  	block.add_theme_constant_override("separation", 4)
-@@ -1607,7 +1631,7 @@ func _refresh() -> void:
+@@ -1607,7 +1639,7 @@ func _refresh() -> void:
  	elif not horde.is_empty() and Navigation.indoor(location) and str(horde.place) in ["住宅街", "屋外"]:
  		danger_label.text = "群れが通過中" if str(horde.place) == "屋外" else "群れ接近"
  		stage = ["", 3]
@@ -99249,7 +99303,7 @@ index 0f2add4..53a2a30 100644
  	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
  	var normalized := Vitals.values(world.s)
  	for key in normalized:
-@@ -1647,10 +1671,32 @@ func _refresh() -> void:
+@@ -1647,10 +1679,32 @@ func _refresh() -> void:
  		var season := Cold.season_photo(world, location, str(world.s.profile.housing))
  		if not season.is_empty() and ResourceLoader.exists("res://assets/photos/%s.jpg" % season):
  			picture.texture = scene_view.location_texture(location, season, "")
@@ -99285,7 +99339,7 @@ index 0f2add4..53a2a30 100644
  	preview_button.visible = picture.texture != null
  	_refresh_scene_caption()
  	_update_scene_visibility()
-@@ -1844,6 +1890,8 @@ func _suggestions() -> Array:
+@@ -1844,6 +1898,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -99294,7 +99348,7 @@ index 0f2add4..53a2a30 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1899,6 +1947,11 @@ func _suggestions() -> Array:
+@@ -1899,6 +1955,11 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
@@ -99306,7 +99360,7 @@ index 0f2add4..53a2a30 100644
  	if location == "避難所" and Shelter.is_open(world):
  		out.append("配給を受け取る")
  		out.append("避難所の様子を聞く")
-@@ -1910,6 +1963,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +1971,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -99315,7 +99369,7 @@ index 0f2add4..53a2a30 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,10 +2026,38 @@ func _suggestions() -> Array:
+@@ -1971,10 +2034,38 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -99354,7 +99408,7 @@ index 0f2add4..53a2a30 100644
  		out.append("家に帰る")
  	return out.slice(0, 6)
  
-@@ -2614,7 +2697,19 @@ func _drain_walker_notices() -> void:
+@@ -2614,7 +2705,19 @@ func _drain_walker_notices() -> void:
  	var w := Walkers.ensure(world)
  	var notices: Array = w.notices
  	w.notices = []
@@ -99374,7 +99428,7 @@ index 0f2add4..53a2a30 100644
  		var said := false
  		for person in world.s.household_members:
  			said = said or str(line).begins_with(str(person.name) + "「")
-@@ -2838,7 +2933,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2941,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -99384,7 +99438,7 @@ index 0f2add4..53a2a30 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3129,11 +3225,20 @@ func _eat_before_sleep() -> String:
+@@ -3129,11 +3233,20 @@ func _eat_before_sleep() -> String:
  
  func _shelter_command(cmd: String) -> bool:
  	if location != "避難所":
@@ -99405,7 +99459,7 @@ index 0f2add4..53a2a30 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,8 +3316,179 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,8 +3324,179 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -99585,7 +99639,7 @@ index 0f2add4..53a2a30 100644
  	if _weapon_command(cmd) or _cold_command(cmd) or _request_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
  		return true
  	for index in world.s.household_members.size():
-@@ -3457,6 +3733,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3741,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -99595,7 +99649,7 @@ index 0f2add4..53a2a30 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3752,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3760,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -99614,7 +99668,7 @@ index 0f2add4..53a2a30 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,7 +3782,23 @@ func _district_map() -> String:
+@@ -3494,7 +3790,23 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -99638,7 +99692,7 @@ index 0f2add4..53a2a30 100644
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
  		return _district_map()
-@@ -3506,6 +3810,107 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3818,107 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -99746,7 +99800,7 @@ index 0f2add4..53a2a30 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3944,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3952,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -99755,7 +99809,7 @@ index 0f2add4..53a2a30 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3670,18 +4075,23 @@ func _execute_command(cmd: String) -> String:
+@@ -3670,18 +4083,23 @@ func _execute_command(cmd: String) -> String:
  		if location != "屋外": return "探索には屋外に出る必要がある。"
  		return world.longplay_action("scavenge")
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
@@ -99785,7 +99839,7 @@ index 0f2add4..53a2a30 100644
  		var result: String = world.action("harvest")
  		if result.begins_with("収穫した"): world.advance(30)
  		return result
-@@ -3696,7 +4106,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4114,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -99795,7 +99849,7 @@ index 0f2add4..53a2a30 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3709,7 +4120,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3709,7 +4128,12 @@ func _execute_command(cmd: String) -> String:
  				return "食事をするには台所へ行こう。"
  		var light_meal := float(world.s.hunger) < 15.0
  		if not _eat_here():
@@ -99809,7 +99863,7 @@ index 0f2add4..53a2a30 100644
  		# A hungry person eats a proper meal, not one bite (up to 3 portions).
  		var portions := 1
  		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
-@@ -3718,7 +4134,11 @@ func _execute_command(cmd: String) -> String:
+@@ -3718,7 +4142,11 @@ func _execute_command(cmd: String) -> String:
  		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
  	if cmd.contains("水を飲") or cmd.contains("飲み水"):
  		if not _drink_here():
@@ -99822,7 +99876,7 @@ index 0f2add4..53a2a30 100644
  		var cups := 1
  		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
  			cups += 1
-@@ -3754,6 +4174,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4182,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -99837,7 +99891,7 @@ index 0f2add4..53a2a30 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3775,7 +4203,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3775,7 +4211,12 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("周囲") or cmd.contains("見回"):
  		world.advance(1)
  		return _look()
@@ -99851,7 +99905,7 @@ index 0f2add4..53a2a30 100644
  
  
  # Illustration choice is a pure function of current location, observation and
-@@ -3795,6 +4228,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4236,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -99892,7 +99946,7 @@ index 0f2add4..53a2a30 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4305,31 @@ func _scene_caption() -> String:
+@@ -3838,7 +4313,31 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -99924,7 +99978,7 @@ index 0f2add4..53a2a30 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4349,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4357,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -99943,7 +99997,7 @@ index 0f2add4..53a2a30 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4376,9 @@ func _site() -> String:
+@@ -3875,6 +4384,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -99953,7 +100007,7 @@ index 0f2add4..53a2a30 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4410,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4418,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -99962,7 +100016,7 @@ index 0f2add4..53a2a30 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4434,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4442,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -99977,7 +100031,7 @@ index 0f2add4..53a2a30 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4453,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4461,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -99990,7 +100044,7 @@ index 0f2add4..53a2a30 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4474,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4482,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -100001,7 +100055,7 @@ index 0f2add4..53a2a30 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4557,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4565,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
