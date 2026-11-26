@@ -103,6 +103,52 @@ index 0000000..5d2d2ce
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_cards.jpg.import b/assets/actions/act_cards.jpg.import
+new file mode 100644
+index 0000000..82882e3
+--- /dev/null
++++ b/assets/actions/act_cards.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bkjp272sglsqm"
++path="res://.godot/imported/act_cards.jpg-7f837c77213aaa4641da531cba99db55.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_cards.jpg"
++dest_files=["res://.godot/imported/act_cards.jpg-7f837c77213aaa4641da531cba99db55.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_cook_home.jpg.import b/assets/actions/act_cook_home.jpg.import
 new file mode 100644
 index 0000000..05de28b
@@ -859,6 +905,2536 @@ index 0000000..3495fff
 +
 +source_file="res://assets/actions/act_reversi.jpg"
 +dest_files=["res://.godot/imported/act_reversi.jpg-0e830f45ce4b4c5f1f9f97882e4b1e45.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/back.png.import b/assets/cards/back.png.import
+new file mode 100644
+index 0000000..88ece07
+--- /dev/null
++++ b/assets/cards/back.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://deycaaf3808m8"
++path="res://.godot/imported/back.png-7d85033bf6bf15f797d0bebaa6d86bd6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/back.png"
++dest_files=["res://.godot/imported/back.png-7d85033bf6bf15f797d0bebaa6d86bd6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_10.png.import b/assets/cards/clubs_10.png.import
+new file mode 100644
+index 0000000..2a59b69
+--- /dev/null
++++ b/assets/cards/clubs_10.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://boavxiwb4fgvs"
++path="res://.godot/imported/clubs_10.png-1607ec9321514471bfaeeaabaae619d9.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_10.png"
++dest_files=["res://.godot/imported/clubs_10.png-1607ec9321514471bfaeeaabaae619d9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_2.png.import b/assets/cards/clubs_2.png.import
+new file mode 100644
+index 0000000..ab40524
+--- /dev/null
++++ b/assets/cards/clubs_2.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dhowmfvmgy2ok"
++path="res://.godot/imported/clubs_2.png-4919530fcb6301f9f9e10fd0aa24a978.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_2.png"
++dest_files=["res://.godot/imported/clubs_2.png-4919530fcb6301f9f9e10fd0aa24a978.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_3.png.import b/assets/cards/clubs_3.png.import
+new file mode 100644
+index 0000000..988e835
+--- /dev/null
++++ b/assets/cards/clubs_3.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c8vc2ewgenl6g"
++path="res://.godot/imported/clubs_3.png-07c7bb614f2fbd24ff52b198dbff8d63.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_3.png"
++dest_files=["res://.godot/imported/clubs_3.png-07c7bb614f2fbd24ff52b198dbff8d63.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_4.png.import b/assets/cards/clubs_4.png.import
+new file mode 100644
+index 0000000..22be1b1
+--- /dev/null
++++ b/assets/cards/clubs_4.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ie6ligsaju7x"
++path="res://.godot/imported/clubs_4.png-c798ab1fb6162c790a2c54d03fd6dfcf.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_4.png"
++dest_files=["res://.godot/imported/clubs_4.png-c798ab1fb6162c790a2c54d03fd6dfcf.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_5.png.import b/assets/cards/clubs_5.png.import
+new file mode 100644
+index 0000000..7276c1b
+--- /dev/null
++++ b/assets/cards/clubs_5.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://6q5a73hpn8vp"
++path="res://.godot/imported/clubs_5.png-40e5d4f0cdcd3eb95aca5cccfa4d5877.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_5.png"
++dest_files=["res://.godot/imported/clubs_5.png-40e5d4f0cdcd3eb95aca5cccfa4d5877.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_6.png.import b/assets/cards/clubs_6.png.import
+new file mode 100644
+index 0000000..f001177
+--- /dev/null
++++ b/assets/cards/clubs_6.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c5vmpu8067ltj"
++path="res://.godot/imported/clubs_6.png-280e58b89eb6c6f94eeaf3deca5dcbf8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_6.png"
++dest_files=["res://.godot/imported/clubs_6.png-280e58b89eb6c6f94eeaf3deca5dcbf8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_7.png.import b/assets/cards/clubs_7.png.import
+new file mode 100644
+index 0000000..892b28d
+--- /dev/null
++++ b/assets/cards/clubs_7.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c5kj4wvjcxnr7"
++path="res://.godot/imported/clubs_7.png-1c745af1529d344decdcfc9b93fe5cfc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_7.png"
++dest_files=["res://.godot/imported/clubs_7.png-1c745af1529d344decdcfc9b93fe5cfc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_8.png.import b/assets/cards/clubs_8.png.import
+new file mode 100644
+index 0000000..6faba7d
+--- /dev/null
++++ b/assets/cards/clubs_8.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ti4ot6y3lfvf"
++path="res://.godot/imported/clubs_8.png-9ee824ece57db208e5c65985fbff3276.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_8.png"
++dest_files=["res://.godot/imported/clubs_8.png-9ee824ece57db208e5c65985fbff3276.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_9.png.import b/assets/cards/clubs_9.png.import
+new file mode 100644
+index 0000000..ef7ff7a
+--- /dev/null
++++ b/assets/cards/clubs_9.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bs4v3q8b0ndm4"
++path="res://.godot/imported/clubs_9.png-e2166aab08aa134b1892df9cd3f13f7c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_9.png"
++dest_files=["res://.godot/imported/clubs_9.png-e2166aab08aa134b1892df9cd3f13f7c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_A.png.import b/assets/cards/clubs_A.png.import
+new file mode 100644
+index 0000000..7007428
+--- /dev/null
++++ b/assets/cards/clubs_A.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bmo0rpmlg0et8"
++path="res://.godot/imported/clubs_A.png-8131aad28afaa3e266fc15e525dfee7a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_A.png"
++dest_files=["res://.godot/imported/clubs_A.png-8131aad28afaa3e266fc15e525dfee7a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_J.png.import b/assets/cards/clubs_J.png.import
+new file mode 100644
+index 0000000..e43a117
+--- /dev/null
++++ b/assets/cards/clubs_J.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bs3kl0h8gt026"
++path="res://.godot/imported/clubs_J.png-6ba7fdd641cf731f36b30901e5fc4afc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_J.png"
++dest_files=["res://.godot/imported/clubs_J.png-6ba7fdd641cf731f36b30901e5fc4afc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_K.png.import b/assets/cards/clubs_K.png.import
+new file mode 100644
+index 0000000..0c0acb4
+--- /dev/null
++++ b/assets/cards/clubs_K.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b586vsmj1ra31"
++path="res://.godot/imported/clubs_K.png-01ae03fcf5c8e4930f0a1a5dc98bb40f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_K.png"
++dest_files=["res://.godot/imported/clubs_K.png-01ae03fcf5c8e4930f0a1a5dc98bb40f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/clubs_Q.png.import b/assets/cards/clubs_Q.png.import
+new file mode 100644
+index 0000000..97ea26a
+--- /dev/null
++++ b/assets/cards/clubs_Q.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c3j44do2wmqms"
++path="res://.godot/imported/clubs_Q.png-9774e8434ff688077f03672336cba919.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/clubs_Q.png"
++dest_files=["res://.godot/imported/clubs_Q.png-9774e8434ff688077f03672336cba919.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_10.png.import b/assets/cards/diamonds_10.png.import
+new file mode 100644
+index 0000000..8e72e73
+--- /dev/null
++++ b/assets/cards/diamonds_10.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ccwvnxrpqyakb"
++path="res://.godot/imported/diamonds_10.png-e955346dcbcdac9ff66efbbd3ff8bb3a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_10.png"
++dest_files=["res://.godot/imported/diamonds_10.png-e955346dcbcdac9ff66efbbd3ff8bb3a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_2.png.import b/assets/cards/diamonds_2.png.import
+new file mode 100644
+index 0000000..7057771
+--- /dev/null
++++ b/assets/cards/diamonds_2.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cclkd2avtagx1"
++path="res://.godot/imported/diamonds_2.png-79d308cbbd2125132440bdced38618c0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_2.png"
++dest_files=["res://.godot/imported/diamonds_2.png-79d308cbbd2125132440bdced38618c0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_3.png.import b/assets/cards/diamonds_3.png.import
+new file mode 100644
+index 0000000..84ea807
+--- /dev/null
++++ b/assets/cards/diamonds_3.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cp856cbh023xw"
++path="res://.godot/imported/diamonds_3.png-e0aa621b89ea1d54bc9c95a5ca8dc10c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_3.png"
++dest_files=["res://.godot/imported/diamonds_3.png-e0aa621b89ea1d54bc9c95a5ca8dc10c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_4.png.import b/assets/cards/diamonds_4.png.import
+new file mode 100644
+index 0000000..cffcf48
+--- /dev/null
++++ b/assets/cards/diamonds_4.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://v1m7agrwevxm"
++path="res://.godot/imported/diamonds_4.png-e76822f7fd51d75777d4b9a7b3376ac0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_4.png"
++dest_files=["res://.godot/imported/diamonds_4.png-e76822f7fd51d75777d4b9a7b3376ac0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_5.png.import b/assets/cards/diamonds_5.png.import
+new file mode 100644
+index 0000000..1bda444
+--- /dev/null
++++ b/assets/cards/diamonds_5.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://v5abxs6psob4"
++path="res://.godot/imported/diamonds_5.png-fd46c5519711348a1d6d2225c00f88e4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_5.png"
++dest_files=["res://.godot/imported/diamonds_5.png-fd46c5519711348a1d6d2225c00f88e4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_6.png.import b/assets/cards/diamonds_6.png.import
+new file mode 100644
+index 0000000..7bc5779
+--- /dev/null
++++ b/assets/cards/diamonds_6.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c5su7hkm2t35m"
++path="res://.godot/imported/diamonds_6.png-0ae6bc0c56c7ebb47570f920d2eebd94.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_6.png"
++dest_files=["res://.godot/imported/diamonds_6.png-0ae6bc0c56c7ebb47570f920d2eebd94.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_7.png.import b/assets/cards/diamonds_7.png.import
+new file mode 100644
+index 0000000..7c711ae
+--- /dev/null
++++ b/assets/cards/diamonds_7.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bpf4qimxrf4ny"
++path="res://.godot/imported/diamonds_7.png-ff48be5ba7a108759ec283ed4eff844a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_7.png"
++dest_files=["res://.godot/imported/diamonds_7.png-ff48be5ba7a108759ec283ed4eff844a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_8.png.import b/assets/cards/diamonds_8.png.import
+new file mode 100644
+index 0000000..ad3b901
+--- /dev/null
++++ b/assets/cards/diamonds_8.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cvhltynn8bho7"
++path="res://.godot/imported/diamonds_8.png-c4b4c6f9efd27bd7299f8fc6b58f3d8c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_8.png"
++dest_files=["res://.godot/imported/diamonds_8.png-c4b4c6f9efd27bd7299f8fc6b58f3d8c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_9.png.import b/assets/cards/diamonds_9.png.import
+new file mode 100644
+index 0000000..faa04d7
+--- /dev/null
++++ b/assets/cards/diamonds_9.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bs3y50y3e3kew"
++path="res://.godot/imported/diamonds_9.png-bcbb4ec3faf483701362e38fa45bf5c2.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_9.png"
++dest_files=["res://.godot/imported/diamonds_9.png-bcbb4ec3faf483701362e38fa45bf5c2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_A.png.import b/assets/cards/diamonds_A.png.import
+new file mode 100644
+index 0000000..a3fe3ee
+--- /dev/null
++++ b/assets/cards/diamonds_A.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dwhehn0omwbyx"
++path="res://.godot/imported/diamonds_A.png-eca2dbabf103fb6bbe210b896bb71f38.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_A.png"
++dest_files=["res://.godot/imported/diamonds_A.png-eca2dbabf103fb6bbe210b896bb71f38.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_J.png.import b/assets/cards/diamonds_J.png.import
+new file mode 100644
+index 0000000..ed75c6a
+--- /dev/null
++++ b/assets/cards/diamonds_J.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://sgelpmx0ywxh"
++path="res://.godot/imported/diamonds_J.png-2f621834e80b02e71f4a31f6c6a3e375.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_J.png"
++dest_files=["res://.godot/imported/diamonds_J.png-2f621834e80b02e71f4a31f6c6a3e375.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_K.png.import b/assets/cards/diamonds_K.png.import
+new file mode 100644
+index 0000000..4601fbb
+--- /dev/null
++++ b/assets/cards/diamonds_K.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://d2e78vcwdmloo"
++path="res://.godot/imported/diamonds_K.png-8e1459ddd8bd8eadf2ee5717aa7beb70.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_K.png"
++dest_files=["res://.godot/imported/diamonds_K.png-8e1459ddd8bd8eadf2ee5717aa7beb70.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/diamonds_Q.png.import b/assets/cards/diamonds_Q.png.import
+new file mode 100644
+index 0000000..033b830
+--- /dev/null
++++ b/assets/cards/diamonds_Q.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://d3owi3fe3fndu"
++path="res://.godot/imported/diamonds_Q.png-0c572e6b7d11226839559339690a8c68.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/diamonds_Q.png"
++dest_files=["res://.godot/imported/diamonds_Q.png-0c572e6b7d11226839559339690a8c68.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_10.png.import b/assets/cards/hearts_10.png.import
+new file mode 100644
+index 0000000..5b316bd
+--- /dev/null
++++ b/assets/cards/hearts_10.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://d2at1o6mydfxn"
++path="res://.godot/imported/hearts_10.png-9a6cf61235ef93afd490f955d3ac7035.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_10.png"
++dest_files=["res://.godot/imported/hearts_10.png-9a6cf61235ef93afd490f955d3ac7035.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_2.png.import b/assets/cards/hearts_2.png.import
+new file mode 100644
+index 0000000..0860a36
+--- /dev/null
++++ b/assets/cards/hearts_2.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cfayguxkmq1ob"
++path="res://.godot/imported/hearts_2.png-d72722474d218bb337a2f36be0e05b23.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_2.png"
++dest_files=["res://.godot/imported/hearts_2.png-d72722474d218bb337a2f36be0e05b23.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_3.png.import b/assets/cards/hearts_3.png.import
+new file mode 100644
+index 0000000..e185a47
+--- /dev/null
++++ b/assets/cards/hearts_3.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c881rpk4wxmqn"
++path="res://.godot/imported/hearts_3.png-80ce41230c447d3220c84a49718441d7.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_3.png"
++dest_files=["res://.godot/imported/hearts_3.png-80ce41230c447d3220c84a49718441d7.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_4.png.import b/assets/cards/hearts_4.png.import
+new file mode 100644
+index 0000000..f3a857d
+--- /dev/null
++++ b/assets/cards/hearts_4.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://corxxu18jfpix"
++path="res://.godot/imported/hearts_4.png-277716deb3b948651ee7984dfee0e602.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_4.png"
++dest_files=["res://.godot/imported/hearts_4.png-277716deb3b948651ee7984dfee0e602.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_5.png.import b/assets/cards/hearts_5.png.import
+new file mode 100644
+index 0000000..35b19d3
+--- /dev/null
++++ b/assets/cards/hearts_5.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dq4olwmvevx5h"
++path="res://.godot/imported/hearts_5.png-b627b9243f92fc5ac5a20a05a300aa5a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_5.png"
++dest_files=["res://.godot/imported/hearts_5.png-b627b9243f92fc5ac5a20a05a300aa5a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_6.png.import b/assets/cards/hearts_6.png.import
+new file mode 100644
+index 0000000..7f013cb
+--- /dev/null
++++ b/assets/cards/hearts_6.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c2iur6hucb5wu"
++path="res://.godot/imported/hearts_6.png-5d2c06f2bbd17181e9ed9b2215a3db74.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_6.png"
++dest_files=["res://.godot/imported/hearts_6.png-5d2c06f2bbd17181e9ed9b2215a3db74.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_7.png.import b/assets/cards/hearts_7.png.import
+new file mode 100644
+index 0000000..95b8685
+--- /dev/null
++++ b/assets/cards/hearts_7.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dcw16ys0uyi6p"
++path="res://.godot/imported/hearts_7.png-a3aafdd120a32d9b814da8762ca185b9.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_7.png"
++dest_files=["res://.godot/imported/hearts_7.png-a3aafdd120a32d9b814da8762ca185b9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_8.png.import b/assets/cards/hearts_8.png.import
+new file mode 100644
+index 0000000..9ae903b
+--- /dev/null
++++ b/assets/cards/hearts_8.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://orykoy0y3jel"
++path="res://.godot/imported/hearts_8.png-c03eb9c9b94b5549a8978c9a16ae401b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_8.png"
++dest_files=["res://.godot/imported/hearts_8.png-c03eb9c9b94b5549a8978c9a16ae401b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_9.png.import b/assets/cards/hearts_9.png.import
+new file mode 100644
+index 0000000..73148f3
+--- /dev/null
++++ b/assets/cards/hearts_9.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cy81d370h7654"
++path="res://.godot/imported/hearts_9.png-0c8567304ee38a1a59a2aa2be2e4f765.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_9.png"
++dest_files=["res://.godot/imported/hearts_9.png-0c8567304ee38a1a59a2aa2be2e4f765.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_A.png.import b/assets/cards/hearts_A.png.import
+new file mode 100644
+index 0000000..a1ed30c
+--- /dev/null
++++ b/assets/cards/hearts_A.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bqcc5gu0dh7w2"
++path="res://.godot/imported/hearts_A.png-da48e0138450072b16313583d7f5ffe0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_A.png"
++dest_files=["res://.godot/imported/hearts_A.png-da48e0138450072b16313583d7f5ffe0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_J.png.import b/assets/cards/hearts_J.png.import
+new file mode 100644
+index 0000000..e7056ab
+--- /dev/null
++++ b/assets/cards/hearts_J.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ch7ygoi5f8kc7"
++path="res://.godot/imported/hearts_J.png-6c57761eccc3bcb9e1632787f95383ae.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_J.png"
++dest_files=["res://.godot/imported/hearts_J.png-6c57761eccc3bcb9e1632787f95383ae.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_K.png.import b/assets/cards/hearts_K.png.import
+new file mode 100644
+index 0000000..a6b9185
+--- /dev/null
++++ b/assets/cards/hearts_K.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c21fam0ig1rxs"
++path="res://.godot/imported/hearts_K.png-8a5e4423a174631d0d6e0eb4ccbb0db7.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_K.png"
++dest_files=["res://.godot/imported/hearts_K.png-8a5e4423a174631d0d6e0eb4ccbb0db7.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/hearts_Q.png.import b/assets/cards/hearts_Q.png.import
+new file mode 100644
+index 0000000..bec929b
+--- /dev/null
++++ b/assets/cards/hearts_Q.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dj72ilkxtddx3"
++path="res://.godot/imported/hearts_Q.png-77bdb1636986a810a7df7871fbfa57d6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/hearts_Q.png"
++dest_files=["res://.godot/imported/hearts_Q.png-77bdb1636986a810a7df7871fbfa57d6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/joker_black.png.import b/assets/cards/joker_black.png.import
+new file mode 100644
+index 0000000..b7f3f0b
+--- /dev/null
++++ b/assets/cards/joker_black.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ddupuscd4ysan"
++path="res://.godot/imported/joker_black.png-e92707286f46beb9c36b2e9f9253b371.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/joker_black.png"
++dest_files=["res://.godot/imported/joker_black.png-e92707286f46beb9c36b2e9f9253b371.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/joker_red.png.import b/assets/cards/joker_red.png.import
+new file mode 100644
+index 0000000..d0559f4
+--- /dev/null
++++ b/assets/cards/joker_red.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://74cfurjcqejh"
++path="res://.godot/imported/joker_red.png-24c268f9a5f0eb04a72534524da455d4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/joker_red.png"
++dest_files=["res://.godot/imported/joker_red.png-24c268f9a5f0eb04a72534524da455d4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_10.png.import b/assets/cards/spades_10.png.import
+new file mode 100644
+index 0000000..fe81650
+--- /dev/null
++++ b/assets/cards/spades_10.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cvx7j2po20v5s"
++path="res://.godot/imported/spades_10.png-c97a0921cfce1bae6d9006a0035fd289.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_10.png"
++dest_files=["res://.godot/imported/spades_10.png-c97a0921cfce1bae6d9006a0035fd289.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_2.png.import b/assets/cards/spades_2.png.import
+new file mode 100644
+index 0000000..662ad17
+--- /dev/null
++++ b/assets/cards/spades_2.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bupqgvpvgfj3e"
++path="res://.godot/imported/spades_2.png-fe2faa5c145ebbaa2daea4444e7bbe73.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_2.png"
++dest_files=["res://.godot/imported/spades_2.png-fe2faa5c145ebbaa2daea4444e7bbe73.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_3.png.import b/assets/cards/spades_3.png.import
+new file mode 100644
+index 0000000..9e834ff
+--- /dev/null
++++ b/assets/cards/spades_3.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ikalapcc3rd1"
++path="res://.godot/imported/spades_3.png-d59cce8c216c81c0fb60f8eadf0d58d3.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_3.png"
++dest_files=["res://.godot/imported/spades_3.png-d59cce8c216c81c0fb60f8eadf0d58d3.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_4.png.import b/assets/cards/spades_4.png.import
+new file mode 100644
+index 0000000..c22f340
+--- /dev/null
++++ b/assets/cards/spades_4.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dsahlhunys1j4"
++path="res://.godot/imported/spades_4.png-5befa424b3d079909f7ff83db5544f86.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_4.png"
++dest_files=["res://.godot/imported/spades_4.png-5befa424b3d079909f7ff83db5544f86.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_5.png.import b/assets/cards/spades_5.png.import
+new file mode 100644
+index 0000000..284ed72
+--- /dev/null
++++ b/assets/cards/spades_5.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://867uqpw42ixw"
++path="res://.godot/imported/spades_5.png-f504a25912b16a8941896a1c3b2e6ceb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_5.png"
++dest_files=["res://.godot/imported/spades_5.png-f504a25912b16a8941896a1c3b2e6ceb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_6.png.import b/assets/cards/spades_6.png.import
+new file mode 100644
+index 0000000..211e4fe
+--- /dev/null
++++ b/assets/cards/spades_6.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dcqy10a36xiw3"
++path="res://.godot/imported/spades_6.png-374f7b51ec589f9e8f2201f131268926.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_6.png"
++dest_files=["res://.godot/imported/spades_6.png-374f7b51ec589f9e8f2201f131268926.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_7.png.import b/assets/cards/spades_7.png.import
+new file mode 100644
+index 0000000..206d4aa
+--- /dev/null
++++ b/assets/cards/spades_7.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dx8s6771o36s1"
++path="res://.godot/imported/spades_7.png-5b4ecb50491f8b7f8ef768aa1844d8b7.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_7.png"
++dest_files=["res://.godot/imported/spades_7.png-5b4ecb50491f8b7f8ef768aa1844d8b7.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_8.png.import b/assets/cards/spades_8.png.import
+new file mode 100644
+index 0000000..81b1913
+--- /dev/null
++++ b/assets/cards/spades_8.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://wf75u8vhclo6"
++path="res://.godot/imported/spades_8.png-356cb9e90fd2947418fe8cc13e374ec4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_8.png"
++dest_files=["res://.godot/imported/spades_8.png-356cb9e90fd2947418fe8cc13e374ec4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_9.png.import b/assets/cards/spades_9.png.import
+new file mode 100644
+index 0000000..2bdfa27
+--- /dev/null
++++ b/assets/cards/spades_9.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://brtjcbyypaxym"
++path="res://.godot/imported/spades_9.png-713d84f67fb6f3f4339aca65a43e84d4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_9.png"
++dest_files=["res://.godot/imported/spades_9.png-713d84f67fb6f3f4339aca65a43e84d4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_A.png.import b/assets/cards/spades_A.png.import
+new file mode 100644
+index 0000000..8079fee
+--- /dev/null
++++ b/assets/cards/spades_A.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cp7hv3gk1m6e"
++path="res://.godot/imported/spades_A.png-9c2270cb0bf976f9e8cc98ed63f3fdcd.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_A.png"
++dest_files=["res://.godot/imported/spades_A.png-9c2270cb0bf976f9e8cc98ed63f3fdcd.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_J.png.import b/assets/cards/spades_J.png.import
+new file mode 100644
+index 0000000..05a5e31
+--- /dev/null
++++ b/assets/cards/spades_J.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://d3h8rljge62g1"
++path="res://.godot/imported/spades_J.png-378978c828bc3addd8d55e269dc03dff.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_J.png"
++dest_files=["res://.godot/imported/spades_J.png-378978c828bc3addd8d55e269dc03dff.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_K.png.import b/assets/cards/spades_K.png.import
+new file mode 100644
+index 0000000..a743348
+--- /dev/null
++++ b/assets/cards/spades_K.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://wwf88pcqdx3n"
++path="res://.godot/imported/spades_K.png-a96d833aae8641fc0bb3a82222d52e88.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_K.png"
++dest_files=["res://.godot/imported/spades_K.png-a96d833aae8641fc0bb3a82222d52e88.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/cards/spades_Q.png.import b/assets/cards/spades_Q.png.import
+new file mode 100644
+index 0000000..0e82b5e
+--- /dev/null
++++ b/assets/cards/spades_Q.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://vt2ain7l3jjw"
++path="res://.godot/imported/spades_Q.png-95dcd2d385d892f3dd8bebb7cccbe5a3.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/cards/spades_Q.png"
++dest_files=["res://.godot/imported/spades_Q.png-95dcd2d385d892f3dd8bebb7cccbe5a3.ctex"]
 +
 +[params]
 +
@@ -91469,21 +94045,22 @@ index 0000000..2c112a7
 @@ -0,0 +1 @@
 +uid://bdaqf6pdnjf73
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..ddfe877 100644
+index 35febbb..008680d 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -16,7 +16,10 @@ const KINDS := [
+@@ -16,7 +16,11 @@ const KINDS := [
  	["fight_miss", "^打ちかかった", "空を切った。"],
  	["eat", "^(しっかり)?食事を取った", "食事をした。"],
  	["eat", "^軽くつまんだ", "少しだけ口にした。"],
 +	["cook_home", "^台所で、(ガスコンロ|電気のコンロ)で.*温かい食事を作って食べた", "温かい食事を作った。"],
  	["cook", "^台所で、.*温かい食事を作って食べた", "温かい食事を作った。"],
 +	["reversi", "^[^【「（\\n]{1,12}とリバーシを打った（", "リバーシを打った。"],
++	["cards", "^[^【「（\\n]{1,40}とトランプをした（", "トランプをした。"],
 +	["laundry", "^(洗濯機を回し|たらいに水を張って)", "洗濯物を干した。"],
  	["smoke", "^(換気扇の下で|窓を少し開けて、)?タバコに火をつけ", "一服した。"],
  	["drink", "^水を飲んだ", "水を飲んだ。"],
  	["bandage", "^傷を手当てした", "傷に包帯を巻いた。"],
-@@ -34,12 +37,17 @@ const KINDS := [
+@@ -34,12 +38,17 @@ const KINDS := [
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
@@ -91503,7 +94080,7 @@ index 35febbb..ddfe877 100644
  	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
  	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
  	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
-@@ -53,6 +61,11 @@ const KINDS := [
+@@ -53,6 +62,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -91515,7 +94092,7 @@ index 35febbb..ddfe877 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -112,7 +125,7 @@ static func _find(base: String) -> String:
+@@ -112,7 +126,7 @@ static func _find(base: String) -> String:
  
  ## The picture for this action now, or "" if none has been made yet.
  ## A moment with no picture of its own borrows a broader one.
@@ -91524,7 +94101,7 @@ index 35febbb..ddfe877 100644
  
  static func path(world, kind: String) -> String:
  	var found := _path(world, kind)
-@@ -120,8 +133,28 @@ static func path(world, kind: String) -> String:
+@@ -120,8 +134,28 @@ static func path(world, kind: String) -> String:
  		found = _path(world, str(FALLBACK[kind]))
  	return found
  
@@ -91553,7 +94130,7 @@ index 35febbb..ddfe877 100644
  	if kind == "eat" and not world.s.household_members.is_empty():
  		options.append("act_eat_together")
  	if crisis(world):
-@@ -130,5 +163,9 @@ static func _path(world, kind: String) -> String:
+@@ -130,5 +164,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -91602,6 +94179,1497 @@ index 2c13ef6..2dff67f 100644
  		cmd=str(synonyms.get(cmd,cmd))
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
+diff --git a/scripts/card_table.gd b/scripts/card_table.gd
+new file mode 100644
+index 0000000..1acd21a
+--- /dev/null
++++ b/scripts/card_table.gd
+@@ -0,0 +1,605 @@
++extends Control
++## v149.35: the card table — a full-screen layer where you play ババ抜き,
++## 大富豪, 七並べ or 神経衰弱 with the people at home (scripts/cards*.gd).
++## Seat 0 is you; the others are housemates, each playing the way they are.
++## Game time stands still while you play; main._cards_finished() writes it
++## down afterwards.
++
++const Cards = preload("res://scripts/cards.gd")
++const UI = preload("res://scripts/ui_kit.gd")
++const Portraits = preload("res://scripts/portraits.gd")
++const MODULES := {
++	"babanuki": preload("res://scripts/cards_babanuki.gd"),
++	"daifugo": preload("res://scripts/cards_daifugo.gd"),
++	"shichinarabe": preload("res://scripts/cards_shichinarabe.gd"),
++	"shinkei": preload("res://scripts/cards_shinkei.gd"),
++}
++
++var game                      # main.gd
++var mates: Array = []         # household indices at the table (seat k+1)
++var everyone: Array = []      # all who sat down (a smaller game seats fewer)
++var names: Array = ["あなた"]
++var profs: Array = [{}]
++var kind := ""
++var state: Dictionary = {}
++var rng := RandomNumberGenerator.new()
++var delay := 0.6              # seconds between their moves (tests: 0)
++var running := false
++var selected: Array = []      # 大富豪: cards picked to play
++var tell: Dictionary = {}     # ババ抜き: what you read off the one you draw from
++var results: Array = []
++var last_said := ""
++var bubbles: Dictionary = {}  # seat -> [text, age]
++var note := ""
++
++var column: VBoxContainer
++var title: Label
++var seats_row: HBoxContainer
++var center: Control
++var status: Label
++var hand_box: Control
++var buttons: HFlowContainer
++var textures := {}
++
++func setup(main_game, game_kind: String, mate_indices: Array) -> void:
++	game = main_game
++	everyone = mate_indices.duplicate()
++	_seat(everyone)
++	rng.seed = hash([int(game.world.s.seed), int(game.world.s.minute), "cards", game_kind])
++	_build()
++	if MODULES.has(game_kind):
++		begin(game_kind)
++	else:
++		_picker()
++
++func _seat(list: Array) -> void:
++	mates = list.duplicate()
++	names = ["あなた"]
++	profs = [{}]
++	for i in mates:
++		var m: Dictionary = game.world.s.household_members[i]
++		names.append(str(m.name))
++		profs.append(Cards.profile(game.world, m))
++
++func _tex(card: String) -> Texture2D:
++	if not textures.has(card):
++		textures[card] = load(Cards.texture_path(card))
++	return textures[card]
++
++# --- Layout ---------------------------------------------------------------
++
++func _build() -> void:
++	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	mouse_filter = Control.MOUSE_FILTER_STOP
++	var shade := ColorRect.new()
++	shade.color = Color("#1b2a22")
++	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	add_child(shade)
++	var margin := MarginContainer.new()
++	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++	for side in ["left", "right", "top", "bottom"]:
++		margin.add_theme_constant_override("margin_" + side, 10)
++	add_child(margin)
++	column = VBoxContainer.new()
++	column.add_theme_constant_override("separation", 8)
++	margin.add_child(column)
++	var top := HBoxContainer.new()
++	column.add_child(top)
++	title = Label.new()
++	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
++	title.add_theme_font_size_override("font_size", 20)
++	title.add_theme_color_override("font_color", Color("#e9dcc0"))
++	top.add_child(title)
++	var quit := Button.new()
++	quit.text = "やめる"
++	quit.custom_minimum_size = Vector2(88, 38)
++	quit.pressed.connect(_leave)
++	top.add_child(quit)
++	seats_row = HBoxContainer.new()
++	seats_row.alignment = BoxContainer.ALIGNMENT_CENTER
++	seats_row.add_theme_constant_override("separation", 6)
++	column.add_child(seats_row)
++	center = Control.new()
++	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
++	center.custom_minimum_size.y = 200
++	center.resized.connect(_on_resized)
++	column.add_child(center)
++	status = Label.new()
++	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	status.add_theme_font_size_override("font_size", 15)
++	status.add_theme_color_override("font_color", Color("#e6edf3"))
++	column.add_child(status)
++	hand_box = Control.new()
++	hand_box.custom_minimum_size.y = 120
++	hand_box.resized.connect(_on_resized)
++	column.add_child(hand_box)
++	buttons = HFlowContainer.new()
++	buttons.alignment = FlowContainer.ALIGNMENT_CENTER
++	buttons.add_theme_constant_override("h_separation", 10)
++	buttons.add_theme_constant_override("v_separation", 8)
++	buttons.custom_minimum_size.y = 46
++	column.add_child(buttons)
++
++## Redraw when the space really changed (not on every relayout).
++var _sizes := ""
++var _queued := false
++
++func _on_resized() -> void:
++	if center == null or hand_box == null:
++		return
++	var now := "%s|%s" % [center.size, hand_box.size]
++	if now == _sizes or _queued:
++		return
++	_sizes = now
++	_queued = true
++	call_deferred("_redraw")
++
++func _redraw() -> void:
++	_queued = false
++	_update()
++
++var _button_sig := ""
++
++func _buttons(list: Array) -> void:
++	var sig := str(list.map(func(item): return [item[0], item.size() > 2 and not bool(item[2])]))
++	if sig == _button_sig:
++		return
++	_button_sig = sig
++	for child in buttons.get_children():
++		child.queue_free()
++	for item in list:
++		var b := Button.new()
++		b.text = str(item[0])
++		b.custom_minimum_size = Vector2(118, 44)
++		b.add_theme_font_size_override("font_size", 17)
++		b.disabled = item.size() > 2 and not bool(item[2])
++		b.pressed.connect(item[1])
++		buttons.add_child(b)
++
++func _picker() -> void:
++	_seat(everyone)
++	state = {}
++	_clear(center)
++	_clear(hand_box)
++	title.text = "トランプ"
++	status.text = "何をして遊ぶ？"
++	var list: Array = []
++	for k in Cards.GAMES:
++		list.append([Cards.GAMES[k], begin.bind(k)])
++	_buttons(list)
++	_seats()
++
++func begin(game_kind: String) -> void:
++	kind = game_kind
++	_seat(everyone.slice(0, int(Cards.SEATS[kind])))
++	var seats := mates.size() + 1
++	state = MODULES[kind].start(seats, rng)
++	selected = []
++	tell = {}
++	note = ""
++	bubbles = {}
++	title.text = Cards.GAMES[kind]
++	if seats > 1:
++		_bubble(1 + rng.randi_range(0, seats - 2), Cards.line(profs[1], "start", rng))
++	_speak()
++	_update()
++	_run()
++
++# --- The flow -------------------------------------------------------------
++
++## Their turns, one after another, until it is yours (or the game ends).
++func _run() -> void:
++	if running:
++		return
++	running = true
++	if kind == "shinkei" and not state.shown.is_empty() and int(state.turn) != 0:
++		_update()
++		if delay > 0.0 and is_inside_tree():
++			await get_tree().create_timer(delay * 1.5).timeout
++		state.shown = []
++	while not bool(state.get("done", true)) and int(state.turn) != 0:
++		if delay > 0.0 and is_inside_tree():
++			await get_tree().create_timer(delay if not bool(state.out[0]) else delay * 0.4).timeout
++		if not is_inside_tree() and delay > 0.0:
++			running = false
++			return
++		_their_move(int(state.turn))
++		_speak()
++		_update()
++		# 神経衰弱: a miss stays face up for a moment.
++		if kind == "shinkei" and not state.shown.is_empty():
++			if delay > 0.0 and is_inside_tree():
++				await get_tree().create_timer(delay * 1.5).timeout
++			state.shown = []
++			_update()
++	running = false
++	if bool(state.get("done", false)):
++		_end()
++	else:
++		_your_turn()
++		_update()
++
++func _their_move(i: int) -> void:
++	for k in bubbles:
++		bubbles[k][1] = int(bubbles[k][1]) + 1
++	match kind:
++		"babanuki":
++			MODULES.babanuki.ai(state, i, profs, rng)
++			var l: Dictionary = state.get("last", {})
++			note = "%sが%sから1枚引いた。%s" % [names[i], names[int(l.get("from", 0))], "ペアがそろった。" if not str(l.get("paired", "")).is_empty() else ""]
++			if int(l.get("from", -1)) == 0:
++				note = "%sがあなたの%sを引いた。%s" % [names[i], Cards.label(str(l.card)), "ペアがそろった。" if not str(l.get("paired", "")).is_empty() else ""]
++		"daifugo":
++			MODULES.daifugo.ai(state, i, profs, rng)
++			var l: Dictionary = state.get("last", {})
++			note = "%sはパスした。" % names[i] if bool(l.get("pass", false)) else "%sが%sを出した。" % [names[i], "・".join(l.get("cards", []).map(func(c): return Cards.label(c)))]
++		"shichinarabe":
++			MODULES.shichinarabe.ai(state, i, profs, rng)
++			var l: Dictionary = state.get("last", {})
++			note = ("%sはパスした（%d回目）。" % [names[i], int(state.passes[i])]) if bool(l.get("pass", false)) else "%sが%sを置いた。" % [names[i], Cards.label(str(l.card))]
++		"shinkei":
++			MODULES.shinkei.ai_flip(state, i, profs, rng)
++			var l: Dictionary = state.get("last", {})
++			if not l.is_empty() and int(l.by) == i:
++				note = "%sが%s。" % [names[i], "1組そろえた" if bool(l.match) else "めくったが、そろわなかった"]
++
++func _your_turn() -> void:
++	selected = []
++	tell = {}
++	if kind == "babanuki":
++		var j: int = MODULES.babanuki.target(state, 0)
++		if j > 0:
++			tell = MODULES.babanuki.tell(state, j, profs[j], names[j], rng)
++
++## Lines the game wants said: into the speakers' bubbles.
++func _speak() -> void:
++	for item in state.get("say", []):
++		var seat := int(item[0])
++		if seat <= 0 or seat >= profs.size():
++			continue
++		_bubble(seat, Cards.line(profs[seat], str(item[1]), rng))
++	state.say = []
++
++func _bubble(seat: int, text: String) -> void:
++	if not text.is_empty():
++		bubbles[seat] = [text, 0]
++		last_said = "%sは「%s」と言った。" % [names[seat], text]
++
++# --- Your moves -------------------------------------------------------------
++
++## ババ抜き: draw the card at `pos` from the one you draw from.
++func draw_card(pos: int) -> void:
++	if kind != "babanuki" or running or int(state.turn) != 0 or bool(state.done):
++		return
++	var j: int = MODULES.babanuki.target(state, 0)
++	var card: String = MODULES.babanuki.draw(state, 0, pos, profs, rng)
++	if card.is_empty():
++		return
++	var l: Dictionary = state.last
++	note = "%sから%sを引いた。%s" % [names[j], Cards.label(card), "ペアがそろったので捨てた。" if not str(l.get("paired", "")).is_empty() else ("……ジョーカーだ。" if Cards.joker(card) else "")]
++	_after_you()
++
++## 大富豪: pick / unpick a card.
++func toggle(card: String) -> void:
++	if running or int(state.turn) != 0:
++		return
++	if card in selected:
++		selected.erase(card)
++	else:
++		# Only one rank at a time.
++		if not selected.is_empty() and (Cards.joker(card) or Cards.joker(selected[0]) or Cards.rank(card) != Cards.rank(selected[0])):
++			selected = []
++		selected.append(card)
++	_update()
++
++func play_selected() -> void:
++	if kind != "daifugo" or running or int(state.turn) != 0:
++		return
++	if MODULES.daifugo.play(state, 0, selected.duplicate()):
++		note = "%sを出した。" % "・".join(selected.map(func(c): return Cards.label(c)))
++		selected = []
++		_after_you()
++
++func pass_turn() -> void:
++	if running or int(state.turn) != 0 or bool(state.done):
++		return
++	match kind:
++		"daifugo":
++			if MODULES.daifugo.pass_turn(state, 0):
++				note = "パスした。"
++				_after_you()
++		"shichinarabe":
++			if MODULES.shichinarabe.pass_turn(state, 0):
++				note = "ドボン……手札を全部場に出した。" if bool(state.out[0]) and 0 in state.busted else "パスした（%d回目）。" % int(state.passes[0])
++				_after_you()
++
++## 七並べ: put a card down.
++func lay(card: String) -> void:
++	if kind != "shichinarabe" or running or int(state.turn) != 0:
++		return
++	if MODULES.shichinarabe.play(state, 0, card):
++		note = "%sを置いた。" % Cards.label(card)
++		_after_you()
++
++## 神経衰弱: turn a card over.
++func flip(cell: int) -> void:
++	if kind != "shinkei" or running or int(state.turn) != 0 or bool(state.done):
++		return
++	if not state.shown.is_empty():
++		state.shown = []
++	var before := int(state.first)
++	MODULES.shinkei.flip(state, 0, cell, profs, rng)
++	if int(state.first) == before:
++		return
++	if before >= 0:
++		var l: Dictionary = state.last
++		note = "そろった！" if bool(l.match) else "そろわなかった。"
++	_speak()
++	_update()
++	if int(state.turn) != 0 or bool(state.done):
++		_after_you()
++
++func _after_you() -> void:
++	_speak()
++	_update()
++	if bool(state.done):
++		_end()
++	else:
++		_run()
++
++# --- The end ----------------------------------------------------------------
++
++func _end() -> void:
++	var place: int = state.ranking.find(0)
++	var seats: int = state.hands.size()
++	var loser: int = state.ranking[-1]
++	var winner: int = state.ranking[0]
++	if winner > 0:
++		_bubble(winner, Cards.line(profs[winner], "first", rng))
++	if loser > 0 and loser != winner:
++		_bubble(loser, Cards.line(profs[loser], "last_sore" if int(profs[loser].temper) >= 60 else "last", rng))
++	var you := "あなたは%d位" % (place + 1)
++	if kind == "daifugo":
++		you = "あなたは%s" % MODULES.daifugo.title(place, seats)
++	note = "%s。%s。" % [MODULES[kind].summary(state, names), you]
++	results.append({"kind": kind, "ranking": state.ranking.duplicate(), "seats": seats, "summary": MODULES[kind].summary(state, names), "place": place})
++	_update()
++	_buttons([["もう一回", begin.bind(kind)], ["別のゲーム", _picker], ["終わる", _leave]])
++
++func _leave() -> void:
++	state.done = true
++	running = false
++	if game != null and game.has_method("_cards_finished"):
++		game._cards_finished(mates, profs, names, results, last_said)
++	queue_free()
++
++# --- Drawing ----------------------------------------------------------------
++
++func _card(code: String, rect: Rect2, parent: Control, on_tap: Callable = Callable(), dim: bool = false) -> TextureRect:
++	var t := TextureRect.new()
++	t.texture = _tex(code)
++	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++	t.stretch_mode = TextureRect.STRETCH_SCALE
++	t.position = rect.position
++	t.size = rect.size
++	t.mouse_filter = Control.MOUSE_FILTER_STOP if on_tap.is_valid() else Control.MOUSE_FILTER_IGNORE
++	if dim:
++		t.modulate = Color(0.55, 0.55, 0.55)
++	if on_tap.is_valid():
++		t.gui_input.connect(func(e):
++			if (e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT) or (e is InputEventScreenTouch and e.pressed):
++				on_tap.call())
++	parent.add_child(t)
++	return t
++
++func _clear(node: Control) -> void:
++	for child in node.get_children():
++		node.remove_child(child)
++		child.queue_free()
++
++func _seats() -> void:
++	_clear(seats_row)
++	for k in range(1, names.size()):
++		var box := PanelContainer.new()
++		var current: bool = not state.is_empty() and not bool(state.get("done", true)) and int(state.turn) == k
++		box.add_theme_stylebox_override("panel", UI.box(Color(0, 0, 0, 0.25), Color("#e9c46a") if current else Color(1, 1, 1, 0.12), 10, 6, 5))
++		box.custom_minimum_size.x = 92
++		seats_row.add_child(box)
++		var v := VBoxContainer.new()
++		v.add_theme_constant_override("separation", 2)
++		box.add_child(v)
++		var top := HBoxContainer.new()
++		v.add_child(top)
++		top.add_child(Portraits.avatar(Portraits.housemate_face(game.world, mates[k - 1]), names[k].left(1), 30, UI.PANEL_2, UI.TEXT))
++		var who := Label.new()
++		who.text = names[k]
++		who.clip_text = true
++		who.custom_minimum_size.x = 50
++		who.add_theme_font_size_override("font_size", 13)
++		top.add_child(who)
++		var info := Label.new()
++		info.add_theme_font_size_override("font_size", 12)
++		info.add_theme_color_override("font_color", Color("#c9d6c2"))
++		info.text = _seat_info(k)
++		v.add_child(info)
++		if bubbles.has(k) and int(bubbles[k][1]) <= 2:
++			var say := Label.new()
++			say.text = "「%s」" % bubbles[k][0]
++			say.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++			say.custom_minimum_size.x = 80
++			say.add_theme_font_size_override("font_size", 12)
++			say.add_theme_color_override("font_color", Color("#ffe7b3"))
++			v.add_child(say)
++
++func _seat_info(k: int) -> String:
++	if state.is_empty():
++		return ""
++	if kind == "shinkei":
++		return "%d組" % int(state.score[k])
++	if bool(state.out[k]):
++		var place: int = state.ranking.find(k)
++		if kind == "shichinarabe" and k in state.busted:
++			return "ドボン"
++		return ("%d位" % (place + 1)) if place >= 0 else "上がり"
++	var s := "%d枚" % state.hands[k].size()
++	if kind == "shichinarabe":
++		s += "・パス%d" % int(state.passes[k])
++	if kind == "daifugo" and bool(state.passed[k]):
++		s += "・パス"
++	return s
++
++func _update() -> void:
++	if center == null or hand_box == null or buttons == null:
++		return
++	_seats()
++	_clear(center)
++	_clear(hand_box)
++	if state.is_empty():
++		return
++	match kind:
++		"babanuki":
++			_draw_babanuki()
++		"daifugo":
++			_draw_daifugo()
++		"shichinarabe":
++			_draw_shichinarabe()
++		"shinkei":
++			_draw_shinkei()
++	var turn_text := ""
++	if not bool(state.done):
++		turn_text = "あなたの番。" if int(state.turn) == 0 else "%sの番。" % names[int(state.turn)]
++	status.text = (note + "\n" if not note.is_empty() else "") + turn_text + _hint()
++	if not bool(state.done):
++		_buttons(_turn_buttons())
++
++func _hint() -> String:
++	if bool(state.done) or int(state.turn) != 0:
++		return ""
++	match kind:
++		"babanuki":
++			var t := str(tell.get("text", ""))
++			if int(tell.get("pos", -1)) >= 0 and not bool(profs[MODULES.babanuki.target(state, 0)].get("child", false)):
++				t += "（左から%d枚目）" % (int(tell.pos) + 1)
++			return "引く札を選ぶ。" + t
++		"daifugo":
++			return "出す札を選んで「出す」。" + ("（革命中）" if bool(state.rev) else "")
++		"shichinarabe":
++			return "明るい札が置ける。"
++		"shinkei":
++			return "札を2枚めくる。（あなた %d組）" % int(state.score[0])
++	return ""
++
++func _turn_buttons() -> Array:
++	var mine: bool = int(state.turn) == 0 and not running
++	match kind:
++		"daifugo":
++			return [["出す", play_selected, mine and MODULES.daifugo.can_play(state, selected)], ["パス", pass_turn, mine and not state.pile.is_empty()]]
++		"shichinarabe":
++			var left := MODULES.shichinarabe.PASSES - int(state.passes[0])
++			return [["パス（あと%d回）" % maxi(0, left) if left > 0 else "パス（ドボン）", pass_turn, mine]]
++	return []
++
++## Your hand along the bottom (overlapping when it is long).
++func _layout_hand(cards: Array, on_tap: Callable, dim_of: Callable, raised_of: Callable) -> void:
++	var w := hand_box.size.x
++	var h := hand_box.size.y - 14.0
++	var cw := minf(h / 1.4, 72.0)
++	var ch := cw * 1.4
++	var n := cards.size()
++	if n == 0:
++		return
++	var step := minf(cw * 0.95, (w - cw) / maxf(1.0, float(n - 1)))
++	var total := step * float(n - 1) + cw
++	var x0 := (w - total) / 2.0
++	for k in n:
++		var c: String = cards[k]
++		var y := 14.0 - (12.0 if bool(raised_of.call(c)) else 0.0)
++		_card(c, Rect2(x0 + step * k, y, cw, ch), hand_box, on_tap.bind(c) if on_tap.is_valid() else Callable(), bool(dim_of.call(c)))
++
++func _draw_babanuki() -> void:
++	var j: int = MODULES.babanuki.target(state, 0) if not bool(state.out[0]) else -1
++	if j > 0 and not bool(state.done):
++		var backs: Array = state.hands[j]
++		var w := center.size.x
++		var cw := minf(64.0, w / 6.0)
++		var ch := cw * 1.4
++		var n := backs.size()
++		var step := minf(cw * 0.9, (w - cw) / maxf(1.0, float(n - 1)))
++		var x0 := (w - (step * float(n - 1) + cw)) / 2.0
++		var y0 := center.size.y / 2.0 - ch / 2.0
++		var lbl := Label.new()
++		lbl.text = "%sの手札" % names[j]
++		lbl.position = Vector2(0, maxf(0.0, y0 - 30.0))
++		lbl.size = Vector2(w, 24)
++		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++		center.add_child(lbl)
++		var mine: bool = int(state.turn) == 0 and not running
++		var sticks: bool = bool(profs[j].get("child", false)) and int(tell.get("pos", -1)) >= 0
++		for k in n:
++			var up := 14.0 if sticks and k == int(tell.pos) else 0.0
++			_card("back", Rect2(x0 + step * k, y0 - up, cw, ch), center, draw_card.bind(k) if mine else Callable())
++	_layout_hand(state.hands[0], Callable(), func(_c): return false, func(_c): return false)
++
++func _draw_daifugo() -> void:
++	var pile: Array = state.pile
++	var w := center.size.x
++	var cw := minf(76.0, w / 5.0)
++	var ch := cw * 1.4
++	var x0 := (w - (cw * 0.6 * float(maxi(0, pile.size() - 1)) + cw)) / 2.0
++	var y0 := center.size.y / 2.0 - ch / 2.0
++	for k in pile.size():
++		_card(pile[k], Rect2(x0 + cw * 0.6 * k, y0, cw, ch), center)
++	var lbl := Label.new()
++	lbl.text = ("場は空（親：%s）" % names[int(state.turn)] if pile.is_empty() and not bool(state.done) else "") + ("　革命中" if bool(state.rev) else "")
++	lbl.position = Vector2(0, maxf(0.0, y0 - 28.0))
++	lbl.size = Vector2(w, 24)
++	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
++	center.add_child(lbl)
++	var mine: bool = int(state.turn) == 0 and not running and not bool(state.done)
++	var playable := {}
++	if mine:
++		for o in MODULES.daifugo.options(state, 0):
++			for c in o:
++				playable[c] = true
++	_layout_hand(state.hands[0], toggle if mine else Callable(), func(c): return mine and not playable.has(c), func(c): return c in selected)
++
++func _draw_shichinarabe() -> void:
++	var w := center.size.x
++	var cw := minf(w / 13.5, (center.size.y - 10.0) / 4.0 / 1.4)
++	var ch := cw * 1.4
++	var x0 := (w - cw * 13.0) / 2.0
++	var y0 := (center.size.y - ch * 4.0 - 9.0) / 2.0
++	for row in 4:
++		var s: String = Cards.SUITS[row]
++		for n in range(1, 14):
++			var rect := Rect2(x0 + cw * float(n - 1), y0 + (ch + 3.0) * row, cw - 1.0, ch)
++			if n in state.table[s]:
++				_card(s + Cards.RANKS[n - 1], rect, center)
++			else:
++				var slot := ColorRect.new()
++				slot.color = Color(0, 0, 0, 0.18)
++				slot.position = rect.position
++				slot.size = rect.size
++				slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
++				center.add_child(slot)
++	var mine: bool = int(state.turn) == 0 and not running and not bool(state.done)
++	_layout_hand(state.hands[0], lay if mine else Callable(), func(c): return not MODULES.shichinarabe.playable(state, c), func(c): return mine and MODULES.shichinarabe.playable(state, c))
++
++func _draw_shinkei() -> void:
++	var cols: int = MODULES.shinkei.COLS
++	var rows: int = MODULES.shinkei.ROWS
++	var w := center.size.x
++	var cw := minf((w - 5.0 * cols) / float(cols), (center.size.y - 6.0 * rows) / float(rows) / 1.4)
++	var ch := cw * 1.4
++	var x0 := (w - (cw + 5.0) * cols) / 2.0
++	var y0 := (center.size.y - (ch + 6.0) * rows) / 2.0
++	var mine: bool = int(state.turn) == 0 and not running and not bool(state.done)
++	for k in state.grid.size():
++		var rect := Rect2(x0 + (cw + 5.0) * (k % cols), y0 + (ch + 6.0) * (k / cols), cw, ch)
++		if int(state.owner[k]) >= 0:
++			var gone := _card(state.grid[k], rect, center)
++			gone.modulate = Color(1, 1, 1, 0.25)
++			continue
++		var up: bool = k == int(state.first) or k in state.shown
++		_card(state.grid[k] if up else "back", rect, center, flip.bind(k) if mine and not up else Callable())
+diff --git a/scripts/card_table.gd.uid b/scripts/card_table.gd.uid
+new file mode 100644
+index 0000000..9331e38
+--- /dev/null
++++ b/scripts/card_table.gd.uid
+@@ -0,0 +1 @@
++uid://bmwcvrmnrteho
+diff --git a/scripts/cards.gd b/scripts/cards.gd
+new file mode 100644
+index 0000000..2ca0074
+--- /dev/null
++++ b/scripts/cards.gd
+@@ -0,0 +1,156 @@
++extends RefCounted
++## v149.35: playing cards with the people at home — ババ抜き, 大富豪, 七並べ,
++## 神経衰弱. This file: the deck, how each housemate is at the card table
++## (from scripts/reversi.gd's profile, plus memory), what they say, and the
++## rules of the four games live in cards_<game>.gd.
++## A card is a short code: suit S/H/D/C + rank A,2..10,J,Q,K; jokers X1 (red), X2 (black).
++
++const Reversi = preload("res://scripts/reversi.gd")
++const DIR := "res://assets/cards/"
++const SUITS := ["S", "H", "D", "C"]
++const RANKS := ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
++const SUIT_FILE := {"S": "spades", "H": "hearts", "D": "diamonds", "C": "clubs"}
++const SUIT_MARK := {"S": "♠", "H": "♥", "D": "♦", "C": "♣", "X": ""}
++const GAMES := {"babanuki": "ババ抜き", "daifugo": "大富豪", "shichinarabe": "七並べ", "shinkei": "神経衰弱"}
++const WORDS := {"babanuki": ["ババ抜き", "ばば抜き", "ババぬき", "ばばぬき"], "daifugo": ["大富豪", "大貧民"], "shichinarabe": ["七並べ", "7並べ", "しちならべ"], "shinkei": ["神経衰弱"]}
++## Up to this many housemates at the table (and the time a game takes).
++const SEATS := {"babanuki": 4, "daifugo": 4, "shichinarabe": 4, "shinkei": 3}
++const MINUTES := {"babanuki": 20, "daifugo": 30, "shichinarabe": 25, "shinkei": 20}
++
++static func deck(jokers: int = 0) -> Array:
++	var out: Array = []
++	for s in SUITS:
++		for r in RANKS:
++			out.append(s + r)
++	for j in jokers:
++		out.append("X%d" % (j + 1))
++	return out
++
++static func shuffled(cards: Array, rng: RandomNumberGenerator) -> Array:
++	var out := cards.duplicate()
++	for i in range(out.size() - 1, 0, -1):
++		var j := rng.randi_range(0, i)
++		var t = out[i]
++		out[i] = out[j]
++		out[j] = t
++	return out
++
++static func suit(card: String) -> String:
++	return card.left(1)
++
++static func rank(card: String) -> String:
++	return card.substr(1)
++
++static func joker(card: String) -> bool:
++	return card.begins_with("X")
++
++## 1 (A) .. 13 (K).
++static func number(card: String) -> int:
++	return RANKS.find(rank(card)) + 1
++
++static func texture_path(card: String) -> String:
++	if card == "back":
++		return DIR + "back.png"
++	if joker(card):
++		return DIR + ("joker_red.png" if card == "X1" else "joker_black.png")
++	return DIR + "%s_%s.png" % [SUIT_FILE[suit(card)], rank(card)]
++
++const SUIT_NAME := {"S": "スペード", "H": "ハート", "D": "ダイヤ", "C": "クラブ"}
++
++static func label(card: String) -> String:
++	return "ジョーカー" if joker(card) else "%sの%s" % [SUIT_NAME[suit(card)], rank(card)]
++
++## How someone sits at the card table: the reversi profile, and memory for
++## 神経衰弱 (children are good at it; it fades with age).
++static func profile(world, mate: Dictionary) -> Dictionary:
++	var p: Dictionary = Reversi.profile(world, mate)
++	var age := int(mate.get("age", 30))
++	var memory := 0.65
++	if age < 13:
++		memory = 0.85
++	elif age < 20:
++		memory = 0.8
++	elif age >= 70:
++		memory = 0.45
++	elif age >= 55:
++		memory = 0.55
++	memory += float(p.skill) * 0.1 + (0.05 if str(p.style) == "careful" else 0.0)
++	p.memory = clampf(memory, 0.3, 0.95)
++	# Plays to hold others up (七並べ), if not kind and either wary or quick-tempered.
++	p.mean = int(p.kind) < 45 and (str(p.style) in ["careful", "greedy"] or int(p.temper) >= 60)
++	return p
++
++# --- What they say --------------------------------------------------------
++
++const LINES := {
++	"start": {"casual": ["よし、配るよ", "トランプか、久しぶりだな", "負けないからな"], "polite": ["よろしくお願いします", "久しぶりですね、トランプ"], "child": ["やったー！ トランプ！", "ぼくが配る！"]},
++	"first": {"casual": ["よし、上がり！", "一番乗り！"], "polite": ["お先に上がりますね", "上がりです"], "child": ["あがりー！ いちばん！"]},
++	"last": {"casual": ["くそー、最下位か", "負けた負けた"], "polite": ["負けてしまいました", "最後でしたね……"], "child": ["えー、ビリやだー！"]},
++	"last_sore": {"casual": ["……もう一回だ。今のはなしだ", "納得いかない。もう一回"], "polite": ["……次は、負けませんから"], "child": ["もう一回！ もう一回やる！"]},
++	"out": {"casual": ["上がり", "抜けたー"], "polite": ["上がりました"], "child": ["あがった！"]},
++	# ババ抜き
++	"got_joker": {"casual": ["うっ……", "……げ"], "polite": ["あっ……", "……"], "child": ["あーっ！ ……なんでもない！"]},
++	"joker_gone": {"casual": ["ふう……", "（ほっとした顔をしている）"], "polite": ["よかった……"], "child": ["やったー、いなくなった！"]},
++	"pair": {"casual": ["そろった", "よし、ペア"], "polite": ["そろいました"], "child": ["そろったー！"]},
++	# 大富豪
++	"revolution": {"casual": ["革命！", "悪いな、革命だ"], "polite": ["すみません、革命です"], "child": ["かくめーい！"]},
++	"eight": {"casual": ["8切り！", "はい、流すよ"], "polite": ["8で切りますね"], "child": ["8ぎり！"]},
++	"pass": {"casual": ["パス", "うーん、パス"], "polite": ["パスします"], "child": ["パス！"]},
++	"strong": {"casual": ["これでどうだ", "ほら、これ"], "polite": ["これでどうでしょう"], "child": ["えいっ！"]},
++	# 七並べ
++	"block": {"casual": ["ふふ、パス", "まあ、パスで"], "polite": ["……パスで", "今回はパスしておきます"], "child": ["パス〜"]},
++	"forced_pass": {"casual": ["出せない……パス", "くっ、パスだ"], "polite": ["出せるものがありません"], "child": ["だせない……"]},
++	"bust": {"casual": ["もうだめだ、ドボン", "あー、終わった"], "polite": ["もう出せません。降参です"], "child": ["ドボンしちゃった……"]},
++	"open": {"casual": ["ほら、開けといたよ", "どうぞ"], "polite": ["どうぞ、続けてください"], "child": ["はい、どうぞ！"]},
++	# 神経衰弱
++	"match": {"casual": ["覚えてた！", "よし、そろった"], "polite": ["当たりました", "覚えていました"], "child": ["あったー！ ぼくおぼえてた！"]},
++	"miss": {"casual": ["あれ、違ったか", "うーん"], "polite": ["違いましたね", "あら……"], "child": ["ちがったー"]},
++}
++
++static func line(prof: Dictionary, situation: String, rng: RandomNumberGenerator) -> String:
++	var set: Dictionary = LINES.get(situation, {})
++	var voice := "child" if bool(prof.get("child", false)) else ("polite" if bool(prof.get("polite", false)) else "casual")
++	var pool: Array = set.get(voice, set.get("casual", []))
++	return str(pool[rng.randi_range(0, pool.size() - 1)]) if not pool.is_empty() else ""
++
++## Which game a command asks for ("" for none named, "?" if only トランプ).
++static func game_named(cmd: String) -> String:
++	for kind in WORDS:
++		for w in WORDS[kind]:
++			if cmd.contains(w):
++				return kind
++	if cmd.contains("トランプ") or cmd.contains("カード遊び") or cmd.contains("カードゲーム"):
++		return "?"
++	return ""
++
++## Next seat (from `i`) still holding cards / still in.
++static func next_seat(state: Dictionary, i: int) -> int:
++	var n: int = state.hands.size()
++	for k in range(1, n + 1):
++		var j := (i + k) % n
++		if not bool(state.out[j]):
++			return j
++	return -1
++
++static func active(state: Dictionary) -> Array:
++	var out: Array = []
++	for i in state.hands.size():
++		if not bool(state.out[i]):
++			out.append(i)
++	return out
++
++## A seat finishes: into the ranking.
++static func finish_seat(state: Dictionary, i: int) -> void:
++	if bool(state.out[i]):
++		return
++	state.out[i] = true
++	state.ranking.append(i)
++	state.say.append([i, "out" if state.ranking.size() > 1 else "first"])
++
++static func base_state(kind: String, seats: int) -> Dictionary:
++	var hands: Array = []
++	var out: Array = []
++	for i in seats:
++		hands.append([])
++		out.append(false)
++	return {"kind": kind, "hands": hands, "out": out, "ranking": [], "turn": 0, "done": false, "say": [], "note": ""}
+diff --git a/scripts/cards.gd.uid b/scripts/cards.gd.uid
+new file mode 100644
+index 0000000..17bc35b
+--- /dev/null
++++ b/scripts/cards.gd.uid
+@@ -0,0 +1 @@
++uid://bhp1la53mdcvf
+diff --git a/scripts/cards_babanuki.gd b/scripts/cards_babanuki.gd
+new file mode 100644
+index 0000000..5ce3ea8
+--- /dev/null
++++ b/scripts/cards_babanuki.gd
+@@ -0,0 +1,139 @@
++extends RefCounted
++## v149.35: ババ抜き. 52 cards and one joker, all dealt; pairs of a rank are
++## thrown out; in turn each draws a card from the next player still in. The
++## one left holding the joker loses.
++## Who they are shows: an honest housemate's face gives away the joker when
++## they draw it (and their eyes stray to it when you are about to draw); a
++## not-so-honest one glances at the wrong card on purpose; a child's joker
++## sticks up out of their hand; the wary keep a straight face.
++## Seat 0 is you.
++
++const Cards = preload("res://scripts/cards.gd")
++
++static func start(seats: int, rng: RandomNumberGenerator) -> Dictionary:
++	var state := Cards.base_state("babanuki", seats)
++	var deck := Cards.shuffled(Cards.deck(1), rng)
++	for k in deck.size():
++		state.hands[k % seats].append(deck[k])
++	for i in seats:
++		_throw_pairs(state.hands[i])
++		state.hands[i] = Cards.shuffled(state.hands[i], rng)
++	for i in seats:
++		if state.hands[i].is_empty():
++			Cards.finish_seat(state, i)
++	state.turn = 0 if not bool(state.out[0]) else Cards.next_seat(state, 0)
++	_check_end(state)
++	return state
++
++static func _throw_pairs(hand: Array) -> void:
++	var by_rank := {}
++	for c in hand:
++		if not Cards.joker(c):
++			by_rank[Cards.rank(c)] = by_rank.get(Cards.rank(c), 0) + 1
++	for r in by_rank:
++		var pairs: int = by_rank[r] / 2
++		for p in pairs * 2:
++			for c in hand:
++				if not Cards.joker(c) and Cards.rank(c) == r:
++					hand.erase(c)
++					break
++
++## Whose hand seat `i` draws from.
++static func target(state: Dictionary, i: int) -> int:
++	return Cards.next_seat(state, i)
++
++static func holds_joker(state: Dictionary, i: int) -> bool:
++	for c in state.hands[i]:
++		if Cards.joker(c):
++			return true
++	return false
++
++## Seat `i` draws card `pos` from their target.
++static func draw(state: Dictionary, i: int, pos: int, profs: Array, rng: RandomNumberGenerator) -> String:
++	if bool(state.done) or int(state.turn) != i:
++		return ""
++	var j := target(state, i)
++	if j < 0:
++		return ""
++	var from: Array = state.hands[j]
++	pos = clampi(pos, 0, from.size() - 1)
++	var card: String = from[pos]
++	from.remove_at(pos)
++	var mine: Array = state.hands[i]
++	var paired := ""
++	if not Cards.joker(card):
++		for c in mine:
++			if not Cards.joker(c) and Cards.rank(c) == Cards.rank(card):
++				paired = c
++				break
++	if paired.is_empty():
++		mine.append(card)
++	else:
++		mine.erase(paired)
++	# Faces: the honest (and children) show it when the joker comes or goes.
++	if Cards.joker(card):
++		if i > 0 and _shows(profs[i]):
++			state.say.append([i, "got_joker"])
++		if j > 0 and _shows(profs[j]):
++			state.say.append([j, "joker_gone"])
++	elif not paired.is_empty() and i > 0 and rng.randf() < 0.3:
++		state.say.append([i, "pair"])
++	if i > 0:
++		state.hands[i] = Cards.shuffled(mine, rng)
++	state.last = {"by": i, "from": j, "card": card, "paired": paired}
++	if from.is_empty():
++		Cards.finish_seat(state, j)
++	if mine.is_empty() and not paired.is_empty():
++		Cards.finish_seat(state, i)
++	elif state.hands[i].is_empty():
++		Cards.finish_seat(state, i)
++	_check_end(state)
++	if not bool(state.done):
++		state.turn = Cards.next_seat(state, i)
++	return card
++
++static func _shows(prof: Dictionary) -> bool:
++	return bool(prof.get("child", false)) or int(prof.get("honest", 50)) >= 60
++
++static func _check_end(state: Dictionary) -> void:
++	var left := Cards.active(state)
++	if left.size() <= 1:
++		if left.size() == 1:
++			state.out[left[0]] = true
++			state.ranking.append(left[0])
++		state.done = true
++
++## A housemate's turn: they draw at random (nobody can see your cards).
++static func ai(state: Dictionary, i: int, profs: Array, rng: RandomNumberGenerator) -> void:
++	var j := target(state, i)
++	if j < 0:
++		return
++	draw(state, i, rng.randi_range(0, state.hands[j].size() - 1), profs, rng)
++
++## As you are about to draw from seat `j`: what you can read off them.
++## {pos: card index or -1, text}. Truthful for children and the honest; a
++## sly one looks at the wrong card; the wary give nothing away.
++static func tell(state: Dictionary, j: int, prof: Dictionary, name: String, rng: RandomNumberGenerator) -> Dictionary:
++	var hand: Array = state.hands[j]
++	var at := -1
++	for k in hand.size():
++		if Cards.joker(hand[k]):
++			at = k
++	if at < 0 or hand.size() < 2:
++		return {"pos": -1, "text": ""}
++	if bool(prof.get("child", false)):
++		return {"pos": at, "text": "%sの手札の1枚だけ、少し飛び出している。" % name}
++	var honest := int(prof.get("honest", 50))
++	if honest >= 60 and rng.randf() < 0.6:
++		return {"pos": at, "text": "%sの目が、一瞬だけ手札の一枚に動いた。" % name}
++	if honest < 30 and rng.randf() < 0.6:
++		var wrong := at
++		while wrong == at:
++			wrong = rng.randi_range(0, hand.size() - 1)
++		return {"pos": wrong, "text": "%sの目が、一瞬だけ手札の一枚に動いた。" % name}
++	return {"pos": -1, "text": "%sは、表情ひとつ変えない。" % name if str(prof.get("style", "")) == "careful" else ""}
++
++static func summary(state: Dictionary, names: Array) -> String:
++	var loser: int = state.ranking[-1] if not state.ranking.is_empty() else -1
++	var first: int = state.ranking[0] if not state.ranking.is_empty() else -1
++	return "最初に上がったのは%s、最後までジョーカーを持っていたのは%sだった" % [names[first], names[loser]]
+diff --git a/scripts/cards_babanuki.gd.uid b/scripts/cards_babanuki.gd.uid
+new file mode 100644
+index 0000000..8ff1dac
+--- /dev/null
++++ b/scripts/cards_babanuki.gd.uid
+@@ -0,0 +1 @@
++uid://2204xu3er4ht
+diff --git a/scripts/cards_daifugo.gd b/scripts/cards_daifugo.gd
+new file mode 100644
+index 0000000..369f00e
+--- /dev/null
++++ b/scripts/cards_daifugo.gd
+@@ -0,0 +1,233 @@
++extends RefCounted
++## v149.35: 大富豪. 52 cards and one joker, all dealt. Lead one card or a set
++## of the same rank; the next must play as many, stronger (3 < … < K < A < 2,
++## the joker above all, played alone). Pass, and you are out until the pile
++## clears — when everyone else has passed, the last to play leads again.
++## 8切り: an 8 clears the pile and you lead again. 革命: four of a kind turns
++## the order upside down (the joker stays on top). First out is 大富豪.
++## How they play: the bold throw big sets and their strong cards early; the
++## wary hold back 2s and the joker; the kind go easy when you are struggling;
++## a child plays whatever they like. Seat 0 is you.
++
++const Cards = preload("res://scripts/cards.gd")
++const ORDER := ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2"]
++const TITLES := ["大富豪", "富豪", "平民", "貧民", "大貧民"]
++
++static func start(seats: int, rng: RandomNumberGenerator) -> Dictionary:
++	var state := Cards.base_state("daifugo", seats)
++	var deck := Cards.shuffled(Cards.deck(1), rng)
++	for k in deck.size():
++		state.hands[k % seats].append(deck[k])
++	for i in seats:
++		sort_hand(state.hands[i], false)
++	state.pile = []
++	state.pile_by = -1
++	state.passed = []
++	for i in seats:
++		state.passed.append(false)
++	state.rev = false
++	# Whoever holds the ♦3 starts.
++	for i in seats:
++		if "D3" in state.hands[i]:
++			state.turn = i
++	return state
++
++static func strength(card: String, rev: bool) -> int:
++	if Cards.joker(card):
++		return 99
++	var k := ORDER.find(Cards.rank(card))
++	return (12 - k) if rev else k
++
++static func sort_hand(hand: Array, rev: bool) -> void:
++	hand.sort_custom(func(a, b): return strength(a, rev) < strength(b, rev) or (strength(a, rev) == strength(b, rev) and a < b))
++
++static func _pile_strength(state: Dictionary) -> int:
++	var best := -1
++	for c in state.pile:
++		if not Cards.joker(c):
++			return strength(c, bool(state.rev))
++		best = 99
++	return best
++
++## Whether `cards` may be played now.
++static func can_play(state: Dictionary, cards: Array) -> bool:
++	if cards.is_empty():
++		return false
++	var jokers := cards.filter(func(c): return Cards.joker(c)).size()
++	if jokers > 0 and cards.size() > 1:
++		return false
++	var ranks := {}
++	for c in cards:
++		if not Cards.joker(c):
++			ranks[Cards.rank(c)] = true
++	if ranks.size() > 1:
++		return false
++	if state.pile.is_empty():
++		return true
++	if cards.size() != state.pile.size():
++		return false
++	var mine := strength(cards[0], bool(state.rev))
++	return mine > _pile_strength(state)
++
++## Every play possible from a hand: [cards...] each.
++static func options(state: Dictionary, i: int) -> Array:
++	var hand: Array = state.hands[i]
++	var by_rank := {}
++	var out: Array = []
++	for c in hand:
++		if Cards.joker(c):
++			out.append([c])
++		else:
++			if not by_rank.has(Cards.rank(c)):
++				by_rank[Cards.rank(c)] = []
++			by_rank[Cards.rank(c)].append(c)
++	for r in by_rank:
++		var group: Array = by_rank[r]
++		for n in range(1, group.size() + 1):
++			out.append(group.slice(0, n))
++	return out.filter(func(cards): return can_play(state, cards))
++
++static func play(state: Dictionary, i: int, cards: Array) -> bool:
++	if bool(state.done) or int(state.turn) != i or not can_play(state, cards):
++		return false
++	for c in cards:
++		if not c in state.hands[i]:
++			return false
++	for c in cards:
++		state.hands[i].erase(c)
++	state.pile = cards.duplicate()
++	state.pile_by = i
++	state.last = {"by": i, "cards": cards.duplicate(), "pass": false}
++	if cards.size() == 4:
++		state.rev = not bool(state.rev)
++		state.say.append([i, "revolution"])
++		for h in state.hands:
++			sort_hand(h, bool(state.rev))
++	var eight := cards.any(func(c): return not Cards.joker(c) and Cards.rank(c) == "8")
++	if state.hands[i].is_empty():
++		Cards.finish_seat(state, i)
++		_check_end(state)
++	if bool(state.done):
++		return true
++	if eight:
++		if i > 0 and cards.size() < 4:
++			state.say.append([i, "eight"])
++		_clear(state, i)
++		return true
++	_advance(state, i)
++	return true
++
++static func pass_turn(state: Dictionary, i: int) -> bool:
++	if bool(state.done) or int(state.turn) != i or state.pile.is_empty():
++		return false
++	state.passed[i] = true
++	state.last = {"by": i, "cards": [], "pass": true}
++	_advance(state, i)
++	return true
++
++## The next to play: someone still in who has not passed; if none is left
++## but the one who played last, the pile clears and they lead.
++static func _advance(state: Dictionary, i: int) -> void:
++	var n: int = state.hands.size()
++	for k in range(1, n + 1):
++		var j := (i + k) % n
++		if bool(state.out[j]) or bool(state.passed[j]):
++			if j == int(state.pile_by):
++				_clear(state, j)
++				return
++			continue
++		if j == int(state.pile_by):
++			_clear(state, j)
++			return
++		state.turn = j
++		return
++	_clear(state, int(state.pile_by))
++
++static func _clear(state: Dictionary, leader: int) -> void:
++	state.pile = []
++	for k in state.passed.size():
++		state.passed[k] = false
++	state.turn = leader if not bool(state.out[leader]) else Cards.next_seat(state, leader)
++	state.pile_by = -1
++
++static func _check_end(state: Dictionary) -> void:
++	var left := Cards.active(state)
++	if left.size() <= 1:
++		if left.size() == 1:
++			state.out[left[0]] = true
++			state.ranking.append(left[0])
++		state.done = true
++
++## A housemate's turn.
++static func ai(state: Dictionary, i: int, profs: Array, rng: RandomNumberGenerator) -> void:
++	var prof: Dictionary = profs[i]
++	var opts := options(state, i)
++	if opts.is_empty():
++		if not pass_turn(state, i):
++			# Nothing on the pile and nothing to lead with cannot happen; lead the lowest.
++			play(state, i, [state.hands[i][0]])
++		elif rng.randf() < 0.3:
++			state.say.append([i, "pass"])
++		return
++	var rev := bool(state.rev)
++	var hand: Array = state.hands[i]
++	var style := str(prof.style)
++	var leading: bool = state.pile.is_empty()
++	# Revolution with four of a kind when the hand is mostly low (or always, if bold).
++	for o in opts:
++		if o.size() == 4:
++			var low := hand.filter(func(c): return strength(c, rev) <= 5).size()
++			if style == "greedy" or low > hand.size() / 2:
++				play(state, i, o)
++				return
++	opts = opts.filter(func(o): return o.size() < 4)
++	if opts.is_empty():
++		pass_turn(state, i)
++		return
++	var choice: Array = []
++	if style == "child" or rng.randf() > float(prof.skill) + 0.3:
++		choice = opts[rng.randi_range(0, opts.size() - 1)]
++	else:
++		# Score: get rid of weak cards first; sets are worth shedding together.
++		var scored: Array = []
++		for o in opts:
++			var s := float(strength(o[0], rev))
++			var v := -s + float(o.size()) * 2.0
++			if style == "greedy":
++				v = float(o.size()) * 4.0 + s * 0.3
++			# Leading: keep the whole set together (do not break a pair to lead a single).
++			var held := hand.filter(func(c): return not Cards.joker(c) and not Cards.joker(o[0]) and Cards.rank(c) == Cards.rank(o[0])).size()
++			if held > o.size():
++				v -= 3.0
++			scored.append([v, o])
++		scored.sort_custom(func(a, b): return a[0] > b[0])
++		choice = scored[0][1]
++		# The wary keep 2s and the joker for the end.
++		if style == "careful" and strength(choice[0], rev) >= 11 and hand.size() > 4 and not leading:
++			pass_turn(state, i)
++			state.say.append([i, "pass"])
++			return
++		# The kind go easy on you when you are far behind.
++		if style == "gentle" and not leading and int(state.pile_by) == 0 and state.hands[0].size() >= hand.size() + 4 and rng.randf() < 0.6:
++			pass_turn(state, i)
++			return
++	play(state, i, choice)
++	if strength(choice[0], rev) >= 11 and rng.randf() < 0.4 and not bool(state.done):
++		state.say.append([i, "strong"])
++
++static func title(place: int, seats: int) -> String:
++	if seats <= 2:
++		return ["大富豪", "大貧民"][place]
++	if place == 0:
++		return "大富豪"
++	if place == seats - 1:
++		return "大貧民"
++	if seats == 3:
++		return "平民"
++	return "富豪" if place == 1 else ("平民" if place < seats - 2 else "貧民")
++
++static func summary(state: Dictionary, names: Array) -> String:
++	var parts: Array = []
++	for k in state.ranking.size():
++		parts.append("%s %s" % [title(k, state.hands.size()), names[state.ranking[k]]])
++	return "・".join(parts)
+diff --git a/scripts/cards_daifugo.gd.uid b/scripts/cards_daifugo.gd.uid
+new file mode 100644
+index 0000000..ac8c361
+--- /dev/null
++++ b/scripts/cards_daifugo.gd.uid
+@@ -0,0 +1 @@
++uid://qtsolyle1kho
+diff --git a/scripts/cards_shichinarabe.gd b/scripts/cards_shichinarabe.gd
+new file mode 100644
+index 0000000..a2ae487
+--- /dev/null
++++ b/scripts/cards_shichinarabe.gd
+@@ -0,0 +1,148 @@
++extends RefCounted
++## v149.35: 七並べ. 52 cards, all dealt; the 7s go down first. In turn, play
++## a card next to the row of its suit (6, then 5… or 8, then 9…). You may
++## pass three times; the fourth is ドボン — your cards go on the table and you
++## are out. First to empty their hand wins.
++## How they play: the mean (not kind, wary or quick-tempered) sit on cards
++## that would open the way for others and pass on purpose; the kind open the
++## way; a child plays anything. Seat 0 is you.
++
++const Cards = preload("res://scripts/cards.gd")
++const PASSES := 3
++
++static func start(seats: int, rng: RandomNumberGenerator) -> Dictionary:
++	var state := Cards.base_state("shichinarabe", seats)
++	var deck := Cards.shuffled(Cards.deck(0), rng)
++	for k in deck.size():
++		state.hands[k % seats].append(deck[k])
++	state.table = {}
++	for s in Cards.SUITS:
++		state.table[s] = []
++	state.passes = []
++	state.busted = []
++	for i in seats:
++		state.passes.append(0)
++	for i in seats:
++		for c in state.hands[i].duplicate():
++			if Cards.rank(c) == "7":
++				state.hands[i].erase(c)
++				state.table[Cards.suit(c)].append(7)
++				if c == "D7":
++					state.turn = i
++		_sort(state.hands[i])
++	for i in seats:
++		if state.hands[i].is_empty():
++			Cards.finish_seat(state, i)
++	if bool(state.out[int(state.turn)]):
++		state.turn = Cards.next_seat(state, int(state.turn))
++	return state
++
++static func _sort(hand: Array) -> void:
++	hand.sort_custom(func(a, b): return Cards.SUITS.find(Cards.suit(a)) * 20 + Cards.number(a) < Cards.SUITS.find(Cards.suit(b)) * 20 + Cards.number(b))
++
++static func placed(state: Dictionary, card: String) -> bool:
++	return Cards.number(card) in state.table[Cards.suit(card)]
++
++static func playable(state: Dictionary, card: String) -> bool:
++	if placed(state, card):
++		return false
++	var n := Cards.number(card)
++	var row: Array = state.table[Cards.suit(card)]
++	return (n < 7 and (n + 1) in row) or (n > 7 and (n - 1) in row)
++
++static func options(state: Dictionary, i: int) -> Array:
++	return state.hands[i].filter(func(c): return playable(state, c))
++
++static func play(state: Dictionary, i: int, card: String) -> bool:
++	if bool(state.done) or int(state.turn) != i or not card in state.hands[i] or not playable(state, card):
++		return false
++	state.hands[i].erase(card)
++	state.table[Cards.suit(card)].append(Cards.number(card))
++	state.last = {"by": i, "card": card, "pass": false}
++	if state.hands[i].is_empty():
++		Cards.finish_seat(state, i)
++	_after(state, i)
++	return true
++
++## Pass (the fourth time: ドボン).
++static func pass_turn(state: Dictionary, i: int) -> bool:
++	if bool(state.done) or int(state.turn) != i:
++		return false
++	state.passes[i] = int(state.passes[i]) + 1
++	state.last = {"by": i, "card": "", "pass": true}
++	if int(state.passes[i]) > PASSES:
++		for c in state.hands[i]:
++			state.table[Cards.suit(c)].append(Cards.number(c))
++		state.hands[i] = []
++		state.out[i] = true
++		state.busted.append(i)
++		state.say.append([i, "bust"])
++	_after(state, i)
++	return true
++
++static func _after(state: Dictionary, i: int) -> void:
++	var left := Cards.active(state)
++	if left.size() <= 1:
++		if left.size() == 1:
++			state.out[left[0]] = true
++			state.ranking.append(left[0])
++		# The busted come last, the first to go down at the very bottom.
++		for k in range(state.busted.size() - 1, -1, -1):
++			state.ranking.append(state.busted[k])
++		state.done = true
++		return
++	state.turn = Cards.next_seat(state, i)
++
++## How many of seat i's own cards a play opens up behind it (in that direction).
++static func _own_follow(state: Dictionary, i: int, card: String) -> int:
++	var n := Cards.number(card)
++	var s := Cards.suit(card)
++	var step := -1 if n < 7 else 1
++	var count := 0
++	var k := n + step
++	while k >= 1 and k <= 13:
++		if (s + Cards.RANKS[k - 1]) in state.hands[i]:
++			count += 1
++		k += step
++	return count
++
++static func ai(state: Dictionary, i: int, profs: Array, rng: RandomNumberGenerator) -> void:
++	var prof: Dictionary = profs[i]
++	var opts := options(state, i)
++	if opts.is_empty():
++		var busting: bool = int(state.passes[i]) >= PASSES
++		pass_turn(state, i)
++		if not busting and rng.randf() < 0.4:
++			state.say.append([i, "forced_pass"])
++		return
++	if str(prof.style) == "child":
++		play(state, i, opts[rng.randi_range(0, opts.size() - 1)])
++		return
++	var scored: Array = []
++	for c in opts:
++		var mine := _own_follow(state, i, c)
++		# An end card (A or K) opens nothing for anyone.
++		var opens := 0 if Cards.number(c) in [1, 13] else 1
++		var v := float(mine) * 2.0
++		if bool(prof.mean):
++			v -= float(opens) * (3.0 if mine == 0 else 0.5)
++		elif str(prof.style) == "gentle":
++			v += float(opens) * 2.0
++		v += rng.randf_range(-1.0, 1.0) * (1.0 - float(prof.skill)) * 3.0
++		scored.append([v, c])
++	scored.sort_custom(func(a, b): return a[0] > b[0])
++	# The mean hold on and pass, while they can afford to.
++	if bool(prof.mean) and float(scored[0][0]) < 0.0 and int(state.passes[i]) < PASSES - 1 and rng.randf() < 0.75:
++		pass_turn(state, i)
++		state.say.append([i, "block"])
++		return
++	play(state, i, str(scored[0][1]))
++	if str(prof.style) == "gentle" and rng.randf() < 0.2:
++		state.say.append([i, "open"])
++
++static func summary(state: Dictionary, names: Array) -> String:
++	var first: int = state.ranking[0]
++	var bust := ""
++	if not state.busted.is_empty():
++		bust = "、%sはドボンした" % "と".join(state.busted.map(func(b): return names[b]))
++	return "一番に出し切ったのは%s%s" % [names[first], bust]
+diff --git a/scripts/cards_shichinarabe.gd.uid b/scripts/cards_shichinarabe.gd.uid
+new file mode 100644
+index 0000000..7f90bac
+--- /dev/null
++++ b/scripts/cards_shichinarabe.gd.uid
+@@ -0,0 +1 @@
++uid://biofoaq10em8p
+diff --git a/scripts/cards_shinkei.gd b/scripts/cards_shinkei.gd
+new file mode 100644
+index 0000000..1741313
+--- /dev/null
++++ b/scripts/cards_shinkei.gd
+@@ -0,0 +1,132 @@
++extends RefCounted
++## v149.35: 神経衰弱 — 24 cards (twelve pairs) face down in a 6×4 grid. Turn
++## two over; a pair is yours and you go again; otherwise they go back.
++## Everyone remembers what they have seen as well as they can: children
++## best, the old least; the kind "forget" a pair now and then when well
++## ahead. Seat 0 is you.
++
++const Cards = preload("res://scripts/cards.gd")
++const COLS := 6
++const ROWS := 4
++
++static func start(seats: int, rng: RandomNumberGenerator) -> Dictionary:
++	var state := Cards.base_state("shinkei", seats)
++	var cards: Array = []
++	for r in Cards.RANKS.slice(0, 12):
++		var suits := Cards.shuffled(Cards.SUITS, rng)
++		cards.append(suits[0] + r)
++		cards.append(suits[1] + r)
++	state.grid = Cards.shuffled(cards, rng)
++	state.owner = []
++	for k in state.grid.size():
++		state.owner.append(-1)
++	state.score = []
++	state.memory = []
++	for i in seats:
++		state.score.append(0)
++		state.memory.append({})
++	state.first = -1
++	state.shown = []        # the two cards just turned (a miss, to be turned back)
++	return state
++
++static func open_cells(state: Dictionary) -> Array:
++	var out: Array = []
++	for k in state.grid.size():
++		if int(state.owner[k]) < 0:
++			out.append(k)
++	return out
++
++## Everyone at the table sees a card turned over; each remembers it as well
++## as they can.
++static func _seen(state: Dictionary, cell: int, profs: Array, rng: RandomNumberGenerator) -> void:
++	for i in state.hands.size():
++		if i == 0:
++			continue
++		if rng.randf() < float(profs[i].get("memory", 0.6)):
++			state.memory[i][cell] = Cards.rank(state.grid[cell])
++
++## Seat i turns over `cell`. Returns true when the turn goes on.
++static func flip(state: Dictionary, i: int, cell: int, profs: Array, rng: RandomNumberGenerator) -> bool:
++	if bool(state.done) or int(state.turn) != i or cell < 0 or cell >= state.grid.size() or int(state.owner[cell]) >= 0 or cell == int(state.first):
++		return false
++	state.shown = []
++	_seen(state, cell, profs, rng)
++	if int(state.first) < 0:
++		state.first = cell
++		return true
++	var a := int(state.first)
++	state.first = -1
++	if Cards.rank(state.grid[a]) == Cards.rank(state.grid[cell]):
++		state.owner[a] = i
++		state.owner[cell] = i
++		state.score[i] = int(state.score[i]) + 1
++		for m in state.memory:
++			m.erase(a)
++			m.erase(cell)
++		state.last = {"by": i, "cells": [a, cell], "match": true}
++		if i > 0 and rng.randf() < 0.5:
++			state.say.append([i, "match"])
++		if open_cells(state).is_empty():
++			_end(state)
++		return true
++	state.shown = [a, cell]
++	state.last = {"by": i, "cells": [a, cell], "match": false}
++	if i > 0 and rng.randf() < 0.25:
++		state.say.append([i, "miss"])
++	# Memories fade a little each turn.
++	for k in state.memory.size():
++		if k == 0:
++			continue
++		for c in state.memory[k].keys():
++			if rng.randf() < (1.0 - float(profs[k].get("memory", 0.6))) * 0.25:
++				state.memory[k].erase(c)
++	state.turn = (i + 1) % state.hands.size()
++	return false
++
++static func _end(state: Dictionary) -> void:
++	state.done = true
++	var order: Array = range(state.hands.size())
++	order.sort_custom(func(a, b): return int(state.score[a]) > int(state.score[b]) or (int(state.score[a]) == int(state.score[b]) and a < b))
++	state.ranking = order
++
++## A housemate's two turns-over (repeating while they find pairs).
++static func ai_flip(state: Dictionary, i: int, profs: Array, rng: RandomNumberGenerator) -> void:
++	var prof: Dictionary = profs[i]
++	var mem: Dictionary = state.memory[i]
++	var open := open_cells(state)
++	if open.is_empty():
++		return
++	if int(state.first) >= 0:
++		var r := Cards.rank(state.grid[int(state.first)])
++		for c in mem:
++			if c != int(state.first) and str(mem[c]) == r and int(state.owner[c]) < 0:
++				flip(state, i, c, profs, rng)
++				return
++		flip(state, i, _unknown(state, mem, open, rng), profs, rng)
++		return
++	# A pair they remember.
++	var lead := int(state.score[i]) - int(state.score[0])
++	var easy: bool = str(prof.style) == "gentle" and lead >= 3 and rng.randf() < 0.5
++	if not easy:
++		var by_rank := {}
++		for c in mem:
++			if int(state.owner[c]) >= 0:
++				continue
++			var r: String = mem[c]
++			if by_rank.has(r):
++				flip(state, i, int(by_rank[r]), profs, rng)
++				return
++			by_rank[r] = c
++	flip(state, i, _unknown(state, mem, open, rng), profs, rng)
++
++static func _unknown(state: Dictionary, mem: Dictionary, open: Array, rng: RandomNumberGenerator) -> int:
++	var fresh := open.filter(func(c): return not mem.has(c) and c != int(state.first))
++	if fresh.is_empty():
++		fresh = open.filter(func(c): return c != int(state.first))
++	return int(fresh[rng.randi_range(0, fresh.size() - 1)])
++
++static func summary(state: Dictionary, names: Array) -> String:
++	var parts: Array = []
++	for i in state.ranking:
++		parts.append("%s %d組" % [names[i], int(state.score[i])])
++	return "・".join(parts)
+diff --git a/scripts/cards_shinkei.gd.uid b/scripts/cards_shinkei.gd.uid
+new file mode 100644
+index 0000000..74b03d3
+--- /dev/null
++++ b/scripts/cards_shinkei.gd.uid
+@@ -0,0 +1 @@
++uid://bdcweevimp8ee
 diff --git a/scripts/cold.gd b/scripts/cold.gd
 index 5b0d45e..a19863e 100644
 --- a/scripts/cold.gd
@@ -93271,7 +97339,7 @@ index a4b03a2..daa7343 100644
 +	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
 +	return _done(game, lead + feel)
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..6f65797 100644
+index 0f2add4..d26d2a3 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -93319,7 +97387,7 @@ index 0f2add4..6f65797 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1899,6 +1923,10 @@ func _suggestions() -> Array:
+@@ -1899,6 +1923,11 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
@@ -93327,10 +97395,11 @@ index 0f2add4..6f65797 100644
 +		var partner := _reversi_partner("")
 +		if partner >= 0 and (Mood.of(world.s) < 60.0 or Mood.of(world.s.household_members[partner]) < 50.0):
 +			out.append("%sとリバーシをする" % str(world.s.household_members[partner].name))
++			out.append("トランプをする" if _card_players("").size() <= 1 else "みんなでトランプをする")
  	if location == "避難所" and Shelter.is_open(world):
  		out.append("配給を受け取る")
  		out.append("避難所の様子を聞く")
-@@ -1910,6 +1938,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +1939,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -93339,7 +97408,7 @@ index 0f2add4..6f65797 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,10 +2001,38 @@ func _suggestions() -> Array:
+@@ -1971,10 +2002,38 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -93378,7 +97447,7 @@ index 0f2add4..6f65797 100644
  		out.append("家に帰る")
  	return out.slice(0, 6)
  
-@@ -2838,7 +2896,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2897,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -93388,7 +97457,7 @@ index 0f2add4..6f65797 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3134,6 +3193,10 @@ func _shelter_command(cmd: String) -> bool:
+@@ -3134,6 +3194,10 @@ func _shelter_command(cmd: String) -> bool:
  		_append(Shelter.ration(world))
  		_refresh()
  		return true
@@ -93399,7 +97468,7 @@ index 0f2add4..6f65797 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,8 +3274,102 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,8 +3275,179 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -93495,14 +97564,91 @@ index 0f2add4..6f65797 100644
 +	_append("%sとリバーシを打った（%d分）。%s%sは%s。最後は%s、%s。%s（%s）" % [person.name, minutes, games, person.name, Reversi.manner(prof), "・".join(parts.slice(-1)), outcome, quote, tally])
 +	_refresh()
 +
++## v149.35: cards with everyone at home ("トランプをする", "みんなでババ抜き",
++## "詩音と大富豪をする"). Those named, or everyone awake and well.
++var cards_layer: Control = null
++
++func _card_players(cmd: String) -> Array:
++	var all: Array = []
++	var named: Array = []
++	for i in world.s.household_members.size():
++		var p: Dictionary = world.s.household_members[i]
++		if float(p.health) <= 20.0 or bool(p.get("bitten", false)) or str(p.get("activity", "")) in ["睡眠", "外出"] or not Navigation.indoor(str(p.location)):
++			continue
++		all.append(i)
++		if cmd.contains(str(p.name)):
++			named.append(i)
++	return named if not named.is_empty() else all
++
++func _cards_command(cmd: String) -> bool:
++	var Cards = load("res://scripts/cards.gd")
++	var kind: String = Cards.game_named(cmd)
++	if kind.is_empty() or PlayerIntents.negated(cmd):
++		return false
++	if cards_layer != null and is_instance_valid(cards_layer):
++		return true
++	if not Navigation.indoor(location) or (world.s.get("inside") is Dictionary and not world.s.inside.is_empty()):
++		_append("トランプは家にある。家に帰ってから誘おう。何も実行していません。")
++		_refresh()
++		return true
++	if Combat.active(world):
++		return false
++	var players := _card_players(cmd)
++	if players.is_empty():
++		_append("一緒に遊べる相手が、今は家にいない。何も実行していません。")
++		_refresh()
++		return true
++	var gather := str(world.s.household_members[players[0]].location)
++	if location != gather:
++		_append(_move_to(gather))
++	cards_layer = load("res://scripts/card_table.gd").new()
++	add_child(cards_layer)
++	cards_layer.setup(self, kind, players)
++	return true
++
++## The cards are put away: time passes, everyone feels a little better.
++func _cards_finished(seated: Array, profs: Array, names: Array, results: Array, said: String) -> void:
++	cards_layer = null
++	var Cards = load("res://scripts/cards.gd")
++	var everyone := "・".join(names.slice(1))
++	if results.is_empty():
++		world.advance_safe(5)
++		_append("%sとトランプを広げかけたが、途中で片づけた（5分）。" % everyone)
++		_refresh()
++		return
++	var minutes := 0
++	var lines: Array = []
++	Mood.ensure(world)
++	for r in results:
++		minutes += int(Cards.MINUTES.get(str(r.kind), 20))
++		var ranking: Array = r.ranking
++		var seats := int(r.seats)
++		Mood.change(world.s, 3.0 + (2.0 if int(r.place) == 0 else 0.0))
++		for k in range(1, seats):
++			if k - 1 >= seated.size():
++				continue
++			var person: Dictionary = world.s.household_members[seated[k - 1]]
++			var place := ranking.find(k)
++			var gain := 5.0
++			if place == seats - 1 and int(profs[k].get("temper", 50)) >= 60:
++				gain = 1.5
++			elif place == 0:
++				gain = 7.0
++			Mood.change(person, gain)
++		lines.append("%s（%s）" % [Cards.GAMES[str(r.kind)], str(r.summary)])
++	world.advance_safe(minutes)
++	var tail := said
++	_append("%sとトランプをした（%d分）。%s。%s" % [everyone, minutes, "、".join(lines), tail])
++	_refresh()
++
  ## "詩音を寝室に隔離する" / "詩音を看病する" / "詩音を見送る" for a bitten housemate.
  func _care_command(cmd: String) -> bool:
-+	if _reversi_command(cmd):
++	if _reversi_command(cmd) or _cards_command(cmd):
 +		return true
  	if _weapon_command(cmd) or _cold_command(cmd) or _request_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
  		return true
  	for index in world.s.household_members.size():
-@@ -3457,6 +3614,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3692,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -93512,7 +97658,7 @@ index 0f2add4..6f65797 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3633,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3711,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -93531,7 +97677,7 @@ index 0f2add4..6f65797 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,6 +3663,12 @@ func _district_map() -> String:
+@@ -3494,6 +3741,12 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -93544,7 +97690,7 @@ index 0f2add4..6f65797 100644
  	var target := Navigation.destination(clean)
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
-@@ -3506,6 +3681,107 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3759,107 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -93652,7 +97798,7 @@ index 0f2add4..6f65797 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3815,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3893,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -93661,7 +97807,7 @@ index 0f2add4..6f65797 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3948,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +4026,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -93674,7 +97820,7 @@ index 0f2add4..6f65797 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3973,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4051,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -93684,7 +97830,7 @@ index 0f2add4..6f65797 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +4032,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4110,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -93699,7 +97845,7 @@ index 0f2add4..6f65797 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +4081,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4159,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -93740,7 +97886,7 @@ index 0f2add4..6f65797 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4158,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4236,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -93761,7 +97907,7 @@ index 0f2add4..6f65797 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4191,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4269,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -93780,7 +97926,7 @@ index 0f2add4..6f65797 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4218,9 @@ func _site() -> String:
+@@ -3875,6 +4296,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -93790,7 +97936,7 @@ index 0f2add4..6f65797 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4252,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4330,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -93799,7 +97945,7 @@ index 0f2add4..6f65797 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4276,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4354,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -93814,7 +97960,7 @@ index 0f2add4..6f65797 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4295,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4373,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -93827,7 +97973,7 @@ index 0f2add4..6f65797 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4316,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4394,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -93838,7 +97984,7 @@ index 0f2add4..6f65797 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4399,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4477,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -98483,6 +102629,210 @@ index 470b72c..7e1ce25 100644
  	check(str(a.background).contains("来た") or str(a.background).contains("追われて") or str(a.background).contains("歩いてきた"), "a newcomer has come from somewhere: " + str(a.background).right(25))
  	if a.has("deadline_day"):
  		check(int(a.deadline_day) > int(a.arrived), "their troubles start on arrival")
+diff --git a/tests/test_cards149_35.gd b/tests/test_cards149_35.gd
+new file mode 100644
+index 0000000..e1bfeb2
+--- /dev/null
++++ b/tests/test_cards149_35.gd
+@@ -0,0 +1,191 @@
++extends SceneTree
++## v149.35: cards with the people at home — ババ抜き, 大富豪, 七並べ, 神経衰弱:
++## the rules, personalities at the table, whole games played through the
++## table, and what they leave behind.
++const Main = preload("res://main.tscn")
++const Cards = preload("res://scripts/cards.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func prof(style: String, extra: Dictionary = {}) -> Dictionary:
++	var p := {"style": style, "skill": 0.9, "honest": 50, "temper": 50, "kind": 60, "polite": false, "child": style == "child", "memory": 0.7, "mean": false}
++	p.merge(extra, true)
++	return p
++func run() -> void:
++	var rng := RandomNumberGenerator.new()
++	rng.seed = 7
++	var B = load("res://scripts/cards_babanuki.gd")
++	var D = load("res://scripts/cards_daifugo.gd")
++	var S = load("res://scripts/cards_shichinarabe.gd")
++	var K = load("res://scripts/cards_shinkei.gd")
++	# ババ抜き: pairs go, the joker stays, tells by character.
++	var b: Dictionary = B.start(3, rng)
++	var all_cards := 0
++	var no_pairs := true
++	for h in b.hands:
++		all_cards += h.size()
++		var seen := {}
++		for c in h:
++			if not Cards.joker(c):
++				no_pairs = no_pairs and not seen.has(Cards.rank(c))
++				seen[Cards.rank(c)] = true
++	check(no_pairs and all_cards % 2 == 1, "babanuki: pairs thrown out at the deal, the joker left odd")
++	var holder := -1
++	for i in 3:
++		if B.holds_joker(b, i):
++			holder = i
++	b.hands[1] = ["X1", "S3", "H9"]
++	var honest_tell: Dictionary = B.tell(b, 1, prof("steady", {"honest": 90}), "A", rng)
++	var kid_tell: Dictionary = B.tell(b, 1, prof("child"), "B", rng)
++	check(int(kid_tell.pos) == 0 and str(kid_tell.text).contains("飛び出"), "a child's joker sticks out of their hand")
++	var sly_wrong := 0
++	for t in 30:
++		var tl: Dictionary = B.tell(b, 1, prof("steady", {"honest": 10}), "C", rng)
++		if int(tl.pos) > 0:
++			sly_wrong += 1
++	check(sly_wrong > 5, "a sly one looks at the wrong card (%d/30)" % sly_wrong)
++	# 大富豪: order, sets, 8切り, 革命.
++	var d: Dictionary = D.start(3, rng)
++	d.hands = [["S3", "H3", "C8", "D5"], ["S4", "H4", "SK"], ["SA", "HA", "S2", "D2", "C2", "H2"]]
++	d.turn = 0
++	d.pile = []
++	check(D.can_play(d, ["S3", "H3"]) and not D.can_play(d, ["S3", "D5"]), "daifugo: one rank at a time")
++	D.play(d, 0, ["S3", "H3"])
++	check(int(d.turn) == 1 and D.can_play(d, ["S4", "H4"]) and not D.can_play(d, ["SK"]), "the next must match the count, stronger")
++	D.play(d, 1, ["S4", "H4"])
++	D.pass_turn(d, 2)
++	D.pass_turn(d, 0)
++	check(d.pile.is_empty() and int(d.turn) == 1, "when all others pass, the last to play leads")
++	d.turn = 0
++	D.play(d, 0, ["C8"])
++	check(d.pile.is_empty() and int(d.turn) == 0, "an 8 clears the pile (8切り)")
++	d.turn = 2
++	D.play(d, 2, ["S2", "D2", "C2", "H2"])
++	check(bool(d.rev) and D.strength("S3", true) > D.strength("SA", true), "four of a kind: revolution")
++	# 七並べ.
++	var s7: Dictionary = S.start(3, rng)
++	check(s7.table.values().all(func(r): return 7 in r) and s7.hands.all(func(h): return not h.any(func(c): return Cards.rank(c) == "7")), "shichinarabe: the 7s go down first")
++	check(S.playable(s7, "H6") and S.playable(s7, "H8") and not S.playable(s7, "H5"), "next to the row only")
++	# Mean vs kind with the same choice: a 6 that opens nothing for themselves.
++	var s2: Dictionary = S.start(2, rng)
++	s2.hands = [["C2"], ["H6", "C3", "D9", "S10", "S11"]]
++	s2.hands[1] = ["H6", "C3"]
++	s2.turn = 1
++	s2.passes = [0, 0]
++	var r2 := RandomNumberGenerator.new()
++	r2.seed = 2
++	var blocks := 0
++	for t in 20:
++		var trial := s2.duplicate(true)
++		S.ai(trial, 1, [{}, prof("careful", {"mean": true, "kind": 20})], r2)
++		if bool(trial.last.pass):
++			blocks += 1
++	var opens := 0
++	for t in 20:
++		var trial := s2.duplicate(true)
++		S.ai(trial, 1, [{}, prof("gentle", {"kind": 90})], r2)
++		if not bool(trial.last.pass):
++			opens += 1
++	check(blocks >= 10 and opens == 20, "the mean sit on it (%d/20), the kind open the way (%d/20)" % [blocks, opens])
++	# 神経衰弱: memory by age.
++	var w0 := {"s": {}}
++	var kid := Cards.profile(null if false else _fake_world(), {"name": "結人", "age": 8, "job": "小学生"})
++	var old := Cards.profile(_fake_world(), {"name": "トメ", "age": 78, "job": "無職"})
++	check(float(kid.memory) > float(old.memory) + 0.3, "children remember best at 神経衰弱 (%.2f vs %.2f)" % [kid.memory, old.memory])
++	var k4: Dictionary = K.start(2, rng)
++	k4.memory[1] = {}
++	var a := -1
++	var bb := -1
++	for i in k4.grid.size():
++		for j in range(i + 1, k4.grid.size()):
++			if Cards.rank(k4.grid[i]) == Cards.rank(k4.grid[j]) and a < 0:
++				a = i
++				bb = j
++	k4.memory[1][a] = Cards.rank(k4.grid[a])
++	k4.memory[1][bb] = Cards.rank(k4.grid[bb])
++	k4.turn = 1
++	K.ai_flip(k4, 1, [{}, prof("steady")], rng)
++	K.ai_flip(k4, 1, [{}, prof("steady")], rng)
++	check(int(k4.score[1]) == 1 and int(k4.owner[a]) == 1, "a remembered pair is taken")
++	# At the table: whole games of each through the screen.
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 5
++	p.cohabitants = 2
++	p.companion_names = ["詩音", "蒼"]
++	p.companion_genders = ["女性", "男性"]
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	g.location = "居間"
++	g._sync_player_position()
++	for m in w.s.household_members:
++		m.location = "居間"
++		m.activity = "在宅"
++	var minute := int(w.s.minute)
++	await g._on_command("トランプをする")
++	var table = g.cards_layer
++	check(table != null and table.state.is_empty() and table.buttons.get_child_count() == 4, "the cards come out, with a choice of four games")
++	table.delay = 0.0
++	for kind in ["babanuki", "daifugo", "shichinarabe", "shinkei"]:
++		table.begin(kind)
++		var guard := 0
++		while not bool(table.state.done) and guard < 400:
++			guard += 1
++			if int(table.state.turn) != 0 or table.running:
++				await process_frame
++				continue
++			match kind:
++				"babanuki":
++					table.draw_card(0)
++				"daifugo":
++					var o: Array = D.options(table.state, 0)
++					if o.is_empty():
++						table.pass_turn()
++					else:
++						table.selected = o[0]
++						table.play_selected()
++				"shichinarabe":
++					var o: Array = S.options(table.state, 0)
++					if o.is_empty():
++						table.pass_turn()
++					else:
++						table.lay(str(o[0]))
++				"shinkei":
++					var open: Array = K.open_cells(table.state).filter(func(c): return c != int(table.state.first))
++					table.flip(int(open[0]))
++			await process_frame
++		check(bool(table.state.done) and table.state.ranking.size() == 3, "%s played to the end with everyone (%d steps)" % [kind, guard])
++	check(int(w.s.minute) == minute, "time stands still at the table")
++	var before: float = float(w.s.household_members[0].get("mood", 50.0))
++	table._leave()
++	await process_frame
++	var line: String = str(g.log_entries[-1])
++	check(line.begins_with("詩音・蒼とトランプをした（95分）") and line.contains("ババ抜き") and line.contains("大富豪"), "it goes in the chronicle: " + line.left(120))
++	check(int(w.s.minute) - minute >= 95 and float(w.s.household_members[0].mood) > before, "time passes and they enjoyed it")
++	check(load("res://scripts/action_photos.gd").detect(line).get("kind", "") == "cards", "with its picture")
++	for m in w.s.household_members:
++		m.location = "居間"
++		m.activity = "在宅"
++	g.location = "居間"
++	await g._on_command("蒼と神経衰弱をする")
++	table = g.cards_layer
++	check(table.kind == "shinkei" and table.names == ["あなた", "蒼"], "named game, named player")
++	table._leave()
++	await process_frame
++	g.queue_free()
++	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
++	quit(1 if failures else 0)
++
++func _fake_world():
++	return FakeWorld.new()
++
++class FakeWorld:
++	var s := {}
+diff --git a/tests/test_cards149_35.gd.uid b/tests/test_cards149_35.gd.uid
+new file mode 100644
+index 0000000..1ceb2c4
+--- /dev/null
++++ b/tests/test_cards149_35.gd.uid
+@@ -0,0 +1 @@
++uid://d1ebrfuid2tg4
 diff --git a/tests/test_crops149_36.gd b/tests/test_crops149_36.gd
 new file mode 100644
 index 0000000..b376f14
