@@ -82591,6 +82591,1500 @@ index 0000000..9f364c6
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/README.txt b/assets/ui/dcj_ui/README.txt
+new file mode 100644
+index 0000000..344645b
+--- /dev/null
++++ b/assets/ui/dcj_ui/README.txt
+@@ -0,0 +1 @@
++dcj_ui フォルダをGodotプロジェクト直下に配置。各 .tres は9スライス設定済み。PanelContainer の panel、Button の normal / pressed / disabled、TextEdit の normal / focus に割り当てる。caption_fade.png は写真下部に横幅いっぱいに伸ばす。文字はGodot側で重ねる。実行ボタンの文字は暗色 #242822、通常本文は #ECE8DC。
+\ No newline at end of file
+diff --git a/assets/ui/dcj_ui/action.png.import b/assets/ui/dcj_ui/action.png.import
+new file mode 100644
+index 0000000..9503677
+--- /dev/null
++++ b/assets/ui/dcj_ui/action.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://j4wsij2xolbd"
++path="res://.godot/imported/action.png-d8e452c66047c63e4604aa1c5eefb4a6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/action.png"
++dest_files=["res://.godot/imported/action.png-d8e452c66047c63e4604aa1c5eefb4a6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/action.tres b/assets/ui/dcj_ui/action.tres
+new file mode 100644
+index 0000000..cc9a93a
+--- /dev/null
++++ b/assets/ui/dcj_ui/action.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/action.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/action_card.png.import b/assets/ui/dcj_ui/action_card.png.import
+new file mode 100644
+index 0000000..f74df1f
+--- /dev/null
++++ b/assets/ui/dcj_ui/action_card.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dxq4rp0tcfsbb"
++path="res://.godot/imported/action_card.png-2f57b07f9ca6795b265ab20ac0d160c8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/action_card.png"
++dest_files=["res://.godot/imported/action_card.png-2f57b07f9ca6795b265ab20ac0d160c8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/action_disabled.png.import b/assets/ui/dcj_ui/action_disabled.png.import
+new file mode 100644
+index 0000000..464fd08
+--- /dev/null
++++ b/assets/ui/dcj_ui/action_disabled.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bodmmgljrcp3o"
++path="res://.godot/imported/action_disabled.png-4e3b7e1527c6543ee120495206e3ea0a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/action_disabled.png"
++dest_files=["res://.godot/imported/action_disabled.png-4e3b7e1527c6543ee120495206e3ea0a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/action_disabled.tres b/assets/ui/dcj_ui/action_disabled.tres
+new file mode 100644
+index 0000000..e00b1f0
+--- /dev/null
++++ b/assets/ui/dcj_ui/action_disabled.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/action_disabled.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/action_pressed.png.import b/assets/ui/dcj_ui/action_pressed.png.import
+new file mode 100644
+index 0000000..c905cf2
+--- /dev/null
++++ b/assets/ui/dcj_ui/action_pressed.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://2bx8a161h8wo"
++path="res://.godot/imported/action_pressed.png-93e51b1744c03b1dab521dc860e03611.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/action_pressed.png"
++dest_files=["res://.godot/imported/action_pressed.png-93e51b1744c03b1dab521dc860e03611.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/action_pressed.tres b/assets/ui/dcj_ui/action_pressed.tres
+new file mode 100644
+index 0000000..95d257b
+--- /dev/null
++++ b/assets/ui/dcj_ui/action_pressed.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/action_pressed.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/avatar_ring.png.import b/assets/ui/dcj_ui/avatar_ring.png.import
+new file mode 100644
+index 0000000..998c23d
+--- /dev/null
++++ b/assets/ui/dcj_ui/avatar_ring.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b8ykmeb573aps"
++path="res://.godot/imported/avatar_ring.png-1f6c4dca375cc04832e33abd7c337461.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/avatar_ring.png"
++dest_files=["res://.godot/imported/avatar_ring.png-1f6c4dca375cc04832e33abd7c337461.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/badge_alert.png.import b/assets/ui/dcj_ui/badge_alert.png.import
+new file mode 100644
+index 0000000..15f6312
+--- /dev/null
++++ b/assets/ui/dcj_ui/badge_alert.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://mi7x543muabo"
++path="res://.godot/imported/badge_alert.png-0fb927f7a84f9a5ea6f52898cb05a537.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/badge_alert.png"
++dest_files=["res://.godot/imported/badge_alert.png-0fb927f7a84f9a5ea6f52898cb05a537.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/badge_disrupted.png.import b/assets/ui/dcj_ui/badge_disrupted.png.import
+new file mode 100644
+index 0000000..c6cc822
+--- /dev/null
++++ b/assets/ui/dcj_ui/badge_disrupted.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bgcq58bq67drf"
++path="res://.godot/imported/badge_disrupted.png-bff37ca7529215d04d8aac1c36e47c00.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/badge_disrupted.png"
++dest_files=["res://.godot/imported/badge_disrupted.png-bff37ca7529215d04d8aac1c36e47c00.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/badge_emergency.png.import b/assets/ui/dcj_ui/badge_emergency.png.import
+new file mode 100644
+index 0000000..33f2843
+--- /dev/null
++++ b/assets/ui/dcj_ui/badge_emergency.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://chmcf86ugfhko"
++path="res://.godot/imported/badge_emergency.png-3166c946ff78cd5a8f9acdac52d54522.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/badge_emergency.png"
++dest_files=["res://.godot/imported/badge_emergency.png-3166c946ff78cd5a8f9acdac52d54522.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/badge_normal.png.import b/assets/ui/dcj_ui/badge_normal.png.import
+new file mode 100644
+index 0000000..7f6e245
+--- /dev/null
++++ b/assets/ui/dcj_ui/badge_normal.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://davlq2amfiofx"
++path="res://.godot/imported/badge_normal.png-44f2777702dd3db7e243a2537b6b37ba.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/badge_normal.png"
++dest_files=["res://.godot/imported/badge_normal.png-44f2777702dd3db7e243a2537b6b37ba.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/bar_bg.png.import b/assets/ui/dcj_ui/bar_bg.png.import
+new file mode 100644
+index 0000000..23bbb42
+--- /dev/null
++++ b/assets/ui/dcj_ui/bar_bg.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b2eksw15s0af2"
++path="res://.godot/imported/bar_bg.png-94a3e45ab0d1d403b043fc86f476aa5d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/bar_bg.png"
++dest_files=["res://.godot/imported/bar_bg.png-94a3e45ab0d1d403b043fc86f476aa5d.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/bar_fill.png.import b/assets/ui/dcj_ui/bar_fill.png.import
+new file mode 100644
+index 0000000..b9b45e6
+--- /dev/null
++++ b/assets/ui/dcj_ui/bar_fill.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bumarkyfdpjy4"
++path="res://.godot/imported/bar_fill.png-35edf13a23e0cbad3af761369b0d138f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/bar_fill.png"
++dest_files=["res://.godot/imported/bar_fill.png-35edf13a23e0cbad3af761369b0d138f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/button_quiet.png.import b/assets/ui/dcj_ui/button_quiet.png.import
+new file mode 100644
+index 0000000..e3fbfb5
+--- /dev/null
++++ b/assets/ui/dcj_ui/button_quiet.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://uy8d0s3oqjbr"
++path="res://.godot/imported/button_quiet.png-e10fb8bae9fb008e107c30308579acaa.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/button_quiet.png"
++dest_files=["res://.godot/imported/button_quiet.png-e10fb8bae9fb008e107c30308579acaa.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/button_quiet_pressed.png.import b/assets/ui/dcj_ui/button_quiet_pressed.png.import
+new file mode 100644
+index 0000000..aa45b43
+--- /dev/null
++++ b/assets/ui/dcj_ui/button_quiet_pressed.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://syv8q8kqyeqd"
++path="res://.godot/imported/button_quiet_pressed.png-111b4cb69ba87a7df2fd413c4fd5c3aa.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/button_quiet_pressed.png"
++dest_files=["res://.godot/imported/button_quiet_pressed.png-111b4cb69ba87a7df2fd413c4fd5c3aa.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/caption_fade.png.import b/assets/ui/dcj_ui/caption_fade.png.import
+new file mode 100644
+index 0000000..3f056cc
+--- /dev/null
++++ b/assets/ui/dcj_ui/caption_fade.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://t73q8lawwr6y"
++path="res://.godot/imported/caption_fade.png-d6abcc64a93b675bfad99bc45485694c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/caption_fade.png"
++dest_files=["res://.godot/imported/caption_fade.png-d6abcc64a93b675bfad99bc45485694c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/chip.png.import b/assets/ui/dcj_ui/chip.png.import
+new file mode 100644
+index 0000000..f2d0223
+--- /dev/null
++++ b/assets/ui/dcj_ui/chip.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dma346uwcomfb"
++path="res://.godot/imported/chip.png-b1094d0da053daad3b05aeba599ceddc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/chip.png"
++dest_files=["res://.godot/imported/chip.png-b1094d0da053daad3b05aeba599ceddc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/chip_pressed.png.import b/assets/ui/dcj_ui/chip_pressed.png.import
+new file mode 100644
+index 0000000..f3eb0bc
+--- /dev/null
++++ b/assets/ui/dcj_ui/chip_pressed.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b3ulnpbdd75h7"
++path="res://.godot/imported/chip_pressed.png-5b4a3f923309e92e7fb4820d4087aa20.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/chip_pressed.png"
++dest_files=["res://.godot/imported/chip_pressed.png-5b4a3f923309e92e7fb4820d4087aa20.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/dialogue.png.import b/assets/ui/dcj_ui/dialogue.png.import
+new file mode 100644
+index 0000000..54b0578
+--- /dev/null
++++ b/assets/ui/dcj_ui/dialogue.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bvkx3y2r21ael"
++path="res://.godot/imported/dialogue.png-a6e0bd13885d1fe1ddf22bb344fa5e5d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/dialogue.png"
++dest_files=["res://.godot/imported/dialogue.png-a6e0bd13885d1fe1ddf22bb344fa5e5d.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/dialogue.tres b/assets/ui/dcj_ui/dialogue.tres
+new file mode 100644
+index 0000000..3ffb415
+--- /dev/null
++++ b/assets/ui/dcj_ui/dialogue.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/dialogue.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/header.png.import b/assets/ui/dcj_ui/header.png.import
+new file mode 100644
+index 0000000..9762d0c
+--- /dev/null
++++ b/assets/ui/dcj_ui/header.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://hoqxeav65y68"
++path="res://.godot/imported/header.png-b704df4913e010142a524e8d1d118a3f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/header.png"
++dest_files=["res://.godot/imported/header.png-b704df4913e010142a524e8d1d118a3f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/input.png.import b/assets/ui/dcj_ui/input.png.import
+new file mode 100644
+index 0000000..2496fbb
+--- /dev/null
++++ b/assets/ui/dcj_ui/input.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ccma034x0ku2k"
++path="res://.godot/imported/input.png-2f6179ef46588b799c19decb671c03f9.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/input.png"
++dest_files=["res://.godot/imported/input.png-2f6179ef46588b799c19decb671c03f9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/input.tres b/assets/ui/dcj_ui/input.tres
+new file mode 100644
+index 0000000..2a294bc
+--- /dev/null
++++ b/assets/ui/dcj_ui/input.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/input.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/input_focus.png.import b/assets/ui/dcj_ui/input_focus.png.import
+new file mode 100644
+index 0000000..4d062b1
+--- /dev/null
++++ b/assets/ui/dcj_ui/input_focus.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cfq2hvxs5e2nx"
++path="res://.godot/imported/input_focus.png-ee0fd8cc12eb17318de91d085faec42f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/input_focus.png"
++dest_files=["res://.godot/imported/input_focus.png-ee0fd8cc12eb17318de91d085faec42f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/input_focus.tres b/assets/ui/dcj_ui/input_focus.tres
+new file mode 100644
+index 0000000..20b0fd0
+--- /dev/null
++++ b/assets/ui/dcj_ui/input_focus.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/input_focus.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/notice.png.import b/assets/ui/dcj_ui/notice.png.import
+new file mode 100644
+index 0000000..c4a3096
+--- /dev/null
++++ b/assets/ui/dcj_ui/notice.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://0tcsbfron5ak"
++path="res://.godot/imported/notice.png-e18d0cf099fe954b4e19e9fecc98e6c1.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/notice.png"
++dest_files=["res://.godot/imported/notice.png-e18d0cf099fe954b4e19e9fecc98e6c1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/notice.tres b/assets/ui/dcj_ui/notice.tres
+new file mode 100644
+index 0000000..dbe5ba8
+--- /dev/null
++++ b/assets/ui/dcj_ui/notice.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/notice.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/photo_frame.png.import b/assets/ui/dcj_ui/photo_frame.png.import
+new file mode 100644
+index 0000000..59bf5e2
+--- /dev/null
++++ b/assets/ui/dcj_ui/photo_frame.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://4bwghll0pug4"
++path="res://.godot/imported/photo_frame.png-d08098c2b598efd1d4fc09e510955ba2.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/photo_frame.png"
++dest_files=["res://.godot/imported/photo_frame.png-d08098c2b598efd1d4fc09e510955ba2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/player.png.import b/assets/ui/dcj_ui/player.png.import
+new file mode 100644
+index 0000000..093eed6
+--- /dev/null
++++ b/assets/ui/dcj_ui/player.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://df15krgq5syds"
++path="res://.godot/imported/player.png-56ed48cd33c2c04c0102c189a1c30944.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/player.png"
++dest_files=["res://.godot/imported/player.png-56ed48cd33c2c04c0102c189a1c30944.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/player.tres b/assets/ui/dcj_ui/player.tres
+new file mode 100644
+index 0000000..7ba5400
+--- /dev/null
++++ b/assets/ui/dcj_ui/player.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/player.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
+diff --git a/assets/ui/dcj_ui/seat.png.import b/assets/ui/dcj_ui/seat.png.import
+new file mode 100644
+index 0000000..0a53c65
+--- /dev/null
++++ b/assets/ui/dcj_ui/seat.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dcmgugmkhmayn"
++path="res://.godot/imported/seat.png-f948243ae569e62d321ff430b160e7fc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/seat.png"
++dest_files=["res://.godot/imported/seat.png-f948243ae569e62d321ff430b160e7fc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/seat_active.png.import b/assets/ui/dcj_ui/seat_active.png.import
+new file mode 100644
+index 0000000..4cbc6eb
+--- /dev/null
++++ b/assets/ui/dcj_ui/seat_active.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bsmvpvohkko65"
++path="res://.godot/imported/seat_active.png-cc638df5d8c714fe53758b68bec9b74a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/seat_active.png"
++dest_files=["res://.godot/imported/seat_active.png-cc638df5d8c714fe53758b68bec9b74a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/table_felt.jpg.import b/assets/ui/dcj_ui/table_felt.jpg.import
+new file mode 100644
+index 0000000..c81ad89
+--- /dev/null
++++ b/assets/ui/dcj_ui/table_felt.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dxp530h5xx138"
++path="res://.godot/imported/table_felt.jpg-d5aa5400d052d4e45d5922cdb3fd37b1.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/table_felt.jpg"
++dest_files=["res://.godot/imported/table_felt.jpg-d5aa5400d052d4e45d5922cdb3fd37b1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/table_wood.jpg.import b/assets/ui/dcj_ui/table_wood.jpg.import
+new file mode 100644
+index 0000000..81e6eed
+--- /dev/null
++++ b/assets/ui/dcj_ui/table_wood.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dawfovm4bx75j"
++path="res://.godot/imported/table_wood.jpg-f789e142936d587760a069708ed9b190.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/table_wood.jpg"
++dest_files=["res://.godot/imported/table_wood.jpg-f789e142936d587760a069708ed9b190.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/warning.png.import b/assets/ui/dcj_ui/warning.png.import
+new file mode 100644
+index 0000000..6ff85ac
+--- /dev/null
++++ b/assets/ui/dcj_ui/warning.png.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c7nhrmwl38nv5"
++path="res://.godot/imported/warning.png-6abf7d2587a9b77f5019df06a7680f41.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/ui/dcj_ui/warning.png"
++dest_files=["res://.godot/imported/warning.png-6abf7d2587a9b77f5019df06a7680f41.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/ui/dcj_ui/warning.tres b/assets/ui/dcj_ui/warning.tres
+new file mode 100644
+index 0000000..2684cab
+--- /dev/null
++++ b/assets/ui/dcj_ui/warning.tres
+@@ -0,0 +1,16 @@
++[gd_resource type="StyleBoxTexture" format=3]
++
++[ext_resource type="Texture2D" path="res://assets/ui/dcj_ui/warning.png" id="1"]
++
++[resource]
++texture = ExtResource("1")
++axis_stretch_horizontal = 2
++axis_stretch_vertical = 2
++texture_margin_left = 12.0
++content_margin_left = 14.0
++texture_margin_top = 12.0
++content_margin_top = 8.0
++texture_margin_right = 12.0
++content_margin_right = 14.0
++texture_margin_bottom = 12.0
++content_margin_bottom = 8.0
 diff --git a/build_scripts/build-ios-unsigned.sh b/build_scripts/build-ios-unsigned.sh
 index d9eac4a..702dccd 100644
 --- a/build_scripts/build-ios-unsigned.sh
@@ -94181,10 +95675,10 @@ index 2c13ef6..2dff67f 100644
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/card_table.gd b/scripts/card_table.gd
 new file mode 100644
-index 0000000..6db0a41
+index 0000000..5fbc195
 --- /dev/null
 +++ b/scripts/card_table.gd
-@@ -0,0 +1,611 @@
+@@ -0,0 +1,619 @@
 +extends Control
 +## v149.35: the card table — a full-screen layer where you play ババ抜き,
 +## 大富豪, 七並べ or 神経衰弱 with the people at home (scripts/cards*.gd).
@@ -94262,6 +95756,15 @@ index 0000000..6db0a41
 +	shade.color = Color("#1b2a22")
 +	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 +	add_child(shade)
++	# v149.35: the green felt of the UI kit.
++	if ResourceLoader.exists("res://assets/ui/dcj_ui/table_felt.jpg"):
++		var felt := TextureRect.new()
++		felt.texture = load("res://assets/ui/dcj_ui/table_felt.jpg")
++		felt.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++		felt.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
++		felt.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		felt.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++		add_child(felt)
 +	var margin := MarginContainer.new()
 +	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 +	for side in ["left", "right", "top", "bottom"]:
@@ -94277,8 +95780,7 @@ index 0000000..6db0a41
 +	title.add_theme_font_size_override("font_size", 20)
 +	title.add_theme_color_override("font_color", Color("#e9dcc0"))
 +	top.add_child(title)
-+	var quit := Button.new()
-+	quit.text = "やめる"
++	var quit := UI.button("やめる", false, 38, 15)
 +	quit.custom_minimum_size = Vector2(88, 38)
 +	quit.pressed.connect(_leave)
 +	top.add_child(quit)
@@ -94336,8 +95838,7 @@ index 0000000..6db0a41
 +	for child in buttons.get_children():
 +		child.queue_free()
 +	for item in list:
-+		var b := Button.new()
-+		b.text = str(item[0])
++		var b := UI.button(str(item[0]), str(item[0]) in ["出す", "もう一回", "いいよ"], 44, 17)
 +		b.custom_minimum_size = Vector2(118, 44)
 +		b.add_theme_font_size_override("font_size", 17)
 +		b.disabled = item.size() > 2 and not bool(item[2])
@@ -94596,7 +96097,8 @@ index 0000000..6db0a41
 +	for k in range(1, names.size()):
 +		var box := PanelContainer.new()
 +		var current: bool = not state.is_empty() and not bool(state.get("done", true)) and int(state.turn) == k
-+		box.add_theme_stylebox_override("panel", UI.box(Color(0, 0, 0, 0.25), Color("#e9c46a") if current else Color(1, 1, 1, 0.12), 10, 6, 5))
++		var flat := UI.box(Color(0, 0, 0, 0.25), Color("#e9c46a") if current else Color(1, 1, 1, 0.12), 10, 6, 5)
++		box.add_theme_stylebox_override("panel", UI.skin_or("seat_active" if current else "seat", flat, Vector4(10, 10, 10, 10), Vector4(8, 6, 8, 6)))
 +		box.custom_minimum_size.x = 92
 +		seats_row.add_child(box)
 +		var v := VBoxContainer.new()
@@ -97405,10 +98907,349 @@ index a4b03a2..daa7343 100644
 +	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
 +	return _done(game, lead + feel)
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..92bd04d 100644
+index 0f2add4..53a2a30 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -1647,10 +1647,32 @@ func _refresh() -> void:
+@@ -222,7 +222,7 @@ func _ready() -> void:
+ 
+ func _panel(parent: Node, title: String) -> VBoxContainer:
+ 	var panel := PanelContainer.new()
+-	panel.add_theme_stylebox_override("panel", _style(Color("#101b28"), Color("#405b76"), 9))
++	panel.add_theme_stylebox_override("panel", _style(Color("#1C201D"), Color("#5A5F52"), 9))
+ 	parent.add_child(panel)
+ 	var body := VBoxContainer.new()
+ 	body.add_theme_constant_override("separation", 8)
+@@ -230,7 +230,7 @@ func _panel(parent: Node, title: String) -> VBoxContainer:
+ 	var label := Label.new()
+ 	label.text = title
+ 	label.add_theme_font_size_override("font_size", 16)
+-	label.add_theme_color_override("font_color", Color("#d9e9fb"))
++	label.add_theme_color_override("font_color", Color("#ECE8DC"))
+ 	body.add_child(label)
+ 	return body
+ 
+@@ -250,8 +250,8 @@ func _action_button(parent: Node, label: String, command: String) -> void:
+ 	var btn := Button.new()
+ 	btn.text = label
+ 	btn.custom_minimum_size = Vector2(95, 42)
+-	btn.add_theme_stylebox_override("normal", _style(Color("#182b40"), Color("#557594")))
+-	btn.add_theme_stylebox_override("hover", _style(Color("#21466d"), Color("#81b8ed")))
++	btn.add_theme_stylebox_override("normal", _style(Color("#232823"), Color("#6B705F")))
++	btn.add_theme_stylebox_override("hover", _style(Color("#3B3A2C"), Color("#C9AE7A")))
+ 	btn.pressed.connect(_on_command.bind(command))
+ 	parent.add_child(btn)
+ 
+@@ -261,6 +261,13 @@ func _build_ui() -> void:
+ 	theme_ui.default_font_size=17
+ 	theme_ui.set_color("font_color", "Label", UI.TEXT)
+ 	theme_ui.set_color("font_color", "Button", UI.TEXT)
++	# v149.35: every plain button wears the UI kit's quiet style.
++	for state in ["normal", "hover", "pressed", "disabled"]:
++		var st := UI.skin("button_quiet_pressed" if state == "pressed" else "button_quiet", Vector4(20, 12, 20, 12), Vector4(14, 6, 14, 6))
++		if st != null:
++			theme_ui.set_stylebox(state, "Button", st)
++	theme_ui.set_color("font_disabled_color", "Button", UI.FAINT)
++	theme_ui.set_color("font_pressed_color", "Button", UI.ACCENT)
+ 	theme=theme_ui
+ 	_load_ui_settings()
+ 	var bg:=ColorRect.new();bg.color=UI.BG;bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(bg)
+@@ -269,7 +276,7 @@ func _build_ui() -> void:
+ 
+ 	# Header: day, time, place and weather; vitals and the city's stage always visible.
+ 	header_panel = PanelContainer.new()
+-	header_panel.add_theme_stylebox_override("panel", UI.box(UI.HEADER, UI.LINE, 12, 12, 10))
++	header_panel.add_theme_stylebox_override("panel", UI.skin_or("header", UI.box(UI.HEADER, UI.LINE, 12, 12, 10), Vector4(12, 10, 12, 10), Vector4(12, 10, 12, 12)))
+ 	base.add_child(header_panel)
+ 	var header := VBoxContainer.new()
+ 	header.add_theme_constant_override("separation", 8)
+@@ -280,7 +287,7 @@ func _build_ui() -> void:
+ 	header_title.add_theme_font_size_override("font_size", 16)
+ 	header_title.add_theme_color_override("font_color", UI.MUTED)
+ 	header_row.add_child(header_title)
+-	day_label = UI.label("1日目", 12, Color("#0b141d"), false)
++	day_label = UI.label("1日目", 12, Color("#141714"), false)
+ 	day_label.add_theme_stylebox_override("normal", UI.box(UI.ACCENT, Color(0, 0, 0, 0), 6, 8, 2))
+ 	day_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	header_row.add_child(day_label)
+@@ -309,7 +316,7 @@ func _build_ui() -> void:
+ 	vitals_row=HBoxContainer.new();vitals_row.add_theme_constant_override("separation",8);header.add_child(vitals_row)
+ 	for key in ["体力","満腹度","水分状態","休息状態","心"]:
+ 		var column:=VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;column.add_theme_constant_override("separation",3);vitals_row.add_child(column)
+-		var value:=UI.label(UI.VITAL_SHORT[key], 12, Color("#c8d4df"), false);column.add_child(value);vitals_values[key]=value
++		var value:=UI.label(UI.VITAL_SHORT[key], 12, Color("#D4D0C4"), false);column.add_child(value);vitals_values[key]=value
+ 		var bar:=UI.bar(100.0, UI.VITAL_COLORS[key], 5);column.add_child(bar);vitals_bars[key]=bar
+ 	danger_label = UI.tag("街：平常", true)
+ 	danger_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+@@ -352,7 +359,8 @@ func _build_ui() -> void:
+ 	district_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 	picture.add_child(district_card)
+ 	var shade := PanelContainer.new()
+-	shade.add_theme_stylebox_override("panel", UI.box(Color(0.03, 0.055, 0.08, 0.82), Color(0, 0, 0, 0), 0, 10, 6))
++	var fade := UI.skin("caption_fade", Vector4(0, 0, 0, 0), Vector4(10, 14, 10, 6))
++	shade.add_theme_stylebox_override("panel", fade if fade != null else UI.box(Color(0.03, 0.055, 0.08, 0.82), Color(0, 0, 0, 0), 0, 10, 6))
+ 	shade.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+ 	shade.grow_vertical = Control.GROW_DIRECTION_BEGIN
+ 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+@@ -360,7 +368,7 @@ func _build_ui() -> void:
+ 	var shade_row := HBoxContainer.new()
+ 	shade_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 	shade.add_child(shade_row)
+-	scene_caption = UI.label("", 13, Color("#dfe7ee"))
++	scene_caption = UI.label("", 13, UI.TEXT)
+ 	scene_caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 	scene_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 	shade_row.add_child(scene_caption)
+@@ -383,7 +391,7 @@ func _build_ui() -> void:
+ 
+ 	# Conversation strip with an explicit way out.
+ 	convo_bar = PanelContainer.new()
+-	convo_bar.add_theme_stylebox_override("panel", UI.box(Color("#0f1b27"), UI.LINE, 10, 10, 4))
++	convo_bar.add_theme_stylebox_override("panel", UI.box(Color("#1B1F1C"), UI.LINE, 10, 10, 4))
+ 	convo_bar.visible = false
+ 	base.add_child(convo_bar)
+ 	var convo_row := HBoxContainer.new()
+@@ -393,14 +401,14 @@ func _build_ui() -> void:
+ 	convo_avatar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ 	convo_avatar.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+ 	convo_avatar.custom_minimum_size = Vector2(28, 28)
+-	convo_avatar.add_theme_stylebox_override("normal", UI.box(Color("#2c4c63"), Color(0, 0, 0, 0), 14, 0, 0))
++	convo_avatar.add_theme_stylebox_override("normal", UI.box(Color("#3A433C"), Color(0, 0, 0, 0), 14, 0, 0))
+ 	convo_avatar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	convo_row.add_child(convo_avatar)
+ 	# v149.28: the partner's face, when there is a picture for them.
+ 	convo_face = Portraits.avatar(ImageTexture.new(), "", 28, Color.BLACK, Color.WHITE) as TextureRect
+ 	convo_face.visible = false
+ 	convo_row.add_child(convo_face)
+-	convo_label = UI.label("", 14, Color("#c8d4df"), false)
++	convo_label = UI.label("", 14, Color("#D4D0C4"), false)
+ 	convo_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 	convo_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	convo_row.add_child(convo_label)
+@@ -423,9 +431,9 @@ func _build_ui() -> void:
+ 	progress_label=UI.label("", 18, UI.ACCENT);progress_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL;progress_row.add_child(progress_label)
+ 	cancel_button=UI.button("中断", false, 48, 15);cancel_button.custom_minimum_size.x=100;cancel_button.pressed.connect(_cancel_action);progress_row.add_child(cancel_button)
+ 	entry_row=HBoxContainer.new();entry_row.add_theme_constant_override("separation",10);base.add_child(entry_row)
+-	command_input=TextEdit.new();command_input.placeholder_text="どうする？";command_input.wrap_mode=TextEdit.LINE_WRAPPING_BOUNDARY;command_input.size_flags_horizontal=Control.SIZE_EXPAND_FILL;command_input.custom_minimum_size.y=96;entry_row.add_child(command_input)
++	command_input=TextEdit.new();command_input.placeholder_text="どうする？";_skin_input(command_input);command_input.wrap_mode=TextEdit.LINE_WRAPPING_BOUNDARY;command_input.size_flags_horizontal=Control.SIZE_EXPAND_FILL;command_input.custom_minimum_size.y=96;entry_row.add_child(command_input)
+ 	command_input.add_theme_stylebox_override("normal", UI.box(UI.PANEL, UI.EDGE, 12, 12, 8))
+-	command_input.add_theme_stylebox_override("focus", UI.box(UI.PANEL, Color("#5b8aa5"), 12, 12, 8))
++	command_input.add_theme_stylebox_override("focus", UI.box(UI.PANEL, Color("#8C8A6A"), 12, 12, 8))
+ 	command_input.add_theme_font_size_override("font_size", 16)
+ 	send_button=UI.button("送信", true, 96, 16);send_button.custom_minimum_size.x=96;send_button.pressed.connect(_submit_command);entry_row.add_child(send_button)
+ 	input_mode_label=UI.label("文章入力 / オフライン解析 · 長期待機は飲食・睡眠を含み、危険時に中断", 13, UI.FAINT, false);base.add_child(input_mode_label)
+@@ -665,7 +673,7 @@ func _build_status_tab() -> void:
+ 		var cell := VBoxContainer.new()
+ 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 		grid.add_child(cell)
+-		cell.add_child(UI.label("%s  %d · %s" % [UI.VITAL_SHORT[key], int(values[key]), Vitals.description(values[key])], 13, Color("#c8d4df"), false))
++		cell.add_child(UI.label("%s  %d · %s" % [UI.VITAL_SHORT[key], int(values[key]), Vitals.description(values[key])], 13, Color("#D4D0C4"), false))
+ 		cell.add_child(UI.bar(values[key], UI.VITAL_COLORS[key], 6))
+ 	var warning := Vitals.warning(world.s)
+ 	if not warning.is_empty():
+@@ -680,7 +688,7 @@ func _build_status_tab() -> void:
+ 		c.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 		c.add_child(UI.label(spec[0], 12, UI.MUTED, false))
+ 		c.add_child(UI.label(spec[1], 20, UI.TEXT, false))
+-		c.add_child(UI.label("目安 あと約%d日" % int(floor(spec[2])), 12, Color("#c8d4df"), false))
++		c.add_child(UI.label("目安 あと約%d日" % int(floor(spec[2])), 12, Color("#D4D0C4"), false))
+ 	var utilities := HFlowContainer.new()
+ 	utilities.add_theme_constant_override("h_separation", 6)
+ 	utilities.add_theme_constant_override("v_separation", 6)
+@@ -708,7 +716,7 @@ func _build_status_tab() -> void:
+ 		row.add_child(UI.label("%s　%s · %s" % [person.name, person.location, HouseholdDialogue._condition(person)], 14, UI.TEXT))
+ 		var order: Dictionary = person.get("water_errand", {})
+ 		if str(order.get("phase", "")) in ["queued", "carrying"]:
+-			row.add_child(UI.label("頼みごと：%s（%d時ごろの帰り道で）" % [HouseholdErrands.order_text(order), world.HOUSEHOLD_RETURN], 12, Color("#c8d4df")))
++			row.add_child(UI.label("頼みごと：%s（%d時ごろの帰り道で）" % [HouseholdErrands.order_text(order), world.HOUSEHOLD_RETURN], 12, Color("#D4D0C4")))
+ 	var files := HBoxContainer.new()
+ 	files.add_theme_constant_override("separation", 10)
+ 	tab_content.add_child(files)
+@@ -806,7 +814,7 @@ func _build_people_tab() -> void:
+ 		var c := UI.card(tab_content, "")
+ 		var head := HBoxContainer.new()
+ 		head.add_theme_constant_override("separation", 10)
+-		head.add_child(Portraits.avatar(Portraits.housemate_face(world, index), str(person.name), 44, Color("#2c4c63"), UI.TEXT))
++		head.add_child(Portraits.avatar(Portraits.housemate_face(world, index), str(person.name), 44, Color("#3A433C"), UI.TEXT))
+ 		var name_label := UI.label(str(person.name), 17, UI.TEXT, false)
+ 		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 		head.add_child(name_label)
+@@ -815,7 +823,7 @@ func _build_people_tab() -> void:
+ 		c.add_child(UI.label(NPCMind.relationship(npc_memory, person, dialogue.recent(index).size()), 13, UI.BODY))
+ 		var order: Dictionary = person.get("water_errand", {})
+ 		if str(order.get("phase", "")) in ["quantity", "queued", "carrying", "returning"]:
+-			c.add_child(UI.label("頼みごと：" + NPCMind.errand_status(world, person).get_slice("。", 0), 13, Color("#c8d4df")))
++			c.add_child(UI.label("頼みごと：" + NPCMind.errand_status(world, person).get_slice("。", 0), 13, Color("#D4D0C4")))
+ 	# v149.28: survivors met outside, with their faces.
+ 	var met: Array = []
+ 	var people: Dictionary = world.s.get("survivors", {}).get("people", {}) if world.s.get("survivors") is Dictionary else {}
+@@ -832,7 +840,7 @@ func _build_people_tab() -> void:
+ 		var head := HBoxContainer.new()
+ 		head.add_theme_constant_override("separation", 10)
+ 		var shown_name := Survivors.call_name(world, id)
+-		head.add_child(Portraits.avatar(Portraits.survivor_face(p), shown_name, 44, Color("#2c4c63"), UI.TEXT))
++		head.add_child(Portraits.avatar(Portraits.survivor_face(p), shown_name, 44, Color("#3A433C"), UI.TEXT))
+ 		var name_label := UI.label(shown_name, 16, UI.TEXT, false)
+ 		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 		head.add_child(name_label)
+@@ -879,11 +887,11 @@ func _build_map_tab() -> void:
+ 	var k := width / 358.0
+ 	var area := Panel.new()
+ 	area.custom_minimum_size = Vector2(width, 476.0 * k)
+-	area.add_theme_stylebox_override("panel", UI.box(Color("#0b141d"), UI.LINE, 12, 0, 0))
++	area.add_theme_stylebox_override("panel", UI.box(Color("#141714"), UI.LINE, 12, 0, 0))
+ 	tab_content.add_child(area)
+ 	for line in MAP_LINES:
+ 		var r := ColorRect.new()
+-		r.color = Color("#2f4b62")
++		r.color = Color("#4A524B")
+ 		r.position = Vector2(line[0], line[1]) * k
+ 		r.size = Vector2(maxf(2, line[2] * k), maxf(2, line[3] * k))
+ 		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+@@ -898,8 +906,8 @@ func _build_map_tab() -> void:
+ 		b.position = Vector2(spec[0], spec[1]) * k
+ 		b.size = Vector2(spec[2], spec[3]) * k
+ 		b.add_theme_font_size_override("font_size", 13)
+-		var edge := Color.WHITE if node == map_selected else (UI.ACCENT if node == here else Color("#2f4b62"))
+-		var fill := Color("#1a3346") if node == map_selected else (Color("#16324a") if node == here else UI.PANEL_2)
++		var edge := Color.WHITE if node == map_selected else (UI.ACCENT if node == here else Color("#4A524B"))
++		var fill := Color("#262B27") if node == map_selected else (Color("#26302A") if node == here else UI.PANEL_2)
+ 		b.add_theme_stylebox_override("normal", UI.box(fill, edge, 10, 4, 2))
+ 		b.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.06), edge, 10, 4, 2))
+ 		b.add_theme_stylebox_override("pressed", UI.box(fill.lightened(0.1), edge, 10, 4, 2))
+@@ -951,7 +959,7 @@ func _mark_font_buttons() -> void:
+ 	for size in font_buttons:
+ 		var b: Button = font_buttons[size]
+ 		b.set_pressed_no_signal(size == ui_font_size)
+-		b.add_theme_stylebox_override("normal", UI.box(Color("#16324a") if size == ui_font_size else UI.PANEL_2, UI.ACCENT if size == ui_font_size else UI.EDGE, 10, 12, 6))
++		b.add_theme_stylebox_override("normal", UI.box(Color("#26302A") if size == ui_font_size else UI.PANEL_2, UI.ACCENT if size == ui_font_size else UI.EDGE, 10, 12, 6))
+ 
+ func _set_photo_folded(folded: bool) -> void:
+ 	photo_folded = folded
+@@ -967,7 +975,7 @@ func _update_scene_visibility() -> void:
+ 
+ func _build_image_preview() -> void:
+ 	image_preview = ColorRect.new()
+-	image_preview.color = Color("#070c13")
++	image_preview.color = Color("#121412")
+ 	image_preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ 	image_preview.hide()
+ 	add_child(image_preview)
+@@ -1215,14 +1223,14 @@ func _show_intro() -> void:
+ 	intro_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+ 	add_child(intro_layer)
+ 	var shade := ColorRect.new()
+-	shade.color = Color("#070d15")
++	shade.color = Color("#121412")
+ 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ 	intro_layer.add_child(shade)
+ 	intro_margin = MarginContainer.new()
+ 	intro_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ 	intro_layer.add_child(intro_margin)
+ 	var panel := PanelContainer.new()
+-	panel.add_theme_stylebox_override("panel", _style(Color("#101b28"), Color("#405b76"), 12))
++	panel.add_theme_stylebox_override("panel", _style(Color("#1C201D"), Color("#5A5F52"), 12))
+ 	intro_margin.add_child(panel)
+ 	var column := VBoxContainer.new()
+ 	column.add_theme_constant_override("separation", 14)
+@@ -1372,7 +1380,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+ 		var card_style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 10, 10)
+ 		card_style.shadow_color = Color(0, 0, 0, 0.6)
+ 		card_style.shadow_size = 18
+-		action_card.add_theme_stylebox_override("panel", card_style)
++		# v149.35: an old photo card — the picture above, the caption on the paper strip.
++		var kit_card := UI.skin("action_card", Vector4(10, 10, 10, 44), Vector4(10, 10, 10, 8))
++		action_card.add_theme_stylebox_override("panel", kit_card if kit_card != null else card_style)
+ 		action_card.mouse_filter = Control.MOUSE_FILTER_STOP
+ 		action_card.gui_input.connect(func(event):
+ 			if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
+@@ -1392,7 +1402,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+ 		label.name = "Caption"
+ 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+ 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+-		label.add_theme_color_override("font_color", UI.BODY)
++		label.add_theme_color_override("font_color", UI.ON_ACTION if kit_card != null else UI.BODY)
++		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
++		label.custom_minimum_size.y = 30 if kit_card != null else 0
+ 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 		column.add_child(label)
+ 		add_child(action_card)
+@@ -1405,7 +1417,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+ 	photo_rect.custom_minimum_size = Vector2(width - 20.0, (width - 20.0) * 0.75)
+ 	caption_label.text = caption
+ 	caption_label.add_theme_font_size_override("font_size", ui_font_size)
+-	caption_label.custom_minimum_size = Vector2(width - 20.0, 0)
++	caption_label.custom_minimum_size = Vector2(width - 20.0, 32 if UI.skin("action_card") != null else 0)
+ 	action_card.size = Vector2(width, 0)
+ 	action_card.reset_size()
+ 	action_card.call_deferred("reset_size")
+@@ -1476,6 +1488,18 @@ func _member_names() -> Array:
+ 	names.append_array(Survivors.names(world))
+ 	return names
+ 
++## v149.35: the kit's text box (normal and focused).
++func _skin_input(box: TextEdit) -> void:
++	var normal := UI.skin("input", Vector4(12, 12, 12, 12), Vector4(14, 10, 14, 10))
++	var focus := UI.skin("input_focus", Vector4(12, 12, 12, 12), Vector4(14, 10, 14, 10))
++	if normal != null:
++		box.add_theme_stylebox_override("normal", normal)
++		box.add_theme_stylebox_override("read_only", normal)
++	if focus != null:
++		box.add_theme_stylebox_override("focus", focus)
++	box.add_theme_color_override("font_color", UI.TEXT)
++	box.add_theme_color_override("font_placeholder_color", UI.FAINT)
++
+ ## One chronicle entry, styled by what it is.
+ func _make_entry(entry: String) -> Control:
+ 	var info := UI.kind(entry, _member_names())
+@@ -1487,9 +1511,9 @@ func _make_entry(entry: String) -> Control:
+ 			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 			row.add_child(spacer)
+ 			var bubble := PanelContainer.new()
+-			bubble.add_theme_stylebox_override("panel", UI.box(UI.PLAYER, Color(0, 0, 0, 0), 14, 12, 8))
++			bubble.add_theme_stylebox_override("panel", UI.skin_or("player", UI.box(UI.PLAYER, Color(0, 0, 0, 0), 14, 12, 8)))
+ 			row.add_child(bubble)
+-			var text := UI.label(str(info.text), size, Color.WHITE)
++			var text := UI.label(str(info.text), size, UI.TEXT)
+ 			bubble.add_child(text)
+ 			log_bubbles.append([text, str(info.text), 0.78])
+ 			_fit_bubble(text, str(info.text), 0.78)
+@@ -1509,7 +1533,7 @@ func _make_entry(entry: String) -> Control:
+ 			var line := HBoxContainer.new()
+ 			column.add_child(line)
+ 			var bubble := PanelContainer.new()
+-			bubble.add_theme_stylebox_override("panel", UI.box(UI.NPC, Color("#22364a"), 14, 12, 8))
++			bubble.add_theme_stylebox_override("panel", UI.skin_or("dialogue", UI.box(UI.NPC, Color("#2E342F"), 14, 12, 8), Vector4(12, 12, 12, 12), Vector4(18, 8, 14, 8)))
+ 			line.add_child(bubble)
+ 			var text := UI.label(str(info.text), size, UI.TEXT)
+ 			bubble.add_child(text)
+@@ -1518,7 +1542,7 @@ func _make_entry(entry: String) -> Control:
+ 			return column
+ 		"fail":
+ 			var panel := PanelContainer.new()
+-			panel.add_theme_stylebox_override("panel", UI.box(Color("#111d29"), UI.EDGE, 12, 12, 10))
++			panel.add_theme_stylebox_override("panel", UI.skin_or("notice", UI.box(Color("#1E2320"), UI.EDGE, 12, 12, 10), Vector4(12, 12, 12, 12), Vector4(18, 10, 14, 10)))
+ 			var body := VBoxContainer.new()
+ 			body.add_theme_constant_override("separation", 6)
+ 			panel.add_child(body)
+@@ -1529,7 +1553,7 @@ func _make_entry(entry: String) -> Control:
+ 			return panel
+ 		"news", "notice":
+ 			var note := UI.label(str(info.text), size - 2, UI.WARN_TEXT if str(info.kind) == "notice" else UI.BODY)
+-			note.add_theme_stylebox_override("normal", UI.box(UI.WARN_BG if str(info.kind) == "notice" else Color("#111d29"), UI.WARN_EDGE if str(info.kind) == "notice" else UI.EDGE, 10, 10, 8))
++			note.add_theme_stylebox_override("normal", UI.skin_or("warning" if str(info.kind) == "notice" else "notice", UI.box(UI.WARN_BG if str(info.kind) == "notice" else Color("#1E2320"), UI.WARN_EDGE if str(info.kind) == "notice" else UI.EDGE, 10, 10, 8), Vector4(12, 12, 12, 12), Vector4(18, 8, 14, 8)))
+ 			return note
+ 	var block := VBoxContainer.new()
+ 	block.add_theme_constant_override("separation", 4)
+@@ -1607,7 +1631,7 @@ func _refresh() -> void:
+ 	elif not horde.is_empty() and Navigation.indoor(location) and str(horde.place) in ["住宅街", "屋外"]:
+ 		danger_label.text = "群れが通過中" if str(horde.place) == "屋外" else "群れ接近"
+ 		stage = ["", 3]
+-	danger_label.add_theme_stylebox_override("normal", UI.box(UI.OK_BG if int(stage[1]) == 0 else UI.WARN_BG, UI.OK_EDGE if int(stage[1]) == 0 else UI.WARN_EDGE, 11, 9, 3))
++	danger_label.add_theme_stylebox_override("normal", UI.badge(danger_label.text, int(stage[1])))
+ 	danger_label.add_theme_color_override("font_color", UI.OK_TEXT if int(stage[1]) == 0 else UI.WARN_TEXT)
+ 	var normalized := Vitals.values(world.s)
+ 	for key in normalized:
+@@ -1647,10 +1671,32 @@ func _refresh() -> void:
  		var season := Cold.season_photo(world, location, str(world.s.profile.housing))
  		if not season.is_empty() and ResourceLoader.exists("res://assets/photos/%s.jpg" % season):
  			picture.texture = scene_view.location_texture(location, season, "")
@@ -97444,7 +99285,7 @@ index 0f2add4..92bd04d 100644
  	preview_button.visible = picture.texture != null
  	_refresh_scene_caption()
  	_update_scene_visibility()
-@@ -1844,6 +1866,8 @@ func _suggestions() -> Array:
+@@ -1844,6 +1890,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -97453,7 +99294,7 @@ index 0f2add4..92bd04d 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1899,6 +1923,11 @@ func _suggestions() -> Array:
+@@ -1899,6 +1947,11 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
@@ -97465,7 +99306,7 @@ index 0f2add4..92bd04d 100644
  	if location == "避難所" and Shelter.is_open(world):
  		out.append("配給を受け取る")
  		out.append("避難所の様子を聞く")
-@@ -1910,6 +1939,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +1963,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -97474,7 +99315,7 @@ index 0f2add4..92bd04d 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,10 +2002,38 @@ func _suggestions() -> Array:
+@@ -1971,10 +2026,38 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -97513,7 +99354,7 @@ index 0f2add4..92bd04d 100644
  		out.append("家に帰る")
  	return out.slice(0, 6)
  
-@@ -2614,7 +2673,19 @@ func _drain_walker_notices() -> void:
+@@ -2614,7 +2697,19 @@ func _drain_walker_notices() -> void:
  	var w := Walkers.ensure(world)
  	var notices: Array = w.notices
  	w.notices = []
@@ -97533,7 +99374,7 @@ index 0f2add4..92bd04d 100644
  		var said := false
  		for person in world.s.household_members:
  			said = said or str(line).begins_with(str(person.name) + "「")
-@@ -2838,7 +2909,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +2933,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -97543,7 +99384,7 @@ index 0f2add4..92bd04d 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3129,11 +3201,20 @@ func _eat_before_sleep() -> String:
+@@ -3129,11 +3225,20 @@ func _eat_before_sleep() -> String:
  
  func _shelter_command(cmd: String) -> bool:
  	if location != "避難所":
@@ -97564,7 +99405,7 @@ index 0f2add4..92bd04d 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,8 +3292,179 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,8 +3316,179 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -97744,7 +99585,7 @@ index 0f2add4..92bd04d 100644
  	if _weapon_command(cmd) or _cold_command(cmd) or _request_command(cmd) or _rescue_command(cmd) or _visit_command(cmd) or _raid_command(cmd) or _shelter_command(cmd) or _role_command(cmd) or _comfort_command(cmd) or _leave_home(cmd) or _lights_command(cmd) or _blackout_command(cmd) or _door_command(cmd) or _back_exit(cmd) or HomeLife.handle(self, cmd):
  		return true
  	for index in world.s.household_members.size():
-@@ -3457,6 +3709,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3733,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -97754,7 +99595,7 @@ index 0f2add4..92bd04d 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3728,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3752,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -97773,7 +99614,7 @@ index 0f2add4..92bd04d 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,7 +3758,23 @@ func _district_map() -> String:
+@@ -3494,7 +3782,23 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -97797,7 +99638,7 @@ index 0f2add4..92bd04d 100644
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
  		return _district_map()
-@@ -3506,6 +3786,107 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3810,107 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -97905,7 +99746,7 @@ index 0f2add4..92bd04d 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3920,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3944,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -97914,7 +99755,7 @@ index 0f2add4..92bd04d 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3670,18 +4051,23 @@ func _execute_command(cmd: String) -> String:
+@@ -3670,18 +4075,23 @@ func _execute_command(cmd: String) -> String:
  		if location != "屋外": return "探索には屋外に出る必要がある。"
  		return world.longplay_action("scavenge")
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
@@ -97944,7 +99785,7 @@ index 0f2add4..92bd04d 100644
  		var result: String = world.action("harvest")
  		if result.begins_with("収穫した"): world.advance(30)
  		return result
-@@ -3696,7 +4082,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4106,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -97954,7 +99795,7 @@ index 0f2add4..92bd04d 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3709,7 +4096,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3709,7 +4120,12 @@ func _execute_command(cmd: String) -> String:
  				return "食事をするには台所へ行こう。"
  		var light_meal := float(world.s.hunger) < 15.0
  		if not _eat_here():
@@ -97968,7 +99809,7 @@ index 0f2add4..92bd04d 100644
  		# A hungry person eats a proper meal, not one bite (up to 3 portions).
  		var portions := 1
  		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
-@@ -3718,7 +4110,11 @@ func _execute_command(cmd: String) -> String:
+@@ -3718,7 +4134,11 @@ func _execute_command(cmd: String) -> String:
  		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
  	if cmd.contains("水を飲") or cmd.contains("飲み水"):
  		if not _drink_here():
@@ -97981,7 +99822,7 @@ index 0f2add4..92bd04d 100644
  		var cups := 1
  		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
  			cups += 1
-@@ -3754,6 +4150,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4174,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -97996,7 +99837,7 @@ index 0f2add4..92bd04d 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3775,7 +4179,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3775,7 +4203,12 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("周囲") or cmd.contains("見回"):
  		world.advance(1)
  		return _look()
@@ -98010,7 +99851,7 @@ index 0f2add4..92bd04d 100644
  
  
  # Illustration choice is a pure function of current location, observation and
-@@ -3795,6 +4204,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4228,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -98051,7 +99892,7 @@ index 0f2add4..92bd04d 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4281,31 @@ func _scene_caption() -> String:
+@@ -3838,7 +4305,31 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -98083,7 +99924,7 @@ index 0f2add4..92bd04d 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4325,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4349,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -98102,7 +99943,7 @@ index 0f2add4..92bd04d 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4352,9 @@ func _site() -> String:
+@@ -3875,6 +4376,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -98112,7 +99953,7 @@ index 0f2add4..92bd04d 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4386,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4410,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -98121,7 +99962,7 @@ index 0f2add4..92bd04d 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4410,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4434,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -98136,7 +99977,7 @@ index 0f2add4..92bd04d 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4429,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4453,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -98149,7 +99990,7 @@ index 0f2add4..92bd04d 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4450,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4474,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -98160,7 +100001,7 @@ index 0f2add4..92bd04d 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4533,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4557,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -99164,7 +101005,7 @@ index 0000000..b95515d
 @@ -0,0 +1 @@
 +uid://v0rn482gqrkl
 diff --git a/scripts/portraits.gd b/scripts/portraits.gd
-index 03dc127..8202230 100644
+index 03dc127..ea0f011 100644
 --- a/scripts/portraits.gd
 +++ b/scripts/portraits.gd
 @@ -57,7 +57,7 @@ static func face_path(name: String, gender: String, age: int, job: String = "")
@@ -99208,6 +101049,28 @@ index 03dc127..8202230 100644
  	return _texture(face_path(str(person.get("name", "")), str(person.get("gender", "")), int(person.get("age", 30)), str(person.get("job", ""))))
  
  ## The face of whoever has this name: a housemate or a survivor met outside.
+@@ -124,6 +138,21 @@ static func avatar(texture: Texture2D, initial: String, size: int, fill: Color,
+ 	rect.custom_minimum_size = Vector2(size, size)
+ 	rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+ 	rect.material = _circle()
++	# v149.35: a thin gold ring around the face (the UI kit's), when large enough.
++	if size >= 30 and ResourceLoader.exists("res://assets/ui/dcj_ui/avatar_ring.png"):
++		var holder := Control.new()
++		holder.custom_minimum_size = Vector2(size, size)
++		holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
++		rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++		holder.add_child(rect)
++		var ring := TextureRect.new()
++		ring.texture = load("res://assets/ui/dcj_ui/avatar_ring.png")
++		ring.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++		ring.stretch_mode = TextureRect.STRETCH_SCALE
++		ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++		holder.add_child(ring)
++		return holder
+ 	return rect
+ 
+ static func _circle() -> ShaderMaterial:
 diff --git a/scripts/raiders.gd b/scripts/raiders.gd
 index 8dd4800..22af019 100644
 --- a/scripts/raiders.gd
@@ -100596,10 +102459,10 @@ index 0000000..62e4b10
 +uid://bxrkik0nbnmag
 diff --git a/scripts/reversi_game.gd b/scripts/reversi_game.gd
 new file mode 100644
-index 0000000..36b8d16
+index 0000000..ae8cd88
 --- /dev/null
 +++ b/scripts/reversi_game.gd
-@@ -0,0 +1,346 @@
+@@ -0,0 +1,355 @@
 +extends Control
 +## v149.35: the reversi table — a full-screen layer over the game. You play
 +## black and go first; the housemate plays white the way they are
@@ -100669,6 +102532,16 @@ index 0000000..36b8d16
 +	shade.color = UI.BG
 +	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 +	add_child(shade)
++	# v149.35: the board sits on the old wooden table of the UI kit.
++	if ResourceLoader.exists("res://assets/ui/dcj_ui/table_wood.jpg"):
++		var wood := TextureRect.new()
++		wood.texture = load("res://assets/ui/dcj_ui/table_wood.jpg")
++		wood.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
++		wood.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
++		wood.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		wood.modulate = Color(0.75, 0.75, 0.75)
++		wood.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
++		add_child(wood)
 +	var center := CenterContainer.new()
 +	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 +	add_child(center)
@@ -100682,14 +102555,14 @@ index 0000000..36b8d16
 +	head.add_child(Portraits.avatar(Portraits.housemate_face(game.world, index), str(mate.name).left(1), 52, UI.PANEL_2, UI.TEXT))
 +	var bubble := PanelContainer.new()
 +	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-+	bubble.add_theme_stylebox_override("panel", UI.box(UI.NPC, UI.EDGE, 12, 12, 8))
++	bubble.add_theme_stylebox_override("panel", UI.skin_or("dialogue", UI.box(UI.NPC, UI.EDGE, 12, 12, 8), Vector4(12, 12, 12, 12), Vector4(18, 8, 14, 8)))
 +	head.add_child(bubble)
 +	var inner := VBoxContainer.new()
 +	bubble.add_child(inner)
 +	var who := Label.new()
 +	who.text = "%s（白）" % str(mate.name)
 +	who.add_theme_font_size_override("font_size", 14)
-+	who.add_theme_color_override("font_color", UI.MUTED)
++	who.add_theme_color_override("font_color", UI.ACCENT)
 +	inner.add_child(who)
 +	speech = Label.new()
 +	speech.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -100732,8 +102605,7 @@ index 0000000..36b8d16
 +	for child in buttons.get_children():
 +		child.queue_free()
 +	for item in list:
-+		var b := Button.new()
-+		b.text = str(item[0])
++		var b := UI.button(str(item[0]), str(item[0]) in ["出す", "もう一回", "いいよ"], 44, 17)
 +		b.custom_minimum_size = Vector2(120, 44)
 +		b.add_theme_font_size_override("font_size", 17)
 +		b.pressed.connect(item[1])
@@ -101917,6 +103789,28 @@ index 5ea74f7..cd89262 100644
  			if world.draw(minute, hash(id), "survivor-risk", 100) < risk:
  				cause = "bitten"
  		if cause.is_empty():
+diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
+index dc4101a..4097c24 100644
+--- a/scripts/title_screen.gd
++++ b/scripts/title_screen.gd
+@@ -24,7 +24,7 @@ func _ready() -> void:
+ 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ 	mouse_filter = Control.MOUSE_FILTER_STOP
+ 	var bg := ColorRect.new()
+-	bg.color = Color("#080f19")
++	bg.color = Color("#141714")
+ 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+ 	add_child(bg)
+ 	margin = MarginContainer.new()
+@@ -82,7 +82,7 @@ func _ready() -> void:
+ 	note.text = "東京の住宅街で、一人暮らしの朝から始まります。住まいや街の様子は、始めるたびに変わります。"
+ 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	note.add_theme_font_size_override("font_size", 16)
+-	note.add_theme_color_override("font_color", Color("#9fb0bf"))
++	note.add_theme_color_override("font_color", Color("#A9A596"))
+ 	form.add_child(note)
+ 	var begin := _button("この名前で始める",form)
+ 	begin.pressed.connect(_request_start)
 diff --git a/scripts/town_map.gd b/scripts/town_map.gd
 new file mode 100644
 index 0000000..e9c81d7
@@ -102325,6 +104219,161 @@ index 0000000..67d58c7
 +++ b/scripts/trade.gd.uid
 @@ -0,0 +1 @@
 +uid://bkba3o5cmowq5
+diff --git a/scripts/ui_kit.gd b/scripts/ui_kit.gd
+index 750251a..9db12fa 100644
+--- a/scripts/ui_kit.gd
++++ b/scripts/ui_kit.gd
+@@ -2,25 +2,25 @@ extends RefCounted
+ ## v149.21 UI: shared colours, cards and the typed chronicle entries
+ ## (player bubble, NPC bubble, narration, notes, notices, failed input).
+ 
+-const BG := Color("#080e15")
+-const HEADER := Color("#0c1520")
+-const PANEL := Color("#0f1924")
+-const PANEL_2 := Color("#13212f")
+-const LINE := Color("#1d2f42")
+-const EDGE := Color("#2a4258")
+-const TEXT := Color("#e6edf3")
+-const BODY := Color("#d7e0e8")
+-const MUTED := Color("#9fb0c0")
+-const FAINT := Color("#8597a8")
+-const ACCENT := Color("#9fd0e6")
+-const PLAYER := Color("#244357")
+-const NPC := Color("#142231")
+-const WARN_BG := Color("#2a1a10")
+-const WARN_EDGE := Color("#7a4a2a")
+-const WARN_TEXT := Color("#ffcfa8")
+-const OK_BG := Color("#13281f")
+-const OK_EDGE := Color("#2d5a42")
+-const OK_TEXT := Color("#9fe3b9")
++const BG := Color("#161917")
++const HEADER := Color("#1B1E1C")
++const PANEL := Color("#1E221F")
++const PANEL_2 := Color("#262B27")
++const LINE := Color("#2E342F")
++const EDGE := Color("#3E463F")
++const TEXT := Color("#ECE8DC")
++const BODY := Color("#DDD8CB")
++const MUTED := Color("#A9A596")
++const FAINT := Color("#8E8B7F")
++const ACCENT := Color("#C9AE7A")
++const PLAYER := Color("#33403C")
++const NPC := Color("#232823")
++const WARN_BG := Color("#2E211A")
++const WARN_EDGE := Color("#8A5A38")
++const WARN_TEXT := Color("#F0C9A0")
++const OK_BG := Color("#1E2A22")
++const OK_EDGE := Color("#5E7A62")
++const OK_TEXT := Color("#B9D7BC")
+ const VITAL_COLORS := {"体力": Color("#7fd1a1"), "満腹度": Color("#ffb27a"), "水分状態": Color("#7cc0de"), "休息状態": Color("#b9a7f0"), "心": Color("#e6a3c4")}
+ const VITAL_SHORT := {"体力": "体力", "満腹度": "満腹", "水分状態": "水分", "休息状態": "休息", "心": "心"}
+ const SOCIETY := {"normal": ["平常", 0], "alert": ["警戒", 1], "disrupted": ["混乱", 2], "emergency": ["緊急", 3]}
+@@ -39,6 +39,33 @@ static func box(bg: Color, edge: Color = Color(0, 0, 0, 0), radius: int = 12, pa
+ 	st.content_margin_bottom = pad_y
+ 	return st
+ 
++## v149.35: the textured UI kit (res://dcj_ui). A 9-slice of one of its
++## pictures, or null when the picture is missing (then the flat style is used).
++const KIT := "res://assets/ui/dcj_ui/"
++## Dark text on the light (ochre) action button.
++const ON_ACTION := Color("#242822")
++
++static func skin(name: String, margin: Vector4 = Vector4(12, 12, 12, 12), pad: Vector4 = Vector4(14, 8, 14, 8)) -> StyleBox:
++	var path := KIT + name + ".png"
++	if not ResourceLoader.exists(path):
++		return null
++	var st := StyleBoxTexture.new()
++	st.texture = load(path)
++	st.texture_margin_left = margin.x
++	st.texture_margin_top = margin.y
++	st.texture_margin_right = margin.z
++	st.texture_margin_bottom = margin.w
++	st.content_margin_left = pad.x
++	st.content_margin_top = pad.y
++	st.content_margin_right = pad.z
++	st.content_margin_bottom = pad.w
++	return st
++
++## The kit's picture if there is one, else a flat box.
++static func skin_or(name: String, fallback: StyleBox, margin: Vector4 = Vector4(12, 12, 12, 12), pad: Vector4 = Vector4(14, 8, 14, 8)) -> StyleBox:
++	var st := skin(name, margin, pad)
++	return st if st != null else fallback
++
+ static func label(text: String, size: int = 15, color: Color = TEXT, wrap: bool = true) -> Label:
+ 	var l := Label.new()
+ 	l.text = text
+@@ -64,28 +91,43 @@ static func button(text: String, primary: bool = false, height: int = 44, size:
+ 	b.text = text
+ 	b.custom_minimum_size.y = height
+ 	b.add_theme_font_size_override("font_size", size)
+-	var bg := Color("#2d5a74") if primary else PANEL_2
+-	var edge := Color("#5b8aa5") if primary else EDGE
+-	b.add_theme_stylebox_override("normal", box(bg, edge, 10, 12, 6))
+-	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), edge.lightened(0.15), 10, 12, 6))
+-	b.add_theme_stylebox_override("pressed", box(bg.lightened(0.15), edge.lightened(0.25), 10, 12, 6))
+-	b.add_theme_stylebox_override("disabled", box(bg.darkened(0.3), LINE, 10, 12, 6))
++	var bg := Color("#C9AE7A") if primary else PANEL_2
++	var edge := Color("#E0CB9A") if primary else EDGE
++	var m := Vector4(12, 12, 12, 12) if primary else Vector4(20, 12, 20, 12)
++	var pad := Vector4(14, 6, 14, 6)
++	b.add_theme_stylebox_override("normal", skin_or("action" if primary else "button_quiet", box(bg, edge, 10, 12, 6), m, pad))
++	b.add_theme_stylebox_override("hover", skin_or("action" if primary else "button_quiet", box(bg.lightened(0.08), edge.lightened(0.15), 10, 12, 6), m, pad))
++	b.add_theme_stylebox_override("pressed", skin_or("action_pressed" if primary else "button_quiet_pressed", box(bg.lightened(0.15), edge.lightened(0.25), 10, 12, 6), m, pad))
++	b.add_theme_stylebox_override("disabled", skin_or("action_disabled" if primary else "button_quiet", box(bg.darkened(0.3), LINE, 10, 12, 6), m, pad))
+ 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+-	b.add_theme_color_override("font_color", TEXT)
++	b.add_theme_color_override("font_color", ON_ACTION if primary else TEXT)
++	b.add_theme_color_override("font_hover_color", ON_ACTION if primary else TEXT)
++	b.add_theme_color_override("font_pressed_color", ON_ACTION if primary else TEXT)
++	b.add_theme_color_override("font_disabled_color", FAINT)
+ 	return b
+ 
+-static func chip(text: String, color: Color = TEXT, bg: Color = PANEL_2, edge: Color = Color("#2f4b62")) -> Button:
++static func chip(text: String, color: Color = TEXT, bg: Color = PANEL_2, edge: Color = Color("#4A524B")) -> Button:
+ 	var b := Button.new()
+ 	b.text = text
+-	b.custom_minimum_size.y = 38
++	b.custom_minimum_size.y = 40
+ 	b.add_theme_font_size_override("font_size", 14)
+-	b.add_theme_stylebox_override("normal", box(bg, edge, 19, 14, 4))
+-	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), edge.lightened(0.2), 19, 14, 4))
+-	b.add_theme_stylebox_override("pressed", box(bg.lightened(0.15), edge.lightened(0.3), 19, 14, 4))
++	var m := Vector4(22, 10, 22, 10)
++	var pad := Vector4(18, 4, 18, 4)
++	b.add_theme_stylebox_override("normal", skin_or("chip", box(bg, edge, 19, 14, 4), m, pad))
++	b.add_theme_stylebox_override("hover", skin_or("chip", box(bg.lightened(0.08), edge.lightened(0.2), 19, 14, 4), m, pad))
++	b.add_theme_stylebox_override("pressed", skin_or("chip_pressed", box(bg.lightened(0.15), edge.lightened(0.3), 19, 14, 4), m, pad))
+ 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+ 	b.add_theme_color_override("font_color", color)
++	b.add_theme_color_override("font_hover_color", color)
++	b.add_theme_color_override("font_pressed_color", ACCENT)
+ 	return b
+ 
++## v149.35: the city's state as a small plaque (平常・警戒・混乱・緊急).
++static func badge(text: String, stage: int) -> StyleBox:
++	var names := ["normal", "alert", "disrupted", "emergency"]
++	var fallback := box(OK_BG if stage == 0 else WARN_BG, OK_EDGE if stage == 0 else WARN_EDGE, 11, 9, 3)
++	return skin_or("badge_" + names[clampi(stage, 0, 3)], fallback, Vector4(8, 8, 8, 8), Vector4(10, 3, 10, 3))
++
+ static func tag(text: String, good: bool) -> Label:
+ 	var l := label(text, 12, OK_TEXT if good else WARN_TEXT, false)
+ 	var st := box(OK_BG if good else WARN_BG, OK_EDGE if good else WARN_EDGE, 11, 10, 3)
+@@ -105,6 +147,15 @@ static func bar(value: float, color: Color, height: int = 6) -> ProgressBar:
+ 	var fill := StyleBoxFlat.new()
+ 	fill.bg_color = color
+ 	fill.set_corner_radius_all(3)
++	# v149.35: the kit's track and fill (the fill tinted with the vital's colour).
++	var kit_back := skin("bar_bg", Vector4(5, 4, 5, 4), Vector4(0, 0, 0, 0))
++	var kit_fill := skin("bar_fill", Vector4(5, 4, 5, 4), Vector4(0, 0, 0, 0))
++	if kit_back != null and kit_fill != null:
++		kit_fill.modulate_color = color
++		b.custom_minimum_size.y = maxi(height, 8)
++		b.add_theme_stylebox_override("background", kit_back)
++		b.add_theme_stylebox_override("fill", kit_fill)
++		return b
+ 	b.add_theme_stylebox_override("background", back)
+ 	b.add_theme_stylebox_override("fill", fill)
+ 	return b
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
 index 1e90817..de6f6d1 100644
 --- a/scripts/walkers.gd
@@ -103062,6 +105111,13 @@ index 0000000..f2a2947
 +		note("cards-stuck", "%s not finished" % t.kind)
 +	t._leave()
 +	await process_frame
+diff --git a/tests/_soak.gd.uid b/tests/_soak.gd.uid
+new file mode 100644
+index 0000000..9ec312c
+--- /dev/null
++++ b/tests/_soak.gd.uid
+@@ -0,0 +1 @@
++uid://d0pftugvxyjd6
 diff --git a/tests/_transcript.gd b/tests/_transcript.gd
 new file mode 100644
 index 0000000..532e2fd
@@ -103153,6 +105209,13 @@ index 0000000..532e2fd
 +			for c in ["周囲を見る", "総合病院へ行く", "ロビーに行く", "病室に行く", "ベッドで休む", "薬品庫に行く", "物資を探索する", "入口に戻る", "大通りへ行く", "中学校へ行く", "保健室に行く", "物資を探索する", "家に帰る", "種を植える", "水やり", "寝る"]:
 +				await say(c)
 +	quit()
+diff --git a/tests/_transcript.gd.uid b/tests/_transcript.gd.uid
+new file mode 100644
+index 0000000..85f82d7
+--- /dev/null
++++ b/tests/_transcript.gd.uid
+@@ -0,0 +1 @@
++uid://d3n5wdbmldjho
 diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
 index 7be9f4a..3c1b11f 100644
 --- a/tests/test_action_play149_32.gd
