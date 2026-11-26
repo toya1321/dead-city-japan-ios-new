@@ -471,6 +471,190 @@ index 0000000..9d2fb7b
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_planter_growing.jpg.import b/assets/actions/act_planter_growing.jpg.import
+new file mode 100644
+index 0000000..962fe1d
+--- /dev/null
++++ b/assets/actions/act_planter_growing.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://boukvg7riwtuq"
++path="res://.godot/imported/act_planter_growing.jpg-e6fe1fd7b7da1c0f4132e8f1cb87df7c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_planter_growing.jpg"
++dest_files=["res://.godot/imported/act_planter_growing.jpg-e6fe1fd7b7da1c0f4132e8f1cb87df7c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_planter_ready.jpg.import b/assets/actions/act_planter_ready.jpg.import
+new file mode 100644
+index 0000000..c6450b5
+--- /dev/null
++++ b/assets/actions/act_planter_ready.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bwsx2t3kemerf"
++path="res://.godot/imported/act_planter_ready.jpg-25628590240cac44a9049817a8599635.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_planter_ready.jpg"
++dest_files=["res://.godot/imported/act_planter_ready.jpg-25628590240cac44a9049817a8599635.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_planter_sprout.jpg.import b/assets/actions/act_planter_sprout.jpg.import
+new file mode 100644
+index 0000000..47347d4
+--- /dev/null
++++ b/assets/actions/act_planter_sprout.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cdjr3633bwbb5"
++path="res://.godot/imported/act_planter_sprout.jpg-346ab30ff935cc735793b0cfacf35967.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_planter_sprout.jpg"
++dest_files=["res://.godot/imported/act_planter_sprout.jpg-346ab30ff935cc735793b0cfacf35967.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_planter_withered.jpg.import b/assets/actions/act_planter_withered.jpg.import
+new file mode 100644
+index 0000000..1bcb73d
+--- /dev/null
++++ b/assets/actions/act_planter_withered.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cax3rvr2cer8f"
++path="res://.godot/imported/act_planter_withered.jpg-1d82879f23fcf03dfa6b50140a54ce7b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_planter_withered.jpg"
++dest_files=["res://.godot/imported/act_planter_withered.jpg-1d82879f23fcf03dfa6b50140a54ce7b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/faces/README.md b/assets/faces/README.md
 index c4c7331..1dfd0fb 100644
 --- a/assets/faces/README.md
@@ -2479,6 +2663,144 @@ index 0000000..95e9450
 +
 +source_file="res://assets/photos/bridge_overgrown.jpg"
 +dest_files=["res://.godot/imported/bridge_overgrown.jpg-f6004f058ac2bf54c929af032798d324.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_houses_1.jpg.import b/assets/photos/community_houses_1.jpg.import
+new file mode 100644
+index 0000000..8a9848c
+--- /dev/null
++++ b/assets/photos/community_houses_1.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://m3o4lwf7olkg"
++path="res://.godot/imported/community_houses_1.jpg-cad60177fa11fecfec3ed1af86665184.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_houses_1.jpg"
++dest_files=["res://.godot/imported/community_houses_1.jpg-cad60177fa11fecfec3ed1af86665184.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_houses_2.jpg.import b/assets/photos/community_houses_2.jpg.import
+new file mode 100644
+index 0000000..a2e2982
+--- /dev/null
++++ b/assets/photos/community_houses_2.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://blmi5gnnrlmxu"
++path="res://.godot/imported/community_houses_2.jpg-7d88bec79a66ee6784a38561a977c4c0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_houses_2.jpg"
++dest_files=["res://.godot/imported/community_houses_2.jpg-7d88bec79a66ee6784a38561a977c4c0.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_houses_3.jpg.import b/assets/photos/community_houses_3.jpg.import
+new file mode 100644
+index 0000000..6811631
+--- /dev/null
++++ b/assets/photos/community_houses_3.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dw7pdogl3k5xy"
++path="res://.godot/imported/community_houses_3.jpg-9c9cd2899885f835555787e484f68b60.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_houses_3.jpg"
++dest_files=["res://.godot/imported/community_houses_3.jpg-9c9cd2899885f835555787e484f68b60.ctex"]
 +
 +[params]
 +
@@ -8117,6 +8439,190 @@ index 0000000..2d1bc14
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_bridge.jpg.import b/assets/photos/station_platform_bridge.jpg.import
+new file mode 100644
+index 0000000..27419bd
+--- /dev/null
++++ b/assets/photos/station_platform_bridge.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bieb33bhumpbu"
++path="res://.godot/imported/station_platform_bridge.jpg-f7ee42e48fead646df4409e2ce3c43cb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_bridge.jpg"
++dest_files=["res://.godot/imported/station_platform_bridge.jpg-f7ee42e48fead646df4409e2ce3c43cb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_bridge_alert.jpg.import b/assets/photos/station_platform_bridge_alert.jpg.import
+new file mode 100644
+index 0000000..f625d8d
+--- /dev/null
++++ b/assets/photos/station_platform_bridge_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bjrah2aqylqno"
++path="res://.godot/imported/station_platform_bridge_alert.jpg-c1faf51e45ea6d8342681b541c008c94.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_bridge_alert.jpg"
++dest_files=["res://.godot/imported/station_platform_bridge_alert.jpg-c1faf51e45ea6d8342681b541c008c94.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_bridge_collapse.jpg.import b/assets/photos/station_platform_bridge_collapse.jpg.import
+new file mode 100644
+index 0000000..813b044
+--- /dev/null
++++ b/assets/photos/station_platform_bridge_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://i3cs6s521yfe"
++path="res://.godot/imported/station_platform_bridge_collapse.jpg-c42152f901a363ef377922fe390629aa.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_bridge_collapse.jpg"
++dest_files=["res://.godot/imported/station_platform_bridge_collapse.jpg-c42152f901a363ef377922fe390629aa.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_bridge_overgrown.jpg.import b/assets/photos/station_platform_bridge_overgrown.jpg.import
+new file mode 100644
+index 0000000..923f429
+--- /dev/null
++++ b/assets/photos/station_platform_bridge_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dac5ejqpuvimu"
++path="res://.godot/imported/station_platform_bridge_overgrown.jpg-d5058bbb936feb762cc60a843b193265.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_bridge_overgrown.jpg"
++dest_files=["res://.godot/imported/station_platform_bridge_overgrown.jpg-d5058bbb936feb762cc60a843b193265.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/photos/station_platform_collapse.jpg.import b/assets/photos/station_platform_collapse.jpg.import
 new file mode 100644
 index 0000000..9ad790d
@@ -8367,6 +8873,190 @@ index 0000000..f7232be
 +
 +source_file="res://assets/photos/station_platform_overgrown.jpg"
 +dest_files=["res://.godot/imported/station_platform_overgrown.jpg-5492d93347e7e0d5962232634c1852c6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_waiting.jpg.import b/assets/photos/station_platform_waiting.jpg.import
+new file mode 100644
+index 0000000..b2b7b70
+--- /dev/null
++++ b/assets/photos/station_platform_waiting.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://btmwwagmo08lt"
++path="res://.godot/imported/station_platform_waiting.jpg-14b678d28fed4a92c0ad691c09859abc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_waiting.jpg"
++dest_files=["res://.godot/imported/station_platform_waiting.jpg-14b678d28fed4a92c0ad691c09859abc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_waiting_alert.jpg.import b/assets/photos/station_platform_waiting_alert.jpg.import
+new file mode 100644
+index 0000000..7c5fcee
+--- /dev/null
++++ b/assets/photos/station_platform_waiting_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cblppo3avrqqi"
++path="res://.godot/imported/station_platform_waiting_alert.jpg-0c57d7c74fe62f4d0059bb3a0b54f55c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_waiting_alert.jpg"
++dest_files=["res://.godot/imported/station_platform_waiting_alert.jpg-0c57d7c74fe62f4d0059bb3a0b54f55c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_waiting_collapse.jpg.import b/assets/photos/station_platform_waiting_collapse.jpg.import
+new file mode 100644
+index 0000000..3113d01
+--- /dev/null
++++ b/assets/photos/station_platform_waiting_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dmbjd2ht3gr7y"
++path="res://.godot/imported/station_platform_waiting_collapse.jpg-54363625257cdfa9ee39cca93663153e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_waiting_collapse.jpg"
++dest_files=["res://.godot/imported/station_platform_waiting_collapse.jpg-54363625257cdfa9ee39cca93663153e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/station_platform_waiting_overgrown.jpg.import b/assets/photos/station_platform_waiting_overgrown.jpg.import
+new file mode 100644
+index 0000000..ab78fdd
+--- /dev/null
++++ b/assets/photos/station_platform_waiting_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bmwwpaaug077u"
++path="res://.godot/imported/station_platform_waiting_overgrown.jpg-62fef417f025f35ca715efc5ab92dc15.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/station_platform_waiting_overgrown.jpg"
++dest_files=["res://.godot/imported/station_platform_waiting_overgrown.jpg-62fef417f025f35ca715efc5ab92dc15.ctex"]
 +
 +[params]
 +
@@ -90043,10 +90733,10 @@ index 0000000..2c112a7
 @@ -0,0 +1 @@
 +uid://bdaqf6pdnjf73
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..0f0ed46 100644
+index 35febbb..f5ae1ec 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -34,8 +34,11 @@ const KINDS := [
+@@ -34,9 +34,13 @@ const KINDS := [
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
@@ -90057,9 +90747,11 @@ index 35febbb..0f0ed46 100644
 -	["plant", "^植え付けた", "種をまいた。"],
 +	["plant", "^([^【「（\\n]{1,10}を)?植え付けた", "種をまいた。"],
  	["harvest", "^収穫した", "収穫した。"],
++	["planter", "^(まだ収穫できない|枯れた株を抜いた|最初の鉢は、もう枯れて)", "プランターをのぞいた。"],
  	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
  	["lock", "^玄関を閉めて施錠した", "鍵を閉めた。"],
-@@ -53,6 +56,11 @@ const KINDS := [
+ 	["pack", "^(自宅から持ち出した|拠点の備蓄から持ち出した)", "荷物を詰めた。"],
+@@ -53,6 +57,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -90071,7 +90763,29 @@ index 35febbb..0f0ed46 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -130,5 +138,9 @@ static func _path(world, kind: String) -> String:
+@@ -120,8 +129,21 @@ static func path(world, kind: String) -> String:
+ 		found = _path(world, str(FALLBACK[kind]))
+ 	return found
+ 
++## v149.35: the planter as it stands (sprouted, growing, ready, withered).
++static func planter_stage(world) -> String:
++	var plots: Array = world.s.get("plots", [])
++	if plots.is_empty():
++		return "withered"
++	var plot: Dictionary = plots[0]
++	if bool(plot.get("dead", false)):
++		return "withered"
++	var growth := float(plot.get("growth", 0.0))
++	return "ready" if growth >= 1.0 else ("growing" if growth >= 0.35 else "sprout")
++
+ static func _path(world, kind: String) -> String:
+ 	var options: Array = []
++	if kind in ["planter", "water_plants"]:
++		options.append("act_planter_%s" % planter_stage(world))
+ 	if kind == "eat" and not world.s.household_members.is_empty():
+ 		options.append("act_eat_together")
+ 	if crisis(world):
+@@ -130,5 +152,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -90193,10 +90907,10 @@ index 2b63b02..ad9e84c 100644
  	["distract", ["投げ", "気をそら", "注意をそら", "おとり", "囮", "音を出", "鳴らし", "気を引"]],
 diff --git a/scripts/communities.gd b/scripts/communities.gd
 new file mode 100644
-index 0000000..9ef7f24
+index 0000000..553bfa9
 --- /dev/null
 +++ b/scripts/communities.gd
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,447 @@
 +extends RefCounted
 +## v149.38 stage 3: neighbours who band together. Once the town has broken
 +## down, the households still holed up in one block of the estate, one band
@@ -90553,6 +91267,19 @@ index 0000000..9ef7f24
 +	return line + "（「手伝う」「食料を寄付する」「仲間に入れてもらう」）"
 +
 +## The barricade photo, while the player is at it (an hour after calling on them).
++## v149.35: how far a neighbourhood has come — dug a patch (1), the patch
++## and the shared work going (2), settled in (3). Pictures:
++## community_<houses|danchi|tower>_<stage>.jpg (only the street of houses so far).
++static func life_photo(world, area: String) -> String:
++	var c := here(world, area)
++	if c.is_empty():
++		return ""
++	var garden := float(c.garden)
++	var stage := 1 if garden < 1.0 else (2 if garden < 4.0 else 3)
++	var kind := "danchi" if area == "団地" else ("tower" if area == "駅前のマンション" else "houses")
++	var path := "res://assets/photos/community_%s_%d.jpg" % [kind, stage]
++	return path if ResourceLoader.exists(path) else ""
++
 +static func photo(world, area: String) -> String:
 +	var at = world.s.get("residents", {}).get("called_on", []) if world.s.get("residents") is Dictionary else []
 +	if not at is Array or at.size() != 2 or str(at[0]) != area or int(world.s.minute) - int(at[1]) > 60 or here(world, area).is_empty():
@@ -91711,7 +92438,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..d271150 100644
+index 0f2add4..9e7f8a2 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -92025,7 +92752,7 @@ index 0f2add4..d271150 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3983,33 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +3983,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -92036,9 +92763,16 @@ index 0f2add4..d271150 100644
 +	if not load("res://scripts/gangs.gd").at(world, _site()).is_empty():
 +		name = "looter_den"
 +	elif District.is_houses(location) and load("res://scripts/communities.gd").player_here(world, location):
++		# v149.35: the neighbourhood as it has grown, once there is a picture for it.
++		var grown: String = load("res://scripts/communities.gd").life_photo(world, location)
++		if not grown.is_empty():
++			return grown
 +		name = "community_life"
 +	elif District.is_houses(location) and not load("res://scripts/communities.gd").photo(world, location).is_empty():
 +		return load("res://scripts/communities.gd").photo(world, location)
++	elif District.is_houses(location) and not load("res://scripts/communities.gd").life_photo(world, location).is_empty() and float(load("res://scripts/communities.gd").here(world, location).get("garden", 0.0)) >= 1.0:
++		# Walking past: the dug patch and the shared work show from the street.
++		return load("res://scripts/communities.gd").life_photo(world, location)
 +	if name.is_empty():
 +		return load("res://scripts/residents.gd").scene_photo(world, location)
 +	var path := "res://assets/photos/%s.jpg" % name
@@ -92059,7 +92793,7 @@ index 0f2add4..d271150 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4053,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4060,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -92080,7 +92814,7 @@ index 0f2add4..d271150 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4086,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4093,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -92099,7 +92833,7 @@ index 0f2add4..d271150 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4113,9 @@ func _site() -> String:
+@@ -3875,6 +4120,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -92109,7 +92843,7 @@ index 0f2add4..d271150 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4147,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4154,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -92118,7 +92852,7 @@ index 0f2add4..d271150 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4171,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4178,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -92133,7 +92867,7 @@ index 0f2add4..d271150 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4190,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4197,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -92146,7 +92880,7 @@ index 0f2add4..d271150 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4211,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4218,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -92157,7 +92891,7 @@ index 0f2add4..d271150 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4294,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4301,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -94671,10 +95405,10 @@ index 79480a1..dd84cbd 100644
  			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
 diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
 new file mode 100644
-index 0000000..d105199
+index 0000000..85ce1c5
 --- /dev/null
 +++ b/scripts/site_rooms.gd
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,296 @@
 +extends RefCounted
 +## v149.35: some of the town's buildings can be walked through room by room —
 +## each room has its own picture at every stage of the town (normal → alert →
@@ -94740,6 +95474,16 @@ index 0000000..d105199
 +				"alert": "改札の脇に手指消毒液が置かれ、券売機の前にロープが張られている。駅員の窓口は閉まっている。",
 +				"collapse": "改札機の表示は消え、ロープの支柱が倒れている。床に誰かの旅行かばんが置き去りにされている。",
 +				"overgrown": "改札機は錆びつき、階段は苔に覆われている。天井から蔦が垂れ、置き去りのかばんにも落ち葉が積もっている。"}},
++		{"name": "待合室", "key": "waiting", "public": true, "food": 0.3, "water": 0.8,
++			"text": {"normal": "ホームの待合室。青いプラスチックの椅子と木のベンチ。壁に時刻表と路線図、隅に飲み物の自動販売機がある。",
++				"alert": "待合室の椅子に、一つおきに黄色いテープが貼られている。ベンチに消毒液。自動販売機は売り切れのランプばかりだ。",
++				"collapse": "待合室のゴミ箱が倒れ、空き缶が転がっている。ベンチの下に、誰かのバッグが置き去りにされている。",
++				"overgrown": "待合室の壁ははがれ、窓ガラスにひびが走り、蔦が入りこんでいる。自動販売機は錆びて、中のボトルが色あせている。"}},
++		{"name": "跨線橋", "key": "bridge", "public": true, "food": 0.2, "water": 0.2,
++			"text": {"normal": "線路をまたぐ跨線橋の通路。窓の外に、ホームと線路と向こうの山が見える。",
++				"alert": "跨線橋の掲示板に、マスクと手洗いを呼びかける貼り紙。階段の手前に消毒液のスタンドが立っている。",
++				"collapse": "消毒液のスタンドが倒れ、窓ガラスが一枚割れている。階段の手前に、キャリーケースが一つ残されている。",
++				"overgrown": "跨線橋の天井に雨じみが広がり、壁を苔が覆っている。窓の外の線路は、草に埋もれている。"}},
 +	],
 +}
 +
@@ -95936,7 +96680,7 @@ index 1e93ac4..dfc1830 100644
  const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
  ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 5d08c00..71310f6 100644
+index 5d08c00..46c7945 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -1,5 +1,6 @@
@@ -95989,6 +96733,14 @@ index 5d08c00..71310f6 100644
  	if data.has("shelter") and not Shelter.valid(data.shelter):
  		return false
  	if data.has("raid") and not Raiders.valid(data.raid):
+@@ -513,6 +522,7 @@ func action(kind: String, household: bool = false) -> String:
+ 		return "補強を1段外し、木材2と部品1を回収した（%d分）。"%elapsed
+ 	if kind=="tend":
+ 		if s.plots.is_empty():return "栽培中の作物はない。"
++		if bool(s.plots[0].get("dead", false)):return "最初の鉢は、もう枯れてしまっている。（「収穫」で枯れた株を抜ける）"
+ 		if float(s.rain_water)>=1:s.rain_water-=1
+ 		elif (bool(s.water_online) if household else tap_available()):s.tap_water_used+=1
+ 		elif float(s.water)>=1:s.water-=1;s.water_used+=1
 diff --git a/scripts/world_events.gd b/scripts/world_events.gd
 index 33cced8..8412c0c 100644
 --- a/scripts/world_events.gd
@@ -96013,12 +96765,25 @@ index 33cced8..8412c0c 100644
  		"crop_care":
  			sim.warehouse.water-=2
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index 847392a..43adc5e 100644
+index 847392a..05bef68 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
-@@ -246,7 +246,12 @@ func step(sleeping: bool) -> void:
+@@ -245,8 +245,25 @@ func step(sleeping: bool) -> void:
+ 			pending.append(n)
  	s.noise = pending
  	for plot in s.plots:
++		# v149.35: three days with dry soil, and the planter dies.
++		if bool(plot.get("dead", false)):
++			continue
++		if str(s.weather) == "rain":
++			# Rain waters the planters outside.
++			plot.water = maxf(float(plot.water), 0.5)
++		if float(plot.water) <= 0.0:
++			plot.dry = float(plot.get("dry", 0.0)) + 1.0/1440.0
++			if float(plot.dry) >= 3.0:
++				plot.dead = true
++			continue
++		plot.dry = 0.0
  		if plot.water>0:
 -			plot.growth = minf(1.0,plot.growth+_crop_growth_factor()/(14*1440))
 +			# v149.36: each crop on its own timetable, slowed by the season.
@@ -96030,7 +96795,7 @@ index 847392a..43adc5e 100644
  			plot.water = maxf(0.0,plot.water-1.0/1440.0)
  
  # Hidden deterministic outbreak timeline. Independent of player observations.
-@@ -858,12 +863,7 @@ func action(kind: String, household: bool = false) -> String:
+@@ -858,26 +875,45 @@ func action(kind: String, household: bool = false) -> String:
  			advance(30)
  			return "プランターを製作した（30分）。"
  		"plant":
@@ -96043,19 +96808,15 @@ index 847392a..43adc5e 100644
 +			return plant("komatsuna")
  		"tend":
  			if s.plots.is_empty(): return "栽培中の作物はない。"
++			if bool(s.plots[0].get("dead", false)): return "最初の鉢は、もう枯れてしまっている。（「収穫」で枯れた株を抜ける）"
  			if s.rain_water<1.0: return "ためておいた雨水が1L必要。"
-@@ -871,13 +871,29 @@ func action(kind: String, household: bool = false) -> String:
+ 			s.rain_water-=1.0
  			s.plots[0].water+=1.0
  			return "最初の鉢に水1Lを与えた。"
  		"harvest":
 +			var Crops = load("res://scripts/crops.gd")
- 			for plot in s.plots:
- 				if plot.growth>=1.0:
--					plot.growth=0.0
--					s.food+=0.5
--					s.inventory.harvest+=1.0
--					return "収穫した。食卓に出せる青菜が少し増えた（食料0.5人日分）。"
--			return "まだ収穫できない。"
++			for plot in s.plots:
++				if plot.growth>=1.0 and not bool(plot.get("dead", false)):
 +					var crop := str(plot.get("crop", ""))
 +					if not Crops.CROPS.has(crop):
 +						# A planter sown before crops had names: greens that regrow.
@@ -96071,15 +96832,28 @@ index 847392a..43adc5e 100644
 +					return "収穫した：%s（食料%.1f人日分）。空いたプランターに、また何か植えられる。" % [Crops.label(crop) if Crops.CROPS.has(crop) else "青菜", amount]
 +			if s.plots.is_empty():
 +				return "栽培中の作物はない。"
++			# v149.35: dead plants are pulled out, and the planter is free again.
++			var dead: Array = s.plots.filter(func(q): return bool(q.get("dead", false)))
++			if not dead.is_empty():
++				for q in dead:
++					s.plots.erase(q)
++					s.inventory.planter += 1
++				return "枯れた株を抜いた。茶色く縮れた葉が、土の上で崩れた。空いたプランター%d鉢に、また何か植えられる。" % dead.size()
 +			var best: Dictionary = s.plots[0]
-+			for plot in s.plots:
+ 			for plot in s.plots:
+-				if plot.growth>=1.0:
+-					plot.growth=0.0
+-					s.food+=0.5
+-					s.inventory.harvest+=1.0
+-					return "収穫した。食卓に出せる青菜が少し増えた（食料0.5人日分）。"
+-			return "まだ収穫できない。"
 +				if float(plot.growth) > float(best.growth):
 +					best = plot
 +			return "まだ収穫できない。（いちばん育っている%sで、%d%%ほど）" % [Crops.label(str(best.get("crop", "komatsuna"))), int(float(best.growth) * 100.0)]
  		"fortify":
  			if s.inventory.wood<3 or s.inventory.parts<2: return "補強：木材3・部品2が必要。"
  			s.inventory.wood-=3
-@@ -997,6 +1013,30 @@ func _road_connector() -> float:
+@@ -997,6 +1033,30 @@ func _road_connector() -> float:
  	return 50.0
  func _traffic_speed_factor() -> float:
  	return 1.0
@@ -96428,7 +97202,7 @@ index 0000000..69af088
 +uid://ci3mo5q7a6ln4
 diff --git a/tests/test_hospital_rooms149_35.gd b/tests/test_hospital_rooms149_35.gd
 new file mode 100644
-index 0000000..0337bf0
+index 0000000..4b181a7
 --- /dev/null
 +++ b/tests/test_hospital_rooms149_35.gd
 @@ -0,0 +1,110 @@
@@ -96519,7 +97293,7 @@ index 0000000..0337bf0
 +			for ph in ["", "_alert", "_collapse", "_overgrown"]:
 +				if not ResourceLoader.exists("res://assets/photos/%s_%s%s.jpg" % [site[1], r.key, ph]):
 +					more_ok = false
-+	check(more_ok and SiteRooms.rooms("中学校").size() == 3 and SiteRooms.rooms("駅のホーム").size() == 1, "school rooms and station gates have their pictures")
++	check(more_ok and SiteRooms.rooms("中学校").size() == 3 and SiteRooms.rooms("駅のホーム").size() == 3, "school rooms and station gates have their pictures")
 +	w.s.society = "normal"
 +	w.s.regional_cases = 0
 +	g._move_to("北の住宅街")
@@ -97076,6 +97850,95 @@ index 0000000..0b4480b
 +++ b/tests/test_passing149_38.gd.uid
 @@ -0,0 +1 @@
 +uid://bwwk55chib1p3
+diff --git a/tests/test_places_planters149_35.gd b/tests/test_places_planters149_35.gd
+new file mode 100644
+index 0000000..022ca40
+--- /dev/null
++++ b/tests/test_places_planters149_35.gd
+@@ -0,0 +1,76 @@
++extends SceneTree
++## v149.35: the station's waiting room and footbridge; the neighbourhood's
++## life as it grows (street of houses); planters that sprout, grow, ripen —
++## and wither after three dry days.
++const Main = preload("res://main.tscn")
++const SiteRooms = preload("res://scripts/site_rooms.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 11
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var ok := true
++	for r in SiteRooms.rooms("駅のホーム"):
++		for ph in ["", "_alert", "_collapse", "_overgrown"]:
++			if not ResourceLoader.exists("res://assets/photos/station_platform_%s%s.jpg" % [r.key, ph]):
++				ok = false
++	check(ok and SiteRooms.rooms("駅のホーム").size() == 3, "gates, waiting room and footbridge each have their pictures")
++	g._move_to("駅前")
++	g.location = "駅のホーム"
++	g._sync_player_position()
++	await g._on_command("待合室に行く")
++	check(SiteRooms.current(w, "駅のホーム") == "待合室" and SiteRooms.photo(w, "駅のホーム", "collapse").ends_with("station_platform_waiting_collapse.jpg"), "into the waiting room")
++	await g._on_command("跨線橋に行く")
++	check(SiteRooms.current(w, "駅のホーム") == "跨線橋", "over the footbridge")
++	# Neighbourhood life pictures by how far the patch has come.
++	var Communities = load("res://scripts/communities.gd")
++	var Residents = load("res://scripts/residents.gd")
++	if Residents.ready(w):
++		var cm: Dictionary = Communities.all(w)
++		cm["住宅街:0"] = {"area": "住宅街", "block": 0, "since": 0, "store": 10.0, "water": 10.0, "garden": 0.5, "wall": 0.0, "trust": {}, "ended": false, "leader": [0], "last_out": 0}
++		var stages: Array = []
++		for gdn in [0.5, 2.0, 6.0]:
++			cm["住宅街:0"].garden = gdn
++			stages.append(Communities.life_photo(w, "住宅街").get_file())
++		check(stages == ["community_houses_1.jpg", "community_houses_2.jpg", "community_houses_3.jpg"], "the street's life in three stages: %s" % str(stages))
++		cm["団地:0"] = cm["住宅街:0"].duplicate(true)
++		cm["団地:0"].area = "団地"
++		check(Communities.life_photo(w, "団地").is_empty(), "no street-of-houses picture for the estate")
++	else:
++		check(false, "residents ready")
++	# Planters.
++	var AP = load("res://scripts/action_photos.gd")
++	w.s.weather = "clear"
++	w.s.plots = [{"growth": 0.1, "water": 1.0, "crop": "komatsuna"}]
++	check(AP.planter_stage(w) == "sprout" and AP.path(w, "planter").ends_with("act_planter_sprout.jpg"), "a sprouting planter")
++	w.s.plots[0].growth = 0.6
++	check(AP.planter_stage(w) == "growing", "a growing planter")
++	w.s.plots[0].growth = 1.0
++	check(AP.planter_stage(w) == "ready", "a planter ready to pick")
++	w.s.plots = [{"growth": 0.5, "water": 0.0, "crop": "komatsuna", "dry": 2.99}]
++	w.s.weather = "clear"
++	for m in 20:
++		w.s.weather = "clear"
++		w.step(false)
++	check(bool(w.s.plots[0].get("dead", false)) and AP.planter_stage(w) == "withered", "three dry days, and it withers")
++	var planters := int(w.s.inventory.planter)
++	g.location = "台所"
++	g._sync_player_position()
++	await g._on_command("収穫")
++	check(w.s.plots.is_empty() and int(w.s.inventory.planter) == planters + 1 and g.log_entries.slice(-6).any(func(e): return str(e).contains("枯れた株を抜いた")), "the dead plants are pulled and the planter is free")
++	check(AP.detect("枯れた株を抜いた。").get("kind", "") == "planter", "pulling them shows the withered planter")
++	g.queue_free()
++	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
++	quit(1 if failures else 0)
+diff --git a/tests/test_places_planters149_35.gd.uid b/tests/test_places_planters149_35.gd.uid
+new file mode 100644
+index 0000000..7f0b8ba
+--- /dev/null
++++ b/tests/test_places_planters149_35.gd.uid
+@@ -0,0 +1 @@
++uid://bqoj1hmwxypih
 diff --git a/tests/test_residents149_38.gd b/tests/test_residents149_38.gd
 new file mode 100644
 index 0000000..93a2742
