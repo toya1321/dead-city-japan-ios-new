@@ -78,6 +78,9 @@
    - 駅のホームに待合室（`waiting`、水が少し多い）と跨線橋（`bridge`）を追加。3部屋。
    - 住民の集まり（communities.gd）の暮らしの写真 `community_<houses|danchi|tower>_<1|2|3>.jpg`。段階は畑（c.garden）で 1.0未満=1、4.0未満=2、それ以上=3（`Communities.life_photo`）。仲間になっていればその写真（なければ従来の community_life）。通りがかりでも畑が1.0以上なら見える。いまあるのは houses（一戸建ての住宅街）だけ。danchi / tower はファイルを置けば自動で使われる。
    - プランターの写真 `act_planter_<sprout|growing|ready|withered>.jpg`（行動写真）。水やりと「まだ収穫できない」「枯れた株を抜いた」で、最初の鉢の状態を出す（成長0.35未満=芽、1.0未満=育ち中、1.0=収穫どき）。
+   - 団地の暮らしの写真 `community_danchi_0〜3`。0 は掘り始める前（畑0.3未満、ファイルがあるときだけ）。
+   - 居間の夜（18〜6時）: 電気がついていれば `living_night`、停電または「明かりを消す」なら `living_night_dark`（Cold.season_photo。寒さの写真が優先）。
+   - 行動写真: `act_cook_home`（ガス・電気のコンロで料理。カセットコンロは従来の act_cook）、`act_laundry`（新しい行動「洗濯する」。電気と水道があれば洗濯機で40分、なければ溜めた水10Lで手洗い60分。気分+4、3日以内の再洗濯は+1）、`act_pack_stocked` / `act_pack_bare`（自宅から持ち出すとき、家の食料が10人日以上／3人日未満）。
    - プランターは土が乾いたまま3日（plot.dry）で枯れる（plot.dead）。雨の日は水分0.5まで戻る。枯れた鉢には水をやれず、「収穫」で抜くとプランターが空く。
    - ほかの建物も `SITES` に足せば同じ仕組みで歩ける。テスト `test_hospital_rooms149_35.gd`。
    - 確認用ページ「住人名簿 v149.35」（Artifact）を出してある。ユーザーの直しが来たら、スクリプトか JSON を直して作り直す。

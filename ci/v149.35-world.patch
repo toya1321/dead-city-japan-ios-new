@@ -103,6 +103,52 @@ index 0000000..5d2d2ce
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_cook_home.jpg.import b/assets/actions/act_cook_home.jpg.import
+new file mode 100644
+index 0000000..05de28b
+--- /dev/null
++++ b/assets/actions/act_cook_home.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://djihymsjbepui"
++path="res://.godot/imported/act_cook_home.jpg-b0a6268ec74fdcd7a8b96694c4158cc6.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_cook_home.jpg"
++dest_files=["res://.godot/imported/act_cook_home.jpg-b0a6268ec74fdcd7a8b96694c4158cc6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_draw_pond.jpg.import b/assets/actions/act_draw_pond.jpg.import
 new file mode 100644
 index 0000000..2fb75c9
@@ -379,6 +425,52 @@ index 0000000..3b55e3e
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_laundry.jpg.import b/assets/actions/act_laundry.jpg.import
+new file mode 100644
+index 0000000..ec60121
+--- /dev/null
++++ b/assets/actions/act_laundry.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://np4655vyjb4u"
++path="res://.godot/imported/act_laundry.jpg-93bbf93b60635128e3890744bf82b894.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_laundry.jpg"
++dest_files=["res://.godot/imported/act_laundry.jpg-93bbf93b60635128e3890744bf82b894.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_listen.jpg.import b/assets/actions/act_listen.jpg.import
 new file mode 100644
 index 0000000..7077a52
@@ -445,6 +537,98 @@ index 0000000..9d2fb7b
 +
 +source_file="res://assets/actions/act_listen_2.jpg"
 +dest_files=["res://.godot/imported/act_listen_2.jpg-007a82c27663d332cdb74ddf12012191.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_pack_bare.jpg.import b/assets/actions/act_pack_bare.jpg.import
+new file mode 100644
+index 0000000..dba81f6
+--- /dev/null
++++ b/assets/actions/act_pack_bare.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://csj06wcbmpod7"
++path="res://.godot/imported/act_pack_bare.jpg-8ed7964adb6719a0023fbd8276d00472.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_pack_bare.jpg"
++dest_files=["res://.godot/imported/act_pack_bare.jpg-8ed7964adb6719a0023fbd8276d00472.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_pack_stocked.jpg.import b/assets/actions/act_pack_stocked.jpg.import
+new file mode 100644
+index 0000000..77ea2b3
+--- /dev/null
++++ b/assets/actions/act_pack_stocked.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://da7wnmhxwidpf"
++path="res://.godot/imported/act_pack_stocked.jpg-b7b55c6f0b2f9e9a028d66609035c3fe.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_pack_stocked.jpg"
++dest_files=["res://.godot/imported/act_pack_stocked.jpg-b7b55c6f0b2f9e9a028d66609035c3fe.ctex"]
 +
 +[params]
 +
@@ -2663,6 +2847,190 @@ index 0000000..95e9450
 +
 +source_file="res://assets/photos/bridge_overgrown.jpg"
 +dest_files=["res://.godot/imported/bridge_overgrown.jpg-f6004f058ac2bf54c929af032798d324.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_danchi_0.jpg.import b/assets/photos/community_danchi_0.jpg.import
+new file mode 100644
+index 0000000..00a3e75
+--- /dev/null
++++ b/assets/photos/community_danchi_0.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://g7c81cblx8nu"
++path="res://.godot/imported/community_danchi_0.jpg-555cb550983d1d2fd0b53aacd0bbdac3.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_danchi_0.jpg"
++dest_files=["res://.godot/imported/community_danchi_0.jpg-555cb550983d1d2fd0b53aacd0bbdac3.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_danchi_1.jpg.import b/assets/photos/community_danchi_1.jpg.import
+new file mode 100644
+index 0000000..c373c78
+--- /dev/null
++++ b/assets/photos/community_danchi_1.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bcewx41dh3vxd"
++path="res://.godot/imported/community_danchi_1.jpg-28c69a2d4859e92c5451dbb2a7ac913a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_danchi_1.jpg"
++dest_files=["res://.godot/imported/community_danchi_1.jpg-28c69a2d4859e92c5451dbb2a7ac913a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_danchi_2.jpg.import b/assets/photos/community_danchi_2.jpg.import
+new file mode 100644
+index 0000000..58713b5
+--- /dev/null
++++ b/assets/photos/community_danchi_2.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://degr7r5mk7tk5"
++path="res://.godot/imported/community_danchi_2.jpg-ddf0baa6e7ccd502c17eacd37dc8d1e8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_danchi_2.jpg"
++dest_files=["res://.godot/imported/community_danchi_2.jpg-ddf0baa6e7ccd502c17eacd37dc8d1e8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/community_danchi_3.jpg.import b/assets/photos/community_danchi_3.jpg.import
+new file mode 100644
+index 0000000..bac5a3f
+--- /dev/null
++++ b/assets/photos/community_danchi_3.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://clbg703vqyjxh"
++path="res://.godot/imported/community_danchi_3.jpg-9d412741c546f6784450031ef2c2a270.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/community_danchi_3.jpg"
++dest_files=["res://.godot/imported/community_danchi_3.jpg-9d412741c546f6784450031ef2c2a270.ctex"]
 +
 +[params]
 +
@@ -6711,6 +7079,98 @@ index 0000000..d3a4d2d
 +
 +source_file="res://assets/photos/junior_high_staff_overgrown.jpg"
 +dest_files=["res://.godot/imported/junior_high_staff_overgrown.jpg-d1d786399f8998458b21f61cad7d0993.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/living_night.jpg.import b/assets/photos/living_night.jpg.import
+new file mode 100644
+index 0000000..270968e
+--- /dev/null
++++ b/assets/photos/living_night.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://exx7u5lkmthl"
++path="res://.godot/imported/living_night.jpg-61da4889e077d6cf69fcfd4072f5034f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/living_night.jpg"
++dest_files=["res://.godot/imported/living_night.jpg-61da4889e077d6cf69fcfd4072f5034f.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/living_night_dark.jpg.import b/assets/photos/living_night_dark.jpg.import
+new file mode 100644
+index 0000000..06cfac1
+--- /dev/null
++++ b/assets/photos/living_night_dark.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c6ohdjqsbnab8"
++path="res://.godot/imported/living_night_dark.jpg-266d8357d004aa246e2d6e6e041ebbca.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/living_night_dark.jpg"
++dest_files=["res://.godot/imported/living_night_dark.jpg-266d8357d004aa246e2d6e6e041ebbca.ctex"]
 +
 +[params]
 +
@@ -90733,10 +91193,20 @@ index 0000000..2c112a7
 @@ -0,0 +1 @@
 +uid://bdaqf6pdnjf73
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..f5ae1ec 100644
+index 35febbb..6abfc45 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -34,9 +34,13 @@ const KINDS := [
+@@ -16,7 +16,9 @@ const KINDS := [
+ 	["fight_miss", "^打ちかかった", "空を切った。"],
+ 	["eat", "^(しっかり)?食事を取った", "食事をした。"],
+ 	["eat", "^軽くつまんだ", "少しだけ口にした。"],
++	["cook_home", "^台所で、(ガスコンロ|電気のコンロ)で.*温かい食事を作って食べた", "温かい食事を作った。"],
+ 	["cook", "^台所で、.*温かい食事を作って食べた", "温かい食事を作った。"],
++	["laundry", "^(洗濯機を回し|たらいに水を張って)", "洗濯物を干した。"],
+ 	["smoke", "^(換気扇の下で|窓を少し開けて、)?タバコに火をつけ", "一服した。"],
+ 	["drink", "^水を飲んだ", "水を飲んだ。"],
+ 	["bandage", "^傷を手当てした", "傷に包帯を巻いた。"],
+@@ -34,12 +36,17 @@ const KINDS := [
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
@@ -90750,8 +91220,13 @@ index 35febbb..f5ae1ec 100644
 +	["planter", "^(まだ収穫できない|枯れた株を抜いた|最初の鉢は、もう枯れて)", "プランターをのぞいた。"],
  	["blackout", "^家じゅうの窓を、毛布と段ボールでふさいで", "窓をふさいだ。"],
  	["lock", "^玄関を閉めて施錠した", "鍵を閉めた。"],
- 	["pack", "^(自宅から持ち出した|拠点の備蓄から持ち出した)", "荷物を詰めた。"],
-@@ -53,6 +57,11 @@ const KINDS := [
+-	["pack", "^(自宅から持ち出した|拠点の備蓄から持ち出した)", "荷物を詰めた。"],
++	["pack_home", "^自宅から持ち出した", "荷物を詰めた。"],
++	["pack", "^拠点の備蓄から持ち出した", "荷物を詰めた。"],
+ 	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
+ 	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
+ 	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
+@@ -53,6 +60,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -90763,7 +91238,16 @@ index 35febbb..f5ae1ec 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -120,8 +129,21 @@ static func path(world, kind: String) -> String:
+@@ -112,7 +124,7 @@ static func _find(base: String) -> String:
+ 
+ ## The picture for this action now, or "" if none has been made yet.
+ ## A moment with no picture of its own borrows a broader one.
+-const FALLBACK := {"siege_stab": "siege_hold", "siege_drop": "fight", "siege_hold": "fight", "fight_head": "fight", "fight_legs": "fight", "fight_miss": "fight", "push": "fight", "pin": "fight", "grabbed": "fight", "bitten": "fight"}
++const FALLBACK := {"cook_home": "cook", "pack_home": "pack", "siege_stab": "siege_hold", "siege_drop": "fight", "siege_hold": "fight", "fight_head": "fight", "fight_legs": "fight", "fight_miss": "fight", "push": "fight", "pin": "fight", "grabbed": "fight", "bitten": "fight"}
+ 
+ static func path(world, kind: String) -> String:
+ 	var found := _path(world, kind)
+@@ -120,8 +132,28 @@ static func path(world, kind: String) -> String:
  		found = _path(world, str(FALLBACK[kind]))
  	return found
  
@@ -90780,12 +91264,19 @@ index 35febbb..f5ae1ec 100644
 +
  static func _path(world, kind: String) -> String:
  	var options: Array = []
++	# v149.35: packing from home: the stock room as full or as bare as it is.
++	if kind == "pack_home":
++		var food := float(world.s.get("food", 0.0))
++		if food >= 10.0:
++			options.append("act_pack_stocked")
++		elif food < 3.0:
++			options.append("act_pack_bare")
 +	if kind in ["planter", "water_plants"]:
 +		options.append("act_planter_%s" % planter_stage(world))
  	if kind == "eat" and not world.s.household_members.is_empty():
  		options.append("act_eat_together")
  	if crisis(world):
-@@ -130,5 +152,9 @@ static func _path(world, kind: String) -> String:
+@@ -130,5 +162,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -90834,6 +91325,23 @@ index 2c13ef6..2dff67f 100644
  		cmd=str(synonyms.get(cmd,cmd))
  		var canonical:String=game._canonical_command(cmd)
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
+diff --git a/scripts/cold.gd b/scripts/cold.gd
+index 5b0d45e..a19863e 100644
+--- a/scripts/cold.gd
++++ b/scripts/cold.gd
+@@ -55,6 +55,12 @@ static func season_photo(world, place: String, housing: String) -> String:
+ 		return str(WINTER_PHOTOS[place])
+ 	if place in ["居間", "寝室"] and not world.has_home_power() and indoor(world) < 10.0:
+ 		return "living_cold" if place == "居間" else "bedroom_cold"
++	# v149.35: the living room after dark — lamps on, or (no power, or the
++	# lights put out) dark but for the moon through the curtains.
++	if place == "居間":
++		var hour := int(world.hour_of_day())
++		if hour < 6 or hour >= 18:
++			return "living_night" if world.has_home_power() and not bool(world.s.get("lights_off", false)) else "living_night_dark"
+ 	return ""
+ 
+ static func heater_on(world) -> bool:
 diff --git a/scripts/combat.gd b/scripts/combat.gd
 index 0db5457..f0184e0 100644
 --- a/scripts/combat.gd
@@ -90907,10 +91415,10 @@ index 2b63b02..ad9e84c 100644
  	["distract", ["投げ", "気をそら", "注意をそら", "おとり", "囮", "音を出", "鳴らし", "気を引"]],
 diff --git a/scripts/communities.gd b/scripts/communities.gd
 new file mode 100644
-index 0000000..553bfa9
+index 0000000..9b5f5aa
 --- /dev/null
 +++ b/scripts/communities.gd
-@@ -0,0 +1,447 @@
+@@ -0,0 +1,451 @@
 +extends RefCounted
 +## v149.38 stage 3: neighbours who band together. Once the town has broken
 +## down, the households still holed up in one block of the estate, one band
@@ -91277,6 +91785,10 @@ index 0000000..553bfa9
 +	var garden := float(c.garden)
 +	var stage := 1 if garden < 1.0 else (2 if garden < 4.0 else 3)
 +	var kind := "danchi" if area == "団地" else ("tower" if area == "駅前のマンション" else "houses")
++	# Before any digging at all (stage 0), where there is a picture for it.
++	var bare := "res://assets/photos/community_%s_0.jpg" % kind
++	if garden < 0.3 and ResourceLoader.exists(bare):
++		return bare
 +	var path := "res://assets/photos/community_%s_%d.jpg" % [kind, stage]
 +	return path if ResourceLoader.exists(path) else ""
 +
@@ -92423,10 +92935,19 @@ index 0000000..31d715a
 @@ -0,0 +1 @@
 +uid://bosca37d26cq8
 diff --git a/scripts/home_life.gd b/scripts/home_life.gd
-index a4b03a2..70dde13 100644
+index a4b03a2..daa7343 100644
 --- a/scripts/home_life.gd
 +++ b/scripts/home_life.gd
-@@ -199,8 +199,8 @@ static func heat_source(world) -> String:
+@@ -56,6 +56,8 @@ static func handle(game, cmd: String) -> bool:
+ 		return _read(game)
+ 	if _has(cmd, ["料理", "自炊", "ご飯を作", "ごはんを作", "温かい食事", "温かいご飯", "食事を作", "ご飯作", "ごはん作", "飯作", "飯を作", "温かいもの", "あったかいもの", "作って食べ", "カップ麺", "ラーメン作", "お湯を沸か", "鍋を作", "温める", "温めて", "レトルト"]) and game.dialogue.partner < 0:
+ 		return _cook(game, cmd)
++	if _has(cmd, ["洗濯"]) and not _has(cmd, ["洗濯物を取り込", "洗濯物をたた"]):
++		return _laundry(game)
+ 	if _has(cmd, ["映画"]) and _has(cmd, ["観", "見"]) and game.dialogue.partner < 0 and (cmd.contains("一人") or cmd.contains("ひとり") or _nobody_awake_home(game)):
+ 		return _movie_alone(game, cmd)
+ 	return false
+@@ -199,8 +201,8 @@ static func heat_source(world) -> String:
  
  static func _buy_gas(game, cmd: String) -> bool:
  	var world = game.world
@@ -92437,6 +92958,41 @@ index a4b03a2..70dde13 100644
  	if game.location == "コンビニ" and (bool(world.s.district.sites["コンビニ"].vacant) or not game.District.can_enter(world, "コンビニ")):
  		return _done(game, "今は買えない。")
  	var cans := 3
+@@ -374,3 +376,34 @@ static func _distract_from_home(game) -> bool:
+ 		w.erase("knocking")
+ 		return _done(game, "二階の窓をそっと開け、空き瓶を隣の通りの方へ思い切り投げた。ガラスの割れる音が響き、玄関の前の足音がそちらへ向かっていく。")
+ 	return _done(game, "窓から空き缶を投げたが、すぐ近くに落ちた。玄関の前の連中は、かえって窓の方を見上げている。")
++
++## v149.35: washing the towels and clothes. The machine while there is power
++## and tap water; by hand in a tub after that (10 L of stored water).
++## Clean things lift the spirits — most after a few days without.
++static func _laundry(game) -> bool:
++	var world = game.world
++	if not Navigation.indoor(game.location):
++		return _done(game, "洗濯は家でする。何も実行していません。")
++	var machine: bool = world.has_home_power() and bool(world.s.get("water_online", true))
++	var minutes := 40 if machine else 60
++	if not machine:
++		var stored := float(world.s.get("rain_water", 0.0)) + float(world.s.get("water", 0.0))
++		if stored < 10.0:
++			return _done(game, "手で洗うにも、ためた水が10Lは要る。（雨水と飲み水を合わせて%.0fL）" % stored)
++	world.advance_safe(minutes)
++	var used := 0.0
++	if not machine:
++		used = minf(10.0, float(world.s.get("rain_water", 0.0)))
++		world.s.rain_water = float(world.s.get("rain_water", 0.0)) - used
++		var rest := 10.0 - used
++		if rest > 0.0:
++			world.s.water = float(world.s.water) - rest
++			world.s.water_used = float(world.s.get("water_used", 0.0)) + rest
++	var day := int(world.s.minute) / 1440
++	var since := day - int(world.s.get("laundry_day", -99))
++	world.s.laundry_day = day
++	Mood.ensure(world)
++	Mood.change(world.s, 4.0 if since >= 3 else 1.0)
++	var lead := "洗濯機を回し、タオルと服を脱衣所の物干しに干した（40分）。" if machine else "たらいに水を張って手で洗い、固く絞って、タオルと服を物干しに干した（60分、水10L）。"
++	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
++	return _done(game, lead + feel)
 diff --git a/scripts/main.gd b/scripts/main.gd
 index 0f2add4..9e7f8a2 100644
 --- a/scripts/main.gd
@@ -95115,7 +95671,7 @@ index 6de9c8d..4679f23 100644
  		var shelter := "入口は補強してある。" if int(site.level) == 2 else "ここは寝泊まりできるように整えてある。"
  		return shelter + "「ここで一晩過ごす」ことも、「拠点の状態を見る」こともできる。"
 diff --git a/scripts/scene_view.gd b/scripts/scene_view.gd
-index c95188d..8ef8723 100644
+index c95188d..8b9d544 100644
 --- a/scripts/scene_view.gd
 +++ b/scripts/scene_view.gd
 @@ -1,7 +1,15 @@
@@ -95144,6 +95700,15 @@ index c95188d..8ef8723 100644
  		file = {"school":"residential"}.get(file, file)
  		if not ResourceLoader.exists("res://assets/photos/"+file+".jpg"):return null
  	var stage := PHASES.find(phase)
+@@ -37,7 +47,7 @@ func location_texture(location: String, override_name: String = "", phase: Strin
+ 			break
+ 		stage -= 1
+ 	# v149.28: a room photographed in the dark (blackout stages) already shows it.
+-	dark_photo = file.ends_with("_collapse") or file.ends_with("_overgrown") or file.ends_with("_base_fortified") or file.ends_with("_base") or file.ends_with("_cold")
++	dark_photo = file.ends_with("_collapse") or file.ends_with("_overgrown") or file.ends_with("_base_fortified") or file.ends_with("_base") or file.ends_with("_cold") or file.begins_with("living_night")
+ 	if not cache.has(file):cache[file]=load("res://assets/photos/"+file+".jpg")
+ 	return cache[file]
+ func update_view(next_place:String,next_hour:float,next_weather:String,next_power:bool,next_shop_open:bool,visible_people:int,next_context:String)->void:
 @@ -45,7 +55,7 @@ func update_view(next_place:String,next_hour:float,next_weather:String,next_powe
  	queue_redraw()
  func _draw()->void:
@@ -96884,6 +97449,28 @@ index 847392a..05bef68 100644
  func _crop_growth_factor() -> float:
  	return 1.0
  func _resident_arrived(a: Dictionary, day: int) -> void:
+diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
+index 7be9f4a..3c1b11f 100644
+--- a/tests/test_action_play149_32.gd
++++ b/tests/test_action_play149_32.gd
+@@ -156,7 +156,7 @@ func run() -> void:
+ 	w.s.hunger = 70.0
+ 	await play(g, "台所", "食事する", "eat")
+ 	w.s.hunger = 70.0
+-	await play(g, "台所", "温かい料理を作って食べる", "cook")
++	await play(g, "台所", "温かい料理を作って食べる", "cook|cook_home")
+ 	w.s.cigarettes = 10
+ 	await play(g, "居間", "タバコを吸う", "smoke")
+ 	w.s.thirst = 60.0
+@@ -192,7 +192,7 @@ func run() -> void:
+ 	await play(g, "玄関", "鍵を閉める", "lock")
+ 	w.s.food = 10.0
+ 	w.s.water = 10.0
+-	await play(g, "玄関", "物資を持っていく", "pack")
++	await play(g, "玄関", "物資を持っていく", "pack|pack_home")
+ 	await play(g, "居間", "息をひそめる", "hide")
+ 	w.s.society = "emergency"
+ 	w.s.walkers.places["建物前"] = 3
 diff --git a/tests/test_arrivals149_29.gd b/tests/test_arrivals149_29.gd
 index 470b72c..7e1ce25 100644
 --- a/tests/test_arrivals149_29.gd
@@ -97852,10 +98439,10 @@ index 0000000..0b4480b
 +uid://bwwk55chib1p3
 diff --git a/tests/test_places_planters149_35.gd b/tests/test_places_planters149_35.gd
 new file mode 100644
-index 0000000..022ca40
+index 0000000..a6e5663
 --- /dev/null
 +++ b/tests/test_places_planters149_35.gd
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,103 @@
 +extends SceneTree
 +## v149.35: the station's waiting room and footbridge; the neighbourhood's
 +## life as it grows (street of houses); planters that sprout, grow, ripen —
@@ -97905,7 +98492,7 @@ index 0000000..022ca40
 +		check(stages == ["community_houses_1.jpg", "community_houses_2.jpg", "community_houses_3.jpg"], "the street's life in three stages: %s" % str(stages))
 +		cm["団地:0"] = cm["住宅街:0"].duplicate(true)
 +		cm["団地:0"].area = "団地"
-+		check(Communities.life_photo(w, "団地").is_empty(), "no street-of-houses picture for the estate")
++		check(Communities.life_photo(w, "団地").get_file().begins_with("community_danchi_"), "the estate has its own pictures, not the street of houses")
 +	else:
 +		check(false, "residents ready")
 +	# Planters.
@@ -97929,6 +98516,33 @@ index 0000000..022ca40
 +	await g._on_command("収穫")
 +	check(w.s.plots.is_empty() and int(w.s.inventory.planter) == planters + 1 and g.log_entries.slice(-6).any(func(e): return str(e).contains("枯れた株を抜いた")), "the dead plants are pulled and the planter is free")
 +	check(AP.detect("枯れた株を抜いた。").get("kind", "") == "planter", "pulling them shows the withered planter")
++	# The living room after dark; the estate's life from bare to settled.
++	var Cold = load("res://scripts/cold.gd")
++	w.s.minute = (int(w.s.minute) / 1440) * 1440 + 1440 + int((22.0 - float(w.s.start_hour)) * 60.0)
++	w.s.lights_off = false
++	var lit: String = Cold.season_photo(w, "居間", "一戸建て")
++	w.s.lights_off = true
++	var dark: String = Cold.season_photo(w, "居間", "一戸建て")
++	w.s.lights_off = false
++	check((lit == "living_night" or not w.has_home_power()) and dark == "living_night_dark", "the living room at night: %s / %s" % [lit, dark])
++	if Residents.ready(w):
++		var cm2: Dictionary = Communities.all(w)
++		var seen: Array = []
++		for gdn in [0.1, 0.5, 2.0, 6.0]:
++			cm2["団地:0"].garden = gdn
++			seen.append(Communities.life_photo(w, "団地").get_file())
++		check(seen == ["community_danchi_0.jpg", "community_danchi_1.jpg", "community_danchi_2.jpg", "community_danchi_3.jpg"], "the estate's courtyard in four stages: %s" % str(seen))
++	check(AP.detect("台所で、ガスコンロで温かい食事を作って食べた（30分）。").get("kind", "") == "cook_home" and AP.path(w, "cook_home").ends_with("act_cook_home.jpg"), "a meal on the gas stove")
++	check(AP.detect("台所で、カセットコンロで温かい食事を作って食べた（30分）。").get("kind", "") == "cook", "a meal on the camping stove keeps its own picture")
++	w.s.food = 20.0
++	check(AP.path(w, "pack_home").ends_with("act_pack_stocked.jpg"), "a full stock room")
++	w.s.food = 1.0
++	check(AP.path(w, "pack_home").ends_with("act_pack_bare.jpg"), "a bare stock room")
++	w.s.food = 10.0
++	w.s.water = 30.0
++	await g._on_command("洗濯する")
++	var line: String = str(g.log_entries[-1])
++	check((line.begins_with("洗濯機を回し") or line.begins_with("たらいに水を張って")) and AP.detect(line).get("kind", "") == "laundry", "doing the laundry: " + line.left(40))
 +	g.queue_free()
 +	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
 +	quit(1 if failures else 0)
