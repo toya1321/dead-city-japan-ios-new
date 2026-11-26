@@ -4713,6 +4713,374 @@ index 0000000..6fe7a07
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_exam.jpg.import b/assets/photos/hospital_exam.jpg.import
+new file mode 100644
+index 0000000..43080da
+--- /dev/null
++++ b/assets/photos/hospital_exam.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://1eiu5pm24tmh"
++path="res://.godot/imported/hospital_exam.jpg-48c1aca25d3fa7d5535e08d86acd3932.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_exam.jpg"
++dest_files=["res://.godot/imported/hospital_exam.jpg-48c1aca25d3fa7d5535e08d86acd3932.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_exam_alert.jpg.import b/assets/photos/hospital_exam_alert.jpg.import
+new file mode 100644
+index 0000000..2f4c605
+--- /dev/null
++++ b/assets/photos/hospital_exam_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dv6xv1r3afu6w"
++path="res://.godot/imported/hospital_exam_alert.jpg-40c7b1b6964dfa0ffd81ca8ac9df1faf.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_exam_alert.jpg"
++dest_files=["res://.godot/imported/hospital_exam_alert.jpg-40c7b1b6964dfa0ffd81ca8ac9df1faf.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_exam_collapse.jpg.import b/assets/photos/hospital_exam_collapse.jpg.import
+new file mode 100644
+index 0000000..d986a0d
+--- /dev/null
++++ b/assets/photos/hospital_exam_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://rhpnll56wic4"
++path="res://.godot/imported/hospital_exam_collapse.jpg-9b38d3bc6e467e93f831613a7aef7c39.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_exam_collapse.jpg"
++dest_files=["res://.godot/imported/hospital_exam_collapse.jpg-9b38d3bc6e467e93f831613a7aef7c39.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_exam_overgrown.jpg.import b/assets/photos/hospital_exam_overgrown.jpg.import
+new file mode 100644
+index 0000000..b736b84
+--- /dev/null
++++ b/assets/photos/hospital_exam_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dsg5ksirt6as6"
++path="res://.godot/imported/hospital_exam_overgrown.jpg-8e9096b8279a3cc538d12a3ab945fe13.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_exam_overgrown.jpg"
++dest_files=["res://.godot/imported/hospital_exam_overgrown.jpg-8e9096b8279a3cc538d12a3ab945fe13.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_lobby.jpg.import b/assets/photos/hospital_lobby.jpg.import
+new file mode 100644
+index 0000000..f06e9c8
+--- /dev/null
++++ b/assets/photos/hospital_lobby.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://821inbcfwh6s"
++path="res://.godot/imported/hospital_lobby.jpg-5a57c58d25eba40f40d9dbcf69700cdc.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_lobby.jpg"
++dest_files=["res://.godot/imported/hospital_lobby.jpg-5a57c58d25eba40f40d9dbcf69700cdc.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_lobby_alert.jpg.import b/assets/photos/hospital_lobby_alert.jpg.import
+new file mode 100644
+index 0000000..38c14a1
+--- /dev/null
++++ b/assets/photos/hospital_lobby_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://k7e8qxeg8f76"
++path="res://.godot/imported/hospital_lobby_alert.jpg-911d68d1f7eabd7472f312660be1fec2.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_lobby_alert.jpg"
++dest_files=["res://.godot/imported/hospital_lobby_alert.jpg-911d68d1f7eabd7472f312660be1fec2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_lobby_collapse.jpg.import b/assets/photos/hospital_lobby_collapse.jpg.import
+new file mode 100644
+index 0000000..e757206
+--- /dev/null
++++ b/assets/photos/hospital_lobby_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bpegwrlmt84xb"
++path="res://.godot/imported/hospital_lobby_collapse.jpg-1e50fd32d64c38dddc320d889928c0c1.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_lobby_collapse.jpg"
++dest_files=["res://.godot/imported/hospital_lobby_collapse.jpg-1e50fd32d64c38dddc320d889928c0c1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_lobby_overgrown.jpg.import b/assets/photos/hospital_lobby_overgrown.jpg.import
+new file mode 100644
+index 0000000..e6f2387
+--- /dev/null
++++ b/assets/photos/hospital_lobby_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ck1r4t3ypeybw"
++path="res://.godot/imported/hospital_lobby_overgrown.jpg-a0c22cd91ad5e73f910ae4d8531db084.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_lobby_overgrown.jpg"
++dest_files=["res://.godot/imported/hospital_lobby_overgrown.jpg-a0c22cd91ad5e73f910ae4d8531db084.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/photos/hospital_overgrown.jpg.import b/assets/photos/hospital_overgrown.jpg.import
 new file mode 100644
 index 0000000..b835d0c
@@ -4733,6 +5101,374 @@ index 0000000..b835d0c
 +
 +source_file="res://assets/photos/hospital_overgrown.jpg"
 +dest_files=["res://.godot/imported/hospital_overgrown.jpg-8d02327359476c7d1135d7048eefb021.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_store.jpg.import b/assets/photos/hospital_store.jpg.import
+new file mode 100644
+index 0000000..79ae894
+--- /dev/null
++++ b/assets/photos/hospital_store.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dbqgupcfu8f5p"
++path="res://.godot/imported/hospital_store.jpg-a2d3f91159f4b1070ad1ce0224610bc8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_store.jpg"
++dest_files=["res://.godot/imported/hospital_store.jpg-a2d3f91159f4b1070ad1ce0224610bc8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_store_alert.jpg.import b/assets/photos/hospital_store_alert.jpg.import
+new file mode 100644
+index 0000000..2d03929
+--- /dev/null
++++ b/assets/photos/hospital_store_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://frut48jtgkw7"
++path="res://.godot/imported/hospital_store_alert.jpg-1aba284fd8a4649c8d503838355ef19e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_store_alert.jpg"
++dest_files=["res://.godot/imported/hospital_store_alert.jpg-1aba284fd8a4649c8d503838355ef19e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_store_collapse.jpg.import b/assets/photos/hospital_store_collapse.jpg.import
+new file mode 100644
+index 0000000..d36b32e
+--- /dev/null
++++ b/assets/photos/hospital_store_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c7fwc5ho46ifr"
++path="res://.godot/imported/hospital_store_collapse.jpg-4dab9bb628f17bed9143aa8cb537032c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_store_collapse.jpg"
++dest_files=["res://.godot/imported/hospital_store_collapse.jpg-4dab9bb628f17bed9143aa8cb537032c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_store_overgrown.jpg.import b/assets/photos/hospital_store_overgrown.jpg.import
+new file mode 100644
+index 0000000..ff6be34
+--- /dev/null
++++ b/assets/photos/hospital_store_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://doshkd3sy3bby"
++path="res://.godot/imported/hospital_store_overgrown.jpg-3e7de90f82e40cbb9ab6a8ed9c982fa4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_store_overgrown.jpg"
++dest_files=["res://.godot/imported/hospital_store_overgrown.jpg-3e7de90f82e40cbb9ab6a8ed9c982fa4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_ward.jpg.import b/assets/photos/hospital_ward.jpg.import
+new file mode 100644
+index 0000000..96350c2
+--- /dev/null
++++ b/assets/photos/hospital_ward.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://riwyttp6mflu"
++path="res://.godot/imported/hospital_ward.jpg-1d81e975b84ac9bfdd0758054edd313e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_ward.jpg"
++dest_files=["res://.godot/imported/hospital_ward.jpg-1d81e975b84ac9bfdd0758054edd313e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_ward_alert.jpg.import b/assets/photos/hospital_ward_alert.jpg.import
+new file mode 100644
+index 0000000..cfbab8b
+--- /dev/null
++++ b/assets/photos/hospital_ward_alert.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://crrdmshmg5q7s"
++path="res://.godot/imported/hospital_ward_alert.jpg-a2f7af5636cf4a30f9c1190e2ccacd86.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_ward_alert.jpg"
++dest_files=["res://.godot/imported/hospital_ward_alert.jpg-a2f7af5636cf4a30f9c1190e2ccacd86.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_ward_collapse.jpg.import b/assets/photos/hospital_ward_collapse.jpg.import
+new file mode 100644
+index 0000000..1a81c32
+--- /dev/null
++++ b/assets/photos/hospital_ward_collapse.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://biu68l7raxad1"
++path="res://.godot/imported/hospital_ward_collapse.jpg-badbf0442ad2041968f983da860f3650.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_ward_collapse.jpg"
++dest_files=["res://.godot/imported/hospital_ward_collapse.jpg-badbf0442ad2041968f983da860f3650.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/hospital_ward_overgrown.jpg.import b/assets/photos/hospital_ward_overgrown.jpg.import
+new file mode 100644
+index 0000000..391fe68
+--- /dev/null
++++ b/assets/photos/hospital_ward_overgrown.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dmihbuvayf6ll"
++path="res://.godot/imported/hospital_ward_overgrown.jpg-6f1033389103110ac22e51aed8d4f646.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/hospital_ward_overgrown.jpg"
++dest_files=["res://.godot/imported/hospital_ward_overgrown.jpg-6f1033389103110ac22e51aed8d4f646.ctex"]
 +
 +[params]
 +
@@ -87916,7 +88652,7 @@ index 35febbb..bcc6e67 100644
  			return found
  	return ""
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..5228421 100644
+index 2c13ef6..db5d989 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -87928,7 +88664,7 @@ index 2c13ef6..5228421 100644
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
-@@ -20,6 +20,13 @@ static func wait_action(raw: String) -> Dictionary:
+@@ -20,6 +20,16 @@ static func wait_action(raw: String) -> Dictionary:
  static func allowed(game, command: String, ai: bool = false) -> bool:
  	if command in COMMANDS or command in QUERIES or command in District.COMMANDS:return true
  	if not game.Navigation.destination(command).is_empty():return true
@@ -87936,13 +88672,16 @@ index 2c13ef6..5228421 100644
 +	var home_re := RegEx.new()
 +	home_re.compile("([0-9]+号棟\\s*[0-9]+号室|[0-9]+号室|[0-9]+番の家)(に入る|へ行く|を調べる)$")
 +	if home_re.search(command) != null:return true
++	# v149.35: rooms of a building walked room by room ("薬品庫に行く").
++	var room_cmd: String = game._canonical_command(command)
++	if room_cmd == "入口に戻る" or (room_cmd.ends_with("に行く") and load("res://scripts/site_rooms.gd").SITES.values().any(func(site): return site.rooms.any(func(r): return room_cmd == str(r.name) + "に行く"))):return true
 +	# v149.36: sowing a named crop ("小松菜を植える", "じゃがいもを育てる").
 +	var Crops = load("res://scripts/crops.gd")
 +	if not Crops.named(command).is_empty() and (command.contains("植え") or command.contains("育て") or command.contains("まく") or command.contains("蒔く")):return true
  	var re:=RegEx.new()
  	re.compile("^(?:(?:食品店|金物店|薬局|コンビニ|デパート)で)?(?:食料|水|飲料水|木材|部品|種|包帯|浄水器|ソーラーパネル|蓄電池)を(?:[0-9]{1,2}(?:個|箱|セット|本|袋|つ|缶|パック))?(?:買う|購入する)$")
  	if re.search(command)!=null:return true
-@@ -129,7 +136,7 @@ static func local(game, raw: String) -> Dictionary:
+@@ -129,7 +139,7 @@ static func local(game, raw: String) -> Dictionary:
  			cmd = "水を飲む"
  		elif cmd in NEWS_ALIASES:
  			cmd = "ニュースを見る"
@@ -88545,7 +89284,7 @@ index 0000000..a8649be
 @@ -0,0 +1 @@
 +uid://dca3j1sct27tw
 diff --git a/scripts/district.gd b/scripts/district.gd
-index 31c6246..cd97e3b 100644
+index 31c6246..5a43a9c 100644
 --- a/scripts/district.gd
 +++ b/scripts/district.gd
 @@ -1,6 +1,14 @@
@@ -88619,7 +89358,7 @@ index 31c6246..cd97e3b 100644
  static func can_enter(world, place: String) -> bool:
  	var site: Dictionary = world.s.district.sites[place]
  	var hours: Dictionary = SITES[place]
-@@ -145,7 +177,19 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -145,7 +177,24 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  		return "営業中や管理中の建物では実行できない。"
  	match command:
  		"物資を探索する":
@@ -88629,7 +89368,12 @@ index 31c6246..cd97e3b 100644
 +			var more: Array = []
 +			var stock := extras(world, place)
 +			for item in stock:
-+				var take := mini(int(stock[item]), 3 if item != "bandage" else 5)
++				var per := 3 if item != "bandage" else 5
++				# v149.35: in a building walked room by room, it depends on the room.
++				var SiteRooms = load("res://scripts/site_rooms.gd")
++				if item == "bandage" and SiteRooms.has(place):
++					per = SiteRooms.bandage_take(world, place)
++				var take := mini(int(stock[item]), per)
 +				if take > 0:
 +					stock[item] = int(stock[item]) - take
 +					world.s.inventory[item] = int(world.s.inventory.get(item, 0)) + take
@@ -88640,7 +89384,7 @@ index 31c6246..cd97e3b 100644
  		"ここを拠点にする":
  			if site.level >= 1:
  				return "ここはすでに寝泊まりできる。"
-@@ -172,10 +216,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -172,10 +221,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  			return _transfer_text(world, _transfer(site.cache, bag, FOOD_LIMIT, WATER_LIMIT, FOOD_LIMIT, WATER_LIMIT), "拠点の備蓄から持ち出した")
  	return "ここでは実行できない。"
  
@@ -89533,10 +90277,10 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..60e2c4f 100644
+index 0f2add4..2a2e9f3 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
-@@ -1647,10 +1647,29 @@ func _refresh() -> void:
+@@ -1647,10 +1647,32 @@ func _refresh() -> void:
  		var season := Cold.season_photo(world, location, str(world.s.profile.housing))
  		if not season.is_empty() and ResourceLoader.exists("res://assets/photos/%s.jpg" % season):
  			picture.texture = scene_view.location_texture(location, season, "")
@@ -89552,6 +90296,9 @@ index 0f2add4..60e2c4f 100644
 +		picture.texture = load(_people_photo())
 +	elif picture.texture == null and location == "避難所" and not _shelter_photo().is_empty():
 +		picture.texture = load(_shelter_photo())
++	elif picture.texture == null and not load("res://scripts/site_rooms.gd").photo(world, location, _visual_phase()).is_empty():
++		# v149.35: inside a building, the room you are in.
++		picture.texture = load(load("res://scripts/site_rooms.gd").photo(world, location, _visual_phase()))
 +	elif picture.texture == null:
  		picture.texture = scene_view.location_texture(location,"apartment" if world.s.profile.housing=="集合住宅" and location=="建物前" else "", _visual_phase())
 -	district_card.visible = District.SITES.has(location) and picture.texture == null
@@ -89569,7 +90316,7 @@ index 0f2add4..60e2c4f 100644
  	preview_button.visible = picture.texture != null
  	_refresh_scene_caption()
  	_update_scene_visibility()
-@@ -1844,6 +1863,8 @@ func _suggestions() -> Array:
+@@ -1844,6 +1866,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -89578,7 +90325,7 @@ index 0f2add4..60e2c4f 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1910,6 +1931,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +1934,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -89587,7 +90334,7 @@ index 0f2add4..60e2c4f 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,6 +1994,30 @@ func _suggestions() -> Array:
+@@ -1971,10 +1997,38 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -89618,7 +90365,15 @@ index 0f2add4..60e2c4f 100644
  		if District.SITES.has(_site()) and location != "デパート" and (bool(world.s.district.sites[_site()].vacant) or not District.is_shop(_site())):
  			out.append("物資を探索する" if bool(world.s.district.sites[_site()].vacant) else ("品物を見る" if not ShopWindow.offers(self).is_empty() else "食料を買う"))
  		if not "品物を見る" in out and not ShopWindow.offers(self).is_empty():
-@@ -2838,7 +2885,8 @@ func _survivor_command(cmd: String) -> bool:
+ 			out.push_front("品物を見る")
++		var SiteRooms = load("res://scripts/site_rooms.gd")
++		if SiteRooms.has(location):
++			var room_chips: Array = SiteRooms.chips(world, location)
++			out = room_chips.slice(0, 2) + out
+ 		out.append("家に帰る")
+ 	return out.slice(0, 6)
+ 
+@@ -2838,7 +2892,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -89628,7 +90383,7 @@ index 0f2add4..60e2c4f 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -3134,6 +3182,10 @@ func _shelter_command(cmd: String) -> bool:
+@@ -3134,6 +3189,10 @@ func _shelter_command(cmd: String) -> bool:
  		_append(Shelter.ration(world))
  		_refresh()
  		return true
@@ -89639,7 +90394,7 @@ index 0f2add4..60e2c4f 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3457,6 +3509,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3516,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -89649,16 +90404,38 @@ index 0f2add4..60e2c4f 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,7 +3528,7 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3535,16 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
 -	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
 +	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "次の部屋を探す", "部屋を出る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "子ども部屋を調べる", "風呂場を調べる", "物置を調べる", "ノックする", "声をかける", "食料を分ける", "食べ物を分ける", "一緒に来ないか誘う", "集まりを訪ねる", "集まりの様子", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
  	if cmd in exact: return cmd
++	# v149.35: rooms of a building walked room by room.
++	var SiteRooms = load("res://scripts/site_rooms.gd")
++	for site in SiteRooms.SITES:
++		for r in SiteRooms.rooms(site):
++			for verb in ["に行く", "に入る", "へ行く", "を見る"]:
++				if cmd == str(r.name) + verb:
++					return str(r.name) + "に行く"
++	if cmd == "入口に戻る": return cmd
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
-@@ -3506,6 +3561,106 @@ func _interpret(raw: String) -> String:
+ 	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
+@@ -3494,6 +3564,12 @@ func _district_map() -> String:
+ 
+ func _interpret(raw: String) -> String:
+ 	var clean := raw.strip_edges().trim_suffix("。")
++	# v149.35: walking from room to room inside a building that has them.
++	var SiteRooms = load("res://scripts/site_rooms.gd")
++	if SiteRooms.has(location):
++		var in_room: String = SiteRooms.go(world, location, clean)
++		if not in_room.is_empty():
++			return in_room
+ 	var target := Navigation.destination(clean)
+ 	if not target.is_empty(): return _move_to(target)
+ 	if clean == "街の地図を見る":
+@@ -3506,6 +3582,106 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -89765,7 +90542,7 @@ index 0f2add4..60e2c4f 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3694,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3715,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -89774,7 +90551,7 @@ index 0f2add4..60e2c4f 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3827,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3848,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -89787,7 +90564,7 @@ index 0f2add4..60e2c4f 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3852,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3873,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -89797,7 +90574,7 @@ index 0f2add4..60e2c4f 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3911,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3932,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -89812,7 +90589,7 @@ index 0f2add4..60e2c4f 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3960,33 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +3981,33 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -89846,7 +90623,7 @@ index 0f2add4..60e2c4f 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4030,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4051,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -89867,7 +90644,7 @@ index 0f2add4..60e2c4f 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4063,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4084,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -89886,16 +90663,17 @@ index 0f2add4..60e2c4f 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4090,8 @@ func _site() -> String:
+@@ -3875,6 +4111,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
 +	if world.s.get("inside") is Dictionary and not world.s.inside.is_empty():
 +		world.s.inside = {}
++	world.s.site_room = {}   # leaving a building: next time, in at the entrance
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4123,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4145,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -89904,7 +90682,7 @@ index 0f2add4..60e2c4f 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4147,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4169,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -89919,7 +90697,7 @@ index 0f2add4..60e2c4f 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4166,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4188,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -89932,7 +90710,7 @@ index 0f2add4..60e2c4f 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4187,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4209,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -89943,7 +90721,7 @@ index 0f2add4..60e2c4f 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4270,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4292,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -92455,6 +93233,147 @@ index 79480a1..dd84cbd 100644
  	match where:
  		"コンビニ", "デパート地下":
  			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
+diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
+new file mode 100644
+index 0000000..e8f506e
+--- /dev/null
++++ b/scripts/site_rooms.gd
+@@ -0,0 +1,128 @@
++extends RefCounted
++## v149.35: some of the town's buildings can be walked through room by room —
++## each room has its own picture at every stage of the town (normal → alert →
++## collapse → overgrown) and its own share of what is left. Arriving, you are
++## at the entrance (the building's own picture); "<room>に行く" goes in.
++## world.s.site_room = {"place": where, "room": which room ("" at the entrance)}.
++
++const SITES := {
++	"総合病院": {
++		"photo": "hospital",
++		"rooms": [
++			{"name": "ロビー", "key": "lobby", "public": true,
++				"text": {"normal": "外来のロビー。長椅子に順番を待つ人が座り、受付の向こうで事務の人が電話を受けている。",
++					"alert": "受付にアクリル板が立てられ、長椅子には一つおきに×印のテープが貼られている。廊下の奥に段ボールが積まれている。",
++					"collapse": "ロビーには誰もいない。床に書類や空き箱が散らばり、窓ガラスにひびが走っている。",
++					"overgrown": "天井がはがれ落ち、壁を苔と蔦が覆っている。濡れた床に落ち葉が積もり、長椅子の布は破れている。"}},
++			{"name": "診察室", "key": "exam", "public": false, "bandage": 4,
++				"text": {"normal": "診察室。机のモニターにレントゲン写真が映り、棚には消毒液と手袋の箱が並んでいる。",
++					"alert": "診察室に救急カートと点滴台が持ち込まれ、棚には手袋とマスクの箱がぎっしり詰まっている。",
++					"collapse": "診察室の棚は開けっ放しで、空き箱ばかりが残っている。机の上にカルテが散らばっている。",
++					"overgrown": "診察室の壁紙がはがれ、窓から蔦が入りこんでいる。ガラス戸棚の奥に、まだ薬の箱が見える。"}},
++			{"name": "病室", "key": "ward", "public": false, "bandage": 2,
++				"text": {"normal": "二人部屋の病室。窓の外に住宅街と、向こうの山が見える。",
++					"alert": "病室に点滴台と処置用のワゴンが置かれ、いつでも患者を受け入れられるようになっている。",
++					"collapse": "病室のベッドから、シーツが床まで垂れ下がっている。引き出しは開いたまま。床に空の注射器の袋が落ちている。",
++					"overgrown": "病室のベッドは錆び、カーテンはぼろぼろに裂けている。割れた窓から雨と蔦が入りこんでいる。"}},
++			{"name": "薬品庫", "key": "store", "public": false, "bandage": 10,
++				"text": {"normal": "薬品庫。金属の棚に薬瓶と白い箱が整然と並んでいる。",
++					"alert": "薬品庫の作業台に段ボールが積まれ、消毒液のボトルが並んでいる。棚はまだいっぱいだ。",
++					"collapse": "薬品庫の棚は荒らされ、箱や包装の切れ端が床に散らばっている。持ち出せる物は少ない。",
++					"overgrown": "薬品庫の棚は錆びて蜘蛛の巣に覆われているが、奥の箱にはまだ手つかずの物がありそうだ。"}},
++		],
++	},
++}
++
++static func has(place: String) -> bool:
++	return SITES.has(place)
++
++static func rooms(place: String) -> Array:
++	return SITES.get(place, {}).get("rooms", [])
++
++static func _room_def(place: String, room: String) -> Dictionary:
++	for r in rooms(place):
++		if str(r.name) == room:
++			return r
++	return {}
++
++## The room the player is in at `place` ("" = at the entrance).
++static func current(world, place: String) -> String:
++	var at: Variant = world.s.get("site_room")
++	if at is Dictionary and str(at.get("place", "")) == place:
++		return str(at.get("room", ""))
++	return ""
++
++static func _put(world, place: String, room: String) -> void:
++	world.s.site_room = {"place": place, "room": room}
++
++## Staff still keep people out of the back rooms while the hospital runs.
++static func _open_to_all(world) -> bool:
++	return str(world.s.get("society", "normal")) in ["disrupted", "emergency"]
++
++## "<room>に行く" / "<room>に入る". Returns "" if it is not a room of this place.
++static func go(world, place: String, command: String) -> String:
++	if not has(place):
++		return ""
++	for r in rooms(place):
++		var name := str(r.name)
++		if command in ["%sに行く" % name, "%sに入る" % name, "%sへ行く" % name, "%sを見る" % name]:
++			if current(world, place) == name:
++				return "すでに%sにいる。" % name
++			if not bool(r.public) and not _open_to_all(world):
++				return "「関係者以外立ち入り禁止」の札がかかっている。職員に止められ、%sには入れなかった。" % name
++			world.advance_safe(2)
++			_put(world, place, name)
++			return describe(world, place, phase(world))
++	if command in ["入口に戻る", "外に出る", "建物を出る"] and not current(world, place).is_empty():
++		_put(world, place, "")
++		return "%sの入口に戻った。" % place
++	return ""
++
++static func phase(world) -> String:
++	var society := str(world.s.get("society", "normal"))
++	var day := int(world.s.minute) / 1440
++	if society == "normal" and int(world.s.get("regional_cases", 0)) < 10:
++		return "normal"
++	if day >= 365 and society != "normal":
++		return "overgrown"
++	if society in ["normal", "alert"] or int(world.s.get("regional_cases", 0)) < 200:
++		return "alert"
++	return "collapse"
++
++static func describe(world, place: String, stage: String) -> String:
++	var r := _room_def(place, current(world, place))
++	if r.is_empty():
++		return ""
++	return str(r.text.get(stage, r.text.normal))
++
++## The room's picture for this stage, falling back to an earlier stage.
++static func photo(world, place: String, stage: String) -> String:
++	var r := _room_def(place, current(world, place))
++	if r.is_empty():
++		return ""
++	var base := "%s_%s" % [str(SITES[place].photo), str(r.key)]
++	var phases := ["normal", "alert", "collapse", "overgrown"]
++	var k := phases.find(stage)
++	while k > 0:
++		var path := "res://assets/photos/%s_%s.jpg" % [base, phases[k]]
++		if ResourceLoader.exists(path):
++			return path
++		k -= 1
++	var plain := "res://assets/photos/%s.jpg" % base
++	return plain if ResourceLoader.exists(plain) else ""
++
++## How many bandages one search finds in this room (the store room most).
++static func bandage_take(world, place: String) -> int:
++	var r := _room_def(place, current(world, place))
++	return int(r.get("bandage", 3)) if not r.is_empty() else 3
++
++## The rooms to offer as next moves.
++static func chips(world, place: String) -> Array:
++	var out: Array = []
++	var here := current(world, place)
++	for r in rooms(place):
++		if str(r.name) != here and (bool(r.public) or _open_to_all(world)):
++			out.append("%sに行く" % r.name)
++	if not here.is_empty():
++		out.append("入口に戻る")
++	return out
+diff --git a/scripts/site_rooms.gd.uid b/scripts/site_rooms.gd.uid
+new file mode 100644
+index 0000000..8ecfd8f
+--- /dev/null
++++ b/scripts/site_rooms.gd.uid
+@@ -0,0 +1 @@
++uid://bpirh6ao8ekbg
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
 index 5ea74f7..cd89262 100644
 --- a/scripts/survivors.gd
@@ -93913,6 +94832,67 @@ index 0000000..69af088
 +++ b/tests/test_dwellings149_37.gd.uid
 @@ -0,0 +1 @@
 +uid://ci3mo5q7a6ln4
+diff --git a/tests/test_hospital_rooms149_35.gd b/tests/test_hospital_rooms149_35.gd
+new file mode 100644
+index 0000000..60d7514
+--- /dev/null
++++ b/tests/test_hospital_rooms149_35.gd
+@@ -0,0 +1,48 @@
++extends SceneTree
++## v149.35: the general hospital can be walked room by room — lobby, exam
++## room, ward, store room — each with its own picture at every stage of the
++## town, and the back rooms are off limits while the staff are there.
++const Main = preload("res://main.tscn")
++const SiteRooms = preload("res://scripts/site_rooms.gd")
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(condition: bool, label: String) -> void:
++	print(("PASS " if condition else "FAIL ") + label)
++	if not condition:
++		failures += 1
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 9
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	var all_photos := true
++	for r in SiteRooms.rooms("総合病院"):
++		for ph in ["", "_alert", "_collapse", "_overgrown"]:
++			if not ResourceLoader.exists("res://assets/photos/hospital_%s%s.jpg" % [r.key, ph]):
++				all_photos = false
++	check(all_photos, "every room has a picture for every stage")
++	g.location = "総合病院"
++	g._sync_player_position()
++	check(SiteRooms.current(w, "総合病院").is_empty(), "arriving, you are at the entrance")
++	await g._on_command("ロビーに行く")
++	check(SiteRooms.current(w, "総合病院") == "ロビー", "into the lobby")
++	check(SiteRooms.photo(w, "総合病院", "normal").ends_with("hospital_lobby.jpg"), "the lobby's own picture")
++	await g._on_command("薬品庫に行く")
++	check(SiteRooms.current(w, "総合病院") == "ロビー" and g.log_entries[-1].contains("立ち入り禁止"), "on an ordinary day the store room is off limits")
++	w.s.society = "emergency"
++	w.s.regional_cases = 500
++	await g._on_command("薬品庫に行く")
++	check(SiteRooms.current(w, "総合病院") == "薬品庫", "once it falls apart, anyone can go in")
++	check(SiteRooms.photo(w, "総合病院", "collapse").ends_with("hospital_store_collapse.jpg"), "the store room as it is now")
++	check(SiteRooms.bandage_take(w, "総合病院") > 5, "the store room is where the bandages are")
++	g._move_to("大通り")
++	check(SiteRooms.current(w, "総合病院").is_empty(), "leaving, you come back in at the entrance")
++	g.queue_free()
++	print("RESULT %s" % ("PASS" if failures == 0 else "FAIL"))
++	quit(1 if failures else 0)
+diff --git a/tests/test_hospital_rooms149_35.gd.uid b/tests/test_hospital_rooms149_35.gd.uid
+new file mode 100644
+index 0000000..a0788b2
+--- /dev/null
++++ b/tests/test_hospital_rooms149_35.gd.uid
+@@ -0,0 +1 @@
++uid://6on0qhklmjld
 diff --git a/tests/test_npc_groups149_35.gd b/tests/test_npc_groups149_35.gd
 new file mode 100644
 index 0000000..82db2b0
