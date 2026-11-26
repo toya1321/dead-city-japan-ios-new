@@ -88652,7 +88652,7 @@ index 35febbb..bcc6e67 100644
  			return found
  	return ""
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..db5d989 100644
+index 2c13ef6..2dff67f 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -88674,7 +88674,7 @@ index 2c13ef6..db5d989 100644
 +	if home_re.search(command) != null:return true
 +	# v149.35: rooms of a building walked room by room ("薬品庫に行く").
 +	var room_cmd: String = game._canonical_command(command)
-+	if room_cmd == "入口に戻る" or (room_cmd.ends_with("に行く") and load("res://scripts/site_rooms.gd").SITES.values().any(func(site): return site.rooms.any(func(r): return room_cmd == str(r.name) + "に行く"))):return true
++	if room_cmd in ["入口に戻る", "ベッドで休む"] or (room_cmd.ends_with("に行く") and load("res://scripts/site_rooms.gd").SITES.values().any(func(site): return site.rooms.any(func(r): return room_cmd == str(r.name) + "に行く"))):return true
 +	# v149.36: sowing a named crop ("小松菜を植える", "じゃがいもを育てる").
 +	var Crops = load("res://scripts/crops.gd")
 +	if not Crops.named(command).is_empty() and (command.contains("植え") or command.contains("育て") or command.contains("まく") or command.contains("蒔く")):return true
@@ -90277,7 +90277,7 @@ index a4b03a2..70dde13 100644
  		return _done(game, "今は買えない。")
  	var cans := 3
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..2a2e9f3 100644
+index 0f2add4..9f355c7 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -1647,10 +1647,32 @@ func _refresh() -> void:
@@ -90404,7 +90404,7 @@ index 0f2add4..2a2e9f3 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3535,16 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3535,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -90419,10 +90419,11 @@ index 0f2add4..2a2e9f3 100644
 +				if cmd == str(r.name) + verb:
 +					return str(r.name) + "に行く"
 +	if cmd == "入口に戻る": return cmd
++	if cmd in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む"]: return "ベッドで休む"
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,6 +3564,12 @@ func _district_map() -> String:
+@@ -3494,6 +3565,12 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -90435,7 +90436,7 @@ index 0f2add4..2a2e9f3 100644
  	var target := Navigation.destination(clean)
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
-@@ -3506,6 +3582,106 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +3583,106 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -90542,7 +90543,7 @@ index 0f2add4..2a2e9f3 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +3715,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +3716,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -90551,7 +90552,7 @@ index 0f2add4..2a2e9f3 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3672,9 +3848,10 @@ func _execute_command(cmd: String) -> String:
+@@ -3672,9 +3849,10 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
  		if location != "台所": return "台所で製作する。"
  		return world.action("craft")
@@ -90564,7 +90565,7 @@ index 0f2add4..2a2e9f3 100644
  	if cmd.contains("水やり") or cmd.contains("水をやる"):
  		if location != "台所": return "台所で水やりをする。"
  		var result: String = world.action("tend")
-@@ -3696,7 +3873,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +3874,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -90574,7 +90575,7 @@ index 0f2add4..2a2e9f3 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3754,6 +3932,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +3933,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -90589,7 +90590,7 @@ index 0f2add4..2a2e9f3 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3795,6 +3981,33 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +3982,33 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -90623,7 +90624,7 @@ index 0f2add4..2a2e9f3 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4051,20 @@ func _scene_caption() -> String:
+@@ -3838,7 +4052,20 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -90644,7 +90645,7 @@ index 0f2add4..2a2e9f3 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4084,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4085,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -90663,7 +90664,7 @@ index 0f2add4..2a2e9f3 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4111,9 @@ func _site() -> String:
+@@ -3875,6 +4112,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -90673,7 +90674,7 @@ index 0f2add4..2a2e9f3 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4145,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4146,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -90682,7 +90683,7 @@ index 0f2add4..2a2e9f3 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4169,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4170,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -90697,7 +90698,7 @@ index 0f2add4..2a2e9f3 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4188,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4189,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -90710,7 +90711,7 @@ index 0f2add4..2a2e9f3 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4209,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4210,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -90721,7 +90722,7 @@ index 0f2add4..2a2e9f3 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4292,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4293,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -93235,10 +93236,10 @@ index 79480a1..dd84cbd 100644
  			var site_name := "コンビニ" if where == "コンビニ" else "デパート"
 diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
 new file mode 100644
-index 0000000..e8f506e
+index 0000000..92e85e2
 --- /dev/null
 +++ b/scripts/site_rooms.gd
-@@ -0,0 +1,128 @@
+@@ -0,0 +1,217 @@
 +extends RefCounted
 +## v149.35: some of the town's buildings can be walked through room by room —
 +## each room has its own picture at every stage of the town (normal → alert →
@@ -93300,6 +93301,88 @@ index 0000000..e8f506e
 +static func _open_to_all(world) -> bool:
 +	return str(world.s.get("society", "normal")) in ["disrupted", "emergency"]
 +
++## v149.35: the ward is where you can lie down properly — a bed, out of the
++## street — and where, once the hospital empties, someone too weak to leave
++## may still be lying.
++const WARD := "病室"
++
++static func rest(world, place: String) -> String:
++	if current(world, place) != WARD:
++		return "ここには横になれるベッドがない。"
++	if float(world.s.health) <= 0.0:
++		return "死亡しているため行動できない。"
++	var before := float(world.s.health)
++	world.advance(180, true)
++	world.s.health = minf(100.0, float(world.s.health) + 15.0)
++	if world.s.get("longplay") is Dictionary:
++		world.s.longplay.morale = minf(100.0, float(world.s.longplay.get("morale", 50.0)) + 1.0)
++	var healed := float(world.s.health) - before
++	var stage := phase(world)
++	var lead := "病室のベッドに横になり、カーテンを引いて3時間眠った。"
++	if stage == "overgrown":
++		lead = "湿ったマットレスに横になり、雨の音を聞きながら3時間眠った。"
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([int(world.s.seed), int(world.s.minute), "ward-rest"])
++	var risk := ""
++	if stage in ["collapse", "overgrown"] and rng.randf() < 0.25:
++		load("res://scripts/walkers.gd").make_noise(world, place, 40)
++		risk = "目を覚ますと、廊下の奥で何かが倒れる音がした。"
++	return "%s体が少し楽になった（体力 +%d）。%s" % [lead, int(round(healed)), risk]
++
++## Once the hospital has emptied, the first time you look into the ward there
++## may be a patient left behind: one of the town's old people, too weak to go.
++## They need food to last; help them, take them home, or leave them.
++static func patient(world, place: String) -> String:
++	if place != "総合病院" or phase(world) != "collapse" or bool(world.s.get("ward_patient", false)):
++		return ""
++	world.s.ward_patient = true
++	var Survivors = load("res://scripts/survivors.gd")
++	var Residents = load("res://scripts/residents.gd")
++	if Residents.roster().is_empty() or not Residents.ready(world):
++		return ""
++	var people: Dictionary = Survivors.ensure(world).people
++	var taken: Dictionary = Survivors._bound_keys(people)
++	var rng := RandomNumberGenerator.new()
++	rng.seed = hash([int(world.s.seed), "ward-patient"])
++	var options: Array = []
++	for area in world.s.residents.hh:
++		var rows: Array = world.s.residents.hh[area]
++		for i in rows.size():
++			var r: Array = rows[i]
++			if not str(r[Residents.P_PATH]) in ["home", "holed", "away"]:
++				continue
++			var h: Dictionary = Residents.listed(area, i)
++			for k in h.get("people", []).size():
++				var q: Dictionary = h.people[k]
++				if int(q.age) >= 70 and int(r[Residents.P_ALIVE]) & (1 << k) and not taken.has("%s/%d/%d" % [area, i, k]):
++					options.append([area, i, k])
++	if options.is_empty():
++		return ""
++	var pick: Array = options[rng.randi_range(0, options.size() - 1)]
++	var area := str(pick[0])
++	var i := int(pick[1])
++	var k := int(pick[2])
++	var q: Dictionary = Residents.listed(area, i).people[k]
++	var made: Dictionary = Survivors._make(rng, "elder", Survivors.Parts.ROLES["elder"], str(q.sex) == "m", place, {})
++	if made.is_empty():
++		return ""
++	Survivors.adopt(made, area, i, k)
++	var day := int(world.s.minute) / 1440
++	made.id = "ward_%s_%d_%d" % [area, i, k]
++	made.place = place
++	made.tag = "hungry"
++	made.secret = ""
++	made.situation = "hungry"
++	made.needs = ["food", "water"]
++	made.given = 0
++	made.hunger_day = day + 3
++	made.background = "%s 入院していたが、職員がいなくなっても、体が弱くて自分では帰れなかった。" % str(made.home_text)
++	made.intro = "奥のベッドに、%sが横になっていた。痩せた手でこちらを手招きする。「……誰か、来てくれたの。もう何日も、誰も来なくて」" % str(made.label)
++	people[made.id] = made
++	var r: Array = Residents.row(world, area, i)
++	r[Residents.P_ALIVE] = int(r[Residents.P_ALIVE]) & ~(1 << k)
++	return " " + str(made.intro)
++
 +## "<room>に行く" / "<room>に入る". Returns "" if it is not a room of this place.
 +static func go(world, place: String, command: String) -> String:
 +	if not has(place):
@@ -93313,7 +93396,12 @@ index 0000000..e8f506e
 +				return "「関係者以外立ち入り禁止」の札がかかっている。職員に止められ、%sには入れなかった。" % name
 +			world.advance_safe(2)
 +			_put(world, place, name)
-+			return describe(world, place, phase(world))
++			var seen := describe(world, place, phase(world))
++			if name == WARD:
++				seen += patient(world, place)
++			return seen
++	if command in ["ベッドで休む", "ベッドで眠る", "ベッドで寝る", "病室で休む"]:
++		return rest(world, place)
 +	if command in ["入口に戻る", "外に出る", "建物を出る"] and not current(world, place).is_empty():
 +		_put(world, place, "")
 +		return "%sの入口に戻った。" % place
@@ -93364,6 +93452,8 @@ index 0000000..e8f506e
 +	for r in rooms(place):
 +		if str(r.name) != here and (bool(r.public) or _open_to_all(world)):
 +			out.append("%sに行く" % r.name)
++	if here == WARD:
++		out.push_front("ベッドで休む")
 +	if not here.is_empty():
 +		out.append("入口に戻る")
 +	return out
@@ -94834,10 +94924,10 @@ index 0000000..69af088
 +uid://ci3mo5q7a6ln4
 diff --git a/tests/test_hospital_rooms149_35.gd b/tests/test_hospital_rooms149_35.gd
 new file mode 100644
-index 0000000..60d7514
+index 0000000..55ec481
 --- /dev/null
 +++ b/tests/test_hospital_rooms149_35.gd
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,61 @@
 +extends SceneTree
 +## v149.35: the general hospital can be walked room by room — lobby, exam
 +## room, ward, store room — each with its own picture at every stage of the
@@ -94881,6 +94971,19 @@ index 0000000..60d7514
 +	check(SiteRooms.current(w, "総合病院") == "薬品庫", "once it falls apart, anyone can go in")
 +	check(SiteRooms.photo(w, "総合病院", "collapse").ends_with("hospital_store_collapse.jpg"), "the store room as it is now")
 +	check(SiteRooms.bandage_take(w, "総合病院") > 5, "the store room is where the bandages are")
++	# The ward: a bed to rest in, and someone left behind.
++	w.s.health = 60.0
++	await g._on_command("病室に行く")
++	var seen: String = g.log_entries[-1]
++	print(seen)
++	var Survivors = load("res://scripts/survivors.gd")
++	var left: Array = Survivors.ensure(w).people.keys().filter(func(id): return str(id).begins_with("ward_"))
++	check(left.size() == 1 and seen.contains("奥のベッド"), "in the emptied hospital, a patient was left behind in the ward")
++	if left.size() == 1:
++		var pt: Dictionary = w.s.survivors.people[left[0]]
++		check(int(pt.age) >= 70 and not str(pt.get("face", "")).is_empty(), "one of the town's old people, with their own face")
++	await g._on_command("ベッドで休む")
++	check(float(w.s.health) > 60.0 and g.log_entries.slice(-15).any(func(e): return str(e).contains("体力 +")), "resting in a ward bed heals (%.0f)" % float(w.s.health))
 +	g._move_to("大通り")
 +	check(SiteRooms.current(w, "総合病院").is_empty(), "leaving, you come back in at the entrance")
 +	g.queue_free()
