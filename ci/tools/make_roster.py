@@ -4,7 +4,7 @@ data/resident_faces.json.
 
 usage: make_roster.py <game dir>
 
-Every face r0001..r1396 is one resident. Families are formed from age and sex
+Every face r0001..r1500 is one resident. Families are formed from age and sex
 (children with parents of a fitting age, couples of a similar age, people on
 their own), placed in the five residential areas, and given names that fit
 their generation, a shared surname per household, a temperament that has
@@ -85,6 +85,10 @@ TRAITS_ADULT = """几帳面 心配性 世話好き 頑固 人見知り 陽気 �
 TRAITS_CHILD = """元気 人見知り 甘えん坊 しっかり者 泣き虫 おしゃべり 恥ずかしがり 負けず嫌い 好奇心が強い
 おっとり いたずら好き 優しい 怖がり 物静か 生意気 素直 マイペース 頑張り屋""".split()
 
+# jobs that are also an occupation the game knows (survivor_parts.gd ROLES)
+ROLE_JOBS = [("看護師", "nurse"), ("薬剤師", "pharmacist"), ("警備員", "guard"), ("小学校の先生", "teacher"),
+    ("元自衛官で、今は運送会社で働いている", "veteran"), ("大工", "carpenter"), ("居酒屋の店主", "cook"),
+    ("営業の会社員", "office"), ("経理の会社員", "office"), ("総務の会社員", "office"), ("家事を切り盛りしている", "homemaker")]
 JOBS = """営業の会社員 経理の会社員 総務の会社員 介護士 看護師 配送ドライバー 工場勤務 市役所の職員 小学校の先生
 スーパーのパート 美容師 大工 電気工事士 保育士 歯科衛生士 八百屋の店主 居酒屋の店員 タクシー運転手 在宅のプログラマー
 郵便局員 銀行員 薬局の事務 警備員 塾講師 清掃員 調理師 自動車整備士 家事を切り盛りしている 求職中 農協の職員
@@ -111,6 +115,24 @@ SENIOR_TAIL = """連れ合いを数年前に亡くした。 遠くに住む子�
 def trait(age):
     return rng.choice(TRAITS_CHILD if age < 13 else TRAITS_ADULT)
 
+ROLE_JOB = {"nurse": "看護師", "pharmacist": "薬剤師", "guard": "警備員", "teacher": "小学校の先生",
+    "veteran": "元自衛官で、今は運送会社で働いている", "carpenter": "大工", "cook": "居酒屋の店主",
+    "office": "営業の会社員", "homemaker": "家事を切り盛りしている", "clerk": "コンビニでアルバイトをしている"}
+
+def job_and_role(p):
+    """An occupation for an adult, and the game's role for it if it has one."""
+    fixed = p.get("role", "")
+    if fixed == "foreign":
+        return rng.choice(["外国から来て、町の工場で働いている", "外国から来て、駅前の店で働いている"]), ""
+    if fixed in ROLE_JOB:
+        return ROLE_JOB[fixed], fixed
+    if rng.random() < 0.30:
+        return rng.choice(ROLE_JOBS)
+    job = rng.choice(JOBS)
+    known = {"看護師": "nurse", "警備員": "guard", "小学校の先生": "teacher", "大工": "carpenter", "家事を切り盛りしている": "homemaker",
+             "営業の会社員": "office", "経理の会社員": "office", "総務の会社員": "office"}
+    return job, known.get(job, "")
+
 def story(p, role, h):
     a = p["age"]
     if a < 13:
@@ -120,13 +142,20 @@ def story(p, role, h):
         return f"{school}。{rng.choice(CLUB)}。"
     if role == "child":
         return rng.choice(["大学に通いながら実家で暮らしている。", "高校を出て、地元で働きはじめた。", "就職先を探しながら実家にいる。", "専門学校に通っている。"])
+    if p.get("role") == "clerk" or p.get("_role") == "clerk":
+        return "コンビニでアルバイトをしている。" + rng.choice(["夜勤が多い。", "店長に頼りにされている。", ""])
+    if p.get("role") == "foreign" and a < 65:
+        return job_and_role(p)[0] + "。日本に来て数年になる。"
     if role == "student":
         return f"{rng.choice(STUDY)}。" + rng.choice(["一人暮らしは二年目。", "実家は遠い。", "仕送りは少ない。", "", ""])
     if a >= 65:
         return f"{rng.choice(RETIRED)}。{rng.choice(HOBBY)}が趣味。" + rng.choice(SENIOR_TAIL if role != "couple" else SENIOR_TAIL[1:])
     if role == "grand":
         return f"{rng.choice(RETIRED)}。孫の世話をしている。"
-    job = rng.choice(JOBS + (["定年後も再雇用で働いている", "早めに仕事を辞めた"] * 4 if a >= 60 else []))
+    if "_job" not in p:
+        p["_job"], r = job_and_role(p)
+        p["_late_role"] = r
+    job = p["_job"]
     tails = [t for t in ADULT_TAIL if a >= 45 or "衰え" not in t]
     if h in ("子どものいる家族", "共働きの夫婦"):
         tails = [t for t in tails if "ベランダ" not in t] if rng.random() < 0.5 else tails
@@ -295,11 +324,41 @@ for a in AREAS:
         for p, role in people:
             name = given(p["sex"], p["age"], sur, taken)
             taken.add(name)
-            plist.append({"id": p["id"], "name": name, "sex": p["sex"], "age": p["age"],
-                          "band": band(p["age"], role), "trait": trait(p["age"]), "story": story(p, role, label)})
+            age = p["age"]
+            game_role = ""
+            if age < 12:
+                game_role = "child"
+            elif 15 <= age <= 18:
+                game_role = "student"
+            elif age >= 65:
+                game_role = "elder"
+            elif p.get("role") == "clerk" or (age <= 24 and role in ("student", "child") and rng.random() < 0.25):
+                game_role = "clerk"
+                p["_role"] = "clerk"
+            elif age >= 25 and role != "grand":
+                if age >= 60 and not p.get("role") and rng.random() < 0.35:
+                    p["_job"], game_role = rng.choice(["定年後も再雇用で働いている", "早めに仕事を辞めた"]), ""
+                else:
+                    p["_job"], game_role = job_and_role(p)
+            if p.get("role") in ROLE_JOB and age >= 18:
+                game_role = p["role"]
+            story_text = story(p, role, label)
+            if not game_role and p.get("_late_role"):
+                game_role = p["_late_role"]
+            # Temperament is their own, and has nothing to do with their face.
+            t = {k: rng.randint(5, 95) for k in ("kindness", "courage", "honesty")}
+            if game_role == "veteran":
+                t["courage"] = min(100, t["courage"] + 20)
+            if age < 13:
+                t["courage"] = max(0, t["courage"] - 25)
+            plist.append({"id": p["id"], "name": name, "sex": p["sex"], "age": age,
+                          "band": band(age, role), "role": game_role, "trait": trait(age), "story": story_text, **t})
+        grown = [q for q in plist if q["band"] != "child"] or plist
         rows.append({"family": label, "surname": sur, "people": plist,
-                     "caution": rng.randint(0, 100), "kindness": rng.randint(0, 100),
-                     "courage": rng.randint(0, 100), "prepared": rng.randint(0, 100)})
+                     "caution": rng.randint(0, 100),
+                     "kindness": round(sum(q["kindness"] for q in grown) / len(grown)),
+                     "courage": max(q["courage"] for q in grown),
+                     "prepared": rng.randint(0, 100)})
     out["homes"][a] = rows
 
 ids = [p["id"] for rows in out["homes"].values() for h in rows for p in h["people"]]
