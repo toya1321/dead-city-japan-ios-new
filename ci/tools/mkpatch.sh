@@ -1,9 +1,9 @@
 #!/bin/bash
 # Regenerate ci/v149.35-world.patch (code/text) + ci/v149.35-assets (images), verify, report.
 set -e
-S=/tmp/claude-0/-home-user-dead-city-japan-ios-new/fd33f221-3685-522f-b000-e9d728f56366/scratchpad
-R=/home/user/dead-city-japan-ios-new
-cd /tmp/claude-0/w/game2
+S=/tmp/w/scratch; mkdir -p $S
+R=/home/claude/dead-city-japan-ios-new
+cd /tmp/w/game2
 B=$(git -C ../g18 rev-parse HEAD)
 git add -A . ':!build' ':!.godot' 2>/dev/null || true
 git diff --cached --name-status --diff-filter=AM $B -- . ':!build' ':!.godot' | awk '$2 ~ /\.(jpg|png|webp|jpeg)$/ {print $2}' > $S/imgs.txt
