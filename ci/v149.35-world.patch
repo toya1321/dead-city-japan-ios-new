@@ -97181,10 +97181,10 @@ index 0000000..049960c
 +uid://cy1s36s7pxiux
 diff --git a/qa/gang_census.gd b/qa/gang_census.gd
 new file mode 100644
-index 0000000..d3510ea
+index 0000000..1c6d24b
 --- /dev/null
 +++ b/qa/gang_census.gd
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,44 @@
 +extends SceneTree
 +## Lives the town DCJ_DAYS days and counts what the gangs did (from the town's news).
 +const Main = preload("res://main.tscn")
@@ -97224,6 +97224,10 @@ index 0000000..d3510ea
 +					desc.append("%s:%d人 力%.1f 武器%d 蓄え%.0f" % [gg.lair, int(f.people), float(f.power), int(f.armed), float(gg.store)])
 +				print("day %d gangs %s" % [d + 1, str(desc)])
 +	print("TALLY ", tally)
++	for id in Gangs.all(w):
++		var gg: Dictionary = Gangs.all(w)[id]
++		var end := int(gg.get("ended_day", -1))
++		print("GANG %s since day %d %s  lived %d days  homes %d" % [gg.lair, int(gg.since) + 1, ("ended day %d (%s)" % [end + 1, str(gg.get("why", ""))]) if bool(gg.ended) else "still there", (end if bool(gg.ended) else int(w.s.minute) / 1440) - int(gg.since), gg.homes.size()])
 +	quit()
 diff --git a/qa/gang_census.gd.uid b/qa/gang_census.gd.uid
 new file mode 100644
@@ -102122,10 +102126,10 @@ index 0000000..e39d8e2
 +uid://b7548xmg3epxc
 diff --git a/scripts/gangs.gd b/scripts/gangs.gd
 new file mode 100644
-index 0000000..453a994
+index 0000000..010bed9
 --- /dev/null
 +++ b/scripts/gangs.gd
-@@ -0,0 +1,378 @@
+@@ -0,0 +1,449 @@
 +extends RefCounted
 +## v149.38 stage 4: looters. Nobody is born one. A household holed up alone,
 +## out of food, with someone able-bodied and not much given to kindness — or
@@ -102255,10 +102259,13 @@ index 0000000..453a994
 +		else:
 +			var id := "gang_%d_%s_%d" % [day, area, i]
 +			join = {"id": id, "lair": free[Residents._roll(world, area, i, day, "lair", free.size())], "since": day,
-+				"store": 0.0, "hungry": 0, "ended": false, "last_raid": -1, "leader": [area, i], "homes": []}
++				"store": 0.0, "hungry": 0, "ended": false, "last_raid": -1, "leader": [area, i], "homes": [], "announced": false}
 +			gangs[id] = join
-+			Residents._news(world, "gang", str(join.lair), "%sに、物騒な連中が住みついたらしい。夜になると、焚き火のまわりに男たちが集まっているという。" % join.lair)
 +	join.homes.append([area, i])
++	# v149.35: one desperate family is not yet a gang anyone talks about.
++	if not bool(join.get("announced", false)) and join.homes.size() >= 2:
++		join.announced = true
++		Residents._news(world, "gang", str(join.lair), "%sに、物騒な連中が住みついたらしい。夜になると、焚き火のまわりに男たちが集まっているという。" % join.lair)
 +	join.store = float(join.store) + float(r[Residents.P_FOOD])
 +	r[Residents.P_FOOD] = 0.0
 +	r[Residents.P_PATH] = "looter"
@@ -102283,10 +102290,76 @@ index 0000000..453a994
 +			_end(world, g, day, "gone")
 +			continue
 +		var need := 0.8 * float(n)
-+		g.hungry = 0 if float(g.store) >= need * 0.6 else int(g.hungry) + 1
-+		g.store = maxf(0.0, float(g.store) - need)
-+		if int(g.hungry) >= 5:
++		# v149.35: what is left where they live, and in the empty shops round about.
++		_forage(world, g, need, day)
++		# Short of food they cut the ration first (0.5 a head); the hungry
++		# days count only below that.
++		var ration := 0.5 * float(n)
++		g.hungry = 0 if float(g.store) >= ration else int(g.hungry) + 1
++		g.store = maxf(0.0, float(g.store) - (need if float(g.store) >= need else minf(float(g.store), ration)))
++		# Hunger thins them out one family at a time; the last of them hold on longest.
++		if int(g.hungry) >= 3 and _homes_left(world, g) > 1:
++			_desert(world, g, day)
++			g.hungry = 1
++		elif int(g.hungry) >= 6:
 +			_end(world, g, day, "hunger")
++
++## v149.35: food from the lair itself, then from an empty building nearby
++## (a party goes out once a day when the store is under a week's worth).
++static func _forage(world, g: Dictionary, need: float, day: int) -> void:
++	if not world.s.get("district") is Dictionary:
++		return
++	var sites: Dictionary = world.s.district.sites
++	var home: Dictionary = sites.get(str(g.lair), {})
++	if not home.is_empty() and float(g.store) < need * 7.0:
++		var take := minf(float(home.get("food", 0.0)), need * 1.5)
++		home.food = float(home.food) - take
++		g.store = float(g.store) + take
++	if float(g.store) >= need * 3.0:
++		return
++	var salt := absi(hash([int(world.s.seed), str(g.id), day, "forage"]))
++	var names: Array = sites.keys()
++	for k in names.size():
++		var place: String = names[(salt + k) % names.size()]
++		var site: Dictionary = sites[place]
++		# Empty, not someone's base, with something left.
++		if not bool(site.get("vacant", false)) or int(site.get("level", 0)) > 0 or float(site.get("food", 0.0)) < 1.0 or place == str(g.lair):
++			continue
++		var got := minf(float(site.food), need * 2.0)
++		site.food = float(site.food) - got
++		g.store = float(g.store) + got
++		if salt % 4 == 0:
++			Residents._news(world, "gang", place, "%sに、%sの連中が物資をあさりに来ていたらしい。" % [place, g.lair])
++		return
++
++static func _homes_left(world, g: Dictionary) -> int:
++	var n := 0
++	for h in g.homes:
++		if str(Residents.row(world, str(h[0]), int(h[1]))[Residents.P_PATH]) == "looter":
++			n += 1
++	return n
++
++## The weakest family gives up and leaves (never the leader's).
++static func _desert(world, g: Dictionary, day: int) -> void:
++	var worst := -1
++	var least := 99999.0
++	for k in g.homes.size():
++		var h: Array = g.homes[k]
++		var r := Residents.row(world, str(h[0]), int(h[1]))
++		if str(r[Residents.P_PATH]) != "looter" or (str(h[0]) == str(g.leader[0]) and int(h[1]) == int(g.leader[1])):
++			continue
++		var p: float = Force.side(Force.household(world, str(h[0]), int(h[1])), 0).power
++		if p < least:
++			least = p
++			worst = k
++	if worst < 0:
++		return
++	var h: Array = g.homes[worst]
++	var r := Residents.row(world, str(h[0]), int(h[1]))
++	if Residents.living(r) > 0:
++		Residents._gone(world, str(h[0]), int(h[1]), r, day, "gang")
++	else:
++		r[Residents.P_PATH] = "dead"
 +
 +## Who to hit: what they have against what it will cost.
 +static func _raid(world, g: Dictionary, day: int) -> void:
@@ -102419,6 +102492,7 @@ index 0000000..453a994
 +static func _end(world, g: Dictionary, day: int, why: String) -> void:
 +	g.ended = true
 +	g.ended_day = day
++	g.why = why
 +	var people_: Dictionary = world.s.survivors.people if world.s.get("survivors") is Dictionary else {}
 +	for id in g.get("recruits", []):
 +		if people_.has(id) and str(people_[id].status) == "looter":
@@ -102431,7 +102505,8 @@ index 0000000..453a994
 +			else:
 +				r[Residents.P_PATH] = "dead"
 +			r[Residents.P_SINCE] = day
-+	Residents._news(world, "gang_end", str(g.lair), "%sにいた連中は、%s" % [g.lair, {"hunger": "食べる物にも困って、町を出ていったらしい。", "driven": "住人たちに追い出されて、散り散りになったらしい。"}.get(why, "もういないらしい。")])
++	if bool(g.get("announced", true)):
++		Residents._news(world, "gang_end", str(g.lair), "%sにいた連中は、%s" % [g.lair, {"hunger": "食べる物にも困って、町を出ていったらしい。", "driven": "住人たちに追い出されて、散り散りになったらしい。"}.get(why, "もういないらしい。")])
 +	if str(world.s.residents.get("player_gang", "")) == str(g.id):
 +		world.s.residents.player_gang = ""
 +
@@ -112776,10 +112851,10 @@ index 0000000..133d436
 +uid://b0cria8bmdc6q
 diff --git a/tests/test_residents149_38.gd b/tests/test_residents149_38.gd
 new file mode 100644
-index 0000000..3daa939
+index 0000000..a672b76
 --- /dev/null
 +++ b/tests/test_residents149_38.gd
-@@ -0,0 +1,393 @@
+@@ -0,0 +1,397 @@
 +extends SceneTree
 +## v149.38: the town's households live their own lives — every home has its
 +## family from the seed; each morning they decide (stay, stock up, leave town,
@@ -113077,7 +113152,11 @@ index 0000000..3daa939
 +			rr[Residents.P_FOOD] = 0.0
 +	for key in load("res://scripts/communities.gd").all(w):
 +		load("res://scripts/communities.gd").all(w)[key].store = 0.0
-+	for d in 8:
++	# v149.35: nor anything left in the empty buildings they forage.
++	for site in w.s.district.sites.values():
++		site.food = 0.0
++	# They thin out a family at a time before the last of them give up.
++	for d in 60:
 +		Gangs.daily(w, 900 + d)
 +	check(bool(gang.ended) and str(hr2[Residents.P_PATH]) in ["gone", "dead", "wander"], "with nothing left to take, they break up and leave")
 +	# Stage 5: someone who loses their home may stay to wander the town.
