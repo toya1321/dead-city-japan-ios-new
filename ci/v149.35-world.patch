@@ -97179,6 +97179,59 @@ index 0000000..049960c
 +++ b/qa/economy_long.gd.uid
 @@ -0,0 +1 @@
 +uid://cy1s36s7pxiux
+diff --git a/qa/gang_census.gd b/qa/gang_census.gd
+new file mode 100644
+index 0000000..d3510ea
+--- /dev/null
++++ b/qa/gang_census.gd
+@@ -0,0 +1,40 @@
++extends SceneTree
++## Lives the town DCJ_DAYS days and counts what the gangs did (from the town's news).
++const Main = preload("res://main.tscn")
++const Gangs = preload("res://scripts/gangs.gd")
++const Force = preload("res://scripts/force.gd")
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED"))
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	var tally := {}
++	var seen := {}
++	for d in int(OS.get_environment("DCJ_DAYS")):
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.s.walkers.encounter = {}
++			w.advance_safe(60)
++		if w.s.get("residents") is Dictionary:
++			for line in w.s.residents.get("news_today", []):
++				var t := str(line)
++				if seen.has(t):
++					continue
++				seen[t] = true
++				for k in ["追い返された", "根こそぎ", "抵抗した人が殺された", "バリケードが略奪者に破られ", "住みついた", "町を出ていった", "追い出された"]:
++					if t.contains(k):
++						tally[k] = int(tally.get(k, 0)) + 1
++			if d % 15 == 14:
++				var desc := []
++				for gg in Gangs.active(w):
++					var f: Dictionary = Force.gang(w, gg)
++					desc.append("%s:%d人 力%.1f 武器%d 蓄え%.0f" % [gg.lair, int(f.people), float(f.power), int(f.armed), float(gg.store)])
++				print("day %d gangs %s" % [d + 1, str(desc)])
++	print("TALLY ", tally)
++	quit()
+diff --git a/qa/gang_census.gd.uid b/qa/gang_census.gd.uid
+new file mode 100644
+index 0000000..b4d1904
+--- /dev/null
++++ b/qa/gang_census.gd.uid
+@@ -0,0 +1 @@
++uid://dugobnw044qix
 diff --git a/qa/meal_talk_check.gd b/qa/meal_talk_check.gd
 new file mode 100644
 index 0000000..23ac28f
@@ -97827,6 +97880,251 @@ index 0000000..9c3de07
 +++ b/qa/saveload_same.gd.uid
 @@ -0,0 +1 @@
 +uid://cs4b7gw40rvkf
+diff --git a/qa/scene_audit.gd b/qa/scene_audit.gd
+new file mode 100644
+index 0000000..1aed642
+--- /dev/null
++++ b/qa/scene_audit.gd
+@@ -0,0 +1,232 @@
++extends SceneTree
++## Plays every people-fight scene many times through the real command path,
++## pressing a random offered chip each step, and reports:
++##  - chips the game did not understand, or answered with nothing
++##  - scenes that never end
++##  - a scene's photo missing while it runs
++##  - a save made mid-scene that does not load back the same
++##  - script errors (printed by Godot into the log)
++## DCJ_RUNS (default 25) runs per scenario.
++const Main = preload("res://main.tscn")
++const Residents = preload("res://scripts/residents.gd")
++const Dwellings = preload("res://scripts/dwellings.gd")
++const Gangs = preload("res://scripts/gangs.gd")
++const Communities = preload("res://scripts/communities.gd")
++const Lair = preload("res://scripts/lair.gd")
++const Assault = preload("res://scripts/assault_scene.gd")
++const Scene = preload("res://scripts/raid_scene.gd")
++const Raiders = preload("res://scripts/raiders.gd")
++const BAD := ["解釈できません", "処理できない", "何も実行していません", "SCRIPT ERROR", "その相手がいない", "それはできない"]
++var g
++var w
++var issues := {}
++var stats := {}
++var rng := RandomNumberGenerator.new()
++func _initialize() -> void:
++	call_deferred("run")
++func note(kind: String, detail: String) -> void:
++	var key := kind + " | " + detail.left(120)
++	issues[key] = int(issues.get(key, 0)) + 1
++func count(key: String) -> void:
++	stats[key] = int(stats.get(key, 0)) + 1
++func press(cmd: String) -> String:
++	g.log_entries.clear()
++	await g._on_command(cmd)
++	while g.advancing:
++		await process_frame
++	var said := "\n".join(g.log_entries.slice(1))
++	for b in BAD:
++		if said.contains(b):
++			note("not understood", "%s => %s" % [cmd, said.replace("\n", " / ")])
++	if said.strip_edges().is_empty():
++		note("no answer", cmd)
++	return said
++func in_scene() -> bool:
++	return Assault.active(w) or Scene.active(w) or Raiders.active(w)
++func photo_check(label: String) -> void:
++	if Assault.active(w) or Scene.active(w):
++		var p: String = Scene.photo(w)
++		if p.is_empty():
++			note("no photo", label + " stage " + str(Assault.state(w).get("stage", "")) + str(w.s.raid.get("stage", "") if Scene.active(w) else ""))
++		else:
++			count("photo " + p.get_file().get_basename())
++## Saves mid-scene, loads it back, checks the scene is still there.
++func save_load_check(label: String) -> void:
++	var before := JSON.stringify([w.s.get("assault", {}), w.s.get("raid", {})])
++	var path := "user://scene_audit.sav"
++	w.save_file(path)
++	var ok = w.load_file(path)
++	var after := JSON.stringify([w.s.get("assault", {}), w.s.get("raid", {})])
++	if before != after:
++		note("save/load changed the scene", label)
++	count("save/load mid-scene")
++## Presses random offered chips until the scene ends (or 30 presses).
++func play_out(label: String, place: String) -> void:
++	var presses := 0
++	var saved := false
++	while in_scene() and presses < 30:
++		presses += 1
++		var chips: Array = g._suggestions()
++		if chips.is_empty():
++			note("no chips mid-scene", label)
++			break
++		var cmd := str(chips[rng.randi() % chips.size()])
++		if load("res://scripts/combat.gd").active(w):
++			count("walkers interrupted: " + label)
++		var stage := str(Assault.state(w).get("stage", "")) if Assault.active(w) else ("home-" + str(w.s.raid.get("stage", "door")))
++		count("%s: %s → %s" % [label, stage, cmd])
++		await press(cmd)
++		photo_check(label)
++		if not saved and presses == 2 and in_scene():
++			saved = true
++			save_load_check(label)
++		w.s.health = maxf(float(w.s.health), 40.0)
++		w.s.hunger = 0.0
++		w.s.thirst = 0.0
++		w.s.fatigue = 0.0
++		if g.location != place and Assault.active(w):
++			# Walked off: the scene must not hang on.
++			await press(place + "へ行く")
++	if presses >= 30:
++		note("scene never ended", label)
++	# How it ended stays on screen for a while.
++	var end_photo: String = Scene.photo(w)
++	if not end_photo.is_empty():
++		count("end photo " + end_photo.get_file().get_basename())
++	elif not load("res://scripts/combat.gd").active(w):
++		count("end without photo: " + label)
++	count(label + " runs")
++func make_gang(homes: int) -> Dictionary:
++	var list: Array = []
++	for i in Dwellings.count("団地"):
++		if list.size() >= homes:
++			break
++		var who: Dictionary = Residents.who(w, "団地", i)
++		if who.people.any(func(q): return bool(q.able)):
++			var r: Array = Residents.row(w, "団地", i)
++			r[Residents.P_PATH] = "looter"
++			r[Residents.P_ALIVE] = (1 << who.people.size()) - 1
++			list.append(["団地", i])
++	for k in Gangs.all(w).keys():
++		Gangs.all(w)[k].ended = true
++	var gang := {"id": "gang_audit_%d" % rng.randi(), "lair": "倉庫街", "since": 1, "store": 25.0, "hungry": 0, "ended": false, "last_raid": 99999, "leader": list[0], "homes": list}
++	Gangs.all(w)[gang.id] = gang
++	return gang
++func make_block() -> Dictionary:
++	var leader := -1
++	for i in Communities._rows(w, "南の住宅街", 0):
++		var r: Array = Residents.row(w, "南の住宅街", i)
++		var who: Dictionary = Residents.who(w, "南の住宅街", i)
++		r[Residents.P_PATH] = "holed"
++		r[Residents.P_ALIVE] = (1 << who.people.size()) - 1
++		r[Residents.P_FLAGS] = (int(r[Residents.P_FLAGS]) | Communities.F_COMM) & ~(Residents.F_ROBBED | Residents.F_HOSTILE)
++		if leader < 0 and who.people.any(func(q): return bool(q.able)):
++			leader = i
++	var c := {"area": "南の住宅街", "block": 0, "since": 1, "store": 20.0, "water": 0.0, "garden": 0.0,
++		"wall": 40.0, "trust": 80.0, "ended": false, "leader": leader, "last_out": -1, "hungry": 0}
++	Communities.all(w)["南の住宅街:0"] = c
++	return c
++func goto(place: String) -> void:
++	g.location = place
++	g._sync_player_position()
++	w.set_meta("player_place", place)
++	w.set_meta("player_at_home", load("res://scripts/navigation.gd").indoor(place))
++func fresh() -> void:
++	w.s.health = 100.0
++	w.s.food = 12.0
++	w.s.cash = 20000
++	w.s.district.bag.food = 3.0
++	w.s.district.bag.water = 2.0
++	w.s.assault = {}
++	w.s.raid = {}
++	w.s.walkers.encounter = {}
++	w.s.residents.erase("confronted_at")
++	w.s.residents.player_gang = ""
++	w.s.residents.player_looter = false
++	w.s.minute = int(w.s.minute) + 37 + rng.randi() % 300
++func run() -> void:
++	rng.seed = 2026
++	g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = 11
++	p.cohabitants = 1
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	w = g.world
++	for d in 2:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.advance_safe(60)
++	w.s.society = "emergency"
++	var runs := int(OS.get_environment("DCJ_RUNS")) if OS.get_environment("DCJ_RUNS") != "" else 25
++	for t in runs:
++		# 1. Home defence: voices at the door, then whatever is offered.
++		fresh()
++		w.s.inventory.parts = t % 2
++		goto("居間")
++		var gang := make_gang(2 + t % 3)
++		w.s.residents.raiding = gang.id
++		w.s.raid = {"at": int(w.s.minute), "size": 2 + t % 3}
++		g._refresh()
++		photo_check("home door")
++		await play_out("home", "居間")
++		# 2. Watching and sneaking into the lair.
++		fresh()
++		gang = make_gang(2 + t % 4)
++		goto("大通り")
++		await press("略奪者の拠点をうかがう")
++		await press("略奪者の拠点をうかがう")
++		if "見張りの交代まで待つ" in g._suggestions() and t % 2 == 0:
++			await press("見張りの交代まで待つ")
++		goto("倉庫街")
++		w.s.residents.erase("confronted_at")
++		await press("倉庫街へ行く")
++		var at_lair: Array = g._suggestions()
++		for c in ["忍び込む"]:
++			if c in at_lair:
++				await press(c)
++		await play_out("sneak", "倉庫街")
++		# Bargain / information from the lair (once each run).
++		fresh()
++		goto("倉庫街")
++		Lair.note(w, gang).grudge = 0
++		await press(["取引を持ちかける", "情報を買う"][t % 2])
++		# 3. Joining and raiding a family or a neighbourhood.
++		fresh()
++		Lair.note(w, gang).grudge = 0
++		gang.erase("player_raid_day")
++		goto("倉庫街")
++		var victim: Array = Residents.row(w, ["北の住宅街", "住宅街", "団地"][t % 3], 3 + t)
++		victim[Residents.P_PATH] = "holed"
++		victim[Residents.P_FOOD] = 6.0
++		victim[Residents.P_FLAGS] = int(victim[Residents.P_FLAGS]) & ~Communities.F_COMM
++		await press("仲間に入れてもらう")
++		if Lair.is_member(w, gang):
++			await press("略奪に加わる")
++			await play_out("raid", "倉庫街")
++			await press("ここを出る")
++		else:
++			note("could not join", "run %d" % t)
++		# 4. Striking the lair with a neighbourhood.
++		fresh()
++		gang = make_gang(1 + t % 3)
++		Lair.note(w, gang).seen = true
++		Lair.note(w, gang).gap_known = t % 2 == 0
++		make_block()
++		goto("南の住宅街")
++		if not "略奪者の拠点を叩こうと持ちかける" in g._suggestions():
++			note("strike not offered", "run %d" % t)
++		await press("略奪者の拠点を叩こうと持ちかける")
++		await play_out("strike", "南の住宅街")
++	print("\n=== STATS ===")
++	var keys := stats.keys()
++	keys.sort()
++	for k in keys:
++		print("  %4d  %s" % [stats[k], k])
++	print("\n=== ISSUES (%d) ===" % issues.size())
++	for k in issues:
++		print("  %3d× %s" % [issues[k], k])
++	quit()
+diff --git a/qa/scene_audit.gd.uid b/qa/scene_audit.gd.uid
+new file mode 100644
+index 0000000..4b35c8c
+--- /dev/null
++++ b/qa/scene_audit.gd.uid
+@@ -0,0 +1 @@
++uid://b11s7hlwyfapi
 diff --git a/qa/smart_bot.gd b/qa/smart_bot.gd
 new file mode 100644
 index 0000000..89fd3fd
@@ -98378,10 +98676,10 @@ index 2c13ef6..590d843 100644
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/assault_scene.gd b/scripts/assault_scene.gd
 new file mode 100644
-index 0000000..df92cb2
+index 0000000..432fd62
 --- /dev/null
 +++ b/scripts/assault_scene.gd
-@@ -0,0 +1,413 @@
+@@ -0,0 +1,417 @@
 +extends RefCounted
 +## v149.35: the player on the taking side, played out a few moves at a time.
 +##
@@ -98775,8 +99073,10 @@ index 0000000..df92cb2
 +	var kind := str(a.kind)
 +	if kind == "strike":
 +		world.s.assault = {}
++		var told: String = _lair().strike_result(world, str(a.target.get("area", "")), str(a.gang), won)
++		# After the hour it takes to carry things off or get home.
 +		_show(world, "assault_won" if won else "assault_lost")
-+		return lead + _lair().strike_result(world, str(a.target.get("area", "")), str(a.gang), won)
++		return lead + told
 +	if kind == "raid":
 +		if won:
 +			# One of them goes too far.
@@ -98786,7 +99086,9 @@ index 0000000..df92cb2
 +			a.stage = "loot"
 +			return lead + "相手は逃げ出すか、手を上げた。奥に食べ物が残っている。（「全部持っていく」「少し残していく」）"
 +		world.s.assault = {}
-+		return lead + _lair().raid_result(world, a.target, 0.0, false, false)
++		var told: String = _lair().raid_result(world, a.target, 0.0, false, false)
++		_show(world, "assault_lost")
++		return lead + told
 +	world.s.assault = {}
 +	return lead
 +
@@ -109584,7 +109886,7 @@ index 4c4fc12..87ec8d5 100644
 +	if float(state.get("mood", 70.0)) < 30: parts.append("気が滅入っている")
 +	return "・".join(parts)
 diff --git a/scripts/walkers.gd b/scripts/walkers.gd
-index 1e90817..bd81156 100644
+index 1e90817..6345a36 100644
 --- a/scripts/walkers.gd
 +++ b/scripts/walkers.gd
 @@ -9,9 +9,12 @@ const Mood = preload("res://scripts/mood.gd")
@@ -109639,10 +109941,15 @@ index 1e90817..bd81156 100644
  			# Stage 6: fallen shelves and fortified bases keep most of them out.
  			var sites: Dictionary = world.s.get("district", {}).get("sites", {})
  			if int(w.get("blocks", {}).get(target, -1)) > minute and world.draw(minute, place.hash() + i, "walker-blocked", 100) < 70:
-@@ -513,6 +521,10 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
+@@ -513,6 +521,15 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
  		return {}
  	if not w.encounter.is_empty() and str(w.encounter.place) == place:
  		return w.encounter
++	# v149.35: in the middle of a raid or a strike with others (assault_scene.gd),
++	# the ones about keep their distance from a crowd with iron pipes.
++	var a = world.s.get("assault", {})
++	if a is Dictionary and not a.is_empty() and str(a.get("kind", "")) in ["strike", "raid"] and str(a.get("place", "")) == place:
++		return {}
 +	# v149.38: just slipped past (or hid from) the ones here.
 +	var passed: Dictionary = w.get("passed", {})
 +	if str(passed.get("place", "")) == place and int(world.s.minute) < int(passed.get("until", 0)):
@@ -109650,7 +109957,7 @@ index 1e90817..bd81156 100644
  	var hour: float = world.hour_of_day()
  	var night := hour < 6.0 or hour >= 18.0
  	var per := (12 if night else 8) + (30 if loud else 0)
-@@ -526,6 +538,26 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
+@@ -526,6 +543,26 @@ static func check(world, place: String, loud: bool = false, from: String = "") -
  	w.encounter = {"place": place, "count": n, "near": noticed, "since": int(world.s.minute), "from": from}
  	return w.encounter
  
@@ -109677,7 +109984,7 @@ index 1e90817..bd81156 100644
  ## A glance does not give a number: one, a few, many, a horde. An exact
  ## count needs a careful look (`counted`, valid while the number holds).
  static func estimate(n: int, counted: int = -1) -> String:
-@@ -618,14 +650,29 @@ static func resolve(world, kind: String, weapon: int = 0, allies: int = 0, prese
+@@ -618,14 +655,29 @@ static func resolve(world, kind: String, weapon: int = 0, allies: int = 0, prese
  			enc.near = true
  			return {"text": "投げた石は、すぐ近くに落ちた。かえってこちらの居場所を知らせてしまった。", "bitten": false, "ended": false, "minutes": 2}
  		"hide":
@@ -109709,7 +110016,7 @@ index 1e90817..bd81156 100644
  			if roll < chance:
  				w.encounter = {}
  				if near:
-@@ -670,7 +717,8 @@ static func _caught(world, enc: Dictionary, n: int, near: bool, lead: String, pr
+@@ -670,7 +722,8 @@ static func _caught(world, enc: Dictionary, n: int, near: bool, lead: String, pr
  		return _caught_housemate(world, enc, n, near, index)
  	var chance := 0
  	if near:
@@ -109719,7 +110026,7 @@ index 1e90817..bd81156 100644
  	chance = maxi(0, chance - int(world.s.get("protection", 0)) * chance / 100)
  	if world.draw(minute, n * 13, "walker-bite", 100) < chance:
  		return _bite(world, enc, lead)
-@@ -684,7 +732,7 @@ static func _caught_housemate(world, enc: Dictionary, n: int, near: bool, index:
+@@ -684,7 +737,7 @@ static func _caught_housemate(world, enc: Dictionary, n: int, near: bool, index:
  	var person: Dictionary = world.s.household_members[index]
  	var chance := 0
  	if near:
