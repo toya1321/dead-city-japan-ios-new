@@ -98544,11 +98544,19 @@ index 0000000..ddf6c11
 @@ -0,0 +1 @@
 +uid://bx2jqxsykgf2u
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..008680d 100644
+index 35febbb..b14e4db 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -16,7 +16,11 @@ const KINDS := [
+@@ -14,9 +14,19 @@ const KINDS := [
+ 	["grabbed", "^(【危険】)?[^\\n]{0,60}(腕をつかまれた|もつれ合ったはずみに|爪が服を裂)", "つかみかかられた。"],
+ 	["fight_head", "^力いっぱい打ちつけた", "力いっぱい振り下ろした。"],
  	["fight_miss", "^打ちかかった", "空を切った。"],
++	# v149.35: waiting for the rescue (rescue.gd).
++	["sos", "^ベランダから屋根に上がり、白いシーツを裂いて", "屋根に「SOS」を書いた。"],
++	["sos_flat", "^ベランダの手すりに、白いシーツを", "ベランダに「SOS」を掲げた。"],
++	["signal", "^窓のカーテンを開け、懐中電灯を空に向けて", "空に向けて、光を送った。"],
++	["rescue_board_flat", "^【救助】荷物をひとつだけ抱えて、階段を", "迎えの車両に乗り込んだ。"],
++	["rescue_board", "^【救助】荷物をひとつだけ抱えて", "迎えの車両に乗り込んだ。"],
  	["eat", "^(しっかり)?食事を取った", "食事をした。"],
  	["eat", "^軽くつまんだ", "少しだけ口にした。"],
 +	["cook_home", "^台所で、(ガスコンロ|電気のコンロ)で.*温かい食事を作って食べた", "温かい食事を作った。"],
@@ -98559,7 +98567,7 @@ index 35febbb..008680d 100644
  	["smoke", "^(換気扇の下で|窓を少し開けて、)?タバコに火をつけ", "一服した。"],
  	["drink", "^水を飲んだ", "水を飲んだ。"],
  	["bandage", "^傷を手当てした", "傷に包帯を巻いた。"],
-@@ -34,12 +38,17 @@ const KINDS := [
+@@ -34,12 +44,17 @@ const KINDS := [
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
  	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
@@ -98579,7 +98587,7 @@ index 35febbb..008680d 100644
  	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
  	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
  	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
-@@ -53,6 +62,11 @@ const KINDS := [
+@@ -53,6 +68,11 @@ const KINDS := [
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
@@ -98591,7 +98599,7 @@ index 35febbb..008680d 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -112,7 +126,7 @@ static func _find(base: String) -> String:
+@@ -112,7 +132,7 @@ static func _find(base: String) -> String:
  
  ## The picture for this action now, or "" if none has been made yet.
  ## A moment with no picture of its own borrows a broader one.
@@ -98600,7 +98608,7 @@ index 35febbb..008680d 100644
  
  static func path(world, kind: String) -> String:
  	var found := _path(world, kind)
-@@ -120,8 +134,28 @@ static func path(world, kind: String) -> String:
+@@ -120,8 +140,28 @@ static func path(world, kind: String) -> String:
  		found = _path(world, str(FALLBACK[kind]))
  	return found
  
@@ -98629,7 +98637,7 @@ index 35febbb..008680d 100644
  	if kind == "eat" and not world.s.household_members.is_empty():
  		options.append("act_eat_together")
  	if crisis(world):
-@@ -130,5 +164,9 @@ static func _path(world, kind: String) -> String:
+@@ -130,5 +170,9 @@ static func _path(world, kind: String) -> String:
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -98640,7 +98648,7 @@ index 35febbb..008680d 100644
  			return found
  	return ""
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..a517262 100644
+index 2c13ef6..9eeab9c 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -98648,7 +98656,7 @@ index 2c13ef6..a517262 100644
  # plan before mutation. AI plans use the same validation and action executor.
  const District = preload("res://scripts/district.gd")
 -const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
-+const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る","略奪者の拠点をうかがう","忍び込む","取引を持ちかける","情報を買う","略奪に加わる","略奪者の拠点を叩こうと持ちかける","奥へ進む","箱を運び出す","物陰でやり過ごす","引き上げる","正面から一斉に踏み込む","物音で気をそらして裏から入る","感染者をおびき寄せてぶつける","見張りの交代を待つ","一番前の相手に打ちかかる","押さえ込む","仲間に任せて下がる","全部持っていく","少し残していく","迎え撃つ準備をする","外の音に耳をすます","玄関で待ち構える","窓のそばで待ち構える","裏口で待ち構える","一番前の男に打ちかかる","家具で押し返す","食料を投げて引かせる","降参する","見張りの交代まで待つ","家具で裏口をふさぐ","家具で窓をふさぐ","家具で玄関をふさぐ","玄関へ駆けつける","窓へ駆けつける","裏口へ駆けつける","差し出された分を受け取って引き上げる","全部よこせと押し入る","2階へ押し入る","置いてある分だけで引き上げる","止める","見て見ぬふりをする","屋根にSOSを書く","光で合図を送る","救助の車両に乗る"]
++const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る","略奪者の拠点をうかがう","忍び込む","取引を持ちかける","情報を買う","略奪に加わる","略奪者の拠点を叩こうと持ちかける","奥へ進む","箱を運び出す","物陰でやり過ごす","引き上げる","正面から一斉に踏み込む","物音で気をそらして裏から入る","感染者をおびき寄せてぶつける","見張りの交代を待つ","一番前の相手に打ちかかる","押さえ込む","仲間に任せて下がる","全部持っていく","少し残していく","迎え撃つ準備をする","外の音に耳をすます","玄関で待ち構える","窓のそばで待ち構える","裏口で待ち構える","一番前の男に打ちかかる","家具で押し返す","食料を投げて引かせる","降参する","見張りの交代まで待つ","家具で裏口をふさぐ","家具で窓をふさぐ","家具で玄関をふさぐ","玄関へ駆けつける","窓へ駆けつける","裏口へ駆けつける","差し出された分を受け取って引き上げる","全部よこせと押し入る","2階へ押し入る","置いてある分だけで引き上げる","止める","見て見ぬふりをする","屋根にSOSを書く","ベランダにSOSを掲げる","光で合図を送る","救助の車両に乗る"]
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
@@ -100614,7 +100622,7 @@ index 0000000..74b03d3
 @@ -0,0 +1 @@
 +uid://bdcweevimp8ee
 diff --git a/scripts/chronicle.gd b/scripts/chronicle.gd
-index 9eafec8..d58702e 100644
+index 9eafec8..70e0b35 100644
 --- a/scripts/chronicle.gd
 +++ b/scripts/chronicle.gd
 @@ -2,16 +2,15 @@ extends RefCounted
@@ -100720,7 +100728,7 @@ index 9eafec8..d58702e 100644
  			picked.append(m)
  	if picked.size() > 12:
  		picked = picked.slice(0, 4) + picked.slice(picked.size() - 8)
-@@ -136,19 +139,21 @@ static func epilogue(world) -> String:
+@@ -136,19 +139,22 @@ static func epilogue(world) -> String:
  		for m in picked:
  			lines.append("%d日目　%s" % [int(m.day), m.text])
  	lines.append("")
@@ -100743,7 +100751,8 @@ index 9eafec8..d58702e 100644
  	var text := "\n".join(lines)
 -	st.photo = E.photo(world, text, total)
 +	# The rescue has its own picture (when made); the others are about dying.
-+	st.photo = ("ending_rescued" if ResourceLoader.exists("res://assets/photos/ending_rescued.jpg") else "") if rescued else E.photo(world, text, total)
++	var rescue_photo := "ending_rescued_flat" if str(world.s.profile.get("housing", "")) == "集合住宅" and ResourceLoader.exists("res://assets/photos/ending_rescued_flat.jpg") else "ending_rescued"
++	st.photo = (rescue_photo if ResourceLoader.exists("res://assets/photos/%s.jpg" % rescue_photo) else "") if rescued else E.photo(world, text, total)
  	return text
  
  ## The record so far, for the player to read back.
@@ -102062,7 +102071,7 @@ index 0000000..9bf6866
 @@ -0,0 +1 @@
 +uid://cs02iqkrnmci1
 diff --git a/scripts/epilogue.gd b/scripts/epilogue.gd
-index 59fc980..5dffd18 100644
+index 59fc980..10d6587 100644
 --- a/scripts/epilogue.gd
 +++ b/scripts/epilogue.gd
 @@ -100,7 +100,19 @@ static func death(world, name: String, days: int) -> String:
@@ -102086,7 +102095,7 @@ index 59fc980..5dffd18 100644
  		return _pick(world, [
  			"%d日目、%sは飢えと渇きの中で、静かに力尽きた。" % [days, name],
  			"最後の缶詰を開けた数日後、%d日目に、%sは起き上がらなくなった。" % [days, name],
-@@ -261,6 +273,41 @@ static func photo(world, text: String, days: int) -> String:
+@@ -261,6 +273,44 @@ static func photo(world, text: String, days: int) -> String:
  		return "ending_tally"
  	return "ending_alone"
  
@@ -102112,7 +102121,10 @@ index 59fc980..5dffd18 100644
 +	if not left.is_empty():
 +		line += "%sは、乗ることを許されなかった。" % "と".join(left)
 +	if bool(r.get("sos", false)):
-+		line += _pick(world, ["屋根の白い「SOS」は、そのまま残された。", "屋根のシーツの文字が、風にはためいていた。"], "rescued-sos")
++		if str(world.s.profile.get("housing", "")) == "集合住宅":
++			line += _pick(world, ["ベランダに垂らしたシーツの「SOS」は、そのまま残された。", "ベランダのシーツの文字が、風にはためいていた。"], "rescued-sos")
++		else:
++			line += _pick(world, ["屋根の白い「SOS」は、そのまま残された。", "屋根のシーツの文字が、風にはためいていた。"], "rescued-sos")
 +	return line
 +
 +static func rescued_closing(world, name: String, days: int) -> String:
@@ -103288,7 +103300,7 @@ index 2c72ddd..a50f2d7 100644
  				return {}
  		"npc":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..6222a4f 100644
+index 0f2add4..7f7d702 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -88,7 +88,6 @@ var chips_toggle: CheckButton
@@ -104417,7 +104429,7 @@ index 0f2add4..6222a4f 100644
  	}
  	if aliases.has(cmd): return aliases[cmd]
 -	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
-+	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "次の部屋を探す", "部屋を出る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "子ども部屋を調べる", "風呂場を調べる", "物置を調べる", "ノックする", "声をかける", "食料を分ける", "食べ物を分ける", "一緒に来ないか誘う", "集まりを訪ねる", "集まりの様子", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る", "略奪者の拠点をうかがう", "忍び込む", "取引を持ちかける", "情報を買う", "略奪に加わる", "略奪者の拠点を叩こうと持ちかける", "見張りの交代まで待つ", "屋根にSOSを書く", "光で合図を送る", "救助の車両に乗る"]
++	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "次の部屋を探す", "部屋を出る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "子ども部屋を調べる", "風呂場を調べる", "物置を調べる", "ノックする", "声をかける", "食料を分ける", "食べ物を分ける", "一緒に来ないか誘う", "集まりを訪ねる", "集まりの様子", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る", "略奪者の拠点をうかがう", "忍び込む", "取引を持ちかける", "情報を買う", "略奪に加わる", "略奪者の拠点を叩こうと持ちかける", "見張りの交代まで待つ", "屋根にSOSを書く", "ベランダにSOSを掲げる", "光で合図を送る", "救助の車両に乗る"]
  	if cmd in exact: return cmd
 +	# v149.35: rooms of a building walked room by room.
 +	var SiteRooms = load("res://scripts/site_rooms.gd")
@@ -104488,7 +104500,7 @@ index 0f2add4..6222a4f 100644
 +		return "ためておいた水%.0fLを鍋で煮沸し、冷まして飲み水にした（30分%s）。" % [litres, "" if world.has_home_power() else "・カセットボンベ少し"]
 +	# v149.35: waiting to be rescued (rescue.gd).
 +	var Rescue = load("res://scripts/rescue.gd")
-+	if clean in ["屋根にSOSを書く", "SOSを書く", "屋上にSOSを書く"]:
++	if clean in ["屋根にSOSを書く", "SOSを書く", "屋上にSOSを書く", "ベランダにSOSを掲げる", "SOSを掲げる"]:
 +		return Rescue.write_sos(world, location)
 +	if clean in ["光で合図を送る", "合図を送る", "懐中電灯で合図する"]:
 +		return Rescue.send_signal(world, location)
@@ -106868,10 +106880,10 @@ index 8dd4800..85b0ae3 100644
  				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/rescue.gd b/scripts/rescue.gd
 new file mode 100644
-index 0000000..3fb460f
+index 0000000..f5dfebf
 --- /dev/null
 +++ b/scripts/rescue.gd
-@@ -0,0 +1,198 @@
+@@ -0,0 +1,206 @@
 +extends RefCounted
 +## v149.35: the "wait" ending — rescue comes to the town.
 +##
@@ -106979,10 +106991,17 @@ index 0000000..3fb460f
 +	if day < int(r.start) - 10 or day > int(r.end):
 +		return ""
 +	if day < int(r.start):
-+		return "【ラジオ】陸上自衛隊は%d日後から、連絡の途絶えた都内の地域で生存者の捜索を行うと発表しました。救助を求める方は、昼は屋根や屋上に大きく「SOS」と書き、夜は懐中電灯などで光の合図を送ってください。" % (int(r.start) - day)
-+	return "【ラジオ】陸上自衛隊による生存者の捜索が続いています。捜索はあと%d日の予定です。屋根の「SOS」と、夜の光の合図を続けてください。" % maxi(1, int(r.end) - day)
++		return "【ラジオ】陸上自衛隊は%d日後から、連絡の途絶えた都内の地域で生存者の捜索を行うと発表しました。救助を求める方は、昼は屋根やベランダに大きく「SOS」と書き、夜は懐中電灯などで光の合図を送ってください。" % (int(r.start) - day)
++	return "【ラジオ】陸上自衛隊による生存者の捜索が続いています。捜索はあと%d日の予定です。屋根やベランダの「SOS」と、夜の光の合図を続けてください。" % maxi(1, int(r.end) - day)
 +
 +# ------------------------------------------------------------------ the player
++
++static func flat(world) -> bool:
++	return str(world.s.profile.get("housing", "一戸建て")) == "集合住宅"
++
++## The chip: the roof of a house; the balcony rail of a flat.
++static func sos_chip(world) -> String:
++	return "ベランダにSOSを掲げる" if flat(world) else "屋根にSOSを書く"
 +
 +static func at_home(place: String) -> bool:
 +	return place in HOME
@@ -106999,7 +107018,7 @@ index 0000000..3fb460f
 +	if not heard:
 +		return []
 +	if not bool(r.get("sos", false)) and _hour(world) >= 6 and _hour(world) < 17:
-+		out.append("屋根にSOSを書く")
++		out.append(sos_chip(world))
 +	var h := _hour(world)
 +	if (h >= 19 or h < 4) and int(r.get("signalled_day", -99)) < _day(world):
 +		out.append("光で合図を送る")
@@ -107010,15 +107029,16 @@ index 0000000..3fb460f
 +		return "家でないと書けない。"
 +	var r := state(world)
 +	if bool(r.get("sos", false)):
-+		return "屋根の「SOS」は、もう書いてある。"
++		return "ベランダの「SOS」は、もう掲げてある。" if flat(world) else "屋根の「SOS」は、もう書いてある。"
 +	var h := _hour(world)
 +	if h < 6 or h >= 17:
 +		return "暗くて、屋根には上がれない。（昼のあいだにできる）"
 +	world.advance_safe(90)
 +	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 15.0)
 +	r.sos = true
-+	var house := str(world.s.profile.get("housing", "一戸建て"))
-+	return ("ベランダから屋根に上がり、" if house == "一戸建て" else "屋上に出て、") + "白いシーツを裂いて、大きく「SOS」の三文字を並べた。四隅を瓦礫で押さえた。空からなら見えるはずだ。……空以外からも、見えるかもしれない。（1時間半）"
++	if flat(world):
++		return "ベランダの手すりに、白いシーツを二枚つないで垂らし、黒いペンキで大きく「SOS」と書いた。風でめくれないよう、裾に水のペットボトルを結びつけた。空からも、通りからも見えるはずだ。……見られたくない相手にも。（1時間半）"
++	return "ベランダから屋根に上がり、白いシーツを裂いて、大きく「SOS」の三文字を並べた。四隅を瓦礫で押さえた。空からなら見えるはずだ。……空以外からも、見えるかもしれない。（1時間半）"
 +
 +static func send_signal(world, place: String) -> String:
 +	if not at_home(place):
@@ -107063,7 +107083,7 @@ index 0000000..3fb460f
 +	r.left = left
 +	world.s.food = 0.0
 +	Chronicle.note(world, "救助の車両に乗って、町を離れた。" + ("%sと一緒に。" % "、".join(going) if not going.is_empty() else ""), "rescue")
-+	var line := "【救助】荷物をひとつだけ抱えて、玄関を出た。"
++	var line := "【救助】荷物をひとつだけ抱えて、" + ("階段を駆け下りた。" if flat(world) else "玄関を出た。")
 +	if not going.is_empty():
 +		line += "%sの手を引いて、" % "、".join(going)
 +	line += "車両の荷台に乗り込んだ。扉が閉まり、毛布が肩にかけられた。"
@@ -113312,10 +113332,10 @@ index 0000000..133d436
 +uid://b0cria8bmdc6q
 diff --git a/tests/test_rescue149_35.gd b/tests/test_rescue149_35.gd
 new file mode 100644
-index 0000000..ebdcb88
+index 0000000..09a0db0
 --- /dev/null
 +++ b/tests/test_rescue149_35.gd
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,172 @@
 +extends SceneTree
 +## v149.35: the "wait" ending — the rescue sweep, being seen, the pickup, the
 +## bite check, and the story told back as a rescue.
@@ -113455,6 +113475,37 @@ index 0000000..ebdcb88
 +	h.log_entries.clear()
 +	await h._on_command("1時間休息")
 +	check(str(h.log_entries).contains("物語は、ここで終わった"), "nothing more can be done")
++	# A flat: the SOS hangs from the balcony; the photos and the ending follow.
++	var f = Main.instantiate()
++	root.add_child(f)
++	for i in 3: await process_frame
++	var fp: Dictionary = f.world.DEFAULT_PROFILE.duplicate(true)
++	fp.seed = 7
++	fp.housing = "集合住宅"
++	f._start_new_game(fp)
++	f._finish_intro()
++	f.local_model.enabled = false
++	var fw = f.world
++	f.location = "居間"
++	f._sync_player_position()
++	fw.s.society = "emergency"
++	hours(fw, 2)
++	var fr: Dictionary = Rescue.state(fw)
++	fw.s.minute = (int(fr.start) - 2) * 1440
++	while int(fw.hour_of_day()) != 10:
++		fw.s.minute = int(fw.s.minute) + 60
++	f._refresh()
++	check("ベランダにSOSを掲げる" in f._suggestions() and not "屋根にSOSを書く" in f._suggestions(), "in a flat, the SOS goes on the balcony")
++	f.log_entries.clear()
++	await f._on_command("ベランダにSOSを掲げる")
++	var hung := str(f.log_entries)
++	check(bool(fr.get("sos", false)) and hung.contains("ベランダの手すり"), "hung from the balcony rail")
++	var AP = load("res://scripts/action_photos.gd")
++	var line := ""
++	for e in f.log_entries:
++		if str(e).begins_with("ベランダの手すり"):
++			line = str(e)
++	check(str(AP.detect(line).get("kind", "")) == "sos_flat", "and it has its own photo kind: " + str(AP.detect(line)))
 +	print("TOTAL FAILURES ", failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_rescue149_35.gd.uid b/tests/test_rescue149_35.gd.uid
