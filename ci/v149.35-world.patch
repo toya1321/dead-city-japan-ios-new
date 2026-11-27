@@ -333,6 +333,52 @@ index 0000000..2d7e4e6
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_give_seat.jpg.import b/assets/actions/act_give_seat.jpg.import
+new file mode 100644
+index 0000000..820c2ef
+--- /dev/null
++++ b/assets/actions/act_give_seat.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://mn11837q6gpc"
++path="res://.godot/imported/act_give_seat.jpg-b30a18faa1a21fe9f5c55ed757091b38.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_give_seat.jpg"
++dest_files=["res://.godot/imported/act_give_seat.jpg-b30a18faa1a21fe9f5c55ed757091b38.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_help_block.jpg.import b/assets/actions/act_help_block.jpg.import
 new file mode 100644
 index 0000000..8340ebd
@@ -885,6 +931,52 @@ index 0000000..1bcb73d
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_rescue_block.jpg.import b/assets/actions/act_rescue_block.jpg.import
+new file mode 100644
+index 0000000..0d516e0
+--- /dev/null
++++ b/assets/actions/act_rescue_block.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://blx0vqk0tfha5"
++path="res://.godot/imported/act_rescue_block.jpg-ac5b26986aea297af7301fa9a14289e9.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_rescue_block.jpg"
++dest_files=["res://.godot/imported/act_rescue_block.jpg-ac5b26986aea297af7301fa9a14289e9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_rescue_board.jpg.import b/assets/actions/act_rescue_board.jpg.import
 new file mode 100644
 index 0000000..1664d73
@@ -1207,6 +1299,52 @@ index 0000000..f47229b
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_signal_block.jpg.import b/assets/actions/act_signal_block.jpg.import
+new file mode 100644
+index 0000000..54dc0d1
+--- /dev/null
++++ b/assets/actions/act_signal_block.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://sluo6vci4vb1"
++path="res://.godot/imported/act_signal_block.jpg-e5fa44e72fbc34ef52ee6682f199eda4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_signal_block.jpg"
++dest_files=["res://.godot/imported/act_signal_block.jpg-e5fa44e72fbc34ef52ee6682f199eda4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_sos.jpg.import b/assets/actions/act_sos.jpg.import
 new file mode 100644
 index 0000000..0902e80
@@ -1227,6 +1365,52 @@ index 0000000..0902e80
 +
 +source_file="res://assets/actions/act_sos.jpg"
 +dest_files=["res://.godot/imported/act_sos.jpg-b5893679f1187ca4237112a99ba9e5e9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_sos_block.jpg.import b/assets/actions/act_sos_block.jpg.import
+new file mode 100644
+index 0000000..c62cda2
+--- /dev/null
++++ b/assets/actions/act_sos_block.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://w2h1jgci0sqp"
++path="res://.godot/imported/act_sos_block.jpg-de9ac1682f41b270f4d9adef3a99213e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_sos_block.jpg"
++dest_files=["res://.godot/imported/act_sos_block.jpg-de9ac1682f41b270f4d9adef3a99213e.ctex"]
 +
 +[params]
 +
@@ -1319,6 +1503,52 @@ index 0000000..6675565
 +
 +source_file="res://assets/actions/act_sos_lair.jpg"
 +dest_files=["res://.godot/imported/act_sos_lair.jpg-14aa6d47e05a19053b1da7bc63868de1.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_sos_roof.jpg.import b/assets/actions/act_sos_roof.jpg.import
+new file mode 100644
+index 0000000..489b2f2
+--- /dev/null
++++ b/assets/actions/act_sos_roof.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bno6hufcwtix7"
++path="res://.godot/imported/act_sos_roof.jpg-6ed239666ae640b297654aed71aa761d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_sos_roof.jpg"
++dest_files=["res://.godot/imported/act_sos_roof.jpg-6ed239666ae640b297654aed71aa761d.ctex"]
 +
 +[params]
 +
@@ -7263,6 +7493,52 @@ index 0000000..cc713e2
 +
 +source_file="res://assets/photos/ending_rescued.jpg"
 +dest_files=["res://.godot/imported/ending_rescued.jpg-53b997f59982d8b51aff1c9c76f3604a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/ending_rescued_block.jpg.import b/assets/photos/ending_rescued_block.jpg.import
+new file mode 100644
+index 0000000..42524ce
+--- /dev/null
++++ b/assets/photos/ending_rescued_block.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://blby10xdn53o7"
++path="res://.godot/imported/ending_rescued_block.jpg-a95ee523369b480aaee8131ac1103a66.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/ending_rescued_block.jpg"
++dest_files=["res://.godot/imported/ending_rescued_block.jpg-a95ee523369b480aaee8131ac1103a66.ctex"]
 +
 +[params]
 +
