@@ -102039,10 +102039,10 @@ index 8dd4800..22af019 100644
  				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/residents.gd b/scripts/residents.gd
 new file mode 100644
-index 0000000..401734e
+index 0000000..5fd4114
 --- /dev/null
 +++ b/scripts/residents.gd
-@@ -0,0 +1,1091 @@
+@@ -0,0 +1,1102 @@
 +extends RefCounted
 +## v149.38: the people who live in the town's homes — every household in the
 +## estate, the tower block and the three streets of houses (790 homes). Who
@@ -102611,13 +102611,24 @@ index 0000000..401734e
 +	var cause := ""
 +	if int(r[P_DRY]) >= 3:
 +		cause = "dry"
-+	elif int(r[P_HUNGRY]) >= 9 and (int(r[P_HUNGRY]) - 9) % 2 == 0:
-+		cause = "hunger"
 +	elif society == "emergency" and str(w.people[order[0]].band) == "senior" and _roll(world, area, i, day, "ill", 1000) < 4:
 +		cause = "ill"
++	# v149.35 (B): hunger kills by the days gone without food — the old and the
++	# children on the fifth day, everyone else on the sixth; all who reach it.
++	var victims: Array = []
++	if cause.is_empty() and int(r[P_HUNGRY]) >= 5:
++		for k in order:
++			var weak: bool = str(w.people[k].band) in ["senior", "child"]
++			if int(r[P_HUNGRY]) >= (5 if weak else 6):
++				victims.append(k)
++		if not victims.is_empty():
++			cause = "hunger"
 +	if cause.is_empty():
 +		return
-+	r[P_ALIVE] = int(r[P_ALIVE]) & ~(1 << int(order[0]))
++	if victims.is_empty():
++		victims = [order[0]]
++	for k in victims:
++		r[P_ALIVE] = int(r[P_ALIVE]) & ~(1 << int(k))
 +	if living(r) == 0:
 +		r[P_PATH] = "dead"
 +		r[P_FLAGS] = int(r[P_FLAGS]) | F_DIED_HOME
@@ -105323,10 +105334,19 @@ index 750251a..8a29342 100644
  	b.add_theme_stylebox_override("fill", fill)
  	return b
 diff --git a/scripts/vitals.gd b/scripts/vitals.gd
-index 4c4fc12..1a4030c 100644
+index 4c4fc12..87ec8d5 100644
 --- a/scripts/vitals.gd
 +++ b/scripts/vitals.gd
-@@ -15,3 +15,15 @@ static func warning(state: Dictionary) -> String:
+@@ -10,8 +10,24 @@ static func warning(state: Dictionary) -> String:
+ 	var lines: Array[String] = []
+ 	if float(state.health) <= 0: return "物語は、ここで終わった。「記録を読み返す」か「新しい世界で始める」。"
+ 	if bool(state.get("bitten", false)): lines.append("噛まれた傷が熱を持っている。感染は治らない。")
+-	if float(state.hunger) >= 85: lines.append("食事が必要です。満腹度が尽きると体力が減少します。")
++	var starved_days := int(float(state.get("starve_min", 0.0)) / 1440.0)
++	if float(state.hunger) >= 100 and starved_days >= 1:
++		lines.append("何も食べずに%d日目。日ごとに体が削られていく。" % (starved_days + 1))
++	elif float(state.hunger) >= 85: lines.append("食事が必要です。満腹度が尽きると体力が減少します。")
+ 	if float(state.thirst) >= 85: lines.append("水分が不足しています。飲料水を飲んでください。")
  	if float(state.fatigue) >= 85: lines.append("休息が必要です。寝室で眠れます。")
  	if float(state.get("mood", 70.0)) < 30: lines.append("気が滅入っている。眠りが浅く、手元が狂いやすい。映画や温かい食事、会話、日の光で気持ちを立て直せる。")
  	return "\n".join(lines)
@@ -105337,7 +105357,8 @@ index 4c4fc12..1a4030c 100644
 +		return ""
 +	var parts: Array[String] = []
 +	if bool(state.get("bitten", false)): parts.append("噛まれた傷が熱い")
-+	if float(state.hunger) >= 85: parts.append("食事が必要")
++	if float(state.hunger) >= 100 and int(float(state.get("starve_min", 0.0)) / 1440.0) >= 1: parts.append("食べずに%d日目" % (int(float(state.get("starve_min", 0.0)) / 1440.0) + 1))
++	elif float(state.hunger) >= 85: parts.append("食事が必要")
 +	if float(state.thirst) >= 85: parts.append("水分が不足")
 +	if float(state.fatigue) >= 85: parts.append("休息が必要")
 +	if float(state.get("mood", 70.0)) < 30: parts.append("気が滅入っている")
@@ -105597,7 +105618,7 @@ index 1e93ac4..dfc1830 100644
  const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
  ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 5d08c00..46c7945 100644
+index 5d08c00..e95a76d 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -1,5 +1,6 @@
@@ -105641,7 +105662,27 @@ index 5d08c00..46c7945 100644
  		Shelter.hourly(self)
  		if int(s.minute) % 1440 == 0:
  			Survivors.daily(self, func(place): return Walkers.count(self, place))
-@@ -431,6 +438,8 @@ func validate_state(data: Dictionary) -> bool:
+@@ -269,7 +276,18 @@ func _household_hour() -> void:
+ 				else:s.water-=0.75
+ 				person.water_used+=0.75
+ 				person.thirst=maxf(0,float(person.thirst)-25)
+-		if float(person.hunger)>=100 or float(person.thirst)>=100:person.health=maxf(0,float(person.health)-1.5)
++		# v149.35 (B): the same as for you — thirst in about three days, hunger
++		# worse by the day; the old and the very young a little sooner.
++		var wasting := 1.5 if float(person.thirst)>=100 else 0.0
++		if float(person.hunger)>=100:
++			person.starve_h = int(person.get("starve_h", 0)) + 1
++			var starving_day: int = int(person.starve_h) / 24 + 1
++			var frail: float = 1.2 if int(person.get("age", 30)) >= 70 or int(person.get("age", 30)) < 13 else 1.0
++			wasting = maxf(wasting, 5.0 * starving_day / 24.0 * frail)
++		elif float(person.hunger) < 70 and int(person.get("starve_h", 0)) > 0:
++			person.starve_h = maxi(0, int(person.starve_h) - 2)
++		if wasting > 0.0:
++			person.health = maxf(0, float(person.health) - wasting)
+ 
+ func can_trade(shop_id: String) -> bool:
+ 	if not s.shops.has(shop_id):return false
+@@ -431,6 +449,8 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("world_traits") and not WorldTraits.valid(data.world_traits):
  		return false
@@ -105650,7 +105691,7 @@ index 5d08c00..46c7945 100644
  	if data.has("shelter") and not Shelter.valid(data.shelter):
  		return false
  	if data.has("raid") and not Raiders.valid(data.raid):
-@@ -513,6 +522,7 @@ func action(kind: String, household: bool = false) -> String:
+@@ -513,6 +533,7 @@ func action(kind: String, household: bool = false) -> String:
  		return "補強を1段外し、木材2と部品1を回収した（%d分）。"%elapsed
  	if kind=="tend":
  		if s.plots.is_empty():return "栽培中の作物はない。"
@@ -105682,10 +105723,34 @@ index 33cced8..8412c0c 100644
  		"crop_care":
  			sim.warehouse.water-=2
 diff --git a/scripts/world_legacy.gd b/scripts/world_legacy.gd
-index 847392a..05bef68 100644
+index 847392a..623ad83 100644
 --- a/scripts/world_legacy.gd
 +++ b/scripts/world_legacy.gd
-@@ -245,8 +245,25 @@ func step(sleeping: bool) -> void:
+@@ -107,8 +107,21 @@ func step(sleeping: bool) -> void:
+ 	
+ 	if float(s.fatigue) >= 95.0:
+ 		s.health = maxf(0.0,float(s.health)-0.004)
+-	if s.hunger >= 100 or s.thirst >= 100:
+-		s.health = maxf(0.0,s.health-0.03)
++	# v149.35 (B): thirst kills in about three days; hunger grows worse by the
++	# day — 5 health on the first day without food, 10 on the second, 15 on the
++	# third… so about six days. Fed again, the starving eases off slowly.
++	# Both at once do not add up: the worse of the two is what wears you down.
++	var wasting := 0.0
++	if s.thirst >= 100:
++		wasting = 0.03
++	if s.hunger >= 100:
++		s.starve_min = float(s.get("starve_min", 0.0)) + 1.0
++		var starving_day: int = int(float(s.starve_min) / 1440.0) + 1
++		wasting = maxf(wasting, 5.0 * starving_day / 1440.0)
++	elif float(s.hunger) < 70.0 and float(s.get("starve_min", 0.0)) > 0.0:
++		s.starve_min = maxf(0.0, float(s.starve_min) - 2.0)
++	if wasting > 0.0:
++		s.health = maxf(0.0, s.health - wasting)
+ 	if float(s.longplay.shelter_integrity) <= 0.0 and s.weather in ["rain", "snow"]:
+ 		s.health = maxf(0.0,float(s.health)-0.003)
+ 	if s.injuries > 0:
+@@ -245,8 +258,25 @@ func step(sleeping: bool) -> void:
  			pending.append(n)
  	s.noise = pending
  	for plot in s.plots:
@@ -105712,7 +105777,7 @@ index 847392a..05bef68 100644
  			plot.water = maxf(0.0,plot.water-1.0/1440.0)
  
  # Hidden deterministic outbreak timeline. Independent of player observations.
-@@ -858,26 +875,45 @@ func action(kind: String, household: bool = false) -> String:
+@@ -858,26 +888,45 @@ func action(kind: String, household: bool = false) -> String:
  			advance(30)
  			return "プランターを製作した（30分）。"
  		"plant":
@@ -105770,7 +105835,7 @@ index 847392a..05bef68 100644
  		"fortify":
  			if s.inventory.wood<3 or s.inventory.parts<2: return "補強：木材3・部品2が必要。"
  			s.inventory.wood-=3
-@@ -997,6 +1033,30 @@ func _road_connector() -> float:
+@@ -997,6 +1046,30 @@ func _road_connector() -> float:
  	return 50.0
  func _traffic_speed_factor() -> float:
  	return 1.0
