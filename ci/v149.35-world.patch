@@ -13499,6 +13499,328 @@ index 0000000..aea636c
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/raids/assault_dead.jpg.import b/assets/raids/assault_dead.jpg.import
+new file mode 100644
+index 0000000..56c0ede
+--- /dev/null
++++ b/assets/raids/assault_dead.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ds00bjvubjbxs"
++path="res://.godot/imported/assault_dead.jpg-ae773b507614f45ab452abfdc723dac9.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_dead.jpg"
++dest_files=["res://.godot/imported/assault_dead.jpg-ae773b507614f45ab452abfdc723dac9.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_decoy.jpg.import b/assets/raids/assault_decoy.jpg.import
+new file mode 100644
+index 0000000..7177c15
+--- /dev/null
++++ b/assets/raids/assault_decoy.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cijbjn8p0r04s"
++path="res://.godot/imported/assault_decoy.jpg-108013e475715e9d3149f1eeaf49c82b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_decoy.jpg"
++dest_files=["res://.godot/imported/assault_decoy.jpg-108013e475715e9d3149f1eeaf49c82b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_fight.jpg.import b/assets/raids/assault_fight.jpg.import
+new file mode 100644
+index 0000000..4351204
+--- /dev/null
++++ b/assets/raids/assault_fight.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dq1l8wnwsvhif"
++path="res://.godot/imported/assault_fight.jpg-74668e12f76fbefccc26decff8372d5c.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_fight.jpg"
++dest_files=["res://.godot/imported/assault_fight.jpg-74668e12f76fbefccc26decff8372d5c.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_front.jpg.import b/assets/raids/assault_front.jpg.import
+new file mode 100644
+index 0000000..bc30d49
+--- /dev/null
++++ b/assets/raids/assault_front.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bo6tutvcjt7mg"
++path="res://.godot/imported/assault_front.jpg-325a1b04b8076eb99477d476a9ece85e.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_front.jpg"
++dest_files=["res://.godot/imported/assault_front.jpg-325a1b04b8076eb99477d476a9ece85e.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_lost.jpg.import b/assets/raids/assault_lost.jpg.import
+new file mode 100644
+index 0000000..b5188b8
+--- /dev/null
++++ b/assets/raids/assault_lost.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b7tcju47pcx08"
++path="res://.godot/imported/assault_lost.jpg-14af7ce0b6c41e1632be47df357e3ef2.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_lost.jpg"
++dest_files=["res://.godot/imported/assault_lost.jpg-14af7ce0b6c41e1632be47df357e3ef2.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_plan.jpg.import b/assets/raids/assault_plan.jpg.import
+new file mode 100644
+index 0000000..ba6b9a2
+--- /dev/null
++++ b/assets/raids/assault_plan.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bma17pdj4lifq"
++path="res://.godot/imported/assault_plan.jpg-d5ddab01c52fcec29bc7d4d7d89dbd62.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_plan.jpg"
++dest_files=["res://.godot/imported/assault_plan.jpg-d5ddab01c52fcec29bc7d4d7d89dbd62.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/assault_won.jpg.import b/assets/raids/assault_won.jpg.import
+new file mode 100644
+index 0000000..e48dd39
+--- /dev/null
++++ b/assets/raids/assault_won.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cqayt30oe3lmw"
++path="res://.godot/imported/assault_won.jpg-67b07c4aabf377f55159befa5a4867ea.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/assault_won.jpg"
++dest_files=["res://.godot/imported/assault_won.jpg-67b07c4aabf377f55159befa5a4867ea.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/raids/lair_boxes.jpg.import b/assets/raids/lair_boxes.jpg.import
 new file mode 100644
 index 0000000..02d59d8
@@ -13545,6 +13867,98 @@ index 0000000..02d59d8
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/raids/lair_caught.jpg.import b/assets/raids/lair_caught.jpg.import
+new file mode 100644
+index 0000000..411f0ee
+--- /dev/null
++++ b/assets/raids/lair_caught.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://6oohvhkhqglx"
++path="res://.godot/imported/lair_caught.jpg-2c5580e8efaf77bf25d442059d7dbccb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_caught.jpg"
++dest_files=["res://.godot/imported/lair_caught.jpg-2c5580e8efaf77bf25d442059d7dbccb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/lair_escape.jpg.import b/assets/raids/lair_escape.jpg.import
+new file mode 100644
+index 0000000..3015a06
+--- /dev/null
++++ b/assets/raids/lair_escape.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://caf1x5v2mq0tx"
++path="res://.godot/imported/lair_escape.jpg-888100402eb91355fed101176c9b57d4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_escape.jpg"
++dest_files=["res://.godot/imported/lair_escape.jpg-888100402eb91355fed101176c9b57d4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/raids/lair_gap.jpg.import b/assets/raids/lair_gap.jpg.import
 new file mode 100644
 index 0000000..5a28cb5
@@ -13565,6 +13979,52 @@ index 0000000..5a28cb5
 +
 +source_file="res://assets/raids/lair_gap.jpg"
 +dest_files=["res://.godot/imported/lair_gap.jpg-5e112e685b78e4e796099b833821bca4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/lair_hide.jpg.import b/assets/raids/lair_hide.jpg.import
+new file mode 100644
+index 0000000..ba04e29
+--- /dev/null
++++ b/assets/raids/lair_hide.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bd8pk5f6ygyao"
++path="res://.godot/imported/lair_hide.jpg-8817c8b96c798c23fb8afa27e73c175f.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_hide.jpg"
++dest_files=["res://.godot/imported/lair_hide.jpg-8817c8b96c798c23fb8afa27e73c175f.ctex"]
 +
 +[params]
 +
@@ -13657,6 +14117,190 @@ index 0000000..419cef0
 +
 +source_file="res://assets/raids/lair_watch.jpg"
 +dest_files=["res://.godot/imported/lair_watch.jpg-d76e12547325ec42a2c934c40368c864.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_family_inside.jpg.import b/assets/raids/raid_family_inside.jpg.import
+new file mode 100644
+index 0000000..af7291d
+--- /dev/null
++++ b/assets/raids/raid_family_inside.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b61eaodmu375l"
++path="res://.godot/imported/raid_family_inside.jpg-673d8c511461400099174ed24403ee90.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_family_inside.jpg"
++dest_files=["res://.godot/imported/raid_family_inside.jpg-673d8c511461400099174ed24403ee90.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_family_neighbors.jpg.import b/assets/raids/raid_family_neighbors.jpg.import
+new file mode 100644
+index 0000000..860b0d4
+--- /dev/null
++++ b/assets/raids/raid_family_neighbors.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cti26a65xjbmp"
++path="res://.godot/imported/raid_family_neighbors.jpg-dd0f81c7fb6335d3c8b80c1fafd012ed.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_family_neighbors.jpg"
++dest_files=["res://.godot/imported/raid_family_neighbors.jpg-dd0f81c7fb6335d3c8b80c1fafd012ed.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_family_offer.jpg.import b/assets/raids/raid_family_offer.jpg.import
+new file mode 100644
+index 0000000..849dbaa
+--- /dev/null
++++ b/assets/raids/raid_family_offer.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bhx0p3n548suh"
++path="res://.godot/imported/raid_family_offer.jpg-2e92a0807869199b96e5971f56141f8a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_family_offer.jpg"
++dest_files=["res://.godot/imported/raid_family_offer.jpg-2e92a0807869199b96e5971f56141f8a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_family_upstairs.jpg.import b/assets/raids/raid_family_upstairs.jpg.import
+new file mode 100644
+index 0000000..c9cc2ca
+--- /dev/null
++++ b/assets/raids/raid_family_upstairs.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://5llg3i8ovvbc"
++path="res://.godot/imported/raid_family_upstairs.jpg-b1146e474e1d202e7208287804cb0621.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_family_upstairs.jpg"
++dest_files=["res://.godot/imported/raid_family_upstairs.jpg-b1146e474e1d202e7208287804cb0621.ctex"]
 +
 +[params]
 +
@@ -14209,6 +14853,98 @@ index 0000000..14a24f6
 +
 +source_file="res://assets/raids/raid_home_won.jpg"
 +dest_files=["res://.godot/imported/raid_home_won.jpg-97ac1c7143bf241a090b1a2ee0122e13.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_take_all.jpg.import b/assets/raids/raid_take_all.jpg.import
+new file mode 100644
+index 0000000..d932477
+--- /dev/null
++++ b/assets/raids/raid_take_all.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b3ldajlq17is7"
++path="res://.godot/imported/raid_take_all.jpg-15e891aeac11f6fced7b9efcc1bfb460.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_take_all.jpg"
++dest_files=["res://.godot/imported/raid_take_all.jpg-15e891aeac11f6fced7b9efcc1bfb460.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/raid_target_house.jpg.import b/assets/raids/raid_target_house.jpg.import
+new file mode 100644
+index 0000000..614267d
+--- /dev/null
++++ b/assets/raids/raid_target_house.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://djsrqvl53p2hv"
++path="res://.godot/imported/raid_target_house.jpg-df538af383416580268641b0a6fc27e4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/raid_target_house.jpg"
++dest_files=["res://.godot/imported/raid_target_house.jpg-df538af383416580268641b0a6fc27e4.ctex"]
 +
 +[params]
 +
