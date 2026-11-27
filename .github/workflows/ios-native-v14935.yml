@@ -1,4 +1,4 @@
-name: Build v149.35 native Qwen IPA (town, residents, meals)
+name: Build v149.35 native Qwen IPA (town, residents, meals, raids, rescue)
 
 on:
   # Built on request (Actions > Run workflow) or when this file changes;
