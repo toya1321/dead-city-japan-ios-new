@@ -95863,6 +95863,129 @@ index 0000000..87375ab
 +++ b/qa/perf_long.gd.uid
 @@ -0,0 +1 @@
 +uid://b8scaaj2y4f6a
+diff --git a/qa/play_scenes.gd b/qa/play_scenes.gd
+new file mode 100644
+index 0000000..e6750a3
+--- /dev/null
++++ b/qa/play_scenes.gd
+@@ -0,0 +1,117 @@
++extends SceneTree
++## Plays the people-fight scenes through the real command path and prints
++## what the player would read, with the chips offered at each step.
++const Main = preload("res://main.tscn")
++const Residents = preload("res://scripts/residents.gd")
++const Dwellings = preload("res://scripts/dwellings.gd")
++const Gangs = preload("res://scripts/gangs.gd")
++const Communities = preload("res://scripts/communities.gd")
++const Lair = preload("res://scripts/lair.gd")
++var g
++func _initialize() -> void:
++	call_deferred("run")
++func say(cmd: String) -> void:
++	g.log_entries.clear()
++	await g._on_command(cmd)
++	while g.advancing:
++		await process_frame
++	print("\n▶ ", cmd)
++	for l in g.log_entries:
++		var t := str(l)
++		if t.begins_with("▶"):
++			continue
++		print("  ", t.replace("\n", "\n  ").left(600))
++	print("  [候補] ", " / ".join(g._suggestions().slice(0, 6)), "   [体%.0f 食%.1f 携%.1f %s]" % [float(g.world.s.health), float(g.world.s.food), float(g.world.s.district.bag.food), g.clock_label.text])
++func run() -> void:
++	g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = int(OS.get_environment("DCJ_SEED")) if OS.get_environment("DCJ_SEED") != "" else 7
++	p.cohabitants = 1
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	for d in 2:
++		for h in 24:
++			w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++			w.advance_safe(60)
++	w.s.society = "emergency"
++	w.s.food = 12.0
++	w.s.inventory.parts = 1
++	# A gang of three households at the warehouses.
++	var homes: Array = []
++	for i in Dwellings.count("団地"):
++		if homes.size() >= 3:
++			break
++		var who: Dictionary = Residents.who(w, "団地", i)
++		if who.people.any(func(q): return bool(q.able)):
++			var r: Array = Residents.row(w, "団地", i)
++			r[Residents.P_PATH] = "looter"
++			r[Residents.P_ALIVE] = (1 << who.people.size()) - 1
++			homes.append(["団地", i])
++	var gang := {"id": "gang_play", "lair": "倉庫街", "since": 1, "store": 25.0, "hungry": 0, "ended": false, "last_raid": 99999, "leader": homes[0], "homes": homes}
++	Gangs.all(w)["gang_play"] = gang
++	var scene := OS.get_environment("SCENE")
++	if scene in ["", "home"]:
++		print("\n==================== 家を守る ====================")
++		g.location = "居間"
++		g._sync_player_position()
++		w.s.residents.raiding = "gang_play"
++		w.s.raid = {"at": int(w.s.minute), "size": 3}
++		g._refresh()
++		print("  [候補] ", " / ".join(g._suggestions()))
++		await say("迎え撃つ準備をする")
++		await say("外の音に耳をすます")
++		await say("外の音に耳をすます")
++		var chips: Array = g._suggestions()
++		for c in chips:
++			if str(c).contains("任せる"):
++				await say(str(c))
++				break
++		var guess := "裏口で待ち構える"
++		await say(guess)
++		for t in 6:
++			if not load("res://scripts/raiders.gd").active(w):
++				break
++			await say("家具で押し返す" if t == 0 else "一番前の男に打ちかかる")
++	if scene in ["", "watch", "sneak"]:
++		print("\n==================== 見張って忍び込む ====================")
++		w.s.health = 100.0
++		g.location = "大通り"
++		g._sync_player_position()
++		await say("略奪者の拠点をうかがう")
++		await say("略奪者の拠点をうかがう")
++		await say("見張りの交代まで待つ")
++		await say("倉庫街へ行く")
++		await say("忍び込む")
++		await say("奥へ進む")
++		await say("箱を運び出す")
++		await say("箱を運び出す")
++		await say("物陰でやり過ごす")
++		await say("箱を運び出す")
++		await say("引き上げる")
++	if scene in ["", "raid"]:
++		print("\n==================== 仲間になって略奪 ====================")
++		w.s.health = 100.0
++		Lair.note(w, gang).grudge = 0
++		w.s.district.bag.food = 3.0
++		g.location = "倉庫街"
++		g._sync_player_position()
++		w.s.residents.confronted_at = int(w.s.minute)
++		await say("仲間に入れてもらう")
++		var victim: Array = Residents.row(w, "北の住宅街", 3)
++		victim[Residents.P_PATH] = "holed"
++		victim[Residents.P_FOOD] = 6.0
++		await say("略奪に加わる")
++		await say("物音で気をそらして裏から入る")
++		for t in 6:
++			if not load("res://scripts/assault_scene.gd").active(w) or str(w.s.assault.stage) != "fight":
++				break
++			await say("一番前の相手に打ちかかる")
++		if load("res://scripts/assault_scene.gd").active(w):
++			await say("少し残していく")
++		await say("ここを出る")
++	print("\nEND")
++	quit()
 diff --git a/qa/playthrough.gd b/qa/playthrough.gd
 index 24dd085..0283cb5 100644
 --- a/qa/playthrough.gd
@@ -96637,7 +96760,7 @@ index 35febbb..008680d 100644
  			return found
  	return ""
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..2dff67f 100644
+index 2c13ef6..c188e73 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -96645,7 +96768,7 @@ index 2c13ef6..2dff67f 100644
  # plan before mutation. AI plans use the same validation and action executor.
  const District = preload("res://scripts/district.gd")
 -const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
-+const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
++const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る","略奪者の拠点をうかがう","忍び込む","取引を持ちかける","情報を買う","略奪に加わる","略奪者の拠点を叩こうと持ちかける","奥へ進む","箱を運び出す","物陰でやり過ごす","引き上げる","正面から一斉に踏み込む","物音で気をそらして裏から入る","感染者をおびき寄せてぶつける","見張りの交代を待つ","一番前の相手に打ちかかる","押さえ込む","仲間に任せて下がる","全部持っていく","少し残していく","迎え撃つ準備をする","外の音に耳をすます","玄関で待ち構える","窓のそばで待ち構える","裏口で待ち構える","一番前の男に打ちかかる","家具で押し返す","食料を投げて引かせる","降参する","見張りの交代まで待つ"]
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
@@ -96677,10 +96800,10 @@ index 2c13ef6..2dff67f 100644
  		if not canonical.is_empty() and canonical!="invalid_order":cmd=canonical
 diff --git a/scripts/assault_scene.gd b/scripts/assault_scene.gd
 new file mode 100644
-index 0000000..7885cd1
+index 0000000..cca8556
 --- /dev/null
 +++ b/scripts/assault_scene.gd
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,318 @@
 +extends RefCounted
 +## v149.35: the player on the taking side, played out a few moves at a time.
 +##
@@ -96718,8 +96841,12 @@ index 0000000..7885cd1
 +	return absi(hash([int(world.s.seed), int(world.s.minute), int(a.get("moves", 0)), str(a.get("kind", "")), salt])) % 100
 +
 +static func _gauge(n: int) -> String:
-+	var k := clampi((n + 19) / 20, 0, 5)
-+	return "■".repeat(k) + "□".repeat(5 - k)
++	var k := clampi((n + 9) / 10, 0, 10)
++	return "■".repeat(k) + "□".repeat(10 - k)
++
++## One of a few ways of saying the same thing, so rounds do not read alike.
++static func _pick(world, lines: Array) -> String:
++	return str(lines[_roll(world, "line") % lines.size()])
 +
 +static func _lair():
 +	return load("res://scripts/lair.gd")
@@ -96743,7 +96870,7 @@ index 0000000..7885cd1
 +	world.advance_safe(5)
 +	var what := "%sの拠点" % str(g.get("lair", "")) if kind == "strike" else str(target.get("label", "相手"))
 +	var read: String = {"strong": "数ではこちらが上だ。", "even": "力は五分五分か。", "weak": "相手の方が強い。"}[Force.odds(ours, theirs)]
-+	return "%sを前に、物陰で息を整えた。%s どう攻めるか。（%s）" % [what, read, "・".join(chips(world).map(func(c): return "「%s」" % c))]
++	return "%sを前に、物陰で息を整えた。%s%s どう攻めるか。（%s）" % [what, str(target.get("inside", "")), read, "・".join(chips(world).map(func(c): return "「%s」" % c))]
 +
 +static func chips(world) -> Array:
 +	var a := state(world)
@@ -96751,7 +96878,7 @@ index 0000000..7885cd1
 +		"inside":
 +			return ["奥へ進む", "箱を運び出す", "物陰でやり過ごす", "引き上げる"] if int(a.depth) >= 1 else ["奥へ進む", "物陰でやり過ごす", "引き上げる"]
 +		"plan":
-+			var out: Array = ["正面から一斉に踏み込む", "物音で気をそらして裏から入る"]
++			var out: Array = ["正面から一斉に踏み込む", "物音で気をそらして裏から入る", "引き上げる"]
 +			if _dead_near(world, str(a.place)) > 0:
 +				out.append("感染者をおびき寄せてぶつける")
 +			var g: Dictionary = Gangs._peek(world).get(str(a.get("gang", "")), {})
@@ -96843,7 +96970,9 @@ index 0000000..7885cd1
 +			var box := minf(float(g.store), 1.0 + float(_roll(world, "box") % 6) / 10.0)
 +			g.store = float(g.store) - box
 +			a.loot = float(a.loot) + box
-+			a.noise = int(a.noise) + 14 + _roll(world, "take") % 18
++			# The more of them sleeping in there, the more ears.
++			var ears := 0.8 + float(Gangs.people(world, g)) / 10.0 if not g.is_empty() else 1.0
++			a.noise = int(a.noise) + int(float(14 + _roll(world, "take") % 18) * ears)
 +			text = "段ボールをひとつ抱え上げた。中で缶詰がぶつかり合って、小さな音を立てた。"
 +		"hide":
 +			world.advance_safe(8)
@@ -96939,12 +97068,12 @@ index 0000000..7885cd1
 +		"strike":
 +			if ours * luck > theirs * 0.8:
 +				a.their_nerve = int(a.their_nerve) - (30 + _roll(world, "hit") % 20)
-+				text = "先頭の男に打ちかかった。相手がよろめき、後ろの者がひるんだ。"
++				text = _pick(world, ["先頭の相手に打ちかかった。相手がよろめき、後ろの者がひるんだ。", "振り下ろした一撃が肩に入った。相手が悲鳴を上げて下がる。", "体ごとぶつかって、相手を壁に押しつけた。", "足を払うと、相手は派手に転んだ。"])
 +			else:
 +				a.nerve = int(a.nerve) - (20 + _roll(world, "miss") % 15)
 +				world.s.health = maxf(1.0, float(world.s.health) - (8.0 + float(_roll(world, "hurt") % 10)))
 +				world.s.injuries = float(world.s.get("injuries", 0.0)) + 0.5
-+				text = "打ちかかったが、横から殴られて膝をついた。"
++				text = _pick(world, ["打ちかかったが、横から殴られて膝をついた。", "振りかぶったところを突き飛ばされ、背中を床に打ちつけた。", "空振りした。その隙に、こめかみを殴られた。"])
 +		"hold":
 +			if ours * luck > theirs * 0.6:
 +				a.their_nerve = int(a.their_nerve) - 15
@@ -100454,10 +100583,10 @@ index a4b03a2..daa7343 100644
 +	return _done(game, lead + feel)
 diff --git a/scripts/lair.gd b/scripts/lair.gd
 new file mode 100644
-index 0000000..dcb0058
+index 0000000..031c4c3
 --- /dev/null
 +++ b/scripts/lair.gd
-@@ -0,0 +1,397 @@
+@@ -0,0 +1,438 @@
 +extends RefCounted
 +## v149.35: what the player can do about a gang's lair (gangs.gd).
 +##  - watch it from the street next to it (how many, when the guard is thin)
@@ -100503,7 +100632,23 @@ index 0000000..dcb0058
 +	return [3, 4, 5, 13, 14][absi(hash(str(g.id))) % 5]
 +
 +static func in_gap(world, g: Dictionary) -> bool:
-+	return int(world.hour_of_day()) == gap(g)
++	# The hour of the change, and the few minutes before it while they hand over.
++	var m := int(world.hour_of_day() * 60.0)
++	return int(m / 60) == gap(g) or (m >= gap(g) * 60 - 10 and m < gap(g) * 60)
++
++## "見張りの交代まで待つ": from next door, until the change.
++static func wait_gap(world, place: String) -> String:
++	var g := next_to(world, place)
++	if g.is_empty() or not bool(_peek_note(world, g).get("gap_known", false)):
++		return "何を待てばいいのか、まだ分からない。（「略奪者の拠点をうかがう」で、見張りの交代の時刻が分かる）"
++	var now := int(world.hour_of_day() * 60.0)
++	var wait := ((gap(g) * 60 - now) + 1440) % 1440
++	if wait <= 0 or in_gap(world, g):
++		return "今が、見張りの交代の時間だ。"
++	if wait > 240:
++		return "見張りの交代は%d時ごろ。まだ%d時間近く先だ。ここで待つには長すぎる。（「%d時間待つ」で時間を進めてから来られる）" % [gap(g), wait / 60, maxi(1, wait / 60 - 1)]
++	world.advance_safe(wait + 1)
++	return "物陰で身を縮めて、%d時を待った（%d分）。%sの入口から、見張りの姿が消えた。" % [gap(g), wait, g.lair]
 +
 +static func member_of(world) -> Dictionary:
 +	var id := str(world.s.get("residents", {}).get("player_gang", "")) if world.s.get("residents") is Dictionary else ""
@@ -100600,6 +100745,9 @@ index 0000000..dcb0058
 +		return "ここは、誰かの拠点ではない。"
 +	if is_member(world, g):
 +		return "仲間の物に手を出すわけにはいかない。"
++	# Just seen and turned away at the door: not now.
++	if int(world.s.residents.get("confronted_at", -10000)) > int(world.s.minute) - 60 and int(world.s.residents.get("lair_slipped", -10000)) < int(world.s.minute) - 60:
++		return "さっき顔を見られたばかりだ。今は、入口の男がこちらをじっと見ている。（見張りの交代の時刻に出直す）"
 +	note(world, g).deal_until = -1
 +	return load("res://scripts/assault_scene.gd").begin_sneak(world, g)
 +
@@ -100719,7 +100867,9 @@ index 0000000..dcb0058
 +	world.s.residents.player_looter = true
 +	# A party of them goes, with the player.
 +	var ours: float = float(Force.gang(world, g).power) * 0.5 + Force.player(world)
-+	return "夕方、男たちと一緒に出た。" + load("res://scripts/assault_scene.gd").begin_fight(world, "raid", place, g, target, ours, float(target.power))
++	var hour := int(world.hour_of_day())
++	var when := "朝" if hour < 11 else ("昼" if hour < 16 else ("夕方" if hour < 19 else "夜"))
++	return "%s、男たちと一緒に出た。" % when + load("res://scripts/assault_scene.gd").begin_fight(world, "raid", place, g, target, ours, float(target.power))
 +
 +## Who they would hit today: a neighbourhood worth the trouble, else a lone
 +## household with food. {} if there is none.
@@ -100741,9 +100891,29 @@ index 0000000..dcb0058
 +			if str(r[Residents.P_PATH]) == "holed" and not Communities.member(r) and float(r[Residents.P_FOOD]) > most:
 +				most = float(r[Residents.P_FOOD])
 +				var w := Residents.who(world, area, i)
-+				found = {"type": "home", "area": area, "i": i, "label": "%sの%sさんの家" % [Residents._where(area, i), w.surname],
++				found = {"type": "home", "area": area, "i": i, "label": "%sの%sさんの家" % [Residents._where(area, i), w.surname], "inside": _inside(world, area, i),
 +					"power": float(Force.side(Force.household(world, area, i), 0).power) * 1.3 + 0.3}
 +	return found
++
++## Who is in a home, as seen from outside before going in.
++static func _inside(world, area: String, i: int) -> String:
++	var r := Residents.row(world, area, i)
++	var w := Residents.who(world, area, i)
++	var adults := 0
++	var kids := 0
++	var old := 0
++	for k in w.people.size():
++		if int(r[Residents.P_ALIVE]) & (1 << k) == 0:
++			continue
++		match str(w.people[k].band):
++			"child": kids += 1
++			"senior": old += 1
++			_: adults += 1
++	var bits: Array = []
++	if adults > 0: bits.append("大人%d人" % adults)
++	if old > 0: bits.append("年寄り%d人" % old)
++	if kids > 0: bits.append("子ども%d人" % kids)
++	return "窓の隙間から、%sが見えた。" % "と".join(bits) if not bits.is_empty() else ""
 +
 +## How a raid with them ended. share: 1.0 everything taken, 0.6 something
 +## left behind; 0 when beaten back.
@@ -100870,7 +101040,7 @@ index 2c72ddd..a50f2d7 100644
  				return {}
  		"npc":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..046f6e0 100644
+index 0f2add4..b8b8ca8 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -168,7 +168,12 @@ var safe_margin: MarginContainer
@@ -101484,7 +101654,7 @@ index 0f2add4..046f6e0 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1971,11 +2116,54 @@ func _suggestions() -> Array:
+@@ -1971,11 +2116,56 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -101512,6 +101682,8 @@ index 0f2add4..046f6e0 100644
 +			out.push_front("略奪者の拠点を叩こうと持ちかける")
 +		if not Lair.next_to(world, location).is_empty():
 +			out.append("略奪者の拠点をうかがう")
++			if bool(Lair._peek_note(world, Lair.next_to(world, location)).get("gap_known", false)):
++				out.append("見張りの交代まで待つ")
 +		var den: Dictionary = load("res://scripts/gangs.gd").at(world, _site())
 +		if not den.is_empty():
 +			if Lair.is_member(world, den):
@@ -101539,7 +101711,7 @@ index 0f2add4..046f6e0 100644
  	return out.slice(0, 6)
  
  func _refresh_suggestions() -> void:
-@@ -2614,7 +2802,19 @@ func _drain_walker_notices() -> void:
+@@ -2614,7 +2804,19 @@ func _drain_walker_notices() -> void:
  	var w := Walkers.ensure(world)
  	var notices: Array = w.notices
  	w.notices = []
@@ -101559,7 +101731,7 @@ index 0f2add4..046f6e0 100644
  		var said := false
  		for person in world.s.household_members:
  			said = said or str(line).begins_with(str(person.name) + "「")
-@@ -2838,7 +3038,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +3040,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -101569,7 +101741,7 @@ index 0f2add4..046f6e0 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -2955,10 +3156,35 @@ func _process_leavers() -> void:
+@@ -2955,10 +3158,35 @@ func _process_leavers() -> void:
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
  
@@ -101605,7 +101777,7 @@ index 0f2add4..046f6e0 100644
  	var kind := ""
  	if NPCMemory._mentions(cmd, ["追い払", "怒鳴", "大声", "出ていけ", "帰れ", "叫"]):
  		kind = "shout"
-@@ -3129,11 +3355,20 @@ func _eat_before_sleep() -> String:
+@@ -3129,11 +3357,20 @@ func _eat_before_sleep() -> String:
  
  func _shelter_command(cmd: String) -> bool:
  	if location != "避難所":
@@ -101626,7 +101798,7 @@ index 0f2add4..046f6e0 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,9 +3446,279 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,9 +3448,279 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -101907,7 +102079,7 @@ index 0f2add4..046f6e0 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -3457,6 +3962,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +3964,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -101917,12 +102089,12 @@ index 0f2add4..046f6e0 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +3981,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +3983,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
 -	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る"]
-+	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "次の部屋を探す", "部屋を出る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "子ども部屋を調べる", "風呂場を調べる", "物置を調べる", "ノックする", "声をかける", "食料を分ける", "食べ物を分ける", "一緒に来ないか誘う", "集まりを訪ねる", "集まりの様子", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る", "略奪者の拠点をうかがう", "忍び込む", "取引を持ちかける", "情報を買う", "略奪に加わる", "略奪者の拠点を叩こうと持ちかける"]
++	var exact := ["周囲を見る", "窓から外を見る", "ニュースを見る", "生存記録", "日誌", "世界の出来事", "出来事の記録", "配送状況", "注文履歴", "1時間休息", "寝る", "食事する", "水を飲む", "持ち物", "状態", "保存", "読込", "近くの住民を観察", "住民を観察", "NPCを観察", "玄関を補強", "住居を修繕", "家を修理", "浄水する", "プランターを作る", "種を植える", "水やり", "水をやる", "収穫", "収穫する", "物資を探索する", "街を観察する", "外に出る", "家に戻る", "鍵を開ける", "鍵を閉める", "施錠する", "傷を手当てする", "買い物する", "空き家を探す", "手伝う", "物資を寄付する", "食料を寄付する", "水を寄付する", "仲間に入れてもらう", "ここを出る", "次の部屋を探す", "部屋を出る", "ドアをこじ開ける", "台所を調べる", "居間を調べる", "寝室を調べる", "押し入れを調べる", "子ども部屋を調べる", "風呂場を調べる", "物置を調べる", "ノックする", "声をかける", "食料を分ける", "食べ物を分ける", "一緒に来ないか誘う", "集まりを訪ねる", "集まりの様子", "ここを集落にする", "集落の様子", "町のうわさ", "うわさを思い出す", "水を汲む", "川の水を汲む", "池の水を汲む", "水を煮沸する", "煮沸する", "在庫を見る", "品物を見る", "品揃えを見る", "品ぞろえを見る", "商品を見る", "略奪者の拠点をうかがう", "忍び込む", "取引を持ちかける", "情報を買う", "略奪に加わる", "略奪者の拠点を叩こうと持ちかける", "見張りの交代まで待つ"]
  	if cmd in exact: return cmd
 +	# v149.35: rooms of a building walked room by room.
 +	var SiteRooms = load("res://scripts/site_rooms.gd")
@@ -101936,7 +102108,7 @@ index 0f2add4..046f6e0 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,7 +4011,23 @@ func _district_map() -> String:
+@@ -3494,7 +4013,23 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -101960,7 +102132,7 @@ index 0f2add4..046f6e0 100644
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
  		return _district_map()
-@@ -3506,6 +4039,128 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +4041,130 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -101995,6 +102167,8 @@ index 0f2add4..046f6e0 100644
 +	var Lair = load("res://scripts/lair.gd")
 +	if clean in ["略奪者の拠点をうかがう", "拠点をうかがう", "拠点を見張る", "見張りを観察する", "見張りの様子をうかがう"]:
 +		return Lair.watch(world, location)
++	if clean in ["見張りの交代まで待つ", "交代まで待つ", "見張りの交代を待つ"] and not Lair.next_to(world, location).is_empty():
++		return Lair.wait_gap(world, location)
 +	if not load("res://scripts/gangs.gd").at(world, _site()).is_empty():
 +		if clean in ["忍び込む", "こっそり忍び込む", "物資を盗む", "蓄えを盗む"]:
 +			return Lair.sneak_in(world, _site())
@@ -102089,7 +102263,7 @@ index 0f2add4..046f6e0 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +4194,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +4198,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -102098,7 +102272,7 @@ index 0f2add4..046f6e0 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3670,18 +4325,23 @@ func _execute_command(cmd: String) -> String:
+@@ -3670,18 +4329,23 @@ func _execute_command(cmd: String) -> String:
  		if location != "屋外": return "探索には屋外に出る必要がある。"
  		return world.longplay_action("scavenge")
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
@@ -102128,7 +102302,7 @@ index 0f2add4..046f6e0 100644
  		var result: String = world.action("harvest")
  		if result.begins_with("収穫した"): world.advance(30)
  		return result
-@@ -3696,7 +4356,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4360,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -102138,7 +102312,7 @@ index 0f2add4..046f6e0 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3709,7 +4370,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3709,7 +4374,12 @@ func _execute_command(cmd: String) -> String:
  				return "食事をするには台所へ行こう。"
  		var light_meal := float(world.s.hunger) < 15.0
  		if not _eat_here():
@@ -102152,7 +102326,7 @@ index 0f2add4..046f6e0 100644
  		# A hungry person eats a proper meal, not one bite (up to 3 portions).
  		var portions := 1
  		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
-@@ -3718,7 +4384,11 @@ func _execute_command(cmd: String) -> String:
+@@ -3718,7 +4388,11 @@ func _execute_command(cmd: String) -> String:
  		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
  	if cmd.contains("水を飲") or cmd.contains("飲み水"):
  		if not _drink_here():
@@ -102165,7 +102339,7 @@ index 0f2add4..046f6e0 100644
  		var cups := 1
  		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
  			cups += 1
-@@ -3754,6 +4424,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4428,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -102180,7 +102354,7 @@ index 0f2add4..046f6e0 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3775,7 +4453,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3775,7 +4457,12 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("周囲") or cmd.contains("見回"):
  		world.advance(1)
  		return _look()
@@ -102194,7 +102368,7 @@ index 0f2add4..046f6e0 100644
  
  
  # Illustration choice is a pure function of current location, observation and
-@@ -3795,6 +4478,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4482,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -102235,7 +102409,7 @@ index 0f2add4..046f6e0 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4555,31 @@ func _scene_caption() -> String:
+@@ -3838,7 +4559,31 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -102267,7 +102441,7 @@ index 0f2add4..046f6e0 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4599,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4603,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -102286,7 +102460,7 @@ index 0f2add4..046f6e0 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4626,9 @@ func _site() -> String:
+@@ -3875,6 +4630,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -102296,7 +102470,7 @@ index 0f2add4..046f6e0 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4660,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4664,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -102305,7 +102479,7 @@ index 0f2add4..046f6e0 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4684,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4688,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -102320,7 +102494,7 @@ index 0f2add4..046f6e0 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4703,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4707,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -102333,7 +102507,7 @@ index 0f2add4..046f6e0 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4724,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4728,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -102344,7 +102518,7 @@ index 0f2add4..046f6e0 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4807,11 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4811,11 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -103967,10 +104141,10 @@ index 03dc127..ea0f011 100644
  static func _circle() -> ShaderMaterial:
 diff --git a/scripts/raid_scene.gd b/scripts/raid_scene.gd
 new file mode 100644
-index 0000000..0de5dfd
+index 0000000..907941a
 --- /dev/null
 +++ b/scripts/raid_scene.gd
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,249 @@
 +extends RefCounted
 +## v149.35: defending the home against looters, played out a few moves at a
 +## time (the voices at the door come first, raiders.gd). Choosing to meet
@@ -104113,9 +104287,10 @@ index 0000000..0de5dfd
 +		return "これ以上は分からない。足音は、もうすぐそこまで来ている。"
 +	# Mostly right; now and then the sound misleads.
 +	var truth := str(raid.entry)
-+	var said: String = truth if _roll(world, "clue") < 75 else SPOTS[(SPOTS.find(truth) + 1 + _roll(world, "wrong") % 2) % 3]
++	# The second listen is surer than the first.
++	var said: String = truth if _roll(world, "clue") < (65 if int(raid.heard) == 1 else 90) else SPOTS[(SPOTS.find(truth) + 1 + _roll(world, "wrong") % 2) % 3]
 +	var clue: String = {"玄関": "玄関の扉の向こうで、金属をこじる、きしんだ音がする。", "窓": "居間の窓のすぐ外で、ガラスを指で叩く音がした。", "裏口": "家の裏手で、砂利を踏む音がする。勝手口のノブが、そっと回された。"}[said]
-+	return clue + "（もう一度耳をすますと、確かめられるかもしれない）" if int(raid.heard) == 1 else clue
++	return clue + "（もう一度耳をすますと、確かめられるかもしれない）" if int(raid.heard) == 1 else "息を詰めて、もう一度耳をすました。" + clue + "……今度は、はっきり聞こえた。"
 +
 +## They come in, at the spot they chose.
 +static func _break_in(world) -> String:
@@ -104158,12 +104333,12 @@ index 0000000..0de5dfd
 +		var hit := ours * luck > theirs * 0.8
 +		if hit:
 +			raid.their_nerve = int(raid.their_nerve) - (35 + _roll(world, "hit") % 20)
-+			text = "手にした物を振り下ろした。鈍い音がして、男がうめき声を上げてよろめいた。"
++			text = _pick(world, ["手にした物を振り下ろした。鈍い音がして、男がうめき声を上げてよろめいた。", "入ってきた男の腕を打ち据えた。男は持っていたバールを取り落とした。", "体当たりで、男を入口の外へ押し戻した。"])
 +		else:
 +			raid.nerve = int(raid.nerve) - (25 + _roll(world, "miss") % 15)
 +			world.s.health = maxf(1.0, float(world.s.health) - (8.0 + float(_roll(world, "hurt") % 10)))
 +			world.s.injuries = float(world.s.get("injuries", 0.0)) + 0.5
-+			text = "打ちかかったが、腕をつかまれて殴り返された。口の中に血の味がする。"
++			text = _pick(world, ["打ちかかったが、腕をつかまれて殴り返された。口の中に血の味がする。", "振りかぶった隙に、腹を蹴られた。息が詰まる。", "かわされて、床に引き倒された。"])
 +	else:
 +		# Holding them back: safer, slower. A barricade makes it stronger.
 +		var held := ours * (1.0 + 0.15 * float(int(world.s.get("barricade", 0)))) * luck > theirs * 0.6
@@ -104182,7 +104357,11 @@ index 0000000..0de5dfd
 +	return text + "（相手の勢い：%s ／ こちら：%s）" % [_gauge(int(raid.their_nerve)), _gauge(int(raid.nerve))]
 +
 +static func _gauge(n: int) -> String:
-+	return "■".repeat(clampi((n + 19) / 20, 0, 5)) + "□".repeat(5 - clampi((n + 19) / 20, 0, 5))
++	var k := clampi((n + 9) / 10, 0, 10)
++	return "■".repeat(k) + "□".repeat(10 - k)
++
++static func _pick(world, lines: Array) -> String:
++	return str(lines[_roll(world, "line") % lines.size()])
 +
 +static func _bribe(world) -> String:
 +	var raid: Dictionary = world.s.raid
@@ -104216,11 +104395,16 @@ index 0000000..0de5dfd
 +		world.s.health = maxf(1.0, float(world.s.health) - 10.0)
 +	return load("res://scripts/raiders.gd")._rob(world, lead)
 diff --git a/scripts/raiders.gd b/scripts/raiders.gd
-index 8dd4800..deaed93 100644
+index 8dd4800..b946992 100644
 --- a/scripts/raiders.gd
 +++ b/scripts/raiders.gd
-@@ -30,11 +30,25 @@ static func hourly(world) -> void:
+@@ -28,13 +28,30 @@ static func hourly(world) -> void:
+ 	if not active(world):
+ 		if not night or not WorldTraits.reached(world, "disrupted") or not _light_showing(world):
  			return
++		# v149.35: someone has to be home to be heard answering.
++		if world.has_meta("player_at_home") and not bool(world.get_meta("player_at_home")):
++			return
  		if world.draw(minute, 31, "raid", 100) >= 6:
  			return
 -		world.s.raid = {"at": minute, "size": 2 + world.draw(minute, 32, "raid-size", 3)}
@@ -104246,7 +104430,7 @@ index 8dd4800..deaed93 100644
  	if minute - int(world.s.raid.at) < 60:
  		return
  	_resolve(world, notices)
-@@ -60,6 +74,8 @@ static func _rob(world, lead: String) -> String:
+@@ -60,6 +77,8 @@ static func _rob(world, lead: String) -> String:
  	world.s.food = float(world.s.food) - food
  	world.s.water = float(world.s.water) - water
  	world.s.cash = int(world.s.cash) - cash
@@ -104255,7 +104439,7 @@ index 8dd4800..deaed93 100644
  	Mood.everyone(world, -10.0)
  	Chronicle.note(world, "略奪者に押し入られ、食料と水を奪われた。", "raid")
  	return "【危険】%s台所の食料%.1f人日分、水%.0fL、現金%d円を奪って、走り去った。" % [lead, food, water, cash]
-@@ -100,6 +116,8 @@ static func answer(world, kind: String, weapon: int = 0) -> String:
+@@ -100,6 +119,8 @@ static func answer(world, kind: String, weapon: int = 0) -> String:
  			if roll < chance:
  				world.s.raid = {}
  				world.s.health = maxf(1.0, float(world.s.health) - 10.0)
@@ -105992,7 +106176,7 @@ index 0000000..5970b4a
 @@ -0,0 +1 @@
 +uid://ccorwen5r1bsx
 diff --git a/scripts/scene_description.gd b/scripts/scene_description.gd
-index 6de9c8d..75db437 100644
+index 6de9c8d..dccc9b8 100644
 --- a/scripts/scene_description.gd
 +++ b/scripts/scene_description.gd
 @@ -26,12 +26,18 @@ const DETAILS = {
@@ -106015,16 +106199,20 @@ index 6de9c8d..75db437 100644
  		detail += _outside_light(str(world.s.weather), world.hour_of_day())
  		if not world.visible_residents().is_empty():
  			detail += "近くに人影が見える。"
-@@ -76,7 +82,7 @@ static func _action_cue(world, place: String) -> String:
+@@ -75,8 +81,11 @@ static func _action_cue(world, place: String) -> String:
+ 			if District.can_enter(world, place):
  				return "店は営業中。「品物を見る」で品ぞろえを確かめて、買う物を選べる。"
  			return "営業時間外だ。いまは買い物できない。"
++		# v149.35: a gang lives here (gangs.gd): no "nobody about".
++		if not load("res://scripts/gangs.gd").at(world, place).is_empty():
++			return "入口のあたりに、誰かが出入りした跡がある。"
  		if not District.prepared(world, place):
 -			var occupancy := "寝泊まりの支度はまだしていない。" if place == "近所の空き家" else "店は放棄されている。"
 +			var occupancy := "寝泊まりの支度はまだしていない。" if place == "近所の空き家" else ("店は放棄されている。" if District.is_shop(place) or TownMap.PLACES.get(place, {}).has("opens") or place == "ガソリンスタンド" else "人の姿はない。")
  			return occupancy + "「物資を探索する」や「ここを拠点にする」と入力できる。"
  		var shelter := "入口は補強してある。" if int(site.level) == 2 else "ここは寝泊まりできるように整えてある。"
  		return shelter + "「ここで一晩過ごす」ことも、「拠点の状態を見る」こともできる。"
-@@ -86,7 +92,15 @@ static func _action_cue(world, place: String) -> String:
+@@ -86,7 +95,15 @@ static func _action_cue(world, place: String) -> String:
  		return "店は休業中。いまは買い物できない。"
  	match place:
  		"寝室": return "「窓を見る」と外の様子を確かめられる。休むなら「寝る」。"
@@ -109212,10 +109400,10 @@ index 0000000..a0788b2
 +uid://6on0qhklmjld
 diff --git a/tests/test_lair149_35.gd b/tests/test_lair149_35.gd
 new file mode 100644
-index 0000000..94066ae
+index 0000000..f279750
 --- /dev/null
 +++ b/tests/test_lair149_35.gd
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,239 @@
 +extends SceneTree
 +## v149.35: a gang's lair — watching it, slipping in at the guard's change,
 +## paying them off, buying what they know, joining them (and raiding), and
@@ -109320,6 +109508,10 @@ index 0000000..94066ae
 +	g.location = "大通り"
 +	g._sync_player_position()
 +	check("略奪者の拠点をうかがう" in g._suggestions(), "the road next to a lair offers to watch it")
++	# Typed or tapped, it goes through the real command path.
++	g.log_entries.clear()
++	await g._on_command("略奪者の拠点をうかがう")
++	check(str(g.log_entries).contains("見張") and not str(g.log_entries).contains("解釈できません"), "the chip is understood: " + str(g.log_entries).left(60))
 +	var learned := false
 +	var spotted := false
 +	for t in 6:
