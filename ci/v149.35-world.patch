@@ -98476,6 +98476,202 @@ index 24dd085..0283cb5 100644
  		if cmd.begins_with("#snap"):
  			await snap(g, cmd.split(" ")[1]); continue
  		if cmd.begins_with("#chip"):
+diff --git a/qa/rescue_audit.gd b/qa/rescue_audit.gd
+new file mode 100644
+index 0000000..6987ee2
+--- /dev/null
++++ b/qa/rescue_audit.gd
+@@ -0,0 +1,183 @@
++extends SceneTree
++## Lives through the rescue sweep in every kind of place the player can be
++## fetched from — a house, a flat, a base, a neighbourhood, a gang's lair —
++## pressing the rescue chips that are offered (some days not), through the
++## real command path. Reports chips not understood, photos missing for what
++## was done, how each run ended, and script errors. DCJ_RUNS per kind (4).
++const Main = preload("res://main.tscn")
++const Rescue = preload("res://scripts/rescue.gd")
++const Residents = preload("res://scripts/residents.gd")
++const Communities = preload("res://scripts/communities.gd")
++const Gangs = preload("res://scripts/gangs.gd")
++const Chronicle = preload("res://scripts/chronicle.gd")
++const AP = preload("res://scripts/action_photos.gd")
++const BAD := ["解釈できません", "処理できない", "何も実行していません", "SCRIPT ERROR"]
++const RESCUE_CHIPS := ["屋根にSOSを書く", "ベランダにSOSを掲げる", "屋上にSOSを書く", "みんなでSOSを並べる", "光で合図を送る", "救助の車両に乗る", "みんなで乗る", "自分の席を譲る", "同居人とだけ乗る", "武器を置いてみんなで乗る", "救助を呼ぼうと持ちかける", "頭を説き伏せる", "こっそり合図を送る"]
++var issues := {}
++var stats := {}
++var rng := RandomNumberGenerator.new()
++func _initialize() -> void:
++	call_deferred("run")
++func note(k: String, d: String) -> void:
++	var key := k + " | " + d.left(140)
++	issues[key] = int(issues.get(key, 0)) + 1
++func count(k: String) -> void:
++	stats[k] = int(stats.get(k, 0)) + 1
++func game(seed: int, housing: String, mates: int):
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.seed = seed
++	p.housing = housing
++	p.cohabitants = mates
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	return g
++func keep_alive(w) -> void:
++	w.s.hunger = 0.0; w.s.thirst = 0.0; w.s.fatigue = 0.0; w.s.health = 100.0
++	w.s.walkers.encounter = {}
++	w.s.raid = {}
++	w.s.assault = {}
++	w.s.bitten = false
++func press(g, cmd: String, label: String) -> String:
++	g.log_entries.clear()
++	await g._on_command(cmd)
++	while g.advancing:
++		await process_frame
++	var said := "\n".join(g.log_entries.slice(1))
++	for b in BAD:
++		if said.contains(b):
++			note("not understood", "%s: %s => %s" % [label, cmd, said.replace("\n", " / ")])
++	if said.strip_edges().is_empty():
++		note("no answer", "%s: %s" % [label, cmd])
++	# A photo for what was done, when there is one for it.
++	for line in g.log_entries.slice(1):
++		var d: Dictionary = AP.detect(str(line))
++		if not d.is_empty():
++			if AP.path(g.world, str(d.kind)).is_empty():
++				note("no photo file", "%s (%s)" % [d.kind, cmd])
++			else:
++				count("photo " + str(d.kind))
++	return said
++func to_hour(g, h: int) -> void:
++	var w = g.world
++	for k in 30:
++		if int(w.hour_of_day()) == h:
++			return
++		keep_alive(w)
++		w.advance_safe(60)
++		g.location = g.get_meta("stay")
++		g._sync_player_position()
++		w.set_meta("player_place", g.location)
++		w.set_meta("player_at_home", load("res://scripts/navigation.gd").indoor(g.location))
++func setup(g, kind: String) -> String:
++	var w = g.world
++	w.s.society = "emergency"
++	for h in 26:
++		keep_alive(w)
++		w.advance_safe(60)
++	match kind:
++		"house", "flat":
++			return "居間"
++		"base":
++			w.s.district.sites["金物店"].vacant = true
++			w.s.district.sites["金物店"].level = 1
++			return "金物店"
++		"block":
++			var leader := -1
++			for i in Communities._rows(w, "南の住宅街", 0):
++				var row: Array = Residents.row(w, "南の住宅街", i)
++				var who: Dictionary = Residents.who(w, "南の住宅街", i)
++				row[Residents.P_PATH] = "holed"
++				row[Residents.P_ALIVE] = (1 << who.people.size()) - 1
++				row[Residents.P_FLAGS] = int(row[Residents.P_FLAGS]) | Communities.F_COMM
++				if leader < 0 and who.people.any(func(q): return bool(q.able)):
++					leader = i
++			Communities.all(w)["南の住宅街:0"] = {"area": "南の住宅街", "block": 0, "since": 1, "store": 200.0, "water": 50.0, "garden": 0.0, "wall": 40.0, "trust": 80.0, "ended": false, "leader": leader, "last_out": -1, "hungry": 0}
++			w.s.residents.player_cm = "南の住宅街:0"
++			return "南の住宅街"
++		"lair":
++			var homes: Array = []
++			for i in load("res://scripts/dwellings.gd").count("団地"):
++				if homes.size() >= 3:
++					break
++				var who: Dictionary = Residents.who(w, "団地", i)
++				if who.people.any(func(q): return bool(q.able)):
++					var row: Array = Residents.row(w, "団地", i)
++					row[Residents.P_PATH] = "looter"
++					row[Residents.P_ALIVE] = (1 << who.people.size()) - 1
++					homes.append(["団地", i])
++			var gang := {"id": "gang_audit", "lair": "倉庫街", "since": 1, "store": 300.0, "hungry": rng.randi() % 4, "ended": false, "last_raid": 99999, "leader": homes[0], "homes": homes, "announced": true}
++			Gangs.all(w)["gang_audit"] = gang
++			w.s.residents.player_gang = "gang_audit"
++			w.s.residents.confronted_at = 99999999
++			return "倉庫街"
++	return "居間"
++func run() -> void:
++	rng.seed = 7
++	var runs := int(OS.get_environment("DCJ_RUNS")) if OS.get_environment("DCJ_RUNS") != "" else 4
++	for kind in ["house", "flat", "base", "block", "lair"]:
++		for t in runs:
++			var g = await game(100 + t * 7 + kind.length(), "集合住宅" if kind == "flat" else "一戸建て", t % 2)
++			var w = g.world
++			var place: String = setup(g, kind)
++			g.set_meta("stay", place)
++			var r: Dictionary = Rescue.state(w)
++			var label := "%s#%d" % [kind, t]
++			# From three days before the sweep until it is over.
++			w.s.minute = (int(r.start) - 3) * 1440
++			var ended := ""
++			for day in range(int(r.start) - 3, int(r.end) + 2):
++				if Rescue.done(w):
++					break
++				# Morning: a pickup waiting?
++				to_hour(g, 8)
++				g._refresh()
++				var morning: Array = g._suggestions().filter(func(c): return str(c) in RESCUE_CHIPS)
++				if not morning.is_empty() and Rescue.waiting(w):
++					var pick := str(morning[rng.randi() % morning.size()])
++					count("%s pickup → %s" % [kind, pick])
++					await press(g, pick, label)
++					if Rescue.done(w):
++						break
++				# Midday: SOS (most days).
++				to_hour(g, 10)
++				g._refresh()
++				for c in g._suggestions():
++					if str(c) in RESCUE_CHIPS and rng.randi() % 4 != 0:
++						count("%s day → %s" % [kind, str(c)])
++						await press(g, str(c), label)
++						break
++				# Night: a light (most nights).
++				to_hour(g, 21)
++				g._refresh()
++				for c in g._suggestions():
++					if str(c) in RESCUE_CHIPS and rng.randi() % 3 != 0:
++						count("%s night → %s" % [kind, str(c)])
++						await press(g, str(c), label)
++						break
++			if Rescue.done(w):
++				ended = "rescued"
++				var photo := str(Chronicle.state(w).get("photo", ""))
++				count("%s ending photo %s" % [kind, photo if not photo.is_empty() else "(none)"])
++				if photo.is_empty():
++					note("no ending photo", label)
++				var text := Chronicle.epilogue(w)
++				if text.contains("【最期】") or text.contains("を失ったあと"):
++					note("death lines in a rescue ending", label)
++			else:
++				ended = "not rescued (missed %d, spotted %s)" % [int(r.get("missed", 0)), str(r.get("spotted", -1))]
++			count("%s: %s" % [kind, ended])
++			g.queue_free()
++			await process_frame
++	print("\n=== STATS ===")
++	var keys := stats.keys()
++	keys.sort()
++	for k in keys:
++		print("  %4d  %s" % [stats[k], k])
++	print("\n=== ISSUES (%d) ===" % issues.size())
++	for k in issues:
++		print("  %3d× %s" % [issues[k], k])
++	quit()
+diff --git a/qa/rescue_audit.gd.uid b/qa/rescue_audit.gd.uid
+new file mode 100644
+index 0000000..451f611
+--- /dev/null
++++ b/qa/rescue_audit.gd.uid
+@@ -0,0 +1 @@
++uid://dqtxmtiqchkon
 diff --git a/qa/residents_invariants.gd b/qa/residents_invariants.gd
 new file mode 100644
 index 0000000..3292cf3
@@ -107746,10 +107942,10 @@ index 8dd4800..85b0ae3 100644
  				return "扉を開け放ち、武器を振り上げて飛び出した。もみ合いになり、腕を殴られたが、相手は逃げていった。"
 diff --git a/scripts/rescue.gd b/scripts/rescue.gd
 new file mode 100644
-index 0000000..36824f5
+index 0000000..0f3d1fa
 --- /dev/null
 +++ b/scripts/rescue.gd
-@@ -0,0 +1,565 @@
+@@ -0,0 +1,572 @@
 +extends RefCounted
 +## v149.35: the "wait" ending — rescue comes to the town.
 +##
@@ -107930,14 +108126,21 @@ index 0000000..36824f5
 +
 +## Whether the vehicle waits at this place now.
 +static func waiting_here(world, place: String) -> bool:
-+	return waiting(world) and str(state(world).get("pickup_at", "home")) == _key(world, place)
++	var at := str(state(world).get("pickup_at", "home"))
++	return waiting(world) and (at == _key(world, place) or at == place)
 +
 +## Chips to offer where the player lives.
 +static func chips(world, place: String) -> Array:
 +	var k := kind(world, place)
-+	if done(world) or not scheduled(world) or k == "":
++	if done(world) or not scheduled(world):
 +		return []
 +	var r := state(world)
++	# The vehicle came where it was called; whoever is still there may get in,
++	# even if the neighbourhood broke up or the gang threw them out meanwhile.
++	if waiting(world) and str(r.get("pickup_at", "home")) == place and k == "":
++		return ["救助の車両に乗る"]
++	if k == "":
++		return []
 +	if waiting_here(world, place):
 +		if k == "lair":
 +			return ["武器を置いてみんなで乗る", "自分の席を譲る"]
