@@ -95617,10 +95617,10 @@ index 0000000..049960c
 +uid://cy1s36s7pxiux
 diff --git a/qa/meal_talk_check.gd b/qa/meal_talk_check.gd
 new file mode 100644
-index 0000000..6683fab
+index 0000000..23ac28f
 --- /dev/null
 +++ b/qa/meal_talk_check.gd
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,127 @@
 +extends SceneTree
 +## v149.35: how smoothly the meal council goes with free wording.
 +## Without a model: only the keyword reading (shows what falls through).
@@ -95720,6 +95720,7 @@ index 0000000..6683fab
 +		g.local_model.load_timeout_ms = 400000
 +		g.local_model.generation_timeout_ms = 400000
 +	var ok := 0
++	var extras := 0
 +	var by_keywords := 0
 +	var total_ms := 0
 +	for case in CASES:
@@ -95734,11 +95735,26 @@ index 0000000..6683fab
 +		total_ms += ms
 +		var got: Dictionary = g.meal_talk.get("draft", {})
 +		var good := matches(got, case[1])
++		# Settings the line did not mention, filled in anyway (changes the plan by accident).
++		var extra: Array = []
++		if case[1] is Dictionary:
++			for k in got:
++				if not (case[1] as Dictionary).has(k):
++					extra.append(k)
++		if not extra.is_empty():
++			extras += 1
 +		ok += 1 if good else 0
 +		by_keywords += 1 if not keyword.is_empty() else 0
-+		print(JSON.stringify({"text": case[0], "ok": good, "got": got, "keywords": not keyword.is_empty(), "ms": ms, "reply": str(g.log_entries.slice(-4)).left(200), "raw": backend.raw if backend != null else ""}))
-+	print(JSON.stringify({"summary": true, "ok": ok, "total": CASES.size(), "keywords_only": by_keywords, "model": backend != null, "avg_ms": total_ms / CASES.size()}))
++		print(JSON.stringify({"text": case[0], "ok": good, "extra": extra, "got": got, "keywords": not keyword.is_empty(), "ms": ms, "reply": str(g.log_entries.slice(-4)).left(200), "raw": backend.raw if backend != null else ""}))
++	print(JSON.stringify({"summary": true, "ok": ok, "total": CASES.size(), "keywords_only": by_keywords, "filled_unmentioned": extras, "model": backend != null, "avg_ms": total_ms / CASES.size()}))
 +	quit(0)
+diff --git a/qa/meal_talk_check.gd.uid b/qa/meal_talk_check.gd.uid
+new file mode 100644
+index 0000000..0054b8b
+--- /dev/null
++++ b/qa/meal_talk_check.gd.uid
+@@ -0,0 +1 @@
++uid://lsomyvcxuios
 diff --git a/qa/npc_watch.gd b/qa/npc_watch.gd
 new file mode 100644
 index 0000000..15eacb7
@@ -101220,10 +101236,10 @@ index 0f2add4..486e7d3 100644
  	visual_focus="news"
 diff --git a/scripts/meal_plan.gd b/scripts/meal_plan.gd
 new file mode 100644
-index 0000000..42f326d
+index 0000000..957b80f
 --- /dev/null
 +++ b/scripts/meal_plan.gd
-@@ -0,0 +1,399 @@
+@@ -0,0 +1,403 @@
 +extends RefCounted
 +## v149.35: the household's meals — when, how much, and who first — decided
 +## by talking it over with the people at home.
@@ -101369,12 +101385,15 @@ index 0000000..42f326d
 +		out.meals = [7, 12, 19].filter(func(h): return h != named[0])
 +	elif named.size() >= 1 and _any(t, ["だけ", "のみ"]):
 +		out.meals = named
++	elif has_morning and has_night and not has_noon and _any(t, ["軽く", "しっかり", "済ませ", "食べ", "ごはん", "ご飯"]):
++		# "朝は軽く、夜はしっかり": morning and evening, no lunch.
++		out.meals = [7, 19]
 +	# Who first.
 +	if _any(t, ["子ども", "子供", "子たち", "チビ", "小さい子", "お年寄り", "年寄り", "おばあ", "おじい", "祖母", "祖父", "弱って", "弱い人", "体の弱い"]) and _any(t, ["優先", "先に", "先", "多め", "回そ", "回して", "あげて", "多く"]):
 +		out.share = "weak"
 +	if _any(t, ["外に出る人", "外で動く", "探しに行く人", "探しに出る人", "働く人", "動ける人", "動く人", "外に行く人"]):
 +		out.share = "workers"
-+	if _any(t, ["平等", "同じ量", "みんな同じ", "全員同じ", "均等", "公平"]):
++	if _any(t, ["平等", "同じ量", "みんな同じ", "全員同じ", "均等", "公平", "えこひいき", "ひいき", "特別扱い"]) or (_any(t, ["多くもら", "多めにもら", "多く食べ"]) and _any(t, ["なし", "無し", "ダメ", "だめ", "やめ"])):
 +		out.share = "equal"
 +	# How much.
 +	if _any(t, ["少なめ", "減らそ", "減らして", "減らす", "控えめ", "控えよ", "控えて", "半分", "節約", "ちょっとずつ", "少しずつ", "腹八分", "少しにし", "減らせ"]):
@@ -101587,8 +101606,9 @@ index 0000000..42f326d
 +回数: 3（1日3食・毎食）/ 2（1日2食・どれか1食を抜く）/ 1（1日1食）/ -（回数に触れていない）
 +量: normal（いつも通り・ちゃんと食べる）/ small（少なめ・減らす・節約・半分）/ -（触れていない）
 +配り方: equal（みんな平等・同じ量）/ weak（子ども・お年寄り・弱っている人を優先）/ workers（外で動く人・探しに出る人を優先）/ -（触れていない）
++発言が触れていない項目は必ず「-」にする。今の決まりを推測して埋めない（例：量の話だけなら回数と配り方は「-」）。
 +食事の決まりの提案ではない（質問、雑談、決定、取りやめ）なら {"kind":"clarify","value":""}。
-+例: 「朝と夜だけにしよう」→{"kind":"player","value":"meal:2:-:-"} 「量をちょっと控えよう」→{"kind":"player","value":"meal:-:small:-"} 「チビたちに先に食べさせよう」→{"kind":"player","value":"meal:-:-:weak"} 「1日1回、少なめで、みんな同じにしよう」→{"kind":"player","value":"meal:1:small:equal"} 「昼は抜いて、量はいつも通り」→{"kind":"player","value":"meal:2:normal:-"} 「探しに行く人には多めに」→{"kind":"player","value":"meal:-:-:workers"} 「お腹すいたね」→{"kind":"clarify","value":""}"""
++例: 「朝と夜だけにしよう」→{"kind":"player","value":"meal:2:-:-"} 「量をちょっと控えよう」→{"kind":"player","value":"meal:-:small:-"} 「チビたちに先に食べさせよう」→{"kind":"player","value":"meal:-:-:weak"} 「1日1回、少なめで、みんな同じにしよう」→{"kind":"player","value":"meal:1:small:equal"} 「昼は抜いて、量はいつも通り」→{"kind":"player","value":"meal:2:normal:-"} 「探しに行く人には多めに」→{"kind":"player","value":"meal:-:-:workers"} 「えこひいきは無しにしよう」→{"kind":"player","value":"meal:-:-:equal"} 「1日に何度も食べる余裕はない」→{"kind":"player","value":"meal:2:-:-"} 「腹一杯までは食べないでおこう」→{"kind":"player","value":"meal:-:small:-"} 「お腹すいたね」→{"kind":"clarify","value":""}"""
 +
 +## Someone at home brings it up when the food is running low (at most every
 +## three days, and not right after a decision).
@@ -101623,6 +101643,13 @@ index 0000000..42f326d
 +	var mouths: int = 1 + world.s.household_members.filter(func(m): return float(m.health) > 0.0).size()
 +	var per_day: float = float((p.meals as Array).size()) * float(PORTION.get(str(p.portion), PORTION.normal)) * float(mouths)
 +	return float(world.s.food) / maxf(0.01, per_day)
+diff --git a/scripts/meal_plan.gd.uid b/scripts/meal_plan.gd.uid
+new file mode 100644
+index 0000000..9e30bc5
+--- /dev/null
++++ b/scripts/meal_plan.gd.uid
+@@ -0,0 +1 @@
++uid://bihbl4w0002xw
 diff --git a/scripts/navigation.gd b/scripts/navigation.gd
 index 5b507de..6610b8f 100644
 --- a/scripts/navigation.gd
@@ -107708,6 +107735,13 @@ index 0000000..0eba670
 +	# Solo.
 +	print("RESULT ", "PASS" if failures == 0 else "FAIL %d" % failures)
 +	quit(1 if failures else 0)
+diff --git a/tests/test_meal_plan149_35.gd.uid b/tests/test_meal_plan149_35.gd.uid
+new file mode 100644
+index 0000000..087e5a4
+--- /dev/null
++++ b/tests/test_meal_plan149_35.gd.uid
+@@ -0,0 +1 @@
++uid://bijlw3v05vbhq
 diff --git a/tests/test_npc_groups149_35.gd b/tests/test_npc_groups149_35.gd
 new file mode 100644
 index 0000000..82db2b0

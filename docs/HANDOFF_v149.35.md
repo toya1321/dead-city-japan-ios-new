@@ -39,7 +39,7 @@
   - 自由文はまずキーワードで読み、読めなければローカルAI（`MealPlan.AI_INSTRUCTIONS`、答えは `meal:回数:量:配り方`、`local_npc_model.parse` で検査）に回す。
   - 蓄えが 4 日分を切ると、夕方に一番やさしい同居人が相談を持ちかける（3 日に 1 回まで）。その日は候補に「食事のことを相談」が出る。
   - 「人」タブの一番上に今の決まりを表示。ひとり暮らしは回数と量だけ決められる。
-  - テスト: `tests/test_meal_plan149_35.gd`。実機AIの検証: `qa/meal_talk_check.gd`（40 通りの言い方。モデルなしだと 34/40、残り 6 つは言い回しを AI に任せる分。`DCJ_LLAMA_PROBE`・`DCJ_GGUF` を設定すると Qwen3-4B で実行）。**この環境はネットワークが切られていて、Qwen3-4B での実行はまだしていない。**
+  - テスト: `tests/test_meal_plan149_35.gd`。実機AIの検証: `qa/meal_talk_check.gd`（40 通りの言い方。モデルなしだと 34/40、残り 6 つは言い回しを AI に任せる分。`DCJ_LLAMA_PROBE`・`DCJ_GGUF` を設定すると Qwen3-4B で実行）。Qwen3-4B（Q4_K_M、`dcj_local_llm_probe`）で実行済み（2026-11-27）。40/40 が正しく読める（モデルなしでも 36/40）。AI に回るのは 9 件で、1 回あたり 9〜13 秒（クラウドの CPU での値。初回はモデルの読み込みにさらに時間がかかる）。触れていない項目を AI が勝手に埋めないよう、`AI_INSTRUCTIONS` に「触れていない項目は必ず - にする」と例を足した。テストは「余計に埋めた項目」（`filled_unmentioned`）も数える。
 - **バージョン**: 0.149.35（ビルド番号 182）に上げ済み。`export_presets.cfg` と `build_scripts/build-ios-unsigned.sh`。
 
 ## 3. 進行中の作業：住人 1,500 人の顔と名簿
