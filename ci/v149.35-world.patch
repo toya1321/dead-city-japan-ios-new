@@ -100168,10 +100168,10 @@ index 0000000..482fd66
 +uid://bgepta71yf305
 diff --git a/qa/item_ai_check.gd b/qa/item_ai_check.gd
 new file mode 100644
-index 0000000..dfa250f
+index 0000000..faf4633
 --- /dev/null
 +++ b/qa/item_ai_check.gd
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,106 @@
 +extends SceneTree
 +## v149.39: how free wording about using things becomes the right command —
 +## the fixed reading first (item_actions.recognises), then the local model
@@ -100208,7 +100208,10 @@ index 0000000..dfa250f
 +	["切り傷が化膿しないようにしたい", ["消毒液", "手当て"]],
 +	["凍えそうだ、何か体をあっためる物", ["寝袋", "カイロ", "くるまる"]],
 +	["救助隊に気づいてもらう方法はないか試す", ["発煙筒", "ホイッスル", "合図", "鳴らす"]],
-+	["お腹すいたから何か缶詰を", ["サバの缶詰", "食べる"]],
++	["お腹すいたから何か缶詰を", ["サバの缶詰", "ツナ缶", "食べる"]],
++	["腹減った、ツナ缶でいいや", ["ツナ缶"]],
++	["喉が渇いたからお茶でも", ["お茶"]],
++	["小腹がすいたからお菓子をつまむ", ["チョコ", "ビスケット", "お菓子"]],
 +	["ロウソクはつけない", []],
 +	["ロープって何に使えるかな", []],
 +]
@@ -100222,7 +100225,7 @@ index 0000000..dfa250f
 +	g._finish_intro()
 +	var w = g.world
 +	for id in ["candle", "lighter", "lantern", "batteries_aa", "sleeping_bag", "hand_warmer", "plywood", "nails", "hammer", "duct_tape",
-+			"empty_can", "string", "cooking_oil", "whistle", "flare", "disinfectant", "painkillers", "canned_fish", "sports_drink",
++			"empty_can", "string", "cooking_oil", "whistle", "flare", "disinfectant", "painkillers", "canned_fish", "tuna", "chocolate", "bottled_tea", "sports_drink",
 +			"purification_tablets", "kettle", "cassette_stove", "sheet", "scissors", "rope", "manga", "crank_radio"]:
 +		Items.add(w, id, 2)
 +	var backend = null
@@ -106589,10 +106592,10 @@ index 971fbda..8bf3cc0 100644
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
 diff --git a/scripts/item_actions.gd b/scripts/item_actions.gd
 new file mode 100644
-index 0000000..e32345f
+index 0000000..1807639
 --- /dev/null
 +++ b/scripts/item_actions.gd
-@@ -0,0 +1,1159 @@
+@@ -0,0 +1,1183 @@
 +extends RefCounted
 +## v149.39: doing things with what you have (docs/ITEMS_VERBS.md, first wave).
 +##
@@ -106736,7 +106739,7 @@ index 0000000..e32345f
 +static func recognises(cmd: String) -> bool:
 +	if named(cmd).is_empty():
 +		return false
-+	for words in [LIGHT_WORDS, OFF_WORDS, WARM_WORDS, FORT_WORDS, TRAP_WORDS, SOUND_WORDS, SIGNAL_WORDS, TREAT_WORDS, MED_WORDS, EAT_WORDS, FILTER_WORDS, BOIL_WORDS, ["補強", "ふさ", "塞", "寒"]] + WAVE2:
++	for words in [LIGHT_WORDS, OFF_WORDS, WARM_WORDS, FORT_WORDS, TRAP_WORDS, SOUND_WORDS, SIGNAL_WORDS, TREAT_WORDS, MED_WORDS, EAT_WORDS, THIRST_WORDS, FILTER_WORDS, BOIL_WORDS, ["補強", "ふさ", "塞", "寒"]] + WAVE2:
 +		if has_word(cmd, words):
 +			return true
 +	return false
@@ -106760,8 +106763,8 @@ index 0000000..e32345f
 +	if has_word(cmd, BOIL_WORDS) and said.any(func(id): return Catalog.is_a(id, "stove") or Catalog.is_a(id, "cookware")):
 +		return boil(game, said, at_home)
 +	if has_word(cmd, EAT_WORDS) and said.any(func(id): return Catalog.is_a(id, "edible")):
-+		return eat(game, said, at_home)
-+	if has_word(cmd, MED_WORDS) and said.any(func(id): return Catalog.is_a(id, "drink")) and not said.any(func(id): return Catalog.is_a(id, "medicine") and not Catalog.is_a(id, "drink")):
++		return eat(game, _grouped(world, cmd, said, at_home), at_home)
++	if (has_word(cmd, MED_WORDS) or has_word(cmd, THIRST_WORDS)) and said.any(func(id): return Catalog.is_a(id, "drink")) and not said.any(func(id): return Catalog.is_a(id, "medicine") and not Catalog.is_a(id, "drink")):
 +		return drink(game, said, at_home)
 +	if said.any(func(id): return Catalog.is_a(id, "medicine")) and has_word(cmd, MED_WORDS):
 +		return medicine(game, said, at_home)
@@ -107131,7 +107134,13 @@ index 0000000..e32345f
 +
 +# ---- food and drink --------------------------------------------------------
 +
-+const EAT_WORDS := ["食べ", "食う", "食って", "口にする", "かじ", "すする"]
++const EAT_WORDS := ["食べ", "食う", "食って", "口にする", "かじ", "すする", "お腹すい", "お腹空い", "お腹が空", "おなかすい", "腹減", "腹へ", "腹が減", "空腹", "ひもじ", "腹がすい", "小腹", "つまむ", "つまんで"]
++const THIRST_WORDS := ["渇い", "喉が", "のどが", "水分"]
++## A word for a kind of food, and the things it may mean (what is had is used).
++const FOOD_GROUPS := {"缶詰": ["canned_fish", "tuna", "canned_chicken", "corned_beef", "canned_fruit"], "缶": ["canned_fish", "tuna", "canned_chicken", "corned_beef", "canned_fruit"],
++	"お菓子": ["chocolate", "biscuits", "snacks", "candy", "senbei", "crackers", "yokan"], "麺": ["cup_noodle", "instant_noodle", "dried_noodles", "pasta"],
++	"ご飯": ["rice_pack", "alpha_rice", "rice"], "パン": ["bread", "hardtack", "crackers"], "非常食": ["hardtack", "alpha_rice", "energy_bar", "canned_fish", "tuna"],
++	"飲み物": ["bottled_tea", "sports_drink", "canned_coffee", "vending_drink"], "お茶": ["bottled_tea"]}
 +const FILTER_WORDS := ["ろ過", "濾過", "こす", "こして", "浄水", "きれいに"]
 +const BOIL_WORDS := ["沸か", "煮沸", "湯を"]
 +
@@ -107168,6 +107177,24 @@ index 0000000..e32345f
 +	if at_home and world.has_home_power():
 +		return ["電気のコンロ", "", 0.0]
 +	return []
++
++## "缶詰" (not a particular can) means whichever can is had.
++static func _grouped(world, cmd: String, said: Array, at_home: bool) -> Array:
++	for word in FOOD_GROUPS:
++		if not cmd.contains(str(word)):
++			continue
++		var group: Array = FOOD_GROUPS[word]
++		# A particular thing named by more than the kind's word, and had: that one.
++		for id in said:
++			if have(world, str(id), at_home) <= 0.0:
++				continue
++			for nm in [name_of(str(id))] + Array(Catalog.ITEMS[id].aliases):
++				if str(nm) != str(word) and str(nm).length() > str(word).length() and cmd.contains(str(nm)):
++					return said
++		for id in group:
++			if have(world, str(id), at_home) > 0.0:
++				return [id] + said.filter(func(x): return not x in group)
++	return said
 +
 +static func eat(game, said: Array, at_home: bool) -> String:
 +	var world = game.world
@@ -119427,10 +119454,10 @@ index 0000000..a0788b2
 +uid://6on0qhklmjld
 diff --git a/tests/test_item_actions149_39.gd b/tests/test_item_actions149_39.gd
 new file mode 100644
-index 0000000..b3929ad
+index 0000000..91aa743
 --- /dev/null
 +++ b/tests/test_item_actions149_39.gd
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,169 @@
 +extends SceneTree
 +## v149.39: doing things with what one has, through the real command path.
 +const Main = preload("res://main.tscn")
@@ -119568,6 +119595,17 @@ index 0000000..b3929ad
 +	w.s.hunger = 60.0
 +	said = await say("猫の缶詰を食べる", "台所")
 +	check(said.contains("ひどい味"), "pet food in a pinch: " + said)
++	# A kind of food named loosely ("缶詰"): whichever can is had.
++	for c in ["canned_fish", "canned_chicken", "corned_beef", "canned_fruit"]:
++		Items.take(w, c, 99)
++	Items.add(w, "tuna", 1)
++	w.s.hunger = 60.0
++	said = await say("お腹すいたから何か缶詰を", "台所")
++	check(Items.count(w, "tuna") < 1.0 and said.contains("ツナ缶"), "\"何か缶詰を\" eats the can that is had: " + said)
++	Items.add(w, "bottled_tea", 1)
++	w.s.thirst = 50.0
++	said = await say("喉が渇いたからお茶でも", "台所")
++	check(Items.count(w, "bottled_tea") < 1.0 and float(w.s.thirst) < 50.0, "\"喉が渇いたからお茶でも\" drinks the tea: " + said)
 +	# ---- water
 +	w.s.rain_water = 6.0
 +	var water0 := float(w.s.water)
