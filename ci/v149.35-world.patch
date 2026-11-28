@@ -106208,6 +106208,259 @@ index 971fbda..8bf3cc0 100644
  	var household: String="この%sで、一人で暮らしている。"%str(profile.housing)
  	if int(profile.cohabitants)>0:household="この%sで、%d人の同居人と暮らしている。"%[str(profile.housing),int(profile.cohabitants)]
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
+diff --git a/scripts/item_catalog.gd b/scripts/item_catalog.gd
+new file mode 100644
+index 0000000..7c7104b
+--- /dev/null
++++ b/scripts/item_catalog.gd
+@@ -0,0 +1,247 @@
++extends RefCounted
++## v149.39: every item, what it is (tags), what it weighs and where it turns up.
++## Generated from tools/items_source.py by tools/build_items.py — edit there.
++
++const TAGS := {"edible": "食べられる", "ready": "火が要らない", "needs_heat": "加熱が要る", "needs_water": "水が要る", "perishable": "傷みやすい", "drink": "飲める", "container": "水が入る", "igniter": "着火具", "fuel": "燃料", "light": "明かり", "uses_batteries": "電池で動く", "cell": "電池", "blade": "刃物", "blunt": "打撃", "long": "長い", "pry": "こじ開け", "cloth": "布", "big_cloth": "大きな布", "string": "紐", "tape": "貼れる", "board": "板", "tool": "工具", "fastener": "留め具", "medicine": "薬", "wound": "傷の手当て", "noise": "音が鳴る", "warm": "暖かい", "heater": "暖房", "stove": "調理の火", "cookware": "調理器具", "write": "書ける", "valuable": "価値がある", "leisure": "気晴らし", "news": "情報が入る", "charge": "充電できる", "hygiene": "清潔", "seed": "植えられる", "garden": "畑", "reflect": "光を反射する", "lock": "鍵", "bag": "入れ物", "weapon": "武器", "armor": "防具", "signal": "合図", "water_clean": "水をきれいにする", "comfort": "心の支え", "material": "材料"}
++
++const ITEMS := {
++	"food": {"name": "保存食（まとめ）", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "人日", "kg": 0.6, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 600, "aliases": ["食料", "食べ物", "保存食"]},
++	"canned_fish": {"name": "サバの缶詰", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.2, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 250, "aliases": ["サバ缶", "魚の缶詰", "缶詰"]},
++	"canned_chicken": {"name": "焼き鳥の缶詰", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.1, "found": ["台所", "押し入れ", "コンビニ", "スーパー"], "price": 200, "aliases": ["焼き鳥缶", "鶏の缶詰"]},
++	"canned_fruit": {"name": "果物の缶詰", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.4, "found": ["台所", "押し入れ", "スーパー"], "price": 300, "aliases": ["みかん缶", "桃缶", "フルーツ缶"]},
++	"corned_beef": {"name": "コンビーフ", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.1, "found": ["台所", "押し入れ", "スーパー"], "price": 400, "aliases": []},
++	"tuna": {"name": "ツナ缶", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.1, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 150, "aliases": ["ツナ", "シーチキン"]},
++	"rice": {"name": "米（2kg）", "cat": "食べ物", "tags": ["edible", "needs_heat", "needs_water"], "unit": "袋", "kg": 2.0, "found": ["台所", "食品店", "スーパー"], "price": 1200, "aliases": ["米", "お米", "白米"]},
++	"rice_pack": {"name": "パックご飯", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.2, "found": ["台所", "押し入れ", "コンビニ", "スーパー"], "price": 180, "aliases": ["レトルトご飯", "パックのご飯"]},
++	"cup_noodle": {"name": "カップ麺", "cat": "食べ物", "tags": ["edible", "needs_heat", "needs_water"], "unit": "個", "kg": 0.1, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 200, "aliases": ["カップラーメン", "カップヌードル"]},
++	"instant_noodle": {"name": "袋麺", "cat": "食べ物", "tags": ["edible", "needs_heat", "needs_water"], "unit": "袋", "kg": 0.1, "found": ["台所", "食品店", "スーパー"], "price": 120, "aliases": ["インスタントラーメン", "袋ラーメン"]},
++	"pasta": {"name": "パスタ", "cat": "食べ物", "tags": ["edible", "needs_heat", "needs_water"], "unit": "袋", "kg": 0.5, "found": ["台所", "食品店", "スーパー"], "price": 250, "aliases": ["スパゲッティ", "パスタ麺"]},
++	"pasta_sauce": {"name": "パスタソース", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.15, "found": ["台所", "スーパー"], "price": 200, "aliases": ["ミートソース"]},
++	"retort_curry": {"name": "レトルトカレー", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.2, "found": ["台所", "押し入れ", "コンビニ", "スーパー"], "price": 250, "aliases": ["カレー"]},
++	"retort_porridge": {"name": "レトルトのおかゆ", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.25, "found": ["台所", "押し入れ", "薬局", "スーパー"], "price": 200, "aliases": ["おかゆ"]},
++	"hardtack": {"name": "乾パン", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "缶", "kg": 0.1, "found": ["押し入れ", "避難所", "スーパー"], "price": 300, "aliases": ["カンパン"]},
++	"crackers": {"name": "クラッカー", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "箱", "kg": 0.2, "found": ["台所", "コンビニ", "スーパー"], "price": 200, "aliases": []},
++	"biscuits": {"name": "ビスケット", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "箱", "kg": 0.2, "found": ["台所", "子ども部屋", "コンビニ", "スーパー"], "price": 200, "aliases": ["クッキー"]},
++	"chocolate": {"name": "チョコレート", "cat": "食べ物", "tags": ["edible", "ready", "comfort"], "unit": "枚", "kg": 0.05, "found": ["居間", "子ども部屋", "コンビニ", "スーパー"], "price": 150, "aliases": ["チョコ", "板チョコ"]},
++	"candy": {"name": "飴", "cat": "食べ物", "tags": ["edible", "ready", "comfort"], "unit": "袋", "kg": 0.1, "found": ["居間", "子ども部屋", "コンビニ"], "price": 150, "aliases": ["キャンディ", "のど飴"]},
++	"nuts": {"name": "ミックスナッツ", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "袋", "kg": 0.2, "found": ["居間", "コンビニ", "スーパー"], "price": 400, "aliases": ["ナッツ", "ピーナッツ"]},
++	"dried_fruit": {"name": "ドライフルーツ", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "袋", "kg": 0.1, "found": ["台所", "スーパー"], "price": 300, "aliases": []},
++	"energy_bar": {"name": "栄養補助食品", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "箱", "kg": 0.08, "found": ["コンビニ", "薬局", "押し入れ"], "price": 200, "aliases": ["ブロック栄養食", "カロリーバー"]},
++	"jelly_drink": {"name": "ゼリー飲料", "cat": "食べ物", "tags": ["edible", "ready", "drink"], "unit": "個", "kg": 0.18, "found": ["コンビニ", "薬局"], "price": 200, "aliases": ["ゼリー", "ウィダー"]},
++	"powdered_milk": {"name": "粉ミルク", "cat": "食べ物", "tags": ["edible", "needs_water"], "unit": "缶", "kg": 0.8, "found": ["スーパー", "薬局", "子ども部屋"], "price": 2000, "aliases": ["ミルク"]},
++	"miso": {"name": "味噌", "cat": "食べ物", "tags": ["edible", "material"], "unit": "個", "kg": 0.75, "found": ["台所", "スーパー"], "price": 400, "aliases": []},
++	"soy_sauce": {"name": "醤油", "cat": "食べ物", "tags": ["material"], "unit": "本", "kg": 0.5, "found": ["台所", "スーパー"], "price": 300, "aliases": ["しょうゆ"]},
++	"salt": {"name": "塩", "cat": "食べ物", "tags": ["material"], "unit": "袋", "kg": 1.0, "found": ["台所", "スーパー"], "price": 150, "aliases": []},
++	"sugar": {"name": "砂糖", "cat": "食べ物", "tags": ["edible", "material"], "unit": "袋", "kg": 1.0, "found": ["台所", "スーパー"], "price": 250, "aliases": []},
++	"cooking_oil": {"name": "サラダ油", "cat": "食べ物", "tags": ["material", "fuel"], "unit": "本", "kg": 1.0, "found": ["台所", "スーパー"], "price": 400, "aliases": ["油", "食用油"]},
++	"flour": {"name": "小麦粉", "cat": "食べ物", "tags": ["edible", "needs_heat", "material"], "unit": "袋", "kg": 1.0, "found": ["台所", "スーパー"], "price": 250, "aliases": []},
++	"mochi": {"name": "切り餅", "cat": "食べ物", "tags": ["edible", "needs_heat"], "unit": "袋", "kg": 1.0, "found": ["台所", "スーパー"], "price": 600, "aliases": ["餅", "もち"]},
++	"umeboshi": {"name": "梅干し", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.3, "found": ["台所"], "price": 600, "aliases": []},
++	"nori": {"name": "海苔", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "袋", "kg": 0.05, "found": ["台所", "スーパー"], "price": 400, "aliases": ["のり"]},
++	"bread": {"name": "食パン", "cat": "食べ物", "tags": ["edible", "ready", "perishable"], "unit": "袋", "kg": 0.4, "found": ["台所", "コンビニ", "スーパー"], "price": 200, "aliases": ["パン"]},
++	"eggs": {"name": "卵", "cat": "食べ物", "tags": ["edible", "needs_heat", "perishable"], "unit": "パック", "kg": 0.6, "found": ["台所", "スーパー"], "price": 250, "aliases": ["たまご"]},
++	"frozen_food": {"name": "冷凍食品", "cat": "食べ物", "tags": ["edible", "needs_heat", "perishable"], "unit": "袋", "kg": 0.4, "found": ["台所", "スーパー"], "price": 400, "aliases": ["冷凍の", "冷食"]},
++	"vegetables": {"name": "野菜", "cat": "食べ物", "tags": ["edible", "needs_heat", "perishable"], "unit": "袋", "kg": 1.0, "found": ["台所", "食品店", "スーパー"], "price": 400, "aliases": ["白菜", "大根", "キャベツ"]},
++	"harvest": {"name": "収穫した野菜", "cat": "食べ物", "tags": ["edible", "perishable"], "unit": "人日", "kg": 0.5, "found": [], "price": 0, "aliases": ["収穫", "採れた野菜"]},
++	"water": {"name": "水", "cat": "飲み物", "tags": ["drink"], "unit": "L", "kg": 1.0, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 100, "aliases": ["飲み水", "ペットボトルの水"]},
++	"rain_water": {"name": "雨水", "cat": "飲み物", "tags": [], "unit": "L", "kg": 1.0, "found": [], "price": 0, "aliases": []},
++	"bottled_tea": {"name": "ペットボトルのお茶", "cat": "飲み物", "tags": ["drink"], "unit": "本", "kg": 0.5, "found": ["台所", "コンビニ", "スーパー"], "price": 150, "aliases": ["お茶", "緑茶"]},
++	"sports_drink": {"name": "スポーツドリンク", "cat": "飲み物", "tags": ["drink", "medicine"], "unit": "本", "kg": 0.5, "found": ["コンビニ", "スーパー", "薬局"], "price": 150, "aliases": ["ポカリ", "アクエリ"]},
++	"ors": {"name": "経口補水液", "cat": "飲み物", "tags": ["drink", "medicine"], "unit": "本", "kg": 0.5, "found": ["薬局", "総合病院"], "price": 250, "aliases": ["補水液", "OS-1"]},
++	"canned_coffee": {"name": "缶コーヒー", "cat": "飲み物", "tags": ["drink", "comfort"], "unit": "本", "kg": 0.2, "found": ["コンビニ", "スーパー", "居間"], "price": 130, "aliases": ["コーヒー"]},
++	"instant_coffee": {"name": "インスタントコーヒー", "cat": "飲み物", "tags": ["needs_water", "comfort"], "unit": "びん", "kg": 0.1, "found": ["台所", "スーパー"], "price": 600, "aliases": ["コーヒー粉"]},
++	"tea_bags": {"name": "ティーバッグ", "cat": "飲み物", "tags": ["needs_water", "comfort"], "unit": "箱", "kg": 0.05, "found": ["台所", "スーパー"], "price": 300, "aliases": ["紅茶", "お茶のティーバッグ"]},
++	"sake": {"name": "日本酒", "cat": "飲み物", "tags": ["drink", "comfort", "valuable"], "unit": "本", "kg": 1.0, "found": ["台所", "居間", "スーパー"], "price": 1200, "aliases": ["酒", "お酒"]},
++	"beer": {"name": "缶ビール", "cat": "飲み物", "tags": ["drink", "comfort", "valuable"], "unit": "本", "kg": 0.4, "found": ["台所", "コンビニ", "スーパー"], "price": 250, "aliases": ["ビール"]},
++	"flashlight": {"name": "懐中電灯", "cat": "明かり・火", "tags": ["light", "uses_batteries", "blunt", "signal"], "unit": "個", "kg": 0.3, "found": ["玄関", "押し入れ", "寝室", "金物店", "ホームセンター", "コンビニ"], "price": 1500, "aliases": ["ライト", "ハンディライト"]},
++	"headlamp": {"name": "ヘッドライト", "cat": "明かり・火", "tags": ["light", "uses_batteries"], "unit": "個", "kg": 0.1, "found": ["物置", "金物店", "ホームセンター"], "price": 2000, "aliases": ["ヘッドランプ"]},
++	"lantern": {"name": "LEDランタン", "cat": "明かり・火", "tags": ["light", "uses_batteries"], "unit": "個", "kg": 0.5, "found": ["押し入れ", "物置", "ホームセンター", "デパート"], "price": 3000, "aliases": ["ランタン"]},
++	"candle": {"name": "ロウソク", "cat": "明かり・火", "tags": ["light", "fuel"], "unit": "本", "kg": 0.05, "found": ["台所", "押し入れ", "居間", "スーパー"], "price": 100, "aliases": ["ろうそく", "キャンドル"]},
++	"lighter": {"name": "ライター", "cat": "明かり・火", "tags": ["igniter"], "unit": "個", "kg": 0.02, "found": ["居間", "台所", "コンビニ"], "price": 150, "aliases": []},
++	"matches": {"name": "マッチ", "cat": "明かり・火", "tags": ["igniter"], "unit": "箱", "kg": 0.02, "found": ["台所", "居間", "押し入れ"], "price": 50, "aliases": []},
++	"batteries_aa": {"name": "単3電池", "cat": "明かり・火", "tags": ["cell"], "unit": "本", "kg": 0.025, "found": ["居間", "押し入れ", "コンビニ", "金物店", "ホームセンター"], "price": 100, "aliases": ["電池", "乾電池", "単三"]},
++	"batteries_d": {"name": "単1電池", "cat": "明かり・火", "tags": ["cell"], "unit": "本", "kg": 0.14, "found": ["押し入れ", "金物店", "ホームセンター"], "price": 200, "aliases": ["単一"]},
++	"glowstick": {"name": "ケミカルライト", "cat": "明かり・火", "tags": ["light", "signal"], "unit": "本", "kg": 0.02, "found": ["物置", "ホームセンター"], "price": 200, "aliases": ["サイリウム"]},
++	"fire_starter": {"name": "着火剤", "cat": "明かり・火", "tags": ["fuel"], "unit": "箱", "kg": 0.1, "found": ["物置", "ホームセンター"], "price": 400, "aliases": []},
++	"torch": {"name": "松明", "cat": "明かり・火", "tags": ["light", "fuel"], "unit": "本", "kg": 0.6, "found": [], "price": 0, "aliases": ["たいまつ"]},
++	"gas_cans": {"name": "カセットボンベ", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "本", "kg": 0.35, "found": ["台所", "物置", "コンビニ", "金物店", "ホームセンター"], "price": 150, "aliases": ["ボンベ", "ガスボンベ"]},
++	"cassette_stove": {"name": "カセットコンロ", "cat": "燃料・暖房", "tags": ["stove"], "unit": "台", "kg": 1.8, "found": ["台所", "押し入れ", "ホームセンター", "デパート"], "price": 3500, "aliases": ["コンロ", "卓上コンロ"]},
++	"gas_heater": {"name": "カセットガスストーブ", "cat": "燃料・暖房", "tags": ["heater"], "unit": "台", "kg": 3.0, "found": ["物置", "ホームセンター"], "price": 12000, "aliases": ["ガスストーブ", "ストーブ"]},
++	"kerosene_heater": {"name": "石油ストーブ", "cat": "燃料・暖房", "tags": ["heater", "stove"], "unit": "台", "kg": 8.0, "found": ["居間", "物置"], "price": 0, "aliases": ["灯油ストーブ"]},
++	"kerosene": {"name": "灯油", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "L", "kg": 0.8, "found": ["物置", "ガソリンスタンド"], "price": 120, "aliases": []},
++	"firewood": {"name": "薪", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "束", "kg": 5.0, "found": ["物置", "公園", "神社", "ホームセンター"], "price": 600, "aliases": ["まき"]},
++	"charcoal": {"name": "炭", "cat": "燃料・暖房", "tags": ["fuel", "water_clean"], "unit": "袋", "kg": 3.0, "found": ["物置", "ホームセンター"], "price": 800, "aliases": ["木炭"]},
++	"newspaper": {"name": "新聞紙", "cat": "燃料・暖房", "tags": ["fuel", "material"], "unit": "束", "kg": 0.5, "found": ["居間", "玄関", "コンビニ"], "price": 0, "aliases": ["新聞"]},
++	"hand_warmer": {"name": "使い捨てカイロ", "cat": "燃料・暖房", "tags": ["warm"], "unit": "個", "kg": 0.05, "found": ["押し入れ", "コンビニ", "薬局"], "price": 50, "aliases": ["カイロ"]},
++	"hot_water_bottle": {"name": "湯たんぽ", "cat": "燃料・暖房", "tags": ["warm", "container"], "unit": "個", "kg": 0.6, "found": ["押し入れ", "寝室"], "price": 0, "aliases": []},
++	"wood": {"name": "木材", "cat": "工具・材料", "tags": ["board", "material", "fuel"], "unit": "本", "kg": 3.0, "found": ["物置", "ホームセンター", "倉庫街"], "price": 500, "aliases": ["板", "角材", "木"]},
++	"parts": {"name": "部品", "cat": "工具・材料", "tags": ["material", "fastener"], "unit": "個", "kg": 0.5, "found": ["物置", "金物店", "ホームセンター"], "price": 800, "aliases": ["金具", "部材"]},
++	"plywood": {"name": "ベニヤ板", "cat": "工具・材料", "tags": ["board", "material"], "unit": "枚", "kg": 5.0, "found": ["物置", "ホームセンター"], "price": 1500, "aliases": ["合板"]},
++	"cardboard": {"name": "段ボール", "cat": "工具・材料", "tags": ["board", "material", "fuel"], "unit": "枚", "kg": 0.3, "found": ["物置", "玄関", "スーパー", "倉庫街", "コンビニ"], "price": 0, "aliases": ["ダンボール"]},
++	"hammer": {"name": "金づち", "cat": "工具・材料", "tags": ["tool", "blunt"], "unit": "本", "kg": 0.6, "found": ["物置", "金物店", "ホームセンター"], "price": 1500, "aliases": ["ハンマー", "トンカチ"]},
++	"nails": {"name": "釘", "cat": "工具・材料", "tags": ["fastener"], "unit": "箱", "kg": 0.3, "found": ["物置", "金物店", "ホームセンター"], "price": 300, "aliases": ["くぎ"]},
++	"screws": {"name": "ネジ", "cat": "工具・材料", "tags": ["fastener"], "unit": "箱", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 300, "aliases": ["ビス", "木ネジ"]},
++	"saw": {"name": "のこぎり", "cat": "工具・材料", "tags": ["tool", "blade"], "unit": "本", "kg": 0.5, "found": ["物置", "金物店", "ホームセンター"], "price": 2000, "aliases": ["ノコギリ"]},
++	"screwdriver": {"name": "ドライバー", "cat": "工具・材料", "tags": ["tool", "pry"], "unit": "本", "kg": 0.15, "found": ["物置", "居間", "金物店", "ホームセンター"], "price": 500, "aliases": ["ねじ回し"]},
++	"drill": {"name": "電動ドライバー", "cat": "工具・材料", "tags": ["tool", "uses_batteries"], "unit": "台", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 9000, "aliases": ["インパクト"]},
++	"wrench": {"name": "モンキーレンチ", "cat": "工具・材料", "tags": ["tool", "blunt"], "unit": "本", "kg": 0.4, "found": ["物置", "金物店", "ホームセンター"], "price": 1500, "aliases": ["レンチ", "スパナ"]},
++	"pliers": {"name": "ペンチ", "cat": "工具・材料", "tags": ["tool"], "unit": "本", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 1000, "aliases": []},
++	"box_cutter": {"name": "カッター", "cat": "工具・材料", "tags": ["tool", "blade"], "unit": "本", "kg": 0.05, "found": ["居間", "物置", "コンビニ", "金物店"], "price": 200, "aliases": ["カッターナイフ"]},
++	"scissors": {"name": "はさみ", "cat": "工具・材料", "tags": ["tool", "blade"], "unit": "本", "kg": 0.1, "found": ["居間", "台所", "子ども部屋", "コンビニ"], "price": 300, "aliases": ["ハサミ"]},
++	"duct_tape": {"name": "ガムテープ", "cat": "工具・材料", "tags": ["tape"], "unit": "巻", "kg": 0.3, "found": ["物置", "玄関", "コンビニ", "金物店", "ホームセンター"], "price": 300, "aliases": ["布テープ", "養生テープ", "テープ"]},
++	"rope": {"name": "ロープ", "cat": "工具・材料", "tags": ["string"], "unit": "本", "kg": 1.0, "found": ["物置", "金物店", "ホームセンター"], "price": 1000, "aliases": ["縄", "綱"]},
++	"string": {"name": "ひも", "cat": "工具・材料", "tags": ["string"], "unit": "巻", "kg": 0.1, "found": ["台所", "居間", "物置", "コンビニ"], "price": 200, "aliases": ["紐", "たこ糸", "ビニールひも"]},
++	"zip_ties": {"name": "結束バンド", "cat": "工具・材料", "tags": ["fastener", "string"], "unit": "袋", "kg": 0.05, "found": ["物置", "金物店", "ホームセンター"], "price": 300, "aliases": ["インシュロック"]},
++	"wire": {"name": "針金", "cat": "工具・材料", "tags": ["string", "fastener"], "unit": "巻", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 400, "aliases": ["ワイヤー"]},
++	"tarp": {"name": "ブルーシート", "cat": "工具・材料", "tags": ["big_cloth"], "unit": "枚", "kg": 1.5, "found": ["物置", "金物店", "ホームセンター"], "price": 1000, "aliases": ["防水シート"]},
++	"glue": {"name": "接着剤", "cat": "工具・材料", "tags": ["tape"], "unit": "本", "kg": 0.05, "found": ["居間", "物置", "金物店"], "price": 300, "aliases": ["ボンド"]},
++	"shovel": {"name": "スコップ", "cat": "工具・材料", "tags": ["tool", "long", "blunt", "garden"], "unit": "本", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 2500, "aliases": ["シャベル"]},
++	"stepladder": {"name": "脚立", "cat": "工具・材料", "tags": ["tool"], "unit": "台", "kg": 5.0, "found": ["物置", "ホームセンター"], "price": 6000, "aliases": ["はしご"]},
++	"padlock": {"name": "南京錠", "cat": "工具・材料", "tags": ["lock"], "unit": "個", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 800, "aliases": ["錠", "鍵"]},
++	"chain": {"name": "チェーン", "cat": "工具・材料", "tags": ["lock", "string"], "unit": "本", "kg": 2.0, "found": ["物置", "金物店", "ホームセンター"], "price": 1500, "aliases": ["鎖"]},
++	"toolbox": {"name": "工具箱", "cat": "工具・材料", "tags": ["tool", "bag"], "unit": "個", "kg": 4.0, "found": ["物置", "ホームセンター"], "price": 5000, "aliases": []},
++	"pole": {"name": "物干し竿", "cat": "工具・材料", "tags": ["long", "material"], "unit": "本", "kg": 1.5, "found": ["ベランダ", "物置", "ホームセンター"], "price": 2000, "aliases": ["竿"]},
++	"bandage": {"name": "包帯", "cat": "医療", "tags": ["wound", "cloth"], "unit": "巻", "kg": 0.05, "found": ["押し入れ", "薬局", "総合病院", "避難所"], "price": 400, "aliases": []},
++	"adhesive_bandage": {"name": "絆創膏", "cat": "医療", "tags": ["wound"], "unit": "箱", "kg": 0.03, "found": ["居間", "押し入れ", "薬局", "コンビニ"], "price": 300, "aliases": ["バンドエイド", "カットバン"]},
++	"gauze": {"name": "ガーゼ", "cat": "医療", "tags": ["wound", "cloth"], "unit": "袋", "kg": 0.03, "found": ["押し入れ", "薬局", "総合病院"], "price": 300, "aliases": []},
++	"disinfectant": {"name": "消毒液", "cat": "医療", "tags": ["wound", "hygiene"], "unit": "本", "kg": 0.1, "found": ["押し入れ", "風呂場", "薬局", "総合病院"], "price": 600, "aliases": ["消毒薬", "アルコール"]},
++	"painkillers": {"name": "痛み止め", "cat": "医療", "tags": ["medicine"], "unit": "箱", "kg": 0.02, "found": ["居間", "押し入れ", "薬局", "総合病院"], "price": 800, "aliases": ["鎮痛剤", "頭痛薬"]},
++	"cold_medicine": {"name": "風邪薬", "cat": "医療", "tags": ["medicine"], "unit": "箱", "kg": 0.02, "found": ["押し入れ", "薬局"], "price": 1200, "aliases": ["かぜ薬"]},
++	"fever_reducer": {"name": "解熱剤", "cat": "医療", "tags": ["medicine"], "unit": "箱", "kg": 0.02, "found": ["押し入れ", "薬局", "総合病院"], "price": 900, "aliases": ["熱さまし"]},
++	"stomach_medicine": {"name": "胃腸薬", "cat": "医療", "tags": ["medicine"], "unit": "箱", "kg": 0.02, "found": ["押し入れ", "薬局"], "price": 900, "aliases": ["整腸剤"]},
++	"antibiotics": {"name": "抗生物質", "cat": "医療", "tags": ["medicine", "valuable"], "unit": "箱", "kg": 0.02, "found": ["総合病院", "薬局"], "price": 0, "aliases": ["抗生剤"]},
++	"masks": {"name": "マスク", "cat": "医療", "tags": ["hygiene"], "unit": "箱", "kg": 0.2, "found": ["居間", "押し入れ", "薬局", "コンビニ"], "price": 500, "aliases": ["不織布マスク"]},
++	"thermometer": {"name": "体温計", "cat": "医療", "tags": ["tool"], "unit": "本", "kg": 0.03, "found": ["居間", "押し入れ", "薬局"], "price": 1500, "aliases": []},
++	"compress": {"name": "湿布", "cat": "医療", "tags": ["medicine", "wound"], "unit": "袋", "kg": 0.1, "found": ["居間", "押し入れ", "薬局"], "price": 600, "aliases": ["シップ"]},
++	"sling": {"name": "三角巾", "cat": "医療", "tags": ["wound", "cloth"], "unit": "枚", "kg": 0.05, "found": ["押し入れ", "薬局", "総合病院", "避難所"], "price": 300, "aliases": []},
++	"first_aid_kit": {"name": "救急箱", "cat": "医療", "tags": ["wound", "medicine", "bag"], "unit": "個", "kg": 1.0, "found": ["居間", "押し入れ", "避難所", "総合病院"], "price": 4000, "aliases": ["救急セット"]},
++	"blanket": {"name": "毛布", "cat": "布・衣類", "tags": ["warm", "cloth", "big_cloth"], "unit": "枚", "kg": 1.5, "found": ["押し入れ", "寝室", "避難所", "デパート"], "price": 3000, "aliases": ["ブランケット"]},
++	"sleeping_bag": {"name": "寝袋", "cat": "布・衣類", "tags": ["warm"], "unit": "個", "kg": 1.5, "found": ["物置", "ホームセンター", "デパート"], "price": 6000, "aliases": ["シュラフ"]},
++	"sheet": {"name": "シーツ", "cat": "布・衣類", "tags": ["cloth", "big_cloth"], "unit": "枚", "kg": 0.6, "found": ["押し入れ", "寝室"], "price": 1500, "aliases": ["敷布"]},
++	"towel": {"name": "タオル", "cat": "布・衣類", "tags": ["cloth", "hygiene"], "unit": "枚", "kg": 0.2, "found": ["風呂場", "押し入れ", "台所"], "price": 300, "aliases": ["手ぬぐい", "バスタオル"]},
++	"raincoat": {"name": "雨合羽", "cat": "布・衣類", "tags": ["armor"], "unit": "着", "kg": 0.5, "found": ["玄関", "物置", "コンビニ", "ホームセンター"], "price": 1500, "aliases": ["レインコート", "カッパ"]},
++	"clothes": {"name": "着替え", "cat": "布・衣類", "tags": ["cloth", "warm"], "unit": "組", "kg": 0.8, "found": ["寝室", "押し入れ", "デパート"], "price": 3000, "aliases": ["服", "下着"]},
++	"socks": {"name": "厚手の靴下", "cat": "布・衣類", "tags": ["warm"], "unit": "足", "kg": 0.1, "found": ["寝室", "デパート"], "price": 500, "aliases": ["靴下"]},
++	"knit_cap": {"name": "ニット帽", "cat": "布・衣類", "tags": ["warm"], "unit": "個", "kg": 0.1, "found": ["寝室", "玄関", "デパート"], "price": 1500, "aliases": ["帽子"]},
++	"emergency_blanket": {"name": "アルミシート", "cat": "布・衣類", "tags": ["warm", "reflect"], "unit": "枚", "kg": 0.05, "found": ["押し入れ", "避難所", "ホームセンター"], "price": 400, "aliases": ["サバイバルシート", "保温シート"]},
++	"water_tank": {"name": "ポリタンク", "cat": "容器・台所", "tags": ["container"], "unit": "個", "kg": 1.0, "found": ["物置", "押し入れ", "ホームセンター"], "price": 1500, "aliases": ["給水タンク"]},
++	"bucket": {"name": "バケツ", "cat": "容器・台所", "tags": ["container"], "unit": "個", "kg": 0.5, "found": ["風呂場", "物置", "ホームセンター"], "price": 600, "aliases": []},
++	"pot": {"name": "鍋", "cat": "容器・台所", "tags": ["cookware", "container"], "unit": "個", "kg": 1.2, "found": ["台所", "デパート"], "price": 3000, "aliases": ["なべ"]},
++	"kettle": {"name": "やかん", "cat": "容器・台所", "tags": ["cookware", "container"], "unit": "個", "kg": 0.8, "found": ["台所"], "price": 2500, "aliases": ["ケトル"]},
++	"frying_pan": {"name": "フライパン", "cat": "容器・台所", "tags": ["cookware", "blunt"], "unit": "個", "kg": 1.0, "found": ["台所", "デパート"], "price": 2500, "aliases": []},
++	"can_opener": {"name": "缶切り", "cat": "容器・台所", "tags": ["tool"], "unit": "個", "kg": 0.05, "found": ["台所"], "price": 300, "aliases": []},
++	"empty_bottle": {"name": "空きペットボトル", "cat": "容器・台所", "tags": ["container"], "unit": "本", "kg": 0.03, "found": ["台所", "玄関", "公園"], "price": 0, "aliases": ["ペットボトル"]},
++	"empty_can": {"name": "空き缶", "cat": "容器・台所", "tags": ["noise", "material"], "unit": "個", "kg": 0.02, "found": ["台所", "公園", "玄関"], "price": 0, "aliases": []},
++	"plastic_bags": {"name": "ポリ袋", "cat": "容器・台所", "tags": ["container"], "unit": "袋", "kg": 0.05, "found": ["台所", "コンビニ", "スーパー"], "price": 100, "aliases": ["ビニール袋", "ゴミ袋"]},
++	"zip_bags": {"name": "チャック付き袋", "cat": "容器・台所", "tags": ["container"], "unit": "箱", "kg": 0.1, "found": ["台所", "スーパー"], "price": 300, "aliases": ["ジップロック"]},
++	"cling_wrap": {"name": "ラップ", "cat": "容器・台所", "tags": ["material"], "unit": "本", "kg": 0.2, "found": ["台所", "スーパー"], "price": 200, "aliases": ["サランラップ"]},
++	"foil": {"name": "アルミホイル", "cat": "容器・台所", "tags": ["reflect", "material"], "unit": "本", "kg": 0.2, "found": ["台所", "スーパー"], "price": 250, "aliases": ["ホイル"]},
++	"canteen": {"name": "水筒", "cat": "容器・台所", "tags": ["container"], "unit": "個", "kg": 0.3, "found": ["台所", "子ども部屋", "デパート"], "price": 2000, "aliases": ["ボトル", "マグボトル"]},
++	"paper_plates": {"name": "紙皿と割り箸", "cat": "容器・台所", "tags": [], "unit": "組", "kg": 0.1, "found": ["台所", "コンビニ"], "price": 200, "aliases": ["紙皿", "割り箸"]},
++	"purification_tablets": {"name": "浄水タブレット", "cat": "容器・台所", "tags": ["water_clean"], "unit": "箱", "kg": 0.02, "found": ["ホームセンター", "薬局"], "price": 1500, "aliases": ["浄水剤"]},
++	"bleach": {"name": "塩素系漂白剤", "cat": "容器・台所", "tags": ["water_clean", "hygiene"], "unit": "本", "kg": 0.6, "found": ["風呂場", "台所", "スーパー"], "price": 300, "aliases": ["漂白剤", "ハイター"]},
++	"filter": {"name": "浄水器", "cat": "容器・台所", "tags": ["water_clean"], "unit": "台", "kg": 1.0, "found": ["ホームセンター"], "price": 15000, "aliases": ["浄水フィルター"]},
++	"radio": {"name": "ラジオ", "cat": "電気・通信", "tags": ["news", "uses_batteries"], "unit": "台", "kg": 0.4, "found": ["居間", "押し入れ", "ホームセンター", "デパート"], "price": 3000, "aliases": ["携帯ラジオ"]},
++	"crank_radio": {"name": "手回し充電ラジオ", "cat": "電気・通信", "tags": ["news", "light", "charge"], "unit": "台", "kg": 0.4, "found": ["押し入れ", "ホームセンター"], "price": 5000, "aliases": ["防災ラジオ"]},
++	"phone": {"name": "スマートフォン", "cat": "電気・通信", "tags": ["news", "light"], "unit": "台", "kg": 0.2, "found": [], "price": 0, "aliases": ["スマホ", "携帯"]},
++	"power_bank": {"name": "モバイルバッテリー", "cat": "電気・通信", "tags": ["charge"], "unit": "個", "kg": 0.2, "found": ["居間", "寝室", "コンビニ", "デパート"], "price": 3000, "aliases": ["充電器"]},
++	"cable": {"name": "充電ケーブル", "cat": "電気・通信", "tags": ["string"], "unit": "本", "kg": 0.05, "found": ["居間", "寝室", "コンビニ"], "price": 1000, "aliases": ["ケーブル"]},
++	"solar": {"name": "ソーラーパネル", "cat": "電気・通信", "tags": ["charge"], "unit": "枚", "kg": 4.0, "found": ["ホームセンター"], "price": 30000, "aliases": ["太陽光パネル"]},
++	"battery": {"name": "蓄電池", "cat": "電気・通信", "tags": ["charge"], "unit": "台", "kg": 10.0, "found": ["ホームセンター"], "price": 60000, "aliases": ["ポータブル電源"]},
++	"whistle": {"name": "ホイッスル", "cat": "電気・通信", "tags": ["noise", "signal"], "unit": "個", "kg": 0.01, "found": ["押し入れ", "子ども部屋", "ホームセンター"], "price": 300, "aliases": ["笛"]},
++	"alarm_buzzer": {"name": "防犯ブザー", "cat": "電気・通信", "tags": ["noise", "uses_batteries"], "unit": "個", "kg": 0.05, "found": ["子ども部屋", "コンビニ"], "price": 1000, "aliases": ["ブザー"]},
++	"alarm_clock": {"name": "目覚まし時計", "cat": "電気・通信", "tags": ["noise", "uses_batteries"], "unit": "個", "kg": 0.3, "found": ["寝室"], "price": 1500, "aliases": ["時計"]},
++	"walkie_talkie": {"name": "トランシーバー", "cat": "電気・通信", "tags": ["news", "uses_batteries"], "unit": "組", "kg": 0.4, "found": ["交番", "ホームセンター"], "price": 8000, "aliases": ["無線機"]},
++	"camera": {"name": "カメラ", "cat": "電気・通信", "tags": [], "unit": "台", "kg": 0.5, "found": [], "price": 0, "aliases": []},
++	"binoculars": {"name": "双眼鏡", "cat": "電気・通信", "tags": [], "unit": "個", "kg": 0.4, "found": ["居間", "物置", "デパート"], "price": 5000, "aliases": []},
++	"soap": {"name": "石けん", "cat": "衛生", "tags": ["hygiene"], "unit": "個", "kg": 0.1, "found": ["風呂場", "台所", "スーパー"], "price": 150, "aliases": ["せっけん"]},
++	"toothbrush": {"name": "歯ブラシ", "cat": "衛生", "tags": ["hygiene"], "unit": "本", "kg": 0.02, "found": ["風呂場", "コンビニ"], "price": 150, "aliases": []},
++	"wet_wipes": {"name": "ウェットティッシュ", "cat": "衛生", "tags": ["hygiene"], "unit": "個", "kg": 0.3, "found": ["居間", "子ども部屋", "コンビニ"], "price": 300, "aliases": ["おしりふき"]},
++	"toilet_paper": {"name": "トイレットペーパー", "cat": "衛生", "tags": ["hygiene", "fuel"], "unit": "ロール", "kg": 0.12, "found": ["風呂場", "押し入れ", "スーパー"], "price": 80, "aliases": ["トイペ"]},
++	"portable_toilet": {"name": "簡易トイレ", "cat": "衛生", "tags": ["hygiene"], "unit": "袋", "kg": 0.1, "found": ["押し入れ", "避難所", "ホームセンター"], "price": 300, "aliases": ["非常用トイレ"]},
++	"sanitary_pads": {"name": "生理用品", "cat": "衛生", "tags": ["hygiene", "cloth"], "unit": "袋", "kg": 0.3, "found": ["寝室", "風呂場", "薬局", "コンビニ"], "price": 400, "aliases": ["ナプキン"]},
++	"marker": {"name": "油性ペン", "cat": "書く・情報", "tags": ["write"], "unit": "本", "kg": 0.02, "found": ["居間", "子ども部屋", "コンビニ"], "price": 150, "aliases": ["マジック", "サインペン"]},
++	"pencil": {"name": "鉛筆", "cat": "書く・情報", "tags": ["write"], "unit": "本", "kg": 0.01, "found": ["子ども部屋", "居間"], "price": 50, "aliases": ["えんぴつ"]},
++	"notebook": {"name": "ノート", "cat": "書く・情報", "tags": ["write", "material"], "unit": "冊", "kg": 0.2, "found": ["居間", "子ども部屋", "コンビニ"], "price": 150, "aliases": ["メモ帳"]},
++	"map": {"name": "地図", "cat": "書く・情報", "tags": [], "unit": "枚", "kg": 0.05, "found": ["居間", "交番", "駅のホーム"], "price": 0, "aliases": ["町の地図"]},
++	"spray_paint": {"name": "スプレー塗料", "cat": "書く・情報", "tags": ["write", "signal"], "unit": "本", "kg": 0.4, "found": ["物置", "ホームセンター"], "price": 800, "aliases": ["ペンキ", "スプレー"]},
++	"paint": {"name": "ペンキ", "cat": "書く・情報", "tags": ["write"], "unit": "缶", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 2000, "aliases": ["塗料"]},
++	"mirror": {"name": "手鏡", "cat": "書く・情報", "tags": ["reflect", "signal"], "unit": "個", "kg": 0.1, "found": ["寝室", "風呂場"], "price": 500, "aliases": ["鏡"]},
++	"book": {"name": "本", "cat": "気晴らし", "tags": ["leisure", "fuel"], "unit": "冊", "kg": 0.3, "found": ["居間", "寝室", "子ども部屋"], "price": 800, "aliases": ["小説", "文庫本"]},
++	"manga": {"name": "漫画", "cat": "気晴らし", "tags": ["leisure"], "unit": "冊", "kg": 0.2, "found": ["子ども部屋", "居間", "コンビニ"], "price": 500, "aliases": ["マンガ"]},
++	"cards": {"name": "トランプ", "cat": "気晴らし", "tags": ["leisure"], "unit": "組", "kg": 0.1, "found": ["居間", "子ども部屋"], "price": 500, "aliases": ["カード"]},
++	"reversi": {"name": "リバーシ", "cat": "気晴らし", "tags": ["leisure"], "unit": "組", "kg": 0.5, "found": ["居間", "子ども部屋"], "price": 1500, "aliases": ["オセロ"]},
++	"dvd": {"name": "DVD", "cat": "気晴らし", "tags": ["leisure"], "unit": "枚", "kg": 0.1, "found": ["居間"], "price": 1000, "aliases": ["映画のDVD"]},
++	"handheld_game": {"name": "携帯ゲーム機", "cat": "気晴らし", "tags": ["leisure", "uses_batteries"], "unit": "台", "kg": 0.3, "found": ["子ども部屋", "居間"], "price": 0, "aliases": ["ゲーム機"]},
++	"stuffed_toy": {"name": "ぬいぐるみ", "cat": "気晴らし", "tags": ["comfort"], "unit": "個", "kg": 0.2, "found": ["子ども部屋"], "price": 0, "aliases": []},
++	"photo_frame": {"name": "写真立て", "cat": "気晴らし", "tags": ["comfort"], "unit": "個", "kg": 0.3, "found": ["居間", "寝室"], "price": 0, "aliases": ["家族の写真"]},
++	"cigarettes": {"name": "タバコ", "cat": "気晴らし", "tags": ["comfort", "valuable"], "unit": "本", "kg": 0.001, "found": ["居間", "コンビニ"], "price": 30, "aliases": ["たばこ"]},
++	"shogi": {"name": "将棋", "cat": "気晴らし", "tags": ["leisure"], "unit": "組", "kg": 0.8, "found": ["居間"], "price": 0, "aliases": ["将棋盤"]},
++	"watch": {"name": "腕時計", "cat": "貴重品", "tags": ["valuable"], "unit": "個", "kg": 0.1, "found": ["寝室"], "price": 0, "aliases": ["時計"]},
++	"jewelry": {"name": "指輪", "cat": "貴重品", "tags": ["valuable"], "unit": "個", "kg": 0.01, "found": ["寝室"], "price": 0, "aliases": ["アクセサリー", "貴金属", "ネックレス"]},
++	"gold_coin": {"name": "記念硬貨", "cat": "貴重品", "tags": ["valuable"], "unit": "枚", "kg": 0.02, "found": ["寝室", "居間"], "price": 0, "aliases": ["金貨", "硬貨"]},
++	"seeds": {"name": "種", "cat": "畑", "tags": ["seed"], "unit": "袋", "kg": 0.02, "found": ["物置", "ホームセンター", "金物店"], "price": 300, "aliases": ["野菜の種"]},
++	"planter": {"name": "プランター", "cat": "畑", "tags": ["garden", "container"], "unit": "個", "kg": 2.0, "found": [], "price": 0, "aliases": []},
++	"potting_soil": {"name": "培養土", "cat": "畑", "tags": ["garden", "material"], "unit": "袋", "kg": 5.0, "found": ["物置", "ホームセンター"], "price": 600, "aliases": ["土"]},
++	"watering_can": {"name": "じょうろ", "cat": "畑", "tags": ["container", "garden"], "unit": "個", "kg": 0.3, "found": ["物置", "ベランダ", "ホームセンター"], "price": 800, "aliases": ["ジョウロ"]},
++	"fertilizer": {"name": "肥料", "cat": "畑", "tags": ["garden"], "unit": "袋", "kg": 1.0, "found": ["物置", "ホームセンター"], "price": 600, "aliases": []},
++	"key": {"name": "玄関の鍵", "cat": "道具", "tags": ["lock"], "unit": "個", "kg": 0.01, "found": [], "price": 0, "aliases": ["鍵", "家の鍵"]},
++	"backpack": {"name": "リュック", "cat": "道具", "tags": ["bag"], "unit": "個", "kg": 0.8, "found": ["玄関", "子ども部屋", "デパート"], "price": 4000, "aliases": ["リュックサック", "バッグ"]},
++	"hiking_pack": {"name": "登山用ザック", "cat": "道具", "tags": ["bag"], "unit": "個", "kg": 1.6, "found": ["物置", "デパート"], "price": 15000, "aliases": ["大きなリュック", "ザック"]},
++	"cart": {"name": "キャリーカート", "cat": "道具", "tags": ["bag"], "unit": "台", "kg": 3.0, "found": ["物置", "玄関", "ホームセンター"], "price": 4000, "aliases": ["台車", "カート"]},
++	"umbrella": {"name": "傘", "cat": "道具", "tags": ["long", "blunt"], "unit": "本", "kg": 0.5, "found": ["玄関"], "price": 500, "aliases": ["かさ"]},
++	"extinguisher": {"name": "消火器", "cat": "道具", "tags": ["blunt"], "unit": "本", "kg": 5.0, "found": ["共用廊下", "玄関", "中学校"], "price": 0, "aliases": []},
++	"broom": {"name": "ほうき", "cat": "道具", "tags": ["long"], "unit": "本", "kg": 0.5, "found": ["玄関", "物置"], "price": 800, "aliases": []},
++	"aerosol": {"name": "殺虫スプレー", "cat": "道具", "tags": [], "unit": "本", "kg": 0.4, "found": ["台所", "物置", "スーパー"], "price": 500, "aliases": ["スプレー缶"]},
++	"noisemaker": {"name": "鳴子", "cat": "道具", "tags": ["noise"], "unit": "個", "kg": 0.3, "found": [], "price": 0, "aliases": ["なるこ"]},
++	"water_filter_diy": {"name": "手作りの浄水器", "cat": "容器・台所", "tags": ["water_clean", "container"], "unit": "個", "kg": 0.5, "found": [], "price": 0, "aliases": ["簡易浄水器"]},
++	"sos_cloth": {"name": "SOSの布", "cat": "布・衣類", "tags": ["big_cloth", "signal"], "unit": "枚", "kg": 0.8, "found": [], "price": 0, "aliases": ["SOS"]},
++	"knife": {"name": "包丁", "cat": "武器", "tags": ["weapon", "blade"], "unit": "本", "kg": 0.2, "found": ["台所"], "price": 0, "aliases": []},
++	"plank": {"name": "角材", "cat": "武器", "tags": ["weapon", "blunt"], "unit": "本", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 0, "aliases": []},
++	"bat": {"name": "金属バット", "cat": "武器", "tags": ["weapon", "blunt"], "unit": "本", "kg": 1.0, "found": ["子ども部屋", "玄関", "中学校"], "price": 0, "aliases": ["バット"]},
++	"pipe": {"name": "鉄パイプ", "cat": "武器", "tags": ["weapon", "blunt", "long"], "unit": "本", "kg": 2.0, "found": ["金物店", "ホームセンター", "倉庫街", "交番"], "price": 0, "aliases": []},
++	"bar": {"name": "バール", "cat": "武器", "tags": ["weapon", "blunt", "pry", "tool"], "unit": "本", "kg": 2.5, "found": ["金物店", "ホームセンター", "倉庫街"], "price": 2000, "aliases": []},
++	"golf": {"name": "ゴルフクラブ", "cat": "武器", "tags": ["weapon", "blunt", "long"], "unit": "本", "kg": 0.4, "found": ["物置", "居間", "デパート"], "price": 0, "aliases": []},
++	"spear": {"name": "物干し竿の槍", "cat": "武器", "tags": ["weapon", "blade", "long"], "unit": "本", "kg": 1.5, "found": [], "price": 0, "aliases": ["槍"]},
++	"nailbat": {"name": "釘バット", "cat": "武器", "tags": ["weapon", "blunt"], "unit": "本", "kg": 1.2, "found": [], "price": 0, "aliases": []},
++	"coat": {"name": "厚手のコート", "cat": "防具", "tags": ["armor", "warm"], "unit": "着", "kg": 1.5, "found": ["寝室", "デパート"], "price": 0, "aliases": ["コート"]},
++	"leather": {"name": "革ジャン", "cat": "防具", "tags": ["armor"], "unit": "着", "kg": 1.5, "found": ["寝室", "デパート"], "price": 0, "aliases": ["革のジャケット"]},
++	"gloves": {"name": "作業用の手袋", "cat": "防具", "tags": ["armor"], "unit": "組", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 800, "aliases": ["軍手", "手袋"]},
++	"helmet": {"name": "ヘルメット", "cat": "防具", "tags": ["armor"], "unit": "個", "kg": 0.4, "found": ["物置", "金物店", "ホームセンター", "交番"], "price": 3000, "aliases": []},
++	"magazine": {"name": "腕に巻いた雑誌", "cat": "防具", "tags": ["armor"], "unit": "組", "kg": 0.3, "found": ["居間"], "price": 0, "aliases": ["雑誌"]},
++	"boots": {"name": "作業用のブーツ", "cat": "防具", "tags": ["armor"], "unit": "足", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 6000, "aliases": ["安全靴", "長靴"]},
++}
++
++const RECIPES := [
++	{"makes": "spear", "needs": ["knife", "long", "tape|string"], "count": 1, "minutes": 20, "note": "今の「物干し竿の槍」"},
++	{"makes": "nailbat", "needs": ["bat|plank", "nails", "hammer"], "count": 1, "minutes": 30, "note": "今の「釘バット」"},
++	{"makes": "torch", "needs": ["wood|pole", "cloth", "fuel"], "count": 1, "minutes": 15, "note": "電池の要らない明かり"},
++	{"makes": "noisemaker", "needs": ["empty_can", "string"], "count": 1, "minutes": 15, "note": "鳴子：夜の襲撃に早く気づく"},
++	{"makes": "water_filter_diy", "needs": ["empty_bottle", "cloth", "charcoal"], "count": 1, "minutes": 30, "note": "簡易浄水器：雨水を飲める水に"},
++	{"makes": "window_seal", "needs": ["cardboard|blanket|tarp", "tape"], "count": 1, "minutes": 20, "note": "窓の目張り：明かりが外に漏れない"},
++	{"makes": "sos_cloth", "needs": ["big_cloth", "write|tape"], "count": 1, "minutes": 30, "note": "SOSの布：救助の合図"},
++]
++
++static func has(id: String) -> bool:
++	return ITEMS.has(id)
++
++static func item(id: String) -> Dictionary:
++	return ITEMS.get(id, {})
++
++static func is_a(id: String, tag: String) -> bool:
++	return tag in ITEMS.get(id, {}).get("tags", [])
++
++## Every item with this tag.
++static func tagged(tag: String) -> Array:
++	return ITEMS.keys().filter(func(k): return tag in ITEMS[k].tags)
++
++## The item a word names (its name or one of its other names), or "".
++static func named_in(text: String) -> String:
++	var best := ""
++	var best_len := 0
++	for k in ITEMS:
++		for word in [str(ITEMS[k].name)] + Array(ITEMS[k].aliases):
++			if str(word).length() > best_len and text.contains(str(word)):
++				best = str(k)
++				best_len = str(word).length()
++	return best
 diff --git a/scripts/lair.gd b/scripts/lair.gd
 new file mode 100644
 index 0000000..3e23b06
@@ -119595,3 +119848,698 @@ index 54f2002..dd3551e 100644
  		var r := Walkers._caught(pw, {"place": "屋外", "count": 5, "near": true}, 5, true, "", [0])
  		if r.has("mate_bitten"):
  			mate_hit = true
+diff --git a/tools/__pycache__/items_source.cpython-313.pyc b/tools/__pycache__/items_source.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..333822123ca65f440941a7051d1840889dde5519
+GIT binary patch
+literal 36351
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/tools/build_items.py b/tools/build_items.py
+new file mode 100644
+index 0000000..424e03c
+--- /dev/null
++++ b/tools/build_items.py
+@@ -0,0 +1,101 @@
++# -*- coding: utf-8 -*-
++"""Builds scripts/item_catalog.gd and docs/ITEM_ICON_PROMPTS.md from
++tools/items_source.py.  Run: python3 tools/build_items.py <docs dir>"""
++import os, sys, json
++sys.path.insert(0, os.path.dirname(__file__))
++import items_source as S
++
++root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++docs = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, "docs")
++
++def gd(v):
++    return json.dumps(v, ensure_ascii=False)
++
++lines = ["extends RefCounted",
++         "## v149.39: every item, what it is (tags), what it weighs and where it turns up.",
++         "## Generated from tools/items_source.py by tools/build_items.py — edit there.",
++         "", "const TAGS := " + gd(S.TAGS), "", "const ITEMS := {"]
++for (iid, name, cat, tags, unit, kg, found, price, aliases, prio, icon) in S.ITEMS:
++    row = {"name": name, "cat": cat, "tags": tags.split(), "unit": unit, "kg": kg,
++           "found": [f for f in found.split(",") if f], "price": price,
++           "aliases": [a for a in aliases.split("/") if a]}
++    lines.append("\t%s: %s," % (gd(iid), gd(row)))
++lines.append("}")
++lines.append("")
++lines.append("const RECIPES := [")
++for (res, needs, makes, minutes, note) in S.RECIPES:
++    lines.append("\t%s," % gd({"makes": res, "needs": needs, "count": makes, "minutes": minutes, "note": note}))
++lines.append("]")
++lines += ["",
++"static func has(id: String) -> bool:", "\treturn ITEMS.has(id)", "",
++"static func item(id: String) -> Dictionary:", "\treturn ITEMS.get(id, {})", "",
++"static func is_a(id: String, tag: String) -> bool:", "\treturn tag in ITEMS.get(id, {}).get(\"tags\", [])", "",
++"## Every item with this tag.",
++"static func tagged(tag: String) -> Array:", "\treturn ITEMS.keys().filter(func(k): return tag in ITEMS[k].tags)", "",
++"## The item a word names (its name or one of its other names), or \"\".",
++"static func named_in(text: String) -> String:",
++"\tvar best := \"\"",
++"\tvar best_len := 0",
++"\tfor k in ITEMS:",
++"\t\tfor word in [str(ITEMS[k].name)] + Array(ITEMS[k].aliases):",
++"\t\t\tif str(word).length() > best_len and text.contains(str(word)):",
++"\t\t\t\tbest = str(k)",
++"\t\t\t\tbest_len = str(word).length()",
++"\treturn best", ""]
++open(os.path.join(root, "scripts", "item_catalog.gd"), "w").write("\n".join(lines))
++
++STYLE = ("写実的な商品写真。正方形（1024×1024）。濃い紺色の無地の背景（スタジオの背景紙）。"
++         "品物を1つ（または1セット）だけ、画面の中央に、少し斜め上から。やわらかいスタジオの光と、下に薄い影。"
++         "実在の商品名・ブランドのロゴ・読める文字は入れない（ラベルは無地か、読めない程度にぼかす）。"
++         "手や人物は写さない。")
++out = ["# アイテムのアイコン プロンプト集（v149.39）", "",
++       "持ち物欄に出るアイコン。今あるアイコン（濃紺の背景に品物だけの商品写真）とそろえる。",
++       "**保存先は `assets/items/<ファイル名>.jpg`。** 1024×1024 で作れば、こちらで 256×256 に縮める。置くだけで持ち物欄に出る。", "",
++       "優先度 **A**（よく見つかる・行動でよく使う）から作るのがおすすめ。下のコードブロックは、共通条件込みでそのまま貼れる。", ""]
++cats = []
++for r in S.ITEMS:
++    if r[2] not in cats: cats.append(r[2])
++todo = [r for r in S.ITEMS if not r[10].startswith("（既存") and not r[10].startswith("（表示")]
++out.append("全 %d 種のうち、新しく作るアイコンは **%d 枚**（A：%d 枚、B：%d 枚）。既にある16枚はそのまま使う。" % (
++    len(S.ITEMS), len(todo), sum(1 for r in todo if r[9] == "A"), sum(1 for r in todo if r[9] == "B")))
++out.append("")
++for prio in ["A", "B"]:
++    out.append("## 優先度 %s" % prio)
++    out.append("")
++    for cat in cats:
++        rows = [r for r in todo if r[9] == prio and r[2] == cat]
++        if not rows: continue
++        out.append("### %s" % cat)
++        out.append("")
++        for (iid, name, cat_, tags, unit, kg, found, price, aliases, p, icon) in rows:
++            desc = icon.replace("（武器）", "").replace("（防具）", "")
++            out.append("**%s** — `%s.jpg`" % (name, iid))
++            out.append("```")
++            out.append(STYLE)
++            out.append(desc)
++            out.append("```")
++            out.append("")
++open(os.path.join(docs, "ITEM_ICON_PROMPTS.md"), "w").write("\n".join(out))
++
++# A table of the whole ledger for reading.
++t = ["# アイテム台帳（v149.39）", "", "元データ：`tools/items_source.py`（ここを直して `python3 tools/build_items.py` で作り直す）。", "",
++     "## 性質（タグ）", "", " / ".join("%s（%s）" % (v, k) for k, v in S.TAGS.items()), ""]
++for cat in cats:
++    t.append("## %s" % cat)
++    t.append("")
++    t.append("| 名前 | 性質 | 単位 | 重さ | 見つかる場所 | 値段 |")
++    t.append("|---|---|---|---|---|---|")
++    for r in S.ITEMS:
++        if r[2] != cat: continue
++        tags = "・".join(S.TAGS[x] for x in r[3].split())
++        t.append("| %s | %s | %s | %gkg | %s | %s |" % (r[1], tags, r[4], r[5], r[6].replace(",", "・"), ("%d円" % r[7]) if r[7] else "—"))
++    t.append("")
++t.append("## 組み合わせて作る物")
++t.append("")
++names = {r[0]: r[1] for r in S.ITEMS}
++for (res, needs, makes, minutes, note) in S.RECIPES:
++    def word(n):
++        return "か".join(names.get(x, "〈%s〉" % S.TAGS.get(x, x)) for x in n.split("|"))
++    t.append("- **%s**：%s（%d分）— %s" % (names.get(res, res), "＋".join(word(n) for n in needs), minutes, note))
++open(os.path.join(docs, "ITEMS_LEDGER.md"), "w").write("\n".join(t) + "\n")
++print("items", len(S.ITEMS), "icons to make", len(todo))
+diff --git a/tools/items_source.py b/tools/items_source.py
+new file mode 100644
+index 0000000..6b8049a
+--- /dev/null
++++ b/tools/items_source.py
+@@ -0,0 +1,259 @@
++# -*- coding: utf-8 -*-
++"""The item ledger (v149.39). One row per item; tools/build_items.py turns it
++into scripts/item_catalog.gd (the game's data) and docs/ITEM_ICON_PROMPTS.md
++(the icon prompts). Edit here, then run the build script.
++
++Row: id, name, category, tags, unit, kg (per unit), found (rooms/shops/places),
++price (yen, 0 = not sold), aliases, priority (A = make first), icon description.
++"""
++
++TAGS = {
++    "edible": "食べられる", "ready": "火が要らない", "needs_heat": "加熱が要る", "needs_water": "水が要る",
++    "perishable": "傷みやすい", "drink": "飲める", "container": "水が入る", "igniter": "着火具",
++    "fuel": "燃料", "light": "明かり", "uses_batteries": "電池で動く", "cell": "電池",
++    "blade": "刃物", "blunt": "打撃", "long": "長い", "pry": "こじ開け", "cloth": "布",
++    "big_cloth": "大きな布", "string": "紐", "tape": "貼れる", "board": "板", "tool": "工具",
++    "fastener": "留め具", "medicine": "薬", "wound": "傷の手当て", "noise": "音が鳴る",
++    "warm": "暖かい", "heater": "暖房", "stove": "調理の火", "cookware": "調理器具",
++    "write": "書ける", "valuable": "価値がある", "leisure": "気晴らし", "news": "情報が入る",
++    "charge": "充電できる", "hygiene": "清潔", "seed": "植えられる", "garden": "畑",
++    "reflect": "光を反射する", "lock": "鍵", "bag": "入れ物", "weapon": "武器", "armor": "防具",
++    "signal": "合図", "water_clean": "水をきれいにする", "comfort": "心の支え", "material": "材料",
++}
++
++ITEMS = [
++# ---------------------------------------------------------------- 食べ物
++("food", "保存食（まとめ）", "食べ物", "edible ready", "人日", 0.6, "台所,押し入れ,食品店,コンビニ,スーパー", 600, "食料/食べ物/保存食", "A", "（既存）"),
++("canned_fish", "サバの缶詰", "食べ物", "edible ready", "個", 0.2, "台所,押し入れ,食品店,コンビニ,スーパー", 250, "サバ缶/魚の缶詰/缶詰", "A", "ふたの閉まった平たい丸い缶詰1つ。銀色の缶に、青い魚の絵だけのラベル（文字なし）。"),
++("canned_chicken", "焼き鳥の缶詰", "食べ物", "edible ready", "個", 0.1, "台所,押し入れ,コンビニ,スーパー", 200, "焼き鳥缶/鶏の缶詰", "B", "小さな長方形の缶詰1つ。赤いラベルに串焼きの絵（文字なし）。"),
++("canned_fruit", "果物の缶詰", "食べ物", "edible ready", "個", 0.4, "台所,押し入れ,スーパー", 300, "みかん缶/桃缶/フルーツ缶", "B", "背の高い丸い缶詰1つ。オレンジ色のラベルに、みかんの房の絵（文字なし）。"),
++("corned_beef", "コンビーフ", "食べ物", "edible ready", "個", 0.1, "台所,押し入れ,スーパー", 400, "", "B", "台形の小さな缶1つ。巻き取り式の鍵が横に付いている。"),
++("tuna", "ツナ缶", "食べ物", "edible ready", "個", 0.1, "台所,押し入れ,食品店,コンビニ,スーパー", 150, "ツナ/シーチキン", "A", "平たい小さな丸い缶1つ。白地に青い波線のラベル（文字なし）。"),
++("rice", "米（2kg）", "食べ物", "edible needs_heat needs_water", "袋", 2.0, "台所,食品店,スーパー", 1200, "米/お米/白米", "A", "透明なビニール袋に入った白米2kg。口を折って留めてある。"),
++("rice_pack", "パックご飯", "食べ物", "edible ready", "個", 0.2, "台所,押し入れ,コンビニ,スーパー", 180, "レトルトご飯/パックのご飯", "A", "白いトレーに入ったパックご飯1つ。透明なふた越しに白いご飯が見える。"),
++("cup_noodle", "カップ麺", "食べ物", "edible needs_heat needs_water", "個", 0.1, "台所,押し入れ,食品店,コンビニ,スーパー", 200, "カップラーメン/カップヌードル", "A", "紙のカップ麺1つ。ふたは閉まっていて、側面は無地の赤と白（文字なし）。"),
++("instant_noodle", "袋麺", "食べ物", "edible needs_heat needs_water", "袋", 0.1, "台所,食品店,スーパー", 120, "インスタントラーメン/袋ラーメン", "B", "インスタントラーメンの袋1つ。黄色い袋に丼の絵（文字なし）。"),
++("pasta", "パスタ", "食べ物", "edible needs_heat needs_water", "袋", 0.5, "台所,食品店,スーパー", 250, "スパゲッティ/パスタ麺", "A", "透明な袋に入った乾燥スパゲッティの束。"),
++("pasta_sauce", "パスタソース", "食べ物", "edible ready", "個", 0.15, "台所,スーパー", 200, "ミートソース", "B", "レトルトのパスタソースのパウチ1つ。赤い袋（文字なし）。"),
++("retort_curry", "レトルトカレー", "食べ物", "edible ready", "個", 0.2, "台所,押し入れ,コンビニ,スーパー", 250, "カレー", "A", "レトルトカレーの箱1つ。茶色とオレンジの箱にカレーの絵（文字なし）。"),
++("retort_porridge", "レトルトのおかゆ", "食べ物", "edible ready", "個", 0.25, "台所,押し入れ,薬局,スーパー", 200, "おかゆ", "B", "白いパウチのおかゆ1つ。米粒の絵（文字なし）。"),
++("hardtack", "乾パン", "食べ物", "edible ready", "缶", 0.1, "押し入れ,避難所,スーパー", 300, "カンパン", "A", "銀色の円筒形の缶に入った乾パン。ふたを少し開けて、小さな乾パンが見えている。"),
++("crackers", "クラッカー", "食べ物", "edible ready", "箱", 0.2, "台所,コンビニ,スーパー", 200, "", "B", "クラッカーの箱1つと、手前に数枚のクラッカー。"),
++("biscuits", "ビスケット", "食べ物", "edible ready", "箱", 0.2, "台所,子ども部屋,コンビニ,スーパー", 200, "クッキー", "B", "ビスケットの箱1つと、手前に丸いビスケット数枚。"),
++("chocolate", "チョコレート", "食べ物", "edible ready comfort", "枚", 0.05, "居間,子ども部屋,コンビニ,スーパー", 150, "チョコ/板チョコ", "A", "銀紙を半分むいた板チョコ1枚。"),
++("candy", "飴", "食べ物", "edible ready comfort", "袋", 0.1, "居間,子ども部屋,コンビニ", 150, "キャンディ/のど飴", "B", "小袋に個包装された飴がいくつか入った袋。"),
++("nuts", "ミックスナッツ", "食べ物", "edible ready", "袋", 0.2, "居間,コンビニ,スーパー", 400, "ナッツ/ピーナッツ", "B", "チャック付きの袋に入ったミックスナッツ。"),
++("dried_fruit", "ドライフルーツ", "食べ物", "edible ready", "袋", 0.1, "台所,スーパー", 300, "", "B", "チャック付きの袋に入ったドライフルーツ（干しぶどう、あんず）。"),
++("energy_bar", "栄養補助食品", "食べ物", "edible ready", "箱", 0.08, "コンビニ,薬局,押し入れ", 200, "ブロック栄養食/カロリーバー", "A", "黄色い小さな箱1つと、手前にブロック状の栄養食2本（文字なし）。"),
++("jelly_drink", "ゼリー飲料", "食べ物", "edible ready drink", "個", 0.18, "コンビニ,薬局", 200, "ゼリー/ウィダー", "B", "吸い口付きのゼリー飲料のパウチ1つ（銀色、文字なし）。"),
++("powdered_milk", "粉ミルク", "食べ物", "edible needs_water", "缶", 0.8, "スーパー,薬局,子ども部屋", 2000, "ミルク", "B", "粉ミルクの大きな缶1つ。ふたの上に計量スプーン。"),
++("miso", "味噌", "食べ物", "edible material", "個", 0.75, "台所,スーパー", 400, "", "B", "プラスチックのカップに入った味噌。ふたを開けて茶色い味噌が見えている。"),
++("soy_sauce", "醤油", "食べ物", "material", "本", 0.5, "台所,スーパー", 300, "しょうゆ", "B", "卓上用の醤油の小びん1本。"),
++("salt", "塩", "食べ物", "material", "袋", 1.0, "台所,スーパー", 150, "", "B", "白い塩の袋1つ。口を輪ゴムで留めてある。"),
++("sugar", "砂糖", "食べ物", "edible material", "袋", 1.0, "台所,スーパー", 250, "", "B", "白い砂糖の袋1つ。口を輪ゴムで留めてある。"),
++("cooking_oil", "サラダ油", "食べ物", "material fuel", "本", 1.0, "台所,スーパー", 400, "油/食用油", "B", "黄色い油の入ったプラスチックボトル1本（ラベルは無地）。"),
++("flour", "小麦粉", "食べ物", "edible needs_heat material", "袋", 1.0, "台所,スーパー", 250, "", "B", "白い紙袋の小麦粉1つ。上を折って閉じてある。"),
++("mochi", "切り餅", "食べ物", "edible needs_heat", "袋", 1.0, "台所,スーパー", 600, "餅/もち", "B", "個包装の切り餅が並んだ透明な袋。"),
++("umeboshi", "梅干し", "食べ物", "edible ready", "個", 0.3, "台所", 600, "", "B", "梅干しの入ったガラスの小びん。赤い梅が透けて見える。"),
++("nori", "海苔", "食べ物", "edible ready", "袋", 0.05, "台所,スーパー", 400, "のり", "B", "袋に入った焼き海苔の束。"),
++("bread", "食パン", "食べ物", "edible ready perishable", "袋", 0.4, "台所,コンビニ,スーパー", 200, "パン", "A", "袋に入った食パン1斤。"),
++("eggs", "卵", "食べ物", "edible needs_heat perishable", "パック", 0.6, "台所,スーパー", 250, "たまご", "B", "プラスチックのパックに並んだ卵10個。"),
++("frozen_food", "冷凍食品", "食べ物", "edible needs_heat perishable", "袋", 0.4, "台所,スーパー", 400, "冷凍の/冷食", "B", "霜のついた冷凍食品の袋1つ（餃子の絵、文字なし）。"),
++("vegetables", "野菜", "食べ物", "edible needs_heat perishable", "袋", 1.0, "台所,食品店,スーパー", 400, "白菜/大根/キャベツ", "B", "キャベツ半玉、大根、にんじんがひとまとめになったもの。"),
++("harvest", "収穫した野菜", "食べ物", "edible perishable", "人日", 0.5, "", 0, "収穫/採れた野菜", "A", "（既存）"),
++# ---------------------------------------------------------------- 飲み物
++("water", "水", "飲み物", "drink", "L", 1.0, "台所,押し入れ,食品店,コンビニ,スーパー", 100, "飲み水/ペットボトルの水", "A", "（既存）"),
++("rain_water", "雨水", "飲み物", "", "L", 1.0, "", 0, "", "B", "（表示のみ・アイコンは水を使う）"),
++("bottled_tea", "ペットボトルのお茶", "飲み物", "drink", "本", 0.5, "台所,コンビニ,スーパー", 150, "お茶/緑茶", "A", "緑茶の500mlペットボトル1本（ラベルは無地の緑）。"),
++("sports_drink", "スポーツドリンク", "飲み物", "drink medicine", "本", 0.5, "コンビニ,スーパー,薬局", 150, "ポカリ/アクエリ", "B", "青と白の500mlペットボトル1本（文字なし）。"),
++("ors", "経口補水液", "飲み物", "drink medicine", "本", 0.5, "薬局,総合病院", 250, "補水液/OS-1", "B", "透明な500mlペットボトル1本。白いラベルに水滴の絵（文字なし）。"),
++("canned_coffee", "缶コーヒー", "飲み物", "drink comfort", "本", 0.2, "コンビニ,スーパー,居間", 130, "コーヒー", "B", "茶色い缶コーヒー1本（文字なし）。"),
++("instant_coffee", "インスタントコーヒー", "飲み物", "needs_water comfort", "びん", 0.1, "台所,スーパー", 600, "コーヒー粉", "B", "ふたつきのガラスびんに入ったインスタントコーヒーの粉。"),
++("tea_bags", "ティーバッグ", "飲み物", "needs_water comfort", "箱", 0.05, "台所,スーパー", 300, "紅茶/お茶のティーバッグ", "B", "紙箱から数個のティーバッグがのぞいている。"),
++("sake", "日本酒", "飲み物", "drink comfort valuable", "本", 1.0, "台所,居間,スーパー", 1200, "酒/お酒", "B", "四合びんの日本酒1本（ラベルは無地の和紙）。"),
++("beer", "缶ビール", "飲み物", "drink comfort valuable", "本", 0.4, "台所,コンビニ,スーパー", 250, "ビール", "B", "金色の缶ビール1本（文字なし）。"),
++# ---------------------------------------------------------------- 明かり・火
++("flashlight", "懐中電灯", "明かり・火", "light uses_batteries blunt signal", "個", 0.3, "玄関,押し入れ,寝室,金物店,ホームセンター,コンビニ", 1500, "ライト/ハンディライト", "A", "黒いアルミの懐中電灯1本。スイッチは切ってある。"),
++("headlamp", "ヘッドライト", "明かり・火", "light uses_batteries", "個", 0.1, "物置,金物店,ホームセンター", 2000, "ヘッドランプ", "B", "ゴムバンド付きのヘッドライト1つ。"),
++("lantern", "LEDランタン", "明かり・火", "light uses_batteries", "個", 0.5, "押し入れ,物置,ホームセンター,デパート", 3000, "ランタン", "A", "取っ手付きのLEDランタン1つ（キャンプ用）。"),
++("candle", "ロウソク", "明かり・火", "light fuel", "本", 0.05, "台所,押し入れ,居間,スーパー", 100, "ろうそく/キャンドル", "A", "白いロウソク数本を束ねたもの。"),
++("lighter", "ライター", "明かり・火", "igniter", "個", 0.02, "居間,台所,コンビニ", 150, "", "A", "透明な赤い使い捨てライター1つ。"),
++("matches", "マッチ", "明かり・火", "igniter", "箱", 0.02, "台所,居間,押し入れ", 50, "", "A", "小さなマッチ箱1つ。少し開いて赤い頭のマッチが見える（箱の絵柄は無地）。"),
++("batteries_aa", "単3電池", "明かり・火", "cell", "本", 0.025, "居間,押し入れ,コンビニ,金物店,ホームセンター", 100, "電池/乾電池/単三", "A", "単3乾電池4本を並べたもの（ラベルは無地の黒と金）。"),
++("batteries_d", "単1電池", "明かり・火", "cell", "本", 0.14, "押し入れ,金物店,ホームセンター", 200, "単一", "B", "単1乾電池2本（ラベルは無地の黒と金）。"),
++("glowstick", "ケミカルライト", "明かり・火", "light signal", "本", 0.02, "物置,ホームセンター", 200, "サイリウム", "B", "緑色に光るケミカルライト1本。"),
++("fire_starter", "着火剤", "明かり・火", "fuel", "箱", 0.1, "物置,ホームセンター", 400, "", "B", "小さな箱と、白い固形の着火剤のかけら。"),
++("torch", "松明", "明かり・火", "light fuel", "本", 0.6, "", 0, "たいまつ", "B", "木の棒の先に布を巻き付けた手作りの松明（火はついていない）。"),
++# ---------------------------------------------------------------- 燃料・暖房
++("gas_cans", "カセットボンベ", "燃料・暖房", "fuel", "本", 0.35, "台所,物置,コンビニ,金物店,ホームセンター", 150, "ボンベ/ガスボンベ", "A", "（既存）"),
++("cassette_stove", "カセットコンロ", "燃料・暖房", "stove", "台", 1.8, "台所,押し入れ,ホームセンター,デパート", 3500, "コンロ/卓上コンロ", "A", "卓上のカセットコンロ1台。ふたは閉めてある。"),
++("gas_heater", "カセットガスストーブ", "燃料・暖房", "heater", "台", 3.0, "物置,ホームセンター", 12000, "ガスストーブ/ストーブ", "A", "カセットボンベで動く小型のガスストーブ1台。"),
++("kerosene_heater", "石油ストーブ", "燃料・暖房", "heater stove", "台", 8.0, "居間,物置", 0, "灯油ストーブ", "B", "円筒形の古い石油ストーブ1台（上にやかんを置ける形）。"),
++("kerosene", "灯油", "燃料・暖房", "fuel", "L", 0.8, "物置,ガソリンスタンド", 120, "", "B", "赤いポリタンクの灯油（18L）1つ。"),
++("firewood", "薪", "燃料・暖房", "fuel", "束", 5.0, "物置,公園,神社,ホームセンター", 600, "まき", "B", "紐で束ねた薪の束。"),
++("charcoal", "炭", "燃料・暖房", "fuel water_clean", "袋", 3.0, "物置,ホームセンター", 800, "木炭", "B", "紙袋から黒い木炭がのぞいている。"),
++("newspaper", "新聞紙", "燃料・暖房", "fuel material", "束", 0.5, "居間,玄関,コンビニ", 0, "新聞", "B", "折りたたんだ新聞紙の束（文字は読めないようにぼかす）。"),
++("hand_warmer", "使い捨てカイロ", "燃料・暖房", "warm", "個", 0.05, "押し入れ,コンビニ,薬局", 50, "カイロ", "A", "使い捨てカイロ1枚（白い袋、文字なし）。"),
++("hot_water_bottle", "湯たんぽ", "燃料・暖房", "warm container", "個", 0.6, "押し入れ,寝室", 0, "", "B", "オレンジ色のプラスチックの湯たんぽ1つ。"),
++# ---------------------------------------------------------------- 工具・材料
++("wood", "木材", "工具・材料", "board material fuel", "本", 3.0, "物置,ホームセンター,倉庫街", 500, "板/角材/木", "A", "（既存）"),
++("parts", "部品", "工具・材料", "material fastener", "個", 0.5, "物置,金物店,ホームセンター", 800, "金具/部材", "A", "（既存）"),
++("plywood", "ベニヤ板", "工具・材料", "board material", "枚", 5.0, "物置,ホームセンター", 1500, "合板", "A", "立てかけたベニヤ板1枚（90×180cm）。"),
++("cardboard", "段ボール", "工具・材料", "board material fuel", "枚", 0.3, "物置,玄関,スーパー,倉庫街,コンビニ", 0, "ダンボール", "A", "たたんだ段ボールの束。"),
++("hammer", "金づち", "工具・材料", "tool blunt", "本", 0.6, "物置,金物店,ホームセンター", 1500, "ハンマー/トンカチ", "A", "木の柄の金づち1本。"),
++("nails", "釘", "工具・材料", "fastener", "箱", 0.3, "物置,金物店,ホームセンター", 300, "くぎ", "A", "小箱から釘がこぼれている。"),
++("screws", "ネジ", "工具・材料", "fastener", "箱", 0.2, "物置,金物店,ホームセンター", 300, "ビス/木ネジ", "B", "小箱に入った木ネジ。"),
++("saw", "のこぎり", "工具・材料", "tool blade", "本", 0.5, "物置,金物店,ホームセンター", 2000, "ノコギリ", "A", "木の柄の片刃ののこぎり1本。"),
++("screwdriver", "ドライバー", "工具・材料", "tool pry", "本", 0.15, "物置,居間,金物店,ホームセンター", 500, "ねじ回し", "A", "プラスのドライバー1本（黄色い柄）。"),
++("drill", "電動ドライバー", "工具・材料", "tool uses_batteries", "台", 1.5, "物置,ホームセンター", 9000, "インパクト", "B", "充電式の電動ドライバー1台（黒、ロゴなし）。"),
++("wrench", "モンキーレンチ", "工具・材料", "tool blunt", "本", 0.4, "物置,金物店,ホームセンター", 1500, "レンチ/スパナ", "B", "銀色のモンキーレンチ1本。"),
++("pliers", "ペンチ", "工具・材料", "tool", "本", 0.2, "物置,金物店,ホームセンター", 1000, "", "B", "赤い柄のペンチ1本。"),
++("box_cutter", "カッター", "工具・材料", "tool blade", "本", 0.05, "居間,物置,コンビニ,金物店", 200, "カッターナイフ", "A", "黄色いカッターナイフ1本。刃は少しだけ出ている。"),
++("scissors", "はさみ", "工具・材料", "tool blade", "本", 0.1, "居間,台所,子ども部屋,コンビニ", 300, "ハサミ", "B", "黒い持ち手のはさみ1本。"),
++("duct_tape", "ガムテープ", "工具・材料", "tape", "巻", 0.3, "物置,玄関,コンビニ,金物店,ホームセンター", 300, "布テープ/養生テープ/テープ", "A", "茶色い布ガムテープ1巻。"),
++("rope", "ロープ", "工具・材料", "string", "本", 1.0, "物置,金物店,ホームセンター", 1000, "縄/綱", "A", "束ねた白い登山用ロープ（10m）。"),
++("string", "ひも", "工具・材料", "string", "巻", 0.1, "台所,居間,物置,コンビニ", 200, "紐/たこ糸/ビニールひも", "A", "白いビニールひもの玉1つ。"),
++("zip_ties", "結束バンド", "工具・材料", "fastener string", "袋", 0.05, "物置,金物店,ホームセンター", 300, "インシュロック", "B", "黒い結束バンドの束。"),
++("wire", "針金", "工具・材料", "string fastener", "巻", 0.2, "物置,金物店,ホームセンター", 400, "ワイヤー", "B", "巻いた銀色の針金。"),
++("tarp", "ブルーシート", "工具・材料", "big_cloth", "枚", 1.5, "物置,金物店,ホームセンター", 1000, "防水シート", "A", "たたんだ青いブルーシート。端にハトメの穴。"),
++("glue", "接着剤", "工具・材料", "tape", "本", 0.05, "居間,物置,金物店", 300, "ボンド", "B", "チューブの接着剤1本（ラベル無地）。"),
++("shovel", "スコップ", "工具・材料", "tool long blunt garden", "本", 1.5, "物置,ホームセンター", 2500, "シャベル", "B", "木の柄の剣先スコップ1本。"),
++("stepladder", "脚立", "工具・材料", "tool", "台", 5.0, "物置,ホームセンター", 6000, "はしご", "B", "たたんだアルミの脚立1台。"),
++("padlock", "南京錠", "工具・材料", "lock", "個", 0.2, "物置,金物店,ホームセンター", 800, "錠/鍵", "B", "鍵が2本付いた真鍮の南京錠1つ。"),
++("chain", "チェーン", "工具・材料", "lock string", "本", 2.0, "物置,金物店,ホームセンター", 1500, "鎖", "B", "とぐろを巻いた太い鉄の鎖。"),
++("toolbox", "工具箱", "工具・材料", "tool bag", "個", 4.0, "物置,ホームセンター", 5000, "", "B", "ふたを閉めた赤い金属の工具箱。"),
++("pole", "物干し竿", "工具・材料", "long material", "本", 1.5, "ベランダ,物置,ホームセンター", 2000, "竿", "B", "銀色の物干し竿1本（横に長く）。"),
++# ---------------------------------------------------------------- 医療
++("bandage", "包帯", "医療", "wound cloth", "巻", 0.05, "押し入れ,薬局,総合病院,避難所", 400, "", "A", "（既存）"),
++("adhesive_bandage", "絆創膏", "医療", "wound", "箱", 0.03, "居間,押し入れ,薬局,コンビニ", 300, "バンドエイド/カットバン", "A", "小箱と、手前に絆創膏2枚。"),
++("gauze", "ガーゼ", "医療", "wound cloth", "袋", 0.03, "押し入れ,薬局,総合病院", 300, "", "B", "個包装の滅菌ガーゼ数枚。"),
++("disinfectant", "消毒液", "医療", "wound hygiene", "本", 0.1, "押し入れ,風呂場,薬局,総合病院", 600, "消毒薬/アルコール", "A", "白いスプレーボトルの消毒液1本（ラベルに赤十字ではなく緑の十字、文字なし）。"),
++("painkillers", "痛み止め", "医療", "medicine", "箱", 0.02, "居間,押し入れ,薬局,総合病院", 800, "鎮痛剤/頭痛薬", "A", "薬の小箱1つと、手前にシートに入った錠剤（文字なし）。"),
++("cold_medicine", "風邪薬", "医療", "medicine", "箱", 0.02, "押し入れ,薬局", 1200, "かぜ薬", "B", "風邪薬の小箱1つと錠剤のシート（文字なし）。"),
++("fever_reducer", "解熱剤", "医療", "medicine", "箱", 0.02, "押し入れ,薬局,総合病院", 900, "熱さまし", "A", "解熱剤の小箱1つと錠剤のシート（文字なし）。"),
++("stomach_medicine", "胃腸薬", "医療", "medicine", "箱", 0.02, "押し入れ,薬局", 900, "整腸剤", "B", "胃腸薬の小びん1つ（文字なし）。"),
++("antibiotics", "抗生物質", "医療", "medicine valuable", "箱", 0.02, "総合病院,薬局", 0, "抗生剤", "A", "処方薬の白い紙袋と、錠剤のシート（文字なし）。"),
++("masks", "マスク", "医療", "hygiene", "箱", 0.2, "居間,押し入れ,薬局,コンビニ", 500, "不織布マスク", "A", "白い不織布マスクの箱と、手前にマスク1枚。"),
++("thermometer", "体温計", "医療", "tool", "本", 0.03, "居間,押し入れ,薬局", 1500, "", "B", "白い電子体温計1本。"),
++("compress", "湿布", "医療", "medicine wound", "袋", 0.1, "居間,押し入れ,薬局", 600, "シップ", "B", "袋から白い湿布がのぞいている。"),
++("sling", "三角巾", "医療", "wound cloth", "枚", 0.05, "押し入れ,薬局,総合病院,避難所", 300, "", "B", "たたんだ白い三角巾1枚。"),
++("first_aid_kit", "救急箱", "医療", "wound medicine bag", "個", 1.0, "居間,押し入れ,避難所,総合病院", 4000, "救急セット", "A", "取っ手付きの白い救急箱（ふたに緑の十字、文字なし）。"),
++# ---------------------------------------------------------------- 布・衣類
++("blanket", "毛布", "布・衣類", "warm cloth big_cloth", "枚", 1.5, "押し入れ,寝室,避難所,デパート", 3000, "ブランケット", "A", "たたんだ茶色の毛布1枚。"),
++("sleeping_bag", "寝袋", "布・衣類", "warm", "個", 1.5, "物置,ホームセンター,デパート", 6000, "シュラフ", "A", "丸めて袋に入れた紺色の寝袋1つ。"),
++("sheet", "シーツ", "布・衣類", "cloth big_cloth", "枚", 0.6, "押し入れ,寝室", 1500, "敷布", "A", "たたんだ白いシーツ1枚。"),
++("towel", "タオル", "布・衣類", "cloth hygiene", "枚", 0.2, "風呂場,押し入れ,台所", 300, "手ぬぐい/バスタオル", "A", "たたんだ白いタオル2枚。"),
++("raincoat", "雨合羽", "布・衣類", "armor", "着", 0.5, "玄関,物置,コンビニ,ホームセンター", 1500, "レインコート/カッパ", "B", "たたんだ紺色の雨合羽。"),
++("clothes", "着替え", "布・衣類", "cloth warm", "組", 0.8, "寝室,押し入れ,デパート", 3000, "服/下着", "B", "たたんだTシャツ、ズボン、靴下のひと組。"),
++("socks", "厚手の靴下", "布・衣類", "warm", "足", 0.1, "寝室,デパート", 500, "靴下", "B", "厚手のウールの靴下1足。"),
++("knit_cap", "ニット帽", "布・衣類", "warm", "個", 0.1, "寝室,玄関,デパート", 1500, "帽子", "B", "グレーのニット帽1つ。"),
++("emergency_blanket", "アルミシート", "布・衣類", "warm reflect", "枚", 0.05, "押し入れ,避難所,ホームセンター", 400, "サバイバルシート/保温シート", "B", "たたんだ金色のアルミの保温シート。"),
++# ---------------------------------------------------------------- 容器・台所
++("water_tank", "ポリタンク", "容器・台所", "container", "個", 1.0, "物置,押し入れ,ホームセンター", 1500, "給水タンク", "A", "白い20Lのポリタンク1つ（青いふた）。"),
++("bucket", "バケツ", "容器・台所", "container", "個", 0.5, "風呂場,物置,ホームセンター", 600, "", "A", "青いプラスチックのバケツ1つ。"),
++("pot", "鍋", "容器・台所", "cookware container", "個", 1.2, "台所,デパート", 3000, "なべ", "A", "ふた付きのアルミの片手鍋1つ。"),
++("kettle", "やかん", "容器・台所", "cookware container", "個", 0.8, "台所", 2500, "ケトル", "B", "銀色のやかん1つ。"),
++("frying_pan", "フライパン", "容器・台所", "cookware blunt", "個", 1.0, "台所,デパート", 2500, "", "B", "黒いフライパン1つ。"),
++("can_opener", "缶切り", "容器・台所", "tool", "個", 0.05, "台所", 300, "", "B", "昔ながらの銀色の缶切り1つ。"),
++("empty_bottle", "空きペットボトル", "容器・台所", "container", "本", 0.03, "台所,玄関,公園", 0, "ペットボトル", "A", "ラベルをはがした空の2Lペットボトル1本。"),
++("empty_can", "空き缶", "容器・台所", "noise material", "個", 0.02, "台所,公園,玄関", 0, "", "A", "ラベルのない空き缶いくつか。"),
++("plastic_bags", "ポリ袋", "容器・台所", "container", "袋", 0.05, "台所,コンビニ,スーパー", 100, "ビニール袋/ゴミ袋", "B", "たたんだ半透明のゴミ袋の束。"),
++("zip_bags", "チャック付き袋", "容器・台所", "container", "箱", 0.1, "台所,スーパー", 300, "ジップロック", "B", "チャック付きの透明な保存袋数枚。"),
++("cling_wrap", "ラップ", "容器・台所", "material", "本", 0.2, "台所,スーパー", 200, "サランラップ", "B", "箱入りの食品用ラップ1本（文字なし）。"),
++("foil", "アルミホイル", "容器・台所", "reflect material", "本", 0.2, "台所,スーパー", 250, "ホイル", "B", "箱から少し引き出したアルミホイル。"),
++("canteen", "水筒", "容器・台所", "container", "個", 0.3, "台所,子ども部屋,デパート", 2000, "ボトル/マグボトル", "B", "ステンレスの水筒1本。"),
++("paper_plates", "紙皿と割り箸", "容器・台所", "", "組", 0.1, "台所,コンビニ", 200, "紙皿/割り箸", "B", "重ねた紙皿と、束ねた割り箸。"),
++("purification_tablets", "浄水タブレット", "容器・台所", "water_clean", "箱", 0.02, "ホームセンター,薬局", 1500, "浄水剤", "B", "小さな錠剤のシートと小箱（文字なし）。"),
++("bleach", "塩素系漂白剤", "容器・台所", "water_clean hygiene", "本", 0.6, "風呂場,台所,スーパー", 300, "漂白剤/ハイター", "B", "白いプラスチックボトルの漂白剤1本（ラベル無地）。"),
++("filter", "浄水器", "容器・台所", "water_clean", "台", 1.0, "ホームセンター", 15000, "浄水フィルター", "A", "（既存）"),
++# ---------------------------------------------------------------- 電気・通信
++("radio", "ラジオ", "電気・通信", "news uses_batteries", "台", 0.4, "居間,押し入れ,ホームセンター,デパート", 3000, "携帯ラジオ", "A", "伸ばしたアンテナの付いた黒い携帯ラジオ1台。"),
++("crank_radio", "手回し充電ラジオ", "電気・通信", "news light charge", "台", 0.4, "押し入れ,ホームセンター", 5000, "防災ラジオ", "A", "手回しハンドルとライトの付いたオレンジ色の防災ラジオ1台。"),
++("phone", "スマートフォン", "電気・通信", "news light", "台", 0.2, "", 0, "スマホ/携帯", "A", "画面の消えた黒いスマートフォン1台。"),
++("power_bank", "モバイルバッテリー", "電気・通信", "charge", "個", 0.2, "居間,寝室,コンビニ,デパート", 3000, "充電器", "A", "白いモバイルバッテリーと短いケーブル。"),
++("cable", "充電ケーブル", "電気・通信", "string", "本", 0.05, "居間,寝室,コンビニ", 1000, "ケーブル", "B", "巻いた白い充電ケーブル1本。"),
++("solar", "ソーラーパネル", "電気・通信", "charge", "枚", 4.0, "ホームセンター", 30000, "太陽光パネル", "A", "（既存）"),
++("battery", "蓄電池", "電気・通信", "charge", "台", 10.0, "ホームセンター", 60000, "ポータブル電源", "A", "（既存）"),
++("whistle", "ホイッスル", "電気・通信", "noise signal", "個", 0.01, "押し入れ,子ども部屋,ホームセンター", 300, "笛", "A", "オレンジ色のプラスチックのホイッスル1つ（首ひも付き）。"),
++("alarm_buzzer", "防犯ブザー", "電気・通信", "noise uses_batteries", "個", 0.05, "子ども部屋,コンビニ", 1000, "ブザー", "B", "子ども用の防犯ブザー1つ（ピンをひくと鳴る）。"),
++("alarm_clock", "目覚まし時計", "電気・通信", "noise uses_batteries", "個", 0.3, "寝室", 1500, "時計", "B", "ベルの付いた丸い目覚まし時計1つ。"),
++("walkie_talkie", "トランシーバー", "電気・通信", "news uses_batteries", "組", 0.4, "交番,ホームセンター", 8000, "無線機", "B", "黒いトランシーバー2台。"),
++("camera", "カメラ", "電気・通信", "", "台", 0.5, "", 0, "", "A", "（既存）"),
++("binoculars", "双眼鏡", "電気・通信", "", "個", 0.4, "居間,物置,デパート", 5000, "", "B", "黒い双眼鏡1つ。"),
++# ---------------------------------------------------------------- 衛生
++("soap", "石けん", "衛生", "hygiene", "個", 0.1, "風呂場,台所,スーパー", 150, "せっけん", "B", "白い固形石けん1つ。"),
++("toothbrush", "歯ブラシ", "衛生", "hygiene", "本", 0.02, "風呂場,コンビニ", 150, "", "B", "歯ブラシ1本。"),
++("wet_wipes", "ウェットティッシュ", "衛生", "hygiene", "個", 0.3, "居間,子ども部屋,コンビニ", 300, "おしりふき", "A", "ふた付きのウェットティッシュの袋（文字なし）。"),
++("toilet_paper", "トイレットペーパー", "衛生", "hygiene fuel", "ロール", 0.12, "風呂場,押し入れ,スーパー", 80, "トイペ", "A", "トイレットペーパー2ロール。"),
++("portable_toilet", "簡易トイレ", "衛生", "hygiene", "袋", 0.1, "押し入れ,避難所,ホームセンター", 300, "非常用トイレ", "B", "非常用トイレの袋と凝固剤の小袋（文字なし）。"),
++("sanitary_pads", "生理用品", "衛生", "hygiene cloth", "袋", 0.3, "寝室,風呂場,薬局,コンビニ", 400, "ナプキン", "B", "個包装の生理用品が入った袋（文字なし）。"),
++# ---------------------------------------------------------------- 書く・情報
++("marker", "油性ペン", "書く・情報", "write", "本", 0.02, "居間,子ども部屋,コンビニ", 150, "マジック/サインペン", "A", "黒い油性ペン1本（キャップ付き）。"),
++("pencil", "鉛筆", "書く・情報", "write", "本", 0.01, "子ども部屋,居間", 50, "えんぴつ", "B", "削った鉛筆2本。"),
++("notebook", "ノート", "書く・情報", "write material", "冊", 0.2, "居間,子ども部屋,コンビニ", 150, "メモ帳", "B", "表紙の無地なノート1冊。"),
++("map", "地図", "書く・情報", "", "枚", 0.05, "居間,交番,駅のホーム", 0, "町の地図", "B", "折りたたんだ町の地図（文字は読めない）。"),
++("spray_paint", "スプレー塗料", "書く・情報", "write signal", "本", 0.4, "物置,ホームセンター", 800, "ペンキ/スプレー", "B", "赤いスプレー塗料の缶1本（ラベル無地）。"),
++("paint", "ペンキ", "書く・情報", "write", "缶", 1.5, "物置,ホームセンター", 2000, "塗料", "B", "白いペンキの缶とはけ。"),
++("mirror", "手鏡", "書く・情報", "reflect signal", "個", 0.1, "寝室,風呂場", 500, "鏡", "B", "丸い手鏡1つ。"),
++# ---------------------------------------------------------------- 気晴らし
++("book", "本", "気晴らし", "leisure fuel", "冊", 0.3, "居間,寝室,子ども部屋", 800, "小説/文庫本", "A", "使い込まれた文庫本1冊（表紙は無地）。"),
++("manga", "漫画", "気晴らし", "leisure", "冊", 0.2, "子ども部屋,居間,コンビニ", 500, "マンガ", "B", "漫画本を数冊重ねたもの（表紙の絵はぼかす）。"),
++("cards", "トランプ", "気晴らし", "leisure", "組", 0.1, "居間,子ども部屋", 500, "カード", "A", "箱から少し出したトランプ。"),
++("reversi", "リバーシ", "気晴らし", "leisure", "組", 0.5, "居間,子ども部屋", 1500, "オセロ", "A", "折りたたみ式のリバーシ盤と白黒の石。"),
++("dvd", "DVD", "気晴らし", "leisure", "枚", 0.1, "居間", 1000, "映画のDVD", "B", "ケースに入ったDVD1枚（表紙はぼかす）。"),
++("handheld_game", "携帯ゲーム機", "気晴らし", "leisure uses_batteries", "台", 0.3, "子ども部屋,居間", 0, "ゲーム機", "B", "画面の消えた携帯ゲーム機1台（ロゴなし）。"),
++("stuffed_toy", "ぬいぐるみ", "気晴らし", "comfort", "個", 0.2, "子ども部屋", 0, "", "B", "少しくたびれたクマのぬいぐるみ1つ。"),
++("photo_frame", "写真立て", "気晴らし", "comfort", "個", 0.3, "居間,寝室", 0, "家族の写真", "B", "家族写真の入った木の写真立て（写真の顔はぼかす）。"),
++("cigarettes", "タバコ", "気晴らし", "comfort valuable", "本", 0.001, "居間,コンビニ", 30, "たばこ", "A", "（既存）"),
++("shogi", "将棋", "気晴らし", "leisure", "組", 0.8, "居間", 0, "将棋盤", "B", "将棋盤と駒箱。"),
++# ---------------------------------------------------------------- 貴重品
++("watch", "腕時計", "貴重品", "valuable", "個", 0.1, "寝室", 0, "時計", "B", "銀色の腕時計1つ。"),
++("jewelry", "指輪", "貴重品", "valuable", "個", 0.01, "寝室", 0, "アクセサリー/貴金属/ネックレス", "B", "小さなケースに入った金の指輪。"),
++("gold_coin", "記念硬貨", "貴重品", "valuable", "枚", 0.02, "寝室,居間", 0, "金貨/硬貨", "B", "金色の記念硬貨2枚。"),
++# ---------------------------------------------------------------- 畑
++("seeds", "種", "畑", "seed", "袋", 0.02, "物置,ホームセンター,金物店", 300, "野菜の種", "A", "（既存）"),
++("planter", "プランター", "畑", "garden container", "個", 2.0, "", 0, "", "A", "（既存）"),
++("potting_soil", "培養土", "畑", "garden material", "袋", 5.0, "物置,ホームセンター", 600, "土", "B", "口を開けた培養土の袋（土が見えている）。"),
++("watering_can", "じょうろ", "畑", "container garden", "個", 0.3, "物置,ベランダ,ホームセンター", 800, "ジョウロ", "B", "緑色のプラスチックのじょうろ1つ。"),
++("fertilizer", "肥料", "畑", "garden", "袋", 1.0, "物置,ホームセンター", 600, "", "B", "粒状の肥料の袋（文字なし）。"),
++# ---------------------------------------------------------------- 道具
++("key", "玄関の鍵", "道具", "lock", "個", 0.01, "", 0, "鍵/家の鍵", "A", "（既存）"),
++("backpack", "リュック", "道具", "bag", "個", 0.8, "玄関,子ども部屋,デパート", 4000, "リュックサック/バッグ", "A", "（既存）"),
++("hiking_pack", "登山用ザック", "道具", "bag", "個", 1.6, "物置,デパート", 15000, "大きなリュック/ザック", "B", "大きな登山用ザック1つ（紺色）。"),
++("cart", "キャリーカート", "道具", "bag", "台", 3.0, "物置,玄関,ホームセンター", 4000, "台車/カート", "B", "折りたたみ式のキャリーカート1台。"),
++("umbrella", "傘", "道具", "long blunt", "本", 0.5, "玄関", 500, "かさ", "B", "閉じた黒いこうもり傘1本。"),
++("extinguisher", "消火器", "道具", "blunt", "本", 5.0, "共用廊下,玄関,中学校", 0, "", "B", "赤い消火器1本（ラベルは無地）。"),
++("broom", "ほうき", "道具", "long", "本", 0.5, "玄関,物置", 800, "", "B", "竹の柄のほうき1本。"),
++("aerosol", "殺虫スプレー", "道具", "", "本", 0.4, "台所,物置,スーパー", 500, "スプレー缶", "B", "スプレー缶1本（ラベル無地）。"),
++# ---------------------------------------------------------------- 作った物
++("noisemaker", "鳴子", "道具", "noise", "個", 0.3, "", 0, "なるこ", "B", "ひもに空き缶をいくつも吊るした手作りの鳴子。"),
++("water_filter_diy", "手作りの浄水器", "容器・台所", "water_clean container", "個", 0.5, "", 0, "簡易浄水器", "B", "底を切ったペットボトルを逆さにして、布・炭・砂利を詰めた手作りのろ過器。"),
++("sos_cloth", "SOSの布", "布・衣類", "big_cloth signal", "枚", 0.8, "", 0, "SOS", "B", "たたんだ白いシーツ。黒い大きな字で「SOS」と書かれているのが端から見える。"),
++# ---------------------------------------------------------------- 武器（今の9種）
++("knife", "包丁", "武器", "weapon blade", "本", 0.2, "台所", 0, "", "A", "（武器）よく研いだ包丁1本。"),
++("plank", "角材", "武器", "weapon blunt", "本", 1.5, "物置,ホームセンター", 0, "", "A", "（武器）手に持てる長さの角材1本。"),
++("bat", "金属バット", "武器", "weapon blunt", "本", 1.0, "子ども部屋,玄関,中学校", 0, "バット", "A", "（武器）使い込まれた銀色の金属バット1本。"),
++("pipe", "鉄パイプ", "武器", "weapon blunt long", "本", 2.0, "金物店,ホームセンター,倉庫街,交番", 0, "", "A", "（武器）錆びた鉄パイプ1本。"),
++("bar", "バール", "武器", "weapon blunt pry tool", "本", 2.5, "金物店,ホームセンター,倉庫街", 2000, "", "A", "（武器）赤いバール1本。"),
++("golf", "ゴルフクラブ", "武器", "weapon blunt long", "本", 0.4, "物置,居間,デパート", 0, "", "B", "（武器）ゴルフクラブ（アイアン）1本。"),
++("spear", "物干し竿の槍", "武器", "weapon blade long", "本", 1.5, "", 0, "槍", "B", "（武器）物干し竿の先に包丁をテープで巻きつけた手作りの槍。"),
++("nailbat", "釘バット", "武器", "weapon blunt", "本", 1.2, "", 0, "", "B", "（武器）釘を打ち込んだ木のバット。"),
++# ---------------------------------------------------------------- 防具（今の6種）
++("coat", "厚手のコート", "防具", "armor warm", "着", 1.5, "寝室,デパート", 0, "コート", "B", "（防具）厚手の紺色のコート。"),
++("leather", "革ジャン", "防具", "armor", "着", 1.5, "寝室,デパート", 0, "革のジャケット", "B", "（防具）黒い革のジャケット。"),
++("gloves", "作業用の手袋", "防具", "armor", "組", 0.2, "物置,金物店,ホームセンター", 800, "軍手/手袋", "A", "（防具）厚手の革の作業用手袋1組。"),
++("helmet", "ヘルメット", "防具", "armor", "個", 0.4, "物置,金物店,ホームセンター,交番", 3000, "", "A", "（防具）白い工事用ヘルメット1つ。"),
++("magazine", "腕に巻いた雑誌", "防具", "armor", "組", 0.3, "居間", 0, "雑誌", "B", "（防具）ガムテープで巻いた雑誌（表紙はぼかす）。"),
++("boots", "作業用のブーツ", "防具", "armor", "足", 1.5, "物置,ホームセンター", 6000, "安全靴/長靴", "B", "（防具）茶色の作業用ブーツ1足。"),
++]
++
++RECIPES = [
++    # result, needs (tags or item ids, each "a|b" = either), makes, minutes, note
++    ("spear", ["knife", "long", "tape|string"], 1, 20, "今の「物干し竿の槍」"),
++    ("nailbat", ["bat|plank", "nails", "hammer"], 1, 30, "今の「釘バット」"),
++    ("torch", ["wood|pole", "cloth", "fuel"], 1, 15, "電池の要らない明かり"),
++    ("noisemaker", ["empty_can", "string"], 1, 15, "鳴子：夜の襲撃に早く気づく"),
++    ("water_filter_diy", ["empty_bottle", "cloth", "charcoal"], 1, 30, "簡易浄水器：雨水を飲める水に"),
++    ("window_seal", ["cardboard|blanket|tarp", "tape"], 1, 20, "窓の目張り：明かりが外に漏れない"),
++    ("sos_cloth", ["big_cloth", "write|tape"], 1, 30, "SOSの布：救助の合図"),
++]
