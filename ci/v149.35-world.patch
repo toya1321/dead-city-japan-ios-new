@@ -1995,6 +1995,98 @@ index 0000000..7a06e01
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_shop_hardware.jpg.import b/assets/actions/act_shop_hardware.jpg.import
+new file mode 100644
+index 0000000..a435176
+--- /dev/null
++++ b/assets/actions/act_shop_hardware.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://spgt1hf33gsn"
++path="res://.godot/imported/act_shop_hardware.jpg-4f0d156f1633910e6bed5ebde7e4454a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_shop_hardware.jpg"
++dest_files=["res://.godot/imported/act_shop_hardware.jpg-4f0d156f1633910e6bed5ebde7e4454a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_shop_pharmacy.jpg.import b/assets/actions/act_shop_pharmacy.jpg.import
+new file mode 100644
+index 0000000..34c83ac
+--- /dev/null
++++ b/assets/actions/act_shop_pharmacy.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://xabtgn3w8p5f"
++path="res://.godot/imported/act_shop_pharmacy.jpg-f4ad8c93bbdb008e1e627d3469229dd5.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_shop_pharmacy.jpg"
++dest_files=["res://.godot/imported/act_shop_pharmacy.jpg-f4ad8c93bbdb008e1e627d3469229dd5.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_signal.jpg.import b/assets/actions/act_signal.jpg.import
 new file mode 100644
 index 0000000..f47229b
@@ -2061,6 +2153,52 @@ index 0000000..54dc0d1
 +
 +source_file="res://assets/actions/act_signal_block.jpg"
 +dest_files=["res://.godot/imported/act_signal_block.jpg-e5fa44e72fbc34ef52ee6682f199eda4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_sleep_base.jpg.import b/assets/actions/act_sleep_base.jpg.import
+new file mode 100644
+index 0000000..2ec5dda
+--- /dev/null
++++ b/assets/actions/act_sleep_base.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://qj3xxhn40a5d"
++path="res://.godot/imported/act_sleep_base.jpg-7c760ebddd9bb840826a8ad28d5951e5.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_sleep_base.jpg"
++dest_files=["res://.godot/imported/act_sleep_base.jpg-7c760ebddd9bb840826a8ad28d5951e5.ctex"]
 +
 +[params]
 +
@@ -114850,10 +114988,10 @@ index c90d746..6b248ad 100644
  	print("v149.32 action photo checks failed: %d" % failures)
 diff --git a/tests/test_action_photos_match149_35.gd b/tests/test_action_photos_match149_35.gd
 new file mode 100644
-index 0000000..e2132cd
+index 0000000..03ac6ff
 --- /dev/null
 +++ b/tests/test_action_photos_match149_35.gd
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,77 @@
 +extends SceneTree
 +## v149.35: an action's photo matches what the line says happened (TV or
 +## radio or phone, DVD or phone film, by-hand laundry, outdoors or indoors,
@@ -114920,9 +115058,15 @@ index 0000000..e2132cd
 +	check(not AP.path(w, "request_bandage").is_empty(), "bandage photo")
 +	# A shop or a base with no picture of its own yet falls back to the usual one.
 +	w.set_meta("player_place", "金物店")
-+	check(AP.path(w, "shop").contains("act_shop"), "shop at the hardware store: " + AP.path(w, "shop"))
++	check(AP.path(w, "shop").contains("act_shop_hardware"), "shop at the hardware store: " + AP.path(w, "shop"))
++	w.set_meta("player_place", "薬局")
++	check(AP.path(w, "shop").contains("act_shop_pharmacy"), "shop at the pharmacy: " + AP.path(w, "shop"))
++	w.set_meta("player_place", "食品店")
++	check(AP.path(w, "shop").ends_with("act_shop.jpg"), "shop at the grocer: " + AP.path(w, "shop"))
++	w.set_meta("player_place", "金物店")
++	check(AP.path(w, "sleep").contains("act_sleep_base"), "sleep at a base: " + AP.path(w, "sleep"))
 +	w.set_meta("player_place", "居間")
-+	check(AP.path(w, "sleep").contains("act_sleep"), "sleep at home: " + AP.path(w, "sleep"))
++	check(AP.path(w, "sleep").contains("act_sleep") and not AP.path(w, "sleep").contains("base"), "sleep at home: " + AP.path(w, "sleep"))
 +	print("action photo match: %d failures" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_action_photos_match149_35.gd.uid b/tests/test_action_photos_match149_35.gd.uid
