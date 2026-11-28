@@ -569,6 +569,52 @@ index 0000000..875fdef
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_found.jpg.import b/assets/actions/act_found.jpg.import
+new file mode 100644
+index 0000000..f47e9b8
+--- /dev/null
++++ b/assets/actions/act_found.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://rm0qos21w5lf"
++path="res://.godot/imported/act_found.jpg-c612e5e9fe2ce86555b668881d796967.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_found.jpg"
++dest_files=["res://.godot/imported/act_found.jpg-c612e5e9fe2ce86555b668881d796967.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_give_door.jpg.import b/assets/actions/act_give_door.jpg.import
 new file mode 100644
 index 0000000..2d7e4e6
@@ -983,6 +1029,52 @@ index 0000000..abd0685
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_lights_off.jpg.import b/assets/actions/act_lights_off.jpg.import
+new file mode 100644
+index 0000000..e58ceef
+--- /dev/null
++++ b/assets/actions/act_lights_off.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b7lsj0tqxggyf"
++path="res://.godot/imported/act_lights_off.jpg-654f40222cb88ec762d8c095e2a84018.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_lights_off.jpg"
++dest_files=["res://.godot/imported/act_lights_off.jpg-654f40222cb88ec762d8c095e2a84018.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_listen.jpg.import b/assets/actions/act_listen.jpg.import
 new file mode 100644
 index 0000000..7077a52
@@ -1351,6 +1443,52 @@ index 0000000..77ea2b3
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_planter_build.jpg.import b/assets/actions/act_planter_build.jpg.import
+new file mode 100644
+index 0000000..695a532
+--- /dev/null
++++ b/assets/actions/act_planter_build.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://uipp0ig2mo7m"
++path="res://.godot/imported/act_planter_build.jpg-adb6f048151024f0cf91d3a9dae84b81.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_planter_build.jpg"
++dest_files=["res://.godot/imported/act_planter_build.jpg-adb6f048151024f0cf91d3a9dae84b81.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_planter_growing.jpg.import b/assets/actions/act_planter_growing.jpg.import
 new file mode 100644
 index 0000000..962fe1d
@@ -1509,6 +1647,52 @@ index 0000000..1bcb73d
 +
 +source_file="res://assets/actions/act_planter_withered.jpg"
 +dest_files=["res://.godot/imported/act_planter_withered.jpg-1d82879f23fcf03dfa6b50140a54ce7b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_repair_home.jpg.import b/assets/actions/act_repair_home.jpg.import
+new file mode 100644
+index 0000000..a329d2f
+--- /dev/null
++++ b/assets/actions/act_repair_home.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://1es4ssl401x4"
++path="res://.godot/imported/act_repair_home.jpg-845f2d1412232b4f6de67653db9db8a0.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_repair_home.jpg"
++dest_files=["res://.godot/imported/act_repair_home.jpg-845f2d1412232b4f6de67653db9db8a0.ctex"]
 +
 +[params]
 +
@@ -1877,6 +2061,52 @@ index 0000000..de65e1e
 +
 +source_file="res://assets/actions/act_rescue_vote.jpg"
 +dest_files=["res://.godot/imported/act_rescue_vote.jpg-67ee6045292f26fdcad77d8ac0175700.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_rest.jpg.import b/assets/actions/act_rest.jpg.import
+new file mode 100644
+index 0000000..2939cb3
+--- /dev/null
++++ b/assets/actions/act_rest.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://kstjt13jhpjh"
++path="res://.godot/imported/act_rest.jpg-f2a8dfabff499b67d92716b4310a1c77.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_rest.jpg"
++dest_files=["res://.godot/imported/act_rest.jpg-f2a8dfabff499b67d92716b4310a1c77.ctex"]
 +
 +[params]
 +
@@ -8603,6 +8833,52 @@ index 0000000..700eb7c
 +
 +source_file="res://assets/photos/ending_rescued_lair.jpg"
 +dest_files=["res://.godot/imported/ending_rescued_lair.jpg-291ae33f2c178dd2bad230795b779b5b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/photos/ending_street.jpg.import b/assets/photos/ending_street.jpg.import
+new file mode 100644
+index 0000000..f341739
+--- /dev/null
++++ b/assets/photos/ending_street.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://u8wrc2yq10p4"
++path="res://.godot/imported/ending_street.jpg-d59577caafd85c12b1025ec8d854d434.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/photos/ending_street.jpg"
++dest_files=["res://.godot/imported/ending_street.jpg-d59577caafd85c12b1025ec8d854d434.ctex"]
 +
 +[params]
 +
@@ -15917,6 +16193,144 @@ index 0000000..4d3a9b8
 +
 +source_file="res://assets/raids/lair_inside.jpg"
 +dest_files=["res://.godot/imported/lair_inside.jpg-0c5b2141d844d5c83155238d5acd6097.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/lair_join.jpg.import b/assets/raids/lair_join.jpg.import
+new file mode 100644
+index 0000000..4d8d2ec
+--- /dev/null
++++ b/assets/raids/lair_join.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cxa0l6j3lmesk"
++path="res://.godot/imported/lair_join.jpg-8d5641a37fa84f50a356cfb78ae4e834.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_join.jpg"
++dest_files=["res://.godot/imported/lair_join.jpg-8d5641a37fa84f50a356cfb78ae4e834.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/lair_leave.jpg.import b/assets/raids/lair_leave.jpg.import
+new file mode 100644
+index 0000000..75a9eb1
+--- /dev/null
++++ b/assets/raids/lair_leave.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://di7ilwbacpuqm"
++path="res://.godot/imported/lair_leave.jpg-a4cccc0d513b88b423040e4efbc3ee32.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_leave.jpg"
++dest_files=["res://.godot/imported/lair_leave.jpg-a4cccc0d513b88b423040e4efbc3ee32.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/raids/lair_talk.jpg.import b/assets/raids/lair_talk.jpg.import
+new file mode 100644
+index 0000000..f9c2604
+--- /dev/null
++++ b/assets/raids/lair_talk.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ckhr8ofi2w8ip"
++path="res://.godot/imported/lair_talk.jpg-246a99969876119bd96c905a3513159d.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/raids/lair_talk.jpg"
++dest_files=["res://.godot/imported/lair_talk.jpg-246a99969876119bd96c905a3513159d.ctex"]
 +
 +[params]
 +
@@ -99014,10 +99428,10 @@ index 0000000..a0897d6
 +uid://ca73wt65o7ufy
 diff --git a/qa/action_photo_audit.gd b/qa/action_photo_audit.gd
 new file mode 100644
-index 0000000..0db098e
+index 0000000..9ee23d3
 --- /dev/null
 +++ b/qa/action_photo_audit.gd
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,127 @@
 +extends SceneTree
 +## Presses every chip the game offers in many situations (home rooms in
 +## ordinary times and after the breakdown, a flat, the shops, a base, the
@@ -99076,7 +99490,10 @@ index 0000000..0db098e
 +			var d: Dictionary = AP.detect(str(l))
 +			if not d.is_empty():
 +				kinds.append(str(d.kind) + ("" if not AP.path(w, str(d.kind)).is_empty() else "(画像なし)"))
++		g._refresh()
 +		var shown := str(g.action_photo_path).get_file()
++		if shown.is_empty() and g.picture.texture != null:
++			shown = "枠:" + str(g.picture.texture.resource_path).get_file()
 +		var first := str(lines[0]).replace("\n", " ").left(70) if not lines.is_empty() else "(なし)"
 +		rows.append("%s | %s | %s | %s | %s" % [ctx, cmd, ",".join(kinds) if not kinds.is_empty() else "-", shown if not shown.is_empty() else "-", first])
 +	w.s = snap.duplicate(true)
@@ -115385,10 +115802,10 @@ index c90d746..6b248ad 100644
  	print("v149.32 action photo checks failed: %d" % failures)
 diff --git a/tests/test_action_photos_match149_35.gd b/tests/test_action_photos_match149_35.gd
 new file mode 100644
-index 0000000..9dda436
+index 0000000..65ef5a0
 --- /dev/null
 +++ b/tests/test_action_photos_match149_35.gd
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,104 @@
 +extends SceneTree
 +## v149.35: an action's photo matches what the line says happened (TV or
 +## radio or phone, DVD or phone film, by-hand laundry, outdoors or indoors,
@@ -115460,7 +115877,11 @@ index 0000000..9dda436
 +	check(not AP.path(w, "eat").contains("crisis"), "eat together normal is not the crisis one")
 +	w.s.society = "emergency"
 +	check(AP.path(w, "eat").contains("act_eat_together_crisis"), "eat together crisis: " + AP.path(w, "eat"))
-+	# Borrowed photos until their own are made.
++	# Their own photos now (work, unlock and curtain still borrow a close one).
++	for k in ["rest", "lights_off", "repair_home", "planter_build", "found"]:
++		check(AP.path(w, k).contains("act_" + k), "own photo for " + k + ": " + AP.path(w, k))
++	for k in ["lair_talk", "lair_join", "lair_leave"]:
++		check(ResourceLoader.exists("res://assets/raids/%s.jpg" % k), "lair photo " + k)
 +	for k in ["work", "unlock", "curtain", "planter_build", "repair_home", "found"]:
 +		check(not AP.path(w, k).is_empty(), "photo (or a borrowed one) for " + k)
 +	# Until its own picture is made, the bandage borrows the request photo.
@@ -115483,7 +115904,7 @@ index 0000000..9dda436
 +	w.s.hunger = 0.0; w.s.thirst = 0.0
 +	w.set_meta("player_place", "住宅街")
 +	var street: String = E.photo(w, "", 10)
-+	check(street == "ending_street" or not ResourceLoader.exists("res://assets/photos/ending_street.jpg"), "street ending: " + street)
++	check(street == "ending_street", "street ending: " + street)
 +	w.set_meta("player_place", "居間")
 +	check(E.photo(w, "", 10) != "ending_street", "no street ending at home")
 +	w.s.walkers.encounter = {}
