@@ -104778,7 +104778,7 @@ index 0000000..a8649be
 @@ -0,0 +1 @@
 +uid://dca3j1sct27tw
 diff --git a/scripts/district.gd b/scripts/district.gd
-index 31c6246..78305f3 100644
+index 31c6246..e7c7cde 100644
 --- a/scripts/district.gd
 +++ b/scripts/district.gd
 @@ -1,6 +1,14 @@
@@ -104797,9 +104797,13 @@ index 31c6246..78305f3 100644
  	"コンビニ": {"food": 8.0, "water": 20.0, "vacant": false, "opens": 0, "closes": 24, "position": Vector2(28, 22)},
  	"近所の空き家": {"food": 1.5, "water": 3.0, "vacant": true, "opens": 0, "closes": 24, "position": Vector2(-29, 36)},
  	"デパート": {"food": 30.0, "water": 45.0, "vacant": false, "opens": 10, "closes": 20, "position": Vector2(53, 31)},
-@@ -43,14 +51,16 @@ static func _supplies(value: Variant, food_limit: float, water_limit: float) ->
+@@ -41,16 +49,19 @@ static func _supplies(value: Variant, food_limit: float, water_limit: float) ->
+ 	return value is Dictionary and _amount(value.get("food"), food_limit) and _amount(value.get("water"), water_limit)
+ 
  static func valid(value: Variant) -> bool:
- 	if not value is Dictionary or not _supplies(value.get("bag"), FOOD_LIMIT, WATER_LIMIT):
+-	if not value is Dictionary or not _supplies(value.get("bag"), FOOD_LIMIT, WATER_LIMIT):
++	# v149.39: the bag is limited by weight now (items.gd); this only rejects nonsense.
++	if not value is Dictionary or not _supplies(value.get("bag"), 200.0, 200.0):
  		return false
 +	# Older saves gain new buildings on upgrade (done before this check).
  	if not value.get("sites") is Dictionary or value.sites.size() != SITES.size():
@@ -104816,7 +104820,7 @@ index 31c6246..78305f3 100644
  			return false
  		if not site.get("vacant") is bool or not _amount(site.get("level"), 2) or float(site.level) != floorf(float(site.level)):
  			return false
-@@ -71,6 +81,13 @@ static func tick(world) -> void:
+@@ -71,6 +82,13 @@ static func tick(world) -> void:
  		world.s.district.sites["コンビニ"].vacant = true
  	if world.s.society == "emergency":
  		world.s.district.sites["デパート"].vacant = true
@@ -104830,7 +104834,7 @@ index 31c6246..78305f3 100644
  	# The small shops: empty once their staff are gone, or when it is all over.
  	for place in SITES:
  		if not is_shop(place) or not world.s.district.sites.has(place):
-@@ -82,6 +99,21 @@ static func tick(world) -> void:
+@@ -82,6 +100,21 @@ static func tick(world) -> void:
  				shop.abandoned = true
  				shop.open = false
  
@@ -104852,7 +104856,27 @@ index 31c6246..78305f3 100644
  static func can_enter(world, place: String) -> bool:
  	var site: Dictionary = world.s.district.sites[place]
  	var hours: Dictionary = SITES[place]
-@@ -123,7 +155,12 @@ static func _transfer_text(world, amount: Vector2, action: String) -> String:
+@@ -108,7 +141,18 @@ static func describe(world, place: String) -> String:
+ 
+ static func bag_text(world) -> String:
+ 	var bag: Dictionary = world.s.district.bag
+-	return "携行：食料 %.1f／%.0f人日、水 %.1f／%.0f L" % [bag.food, FOOD_LIMIT, bag.water, WATER_LIMIT]
++	return "携行：食料 %.1f人日、水 %.1f L（重さ %s）" % [bag.food, bag.water, load("res://scripts/items.gd").weight_text(world, bag)]
++
++## v149.39: into the bag, as much as its weight allows (food first, then water).
++static func _load(world, source: Dictionary, bag: Dictionary, batch_food: float, batch_water: float) -> Vector2:
++	var Items = load("res://scripts/items.gd")
++	var food := minf(float(source.food), minf(batch_food, maxf(0.0, Items.food_limit(world, bag) - float(bag.food))))
++	source.food -= food
++	bag.food += food
++	var water := minf(float(source.water), minf(batch_water, maxf(0.0, Items.water_limit(world, bag) - float(bag.water))))
++	source.water -= water
++	bag.water += water
++	return Vector2(food, water)
+ 
+ static func _transfer(source: Dictionary, destination: Dictionary, food_limit: float, water_limit: float, batch_food: float, batch_water: float) -> Vector2:
+ 	var food := minf(float(source.food), minf(batch_food, maxf(0.0, food_limit - float(destination.food))))
+@@ -123,7 +167,12 @@ static func _transfer_text(world, amount: Vector2, action: String) -> String:
  	if amount == Vector2.ZERO:
  		return "移せる物資か空き容量がない。"
  	world.advance_safe(5)
@@ -104866,7 +104890,19 @@ index 31c6246..78305f3 100644
  
  static func act(world, place: String, command: String, at_home: bool, actor_bag: Dictionary = {}) -> String:
  	if world.s.health <= 0:
-@@ -145,7 +182,28 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+@@ -132,9 +181,9 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+ 	if command == "物資を持っていく":
+ 		if not at_home:
+ 			return "自宅で備蓄を詰められます。外の拠点では「拠点の物資を持ち出す」。"
+-		return _transfer_text(world, _transfer(world.s, bag, FOOD_LIMIT, WATER_LIMIT, 2.0, 4.0), "自宅から持ち出した")
++		return _transfer_text(world, _load(world, world.s, bag, 2.0, 4.0), "自宅から持ち出した")
+ 	if command == "物資を置く" and at_home:
+-		return _transfer_text(world, _transfer(bag, world.s, INF, INF, FOOD_LIMIT, WATER_LIMIT), "自宅の備蓄に戻した")
++		return _transfer_text(world, _transfer(bag, world.s, INF, INF, INF, INF), "自宅の備蓄に戻した")
+ 	if not SITES.has(place):
+ 		return "建物の中で実行してください。"
+ 	var site: Dictionary = world.s.district.sites[place]
+@@ -145,7 +194,28 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
  		return "営業中や管理中の建物では実行できない。"
  	match command:
  		"物資を探索する":
@@ -104875,7 +104911,7 @@ index 31c6246..78305f3 100644
 +			var Rooms = load("res://scripts/site_rooms.gd")
 +			var food_step: float = 2.0 * (Rooms.share(world, place, "food") if Rooms.has(place) else 1.0)
 +			var water_step: float = 4.0 * (Rooms.share(world, place, "water") if Rooms.has(place) else 1.0)
-+			var found := _transfer_text(world, _transfer(site, bag, FOOD_LIMIT, WATER_LIMIT, food_step, water_step), "残っていた物資を回収した")
++			var found := _transfer_text(world, _load(world, site, bag, food_step, water_step), "残っていた物資を回収した")
 +			# v149.36: and what else the place holds, a few at a time.
 +			var more: Array = []
 +			var stock := extras(world, place)
@@ -104896,8 +104932,14 @@ index 31c6246..78305f3 100644
  		"ここを拠点にする":
  			if site.level >= 1:
  				return "ここはすでに寝泊まりできる。"
-@@ -172,10 +230,68 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
- 			return _transfer_text(world, _transfer(site.cache, bag, FOOD_LIMIT, WATER_LIMIT, FOOD_LIMIT, WATER_LIMIT), "拠点の備蓄から持ち出した")
+@@ -168,27 +238,85 @@ static func act(world, place: String, command: String, at_home: bool, actor_bag:
+ 			if site.level < 1:
+ 				return "先に「ここを拠点にする」で置き場所を確保してください。"
+ 			if command == "物資を置く":
+-				return _transfer_text(world, _transfer(bag, site.cache, 100.0, 200.0, FOOD_LIMIT, WATER_LIMIT), "拠点に置いた")
+-			return _transfer_text(world, _transfer(site.cache, bag, FOOD_LIMIT, WATER_LIMIT, FOOD_LIMIT, WATER_LIMIT), "拠点の備蓄から持ち出した")
++				return _transfer_text(world, _transfer(bag, site.cache, 100.0, 200.0, INF, INF), "拠点に置いた")
++			return _transfer_text(world, _load(world, site.cache, bag, INF, INF), "拠点の備蓄から持ち出した")
  	return "ここでは実行できない。"
  
 +## v149.35: the houses of the residential streets. Once people have fled or
@@ -104965,9 +105007,24 @@ index 31c6246..78305f3 100644
  	if item not in ["food", "water"] or quantity < 1 or quantity > 12:
  		return "ここで買えるのは食料と飲料水。数量は1～12です。"
  	var amount := float(quantity) * (1.0 if item == "food" else 2.0)
+ 	var price := quantity * (600 if item == "food" else 120)
+ 	var bag: Dictionary = world.s.district.bag if actor_bag.is_empty() else actor_bag
+-	var limit: float = FOOD_LIMIT if item == "food" else WATER_LIMIT
++	var limit: float = load("res://scripts/items.gd").food_limit(world, bag) if item == "food" else load("res://scripts/items.gd").water_limit(world, bag)
+ 	if world.s.cash < price:
+ 		return "現金が足りない（%d円必要、所持%d円）。" % [price, int(world.s.cash)]
+ 	if float(site[item]) < amount:
+ 		return "店の在庫が足りない（残り%s）。" % (("%.0f人日" % float(site[item])) if item == "food" else ("%.0fL" % float(site[item])))
+ 	if float(bag[item]) + amount > limit:
+ 		var room := int((limit - float(bag[item])) / (1.0 if item == "food" else 2.0))
+-		return "持って帰れるのは、あと%d個まで（手で運べる量には限りがある）。" % maxi(0, room)
++		return "持って帰れるのは、あと%d個まで（リュックの重さに限りがある）。" % maxi(0, room)
+ 	site[item] -= amount
+ 	bag[item] += amount
+ 	world.s.cash -= price
 diff --git a/scripts/dwellings.gd b/scripts/dwellings.gd
 new file mode 100644
-index 0000000..48bd6d5
+index 0000000..11d0f75
 --- /dev/null
 +++ b/scripts/dwellings.gd
 @@ -0,0 +1,419 @@
@@ -105288,7 +105345,7 @@ index 0000000..48bd6d5
 +			continue
 +		match item:
 +			"food":
-+				var take := minf(float(v), minf(District.FOOD_LIMIT - float(bag.food), float(pool.food)))
++				var take := minf(float(v), minf(load("res://scripts/items.gd").food_limit(world, bag) - float(bag.food), float(pool.food)))
 +				if take > 0.0:
 +					bag.food = float(bag.food) + take
 +					pool.food = float(pool.food) - take
@@ -105296,7 +105353,7 @@ index 0000000..48bd6d5
 +				if float(v) > take:
 +					leftover.food = float(v) - take
 +			"water":
-+				var take := minf(float(v), minf(District.WATER_LIMIT - float(bag.water), float(pool.water)))
++				var take := minf(float(v), minf(load("res://scripts/items.gd").water_limit(world, bag) - float(bag.water), float(pool.water)))
 +				if take > 0.0:
 +					bag.water = float(bag.water) + take
 +					pool.water = float(pool.water) - take
@@ -106180,6 +106237,19 @@ index a4b03a2..daa7343 100644
 +	var lead := "洗濯機を回し、タオルと服を脱衣所の物干しに干した（40分）。" if machine else "たらいに水を張って手で洗い、固く絞って、タオルと服を物干しに干した（60分、水10L）。"
 +	var feel := "洗いたてのタオルのにおいに、少しだけ気持ちが軽くなった。" if since >= 3 else "これで、しばらくは着替えに困らない。"
 +	return _done(game, lead + feel)
+diff --git a/scripts/household_actions.gd b/scripts/household_actions.gd
+index 66ef595..562f64b 100644
+--- a/scripts/household_actions.gd
++++ b/scripts/household_actions.gd
+@@ -50,7 +50,7 @@ static func execute_handoff(world, person: Dictionary, transfer: Dictionary, at_
+ 	var item: String = transfer.item
+ 	var amount: float = transfer.amount
+ 	var label: String = Errands.LABELS[item]
+-	var limit := District.WATER_LIMIT if item == "water" else District.FOOD_LIMIT
++	var limit: float = load("res://scripts/items.gd").water_limit(world, bag) if item == "water" else load("res://scripts/items.gd").food_limit(world, bag)
+ 	if amount <= 0:
+ 		return "%sをどれくらい渡すか教えて。" % label
+ 	if transfer.give:
 diff --git a/scripts/household_conversation.gd b/scripts/household_conversation.gd
 index ed18075..3daf697 100644
 --- a/scripts/household_conversation.gd
@@ -106692,6 +106762,159 @@ index 0000000..a32f9cd
 +				best = str(k)
 +				best_len = str(word).length()
 +	return best
+diff --git a/scripts/item_catalog.gd.uid b/scripts/item_catalog.gd.uid
+new file mode 100644
+index 0000000..2b1d4c6
+--- /dev/null
++++ b/scripts/item_catalog.gd.uid
+@@ -0,0 +1 @@
++uid://ddawpgaye57yc
+diff --git a/scripts/items.gd b/scripts/items.gd
+new file mode 100644
+index 0000000..f96518b
+--- /dev/null
++++ b/scripts/items.gd
+@@ -0,0 +1,133 @@
++extends RefCounted
++## v149.39: things the player has, by the item ledger (item_catalog.gd).
++##
++## What the game kept before (food and water in the stores, wood and parts in
++## the inventory, cigarettes, gas cans, blankets, equipment) stays where it
++## was: this reads and writes it under the ledger's ids, so old saves and the
++## old code keep working. Everything new lives in `s.items` (id -> amount).
++##
++## Carrying is by weight: what is in the bag (food, water and the bag's
++## `items`) may not weigh more than the bag holds.
++
++const Catalog = preload("res://scripts/item_catalog.gd")
++
++## Ledger id -> where the game already kept it.
++const LEGACY := {
++	"food": ["s", "food"], "water": ["s", "water"], "rain_water": ["s", "rain_water"],
++	"wood": ["inv", "wood"], "parts": ["inv", "parts"], "seeds": ["inv", "seeds"],
++	"bandage": ["inv", "bandage"], "planter": ["inv", "planter"], "harvest": ["inv", "harvest"],
++	"cigarettes": ["s", "cigarettes"], "gas_cans": ["s", "gas_cans"], "cash": ["s", "cash"],
++	"solar": ["eq", "solar"], "battery": ["eq", "battery"], "camera": ["eq", "camera"], "filter": ["eq", "filter"],
++	"blanket": ["cold", "blankets"],
++}
++
++# --------------------------------------------------------------- at home
++
++static func store(world) -> Dictionary:
++	if not world.s.get("items") is Dictionary:
++		world.s.items = {}
++	return world.s.items
++
++static func count(world, id: String) -> float:
++	if LEGACY.has(id):
++		var where: Array = LEGACY[id]
++		match str(where[0]):
++			"s": return float(world.s.get(where[1], 0))
++			"inv": return float(world.s.get("inventory", {}).get(where[1], 0))
++			"eq": return 1.0 if bool(world.s.get("equipment", {}).get(where[1], false)) else 0.0
++			"cold": return float(world.s.get("cold", {}).get(where[1], 0)) if world.s.get("cold") is Dictionary else 0.0
++	var stock = world.s.get("items", {})
++	return float(stock.get(id, 0)) if stock is Dictionary else 0.0
++
++static func _put(world, id: String, amount: float) -> void:
++	amount = maxf(0.0, amount)
++	if LEGACY.has(id):
++		var where: Array = LEGACY[id]
++		match str(where[0]):
++			"s":
++				var old = world.s.get(where[1], 0)
++				world.s[where[1]] = int(round(amount)) if old is int else amount
++			"inv":
++				var inv: Dictionary = world.s.inventory
++				inv[where[1]] = amount if inv.get(where[1]) is float else int(round(amount))
++			"eq":
++				world.s.equipment[where[1]] = amount >= 1.0
++			"cold":
++				if not world.s.get("cold") is Dictionary:
++					world.s.cold = {}
++				world.s.cold[where[1]] = int(round(amount))
++		return
++	var stock := store(world)
++	if amount <= 0.0001:
++		stock.erase(id)
++	else:
++		stock[id] = amount
++
++static func add(world, id: String, amount: float) -> void:
++	_put(world, id, count(world, id) + amount)
++
++## Takes up to `amount`; returns how much was there to take.
++static func take(world, id: String, amount: float) -> float:
++	var have := count(world, id)
++	var took := minf(have, amount)
++	_put(world, id, have - took)
++	return took
++
++## Everything at home with an amount above zero: [{id, name, amount, unit}].
++static func on_hand(world) -> Array:
++	var out: Array = []
++	for id in Catalog.ITEMS:
++		var n := count(world, str(id))
++		if n > 0.0:
++			var it: Dictionary = Catalog.ITEMS[id]
++			out.append({"id": str(id), "name": str(it.name), "amount": n, "unit": str(it.unit)})
++	return out
++
++## The items at home that have this tag.
++static func with_tag(world, tag: String) -> Array:
++	return Catalog.tagged(tag).filter(func(id): return count(world, str(id)) > 0.0)
++
++# --------------------------------------------------------------- carrying
++
++## kg the bag holds: a daypack by default, more with a bigger pack or a cart.
++const DAYPACK_KG := 12.0
++const HIKING_PACK_KG := 20.0
++const CART_EXTRA_KG := 25.0
++
++static func capacity(world) -> float:
++	var kg := HIKING_PACK_KG if count(world, "hiking_pack") > 0.0 or bag_count(world, "hiking_pack") > 0.0 else DAYPACK_KG
++	if count(world, "cart") > 0.0 and bag_count(world, "cart") > 0.0:
++		kg += CART_EXTRA_KG
++	return kg
++
++static func kg_of(id: String) -> float:
++	return float(Catalog.ITEMS.get(id, {}).get("kg", 0.0))
++
++## How much a bag weighs ({food, water, items}).
++static func weight(bag: Dictionary) -> float:
++	var kg := float(bag.get("food", 0.0)) * kg_of("food") + float(bag.get("water", 0.0)) * kg_of("water")
++	var extra = bag.get("items", {})
++	if extra is Dictionary:
++		for id in extra:
++			if str(id) in ["hiking_pack", "cart"]:
++				continue
++			kg += float(extra[id]) * kg_of(str(id))
++	return kg
++
++static func room_kg(world, bag: Dictionary) -> float:
++	return maxf(0.0, capacity(world) - weight(bag))
++
++## The most food (people-days) / water (L) this bag can hold now, given the
++## rest of what is in it.
++static func food_limit(world, bag: Dictionary) -> float:
++	return float(bag.get("food", 0.0)) + room_kg(world, bag) / kg_of("food")
++
++static func water_limit(world, bag: Dictionary) -> float:
++	return float(bag.get("water", 0.0)) + room_kg(world, bag) / kg_of("water")
++
++static func bag_count(world, id: String) -> float:
++	var extra = world.s.get("district", {}).get("bag", {}).get("items", {})
++	return float(extra.get(id, 0)) if extra is Dictionary else 0.0
++
++static func weight_text(world, bag: Dictionary) -> String:
++	return "%.1f／%.0fkg" % [weight(bag), capacity(world)]
+diff --git a/scripts/items.gd.uid b/scripts/items.gd.uid
+new file mode 100644
+index 0000000..bf522bb
+--- /dev/null
++++ b/scripts/items.gd.uid
+@@ -0,0 +1 @@
++uid://b3fky3spbbk70
 diff --git a/scripts/lair.gd b/scripts/lair.gd
 new file mode 100644
 index 0000000..3e23b06
@@ -107193,7 +107416,7 @@ index 2c72ddd..a50f2d7 100644
  				return {}
  		"npc":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..1af65f8 100644
+index 0f2add4..3ddc2bb 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -63,6 +63,7 @@ var place_label: Label
@@ -107521,7 +107744,41 @@ index 0f2add4..1af65f8 100644
  	var files := HBoxContainer.new()
  	files.add_theme_constant_override("separation", 10)
  	tab_content.add_child(files)
-@@ -799,6 +882,11 @@ func _build_base_tab() -> void:
+@@ -723,9 +806,12 @@ func _build_items_tab() -> void:
+ 	var carry := UI.card(tab_content, "" if Portraits.item("backpack") != null else "リュック（携行）")
+ 	if Portraits.item("backpack") != null:
+ 		_item_row(carry, "backpack", "リュック（携行）", 15)
+-	for spec in [["食料", float(bag.food), District.FOOD_LIMIT, "人日", "food"], ["水", float(bag.water), District.WATER_LIMIT, "L", "water"]]:
+-		_item_row(carry, spec[4], "%s  %.1f / %.0f %s" % [spec[0], spec[1], spec[2], spec[3]], 14)
+-		carry.add_child(UI.bar(100.0 * spec[1] / spec[2], Color("#7cc0de"), 6))
++	# v149.39: what the bag weighs against what it holds.
++	var Items = load("res://scripts/items.gd")
++	_item_row(carry, "food", "食料  %.1f 人日" % float(bag.food), 14)
++	_item_row(carry, "water", "水  %.1f L" % float(bag.water), 14)
++	carry.add_child(UI.label("重さ %s" % Items.weight_text(world, bag), 13, Color("#c9d1e6")))
++	carry.add_child(UI.bar(100.0 * Items.weight(bag) / Items.capacity(world), Color("#7cc0de"), 6))
+ 	var labels := {"wood":"木材","parts":"部品","seeds":"種","bandage":"包帯","planter":"未使用プランター","harvest":"累積収穫量"}
+ 	var gear := {"solar":"ソーラーパネル","battery":"蓄電池","camera":"カメラ","filter":"浄水器"}
+ 	var items := UI.card(tab_content, "道具・資材")
+@@ -749,6 +835,17 @@ func _build_items_tab() -> void:
+ 		_item_row(items, "gas_cans", "カセットボンベ　%.2f本" % float(world.s.get("gas_cans", 3.0)))
+ 	if world.s.plots.size() > 0:
+ 		_item_row(items, "planter", "栽培中のプランター　%d鉢" % world.s.plots.size())
++	# v149.39: everything else from the item ledger, at home and in the bag.
++	var Catalog = load("res://scripts/item_catalog.gd")
++	for where in [[world.s.get("items", {}), ""], [bag.get("items", {}), "（携行）"]]:
++		if not where[0] is Dictionary:
++			continue
++		for id in where[0]:
++			var it: Dictionary = Catalog.item(str(id))
++			if it.is_empty() or float(where[0][id]) <= 0.0:
++				continue
++			var n := float(where[0][id])
++			_item_row(items, str(id), "%s　%s%s%s" % [it.name, ("%d" % int(n)) if is_equal_approx(n, round(n)) else ("%.1f" % n), it.unit, where[1]])
+ 	if not missing.is_empty():
+ 		var toggle := UI.button(("持っていない物を隠す" if show_missing_items else "持っていない物（%d件）を表示" % missing.size()), false, 44, 13)
+ 		toggle.pressed.connect(func():
+@@ -799,6 +896,11 @@ func _build_base_tab() -> void:
  		tab_content.add_child(UI.label("ほかの拠点はまだない。空き家や放棄された建物で「ここを拠点にする」と作れます。", 13, UI.FAINT))
  
  func _build_people_tab() -> void:
@@ -107533,7 +107790,7 @@ index 0f2add4..1af65f8 100644
  	if world.s.household_members.is_empty():
  		tab_content.add_child(UI.label("同居人はいない。", 14, UI.FAINT))
  	for index in world.s.household_members.size():
-@@ -806,7 +894,7 @@ func _build_people_tab() -> void:
+@@ -806,7 +908,7 @@ func _build_people_tab() -> void:
  		var c := UI.card(tab_content, "")
  		var head := HBoxContainer.new()
  		head.add_theme_constant_override("separation", 10)
@@ -107542,7 +107799,7 @@ index 0f2add4..1af65f8 100644
  		var name_label := UI.label(str(person.name), 17, UI.TEXT, false)
  		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  		head.add_child(name_label)
-@@ -815,7 +903,7 @@ func _build_people_tab() -> void:
+@@ -815,7 +917,7 @@ func _build_people_tab() -> void:
  		c.add_child(UI.label(NPCMind.relationship(npc_memory, person, dialogue.recent(index).size()), 13, UI.BODY))
  		var order: Dictionary = person.get("water_errand", {})
  		if str(order.get("phase", "")) in ["quantity", "queued", "carrying", "returning"]:
@@ -107551,7 +107808,7 @@ index 0f2add4..1af65f8 100644
  	# v149.28: survivors met outside, with their faces.
  	var met: Array = []
  	var people: Dictionary = world.s.get("survivors", {}).get("people", {}) if world.s.get("survivors") is Dictionary else {}
-@@ -832,7 +920,7 @@ func _build_people_tab() -> void:
+@@ -832,7 +934,7 @@ func _build_people_tab() -> void:
  		var head := HBoxContainer.new()
  		head.add_theme_constant_override("separation", 10)
  		var shown_name := Survivors.call_name(world, id)
@@ -107560,7 +107817,7 @@ index 0f2add4..1af65f8 100644
  		var name_label := UI.label(shown_name, 16, UI.TEXT, false)
  		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
  		head.add_child(name_label)
-@@ -879,11 +967,11 @@ func _build_map_tab() -> void:
+@@ -879,11 +981,11 @@ func _build_map_tab() -> void:
  	var k := width / 358.0
  	var area := Panel.new()
  	area.custom_minimum_size = Vector2(width, 476.0 * k)
@@ -107574,7 +107831,7 @@ index 0f2add4..1af65f8 100644
  		r.position = Vector2(line[0], line[1]) * k
  		r.size = Vector2(maxf(2, line[2] * k), maxf(2, line[3] * k))
  		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-@@ -898,8 +986,8 @@ func _build_map_tab() -> void:
+@@ -898,8 +1000,8 @@ func _build_map_tab() -> void:
  		b.position = Vector2(spec[0], spec[1]) * k
  		b.size = Vector2(spec[2], spec[3]) * k
  		b.add_theme_font_size_override("font_size", 13)
@@ -107585,7 +107842,7 @@ index 0f2add4..1af65f8 100644
  		b.add_theme_stylebox_override("normal", UI.box(fill, edge, 10, 4, 2))
  		b.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.06), edge, 10, 4, 2))
  		b.add_theme_stylebox_override("pressed", UI.box(fill.lightened(0.1), edge, 10, 4, 2))
-@@ -951,7 +1039,7 @@ func _mark_font_buttons() -> void:
+@@ -951,7 +1053,7 @@ func _mark_font_buttons() -> void:
  	for size in font_buttons:
  		var b: Button = font_buttons[size]
  		b.set_pressed_no_signal(size == ui_font_size)
@@ -107594,7 +107851,7 @@ index 0f2add4..1af65f8 100644
  
  func _set_photo_folded(folded: bool) -> void:
  	photo_folded = folded
-@@ -967,7 +1055,7 @@ func _update_scene_visibility() -> void:
+@@ -967,7 +1069,7 @@ func _update_scene_visibility() -> void:
  
  func _build_image_preview() -> void:
  	image_preview = ColorRect.new()
@@ -107603,7 +107860,7 @@ index 0f2add4..1af65f8 100644
  	image_preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  	image_preview.hide()
  	add_child(image_preview)
-@@ -1134,7 +1222,8 @@ func _apply_responsive_layout(vp: Vector2, keyboard: int) -> void:
+@@ -1134,7 +1236,8 @@ func _apply_responsive_layout(vp: Vector2, keyboard: int) -> void:
  	log_heading.visible = not portrait and not compact
  	content_column.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
  	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -107613,7 +107870,7 @@ index 0f2add4..1af65f8 100644
  	log_scroll.custom_minimum_size.y = 44 if portrait else 50
  	command_input.custom_minimum_size.y = (56 if compact else 60) if portrait else (64 if compact else 96)
  	send_button.custom_minimum_size = Vector2(64, 52) if portrait else Vector2(96, 64 if compact else 96)
-@@ -1164,8 +1253,17 @@ func _show_title() -> void:
+@@ -1164,8 +1267,17 @@ func _show_title() -> void:
  	title_screen.save_exists = FileAccess.file_exists(SAVE_PATH)
  	title_screen.new_game_requested.connect(_start_new_game)
  	title_screen.continue_requested.connect(_continue_from_title)
@@ -107631,7 +107888,7 @@ index 0f2add4..1af65f8 100644
  func _start_new_game(profile: Dictionary) -> void:
  	if not world.configure(profile):
  		if is_instance_valid(title_screen): title_screen.message.text = "主人公の設定を確認してください。"
-@@ -1215,14 +1313,14 @@ func _show_intro() -> void:
+@@ -1215,14 +1327,14 @@ func _show_intro() -> void:
  	intro_layer.mouse_filter = Control.MOUSE_FILTER_STOP
  	add_child(intro_layer)
  	var shade := ColorRect.new()
@@ -107648,7 +107905,7 @@ index 0f2add4..1af65f8 100644
  	intro_margin.add_child(panel)
  	var column := VBoxContainer.new()
  	column.add_theme_constant_override("separation", 14)
-@@ -1358,12 +1456,22 @@ func _action_card_for(line: String) -> void:
+@@ -1358,12 +1470,22 @@ func _action_card_for(line: String) -> void:
  	if hit.is_empty():
  		return
  	# v149.34: buying at the counter window shows no photo over it.
@@ -107672,7 +107929,7 @@ index 0f2add4..1af65f8 100644
  	_show_action_card(load(path), str(hit.caption))
  
  func _show_action_card(texture: Texture2D, caption: String) -> void:
-@@ -1372,7 +1480,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1372,7 +1494,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		var card_style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 10, 10)
  		card_style.shadow_color = Color(0, 0, 0, 0.6)
  		card_style.shadow_size = 18
@@ -107683,7 +107940,7 @@ index 0f2add4..1af65f8 100644
  		action_card.mouse_filter = Control.MOUSE_FILTER_STOP
  		action_card.gui_input.connect(func(event):
  			if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
-@@ -1392,7 +1502,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1392,7 +1516,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		label.name = "Caption"
  		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -107694,7 +107951,7 @@ index 0f2add4..1af65f8 100644
  		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
  		column.add_child(label)
  		add_child(action_card)
-@@ -1405,7 +1517,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1405,7 +1531,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	photo_rect.custom_minimum_size = Vector2(width - 20.0, (width - 20.0) * 0.75)
  	caption_label.text = caption
  	caption_label.add_theme_font_size_override("font_size", ui_font_size)
@@ -107703,7 +107960,7 @@ index 0f2add4..1af65f8 100644
  	action_card.size = Vector2(width, 0)
  	action_card.reset_size()
  	action_card.call_deferred("reset_size")
-@@ -1417,9 +1529,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1417,9 +1543,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	action_card.modulate.a = 0.0
  	action_tween = create_tween()
  	action_tween.tween_property(action_card, "modulate:a", 1.0, 0.25)
@@ -107714,7 +107971,7 @@ index 0f2add4..1af65f8 100644
  
  ## v149.34: arriving at an open shop shows what it sells; leaving closes it.
  func _refresh_shop_window() -> void:
-@@ -1476,6 +1586,37 @@ func _member_names() -> Array:
+@@ -1476,6 +1600,37 @@ func _member_names() -> Array:
  	names.append_array(Survivors.names(world))
  	return names
  
@@ -107752,7 +108009,7 @@ index 0f2add4..1af65f8 100644
  ## One chronicle entry, styled by what it is.
  func _make_entry(entry: String) -> Control:
  	var info := UI.kind(entry, _member_names())
-@@ -1487,9 +1628,9 @@ func _make_entry(entry: String) -> Control:
+@@ -1487,9 +1642,9 @@ func _make_entry(entry: String) -> Control:
  			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  			row.add_child(spacer)
  			var bubble := PanelContainer.new()
@@ -107764,7 +108021,7 @@ index 0f2add4..1af65f8 100644
  			bubble.add_child(text)
  			log_bubbles.append([text, str(info.text), 0.78])
  			_fit_bubble(text, str(info.text), 0.78)
-@@ -1509,7 +1650,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1509,7 +1664,7 @@ func _make_entry(entry: String) -> Control:
  			var line := HBoxContainer.new()
  			column.add_child(line)
  			var bubble := PanelContainer.new()
@@ -107773,7 +108030,7 @@ index 0f2add4..1af65f8 100644
  			line.add_child(bubble)
  			var text := UI.label(str(info.text), size, UI.TEXT)
  			bubble.add_child(text)
-@@ -1518,7 +1659,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1518,7 +1673,7 @@ func _make_entry(entry: String) -> Control:
  			return column
  		"fail":
  			var panel := PanelContainer.new()
@@ -107782,7 +108039,7 @@ index 0f2add4..1af65f8 100644
  			var body := VBoxContainer.new()
  			body.add_theme_constant_override("separation", 6)
  			panel.add_child(body)
-@@ -1529,7 +1670,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1529,7 +1684,7 @@ func _make_entry(entry: String) -> Control:
  			return panel
  		"news", "notice":
  			var note := UI.label(str(info.text), size - 2, UI.WARN_TEXT if str(info.kind) == "notice" else UI.BODY)
@@ -107791,7 +108048,7 @@ index 0f2add4..1af65f8 100644
  			return note
  	var block := VBoxContainer.new()
  	block.add_theme_constant_override("separation", 4)
-@@ -1575,13 +1716,15 @@ func _refresh() -> void:
+@@ -1575,13 +1730,15 @@ func _refresh() -> void:
  	_refresh_shop_window()
  	# v149.29: a death ends the story (no succession); the life is told back,
  	# with what became of those left behind.
@@ -107809,7 +108066,7 @@ index 0f2add4..1af65f8 100644
  			_append(Chronicle.epilogue(world))
  	_drain_walker_notices()
  	_update_dialogue_input()
-@@ -1589,7 +1732,7 @@ func _refresh() -> void:
+@@ -1589,7 +1746,7 @@ func _refresh() -> void:
  	day_label.text = "%d日目" % _day_number()
  	clock_label.text = stamp.right(5)
  	place_label.text = location
@@ -107818,7 +108075,7 @@ index 0f2add4..1af65f8 100644
  	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
  	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
  	danger_label.text = "街：" + str(stage[0])
-@@ -1607,19 +1750,25 @@ func _refresh() -> void:
+@@ -1607,19 +1764,25 @@ func _refresh() -> void:
  	elif not horde.is_empty() and Navigation.indoor(location) and str(horde.place) in ["住宅街", "屋外"]:
  		danger_label.text = "群れが通過中" if str(horde.place) == "屋外" else "群れ接近"
  		stage = ["", 3]
@@ -107850,7 +108107,7 @@ index 0f2add4..1af65f8 100644
  	inventory_status.text = "食料 %.1f人日\n飲料水 %.1f L\n雨水 %.1f L\n現金 %d円\n住居耐久 %.0f / 100" % [float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),float(world.s.longplay.shelter_integrity)]
  	world_status.text = "%s / %s\n%s\n\n確認した報道\n%s" % [str(world.s.profile.name),str(world.s.profile.housing),str(world.s.profile.address),observed_news]
  	world_status.add_theme_font_size_override("font_size",18)
-@@ -1629,12 +1778,17 @@ func _refresh() -> void:
+@@ -1629,12 +1792,17 @@ func _refresh() -> void:
  	scene_view.update_view(location,world.hour_of_day(),str(world.s.weather),world.has_home_power() if Navigation.indoor(location) else bool(world.s.grid_online),world.can_trade(shop_id) if not shop_id.is_empty() else true,visible_count,visual_focus)
  	picture.texture = _base_texture()
  	# v149.29: after the end, the picture of how it ended.
@@ -107869,7 +108126,7 @@ index 0f2add4..1af65f8 100644
  	# v149.33: during an encounter the picture shows the fight as it stands.
  	if ending.is_empty() and float(world.s.health) > 0:
  		var fight_photo: String = Combat.picture_path(world) if Combat.active(world) else (Combat.picture_path(world, "fight_after") if combat_after else "")
-@@ -1642,22 +1796,55 @@ func _refresh() -> void:
+@@ -1642,22 +1810,55 @@ func _refresh() -> void:
  			picture.texture = load(fight_photo)
  			scene_view.ending = true
  			scene_view.queue_redraw()
@@ -107928,7 +108185,7 @@ index 0f2add4..1af65f8 100644
  	scene_caption.text = caption.get_slice("\n", 0) if main_layout.vertical else caption
  
  func _on_command(raw: String) -> void:
-@@ -1667,11 +1854,15 @@ func _on_command(raw: String) -> void:
+@@ -1667,11 +1868,15 @@ func _on_command(raw: String) -> void:
  	if cmd.length()>1200:_append("文章は1200文字以内で入力してください。何も実行していません。");return
  	command_input.clear()
  	command_input.release_focus()
@@ -107945,7 +108202,7 @@ index 0f2add4..1af65f8 100644
  		if cmd.contains("新しい世界") or cmd.contains("はじめから") or cmd.contains("最初から"):
  			_show_title()
  			return
-@@ -1704,6 +1895,8 @@ func _on_command(raw: String) -> void:
+@@ -1704,6 +1909,8 @@ func _on_command(raw: String) -> void:
  		return
  	if await _survivor_command(cmd):
  		return
@@ -107954,7 +108211,7 @@ index 0f2add4..1af65f8 100644
  	if _care_command(cmd):
  		return
  	if NPCConversation.normalize(cmd) == "提案を実行":
-@@ -1735,7 +1928,11 @@ func _on_command(raw: String) -> void:
+@@ -1735,7 +1942,11 @@ func _on_command(raw: String) -> void:
  			await _talk_to(dialogue.partner, speech)
  			return
  	var model_read := PlayerIntents.negated(cmd)   # a declining line is not guessed at
@@ -107967,7 +108224,7 @@ index 0f2add4..1af65f8 100644
  		# v149.24: the player's own action in free wording; the model names it,
  		# the game checks the line and runs the fixed command.
  		_set_local_inference(true)
-@@ -1766,6 +1963,9 @@ func _on_command(raw: String) -> void:
+@@ -1766,6 +1977,9 @@ func _on_command(raw: String) -> void:
  	if cancel_requested:
  		_append("文章の解釈を中断しました。何も実行していません。")
  		return
@@ -107977,7 +108234,7 @@ index 0f2add4..1af65f8 100644
  	if not last_plan.ok:_append(str(last_plan.clarification));return
  	await _run_plan(last_plan)
  
-@@ -1776,19 +1976,19 @@ func _update_dialogue_input() -> void:
+@@ -1776,19 +1990,19 @@ func _update_dialogue_input() -> void:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
  			dialogue.partner = -1
@@ -108000,7 +108257,7 @@ index 0f2add4..1af65f8 100644
  		convo_label.text = "%sと会話中" % partner_name
  		convo_avatar.text = partner_name.left(1)
  		_show_convo_face(Portraits.housemate_face(world, dialogue.partner))
-@@ -1803,10 +2003,12 @@ func _show_convo_face(texture: Texture2D) -> void:
+@@ -1803,10 +2017,12 @@ func _show_convo_face(texture: Texture2D) -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -108014,7 +108271,7 @@ index 0f2add4..1af65f8 100644
  	if Navigation.indoor(location) and Siege.porch(world) > 0 and float(world.s.health) > 0:
  		out.append("家の中から迎え撃つ")
  	if str(NeighborFate.state(world).stage) == "attack" and (Navigation.indoor(location) or location == str(NeighborFate._person(world).get("place", ""))):
-@@ -1817,8 +2019,14 @@ func _suggestions() -> Array:
+@@ -1817,8 +2033,14 @@ func _suggestions() -> Array:
  			"help": return ["手伝う", "断る"]
  			"refuge": return ["家に入れる", "断る"]
  		return ["玄関に出る", "居留守を使う"]
@@ -108030,7 +108287,7 @@ index 0f2add4..1af65f8 100644
  		if world.has_home_power() and not bool(world.s.get("lights_off", false)):
  			raid_chips.push_front("明かりを消す")
  		return raid_chips
-@@ -1844,6 +2052,8 @@ func _suggestions() -> Array:
+@@ -1844,6 +2066,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -108039,7 +108296,7 @@ index 0f2add4..1af65f8 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1899,6 +2109,11 @@ func _suggestions() -> Array:
+@@ -1899,6 +2123,11 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
@@ -108051,7 +108308,7 @@ index 0f2add4..1af65f8 100644
  	if location == "避難所" and Shelter.is_open(world):
  		out.append("配給を受け取る")
  		out.append("避難所の様子を聞く")
-@@ -1910,6 +2125,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +2139,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -108060,7 +108317,7 @@ index 0f2add4..1af65f8 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1946,7 +2163,7 @@ func _suggestions() -> Array:
+@@ -1946,7 +2177,7 @@ func _suggestions() -> Array:
  		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
  	for sid in Survivors.here(world, location):
@@ -108069,7 +108326,7 @@ index 0f2add4..1af65f8 100644
  			out.push_front("%sに話しかける" % Survivors.call_name(world, sid))
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -1971,11 +2188,62 @@ func _suggestions() -> Array:
+@@ -1971,11 +2202,62 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -108132,7 +108389,7 @@ index 0f2add4..1af65f8 100644
  	return out.slice(0, 6)
  
  func _refresh_suggestions() -> void:
-@@ -1984,7 +2252,7 @@ func _refresh_suggestions() -> void:
+@@ -1984,7 +2266,7 @@ func _refresh_suggestions() -> void:
  	for child in chips_row.get_children():
  		chips_row.remove_child(child)
  		child.queue_free()
@@ -108141,17 +108398,17 @@ index 0f2add4..1af65f8 100644
  	if (not ui_show_chips and not ended) or (world.s.health <= 0 and not ended):
  		chips_scroll.visible = false
  		return
-@@ -2614,7 +2882,19 @@ func _drain_walker_notices() -> void:
+@@ -2614,7 +2896,19 @@ func _drain_walker_notices() -> void:
  	var w := Walkers.ensure(world)
  	var notices: Array = w.notices
  	w.notices = []
 +	# v149.35: the same warning over and over (a long sleep, a long wait) is
 +	# told once, with how often it came back.
 +	var times := {}
- 	for line in notices:
++	for line in notices:
 +		times[str(line)] = int(times.get(str(line), 0)) + 1
 +	var told := {}
-+	for line in notices:
+ 	for line in notices:
 +		if told.has(str(line)):
 +			continue
 +		told[str(line)] = true
@@ -108161,7 +108418,7 @@ index 0f2add4..1af65f8 100644
  		var said := false
  		for person in world.s.household_members:
  			said = said or str(line).begins_with(str(person.name) + "「")
-@@ -2838,7 +3118,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +3132,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -108171,7 +108428,7 @@ index 0f2add4..1af65f8 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -2955,10 +3236,35 @@ func _process_leavers() -> void:
+@@ -2955,10 +3250,35 @@ func _process_leavers() -> void:
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
  
@@ -108207,7 +108464,7 @@ index 0f2add4..1af65f8 100644
  	var kind := ""
  	if NPCMemory._mentions(cmd, ["追い払", "怒鳴", "大声", "出ていけ", "帰れ", "叫"]):
  		kind = "shout"
-@@ -3129,11 +3435,20 @@ func _eat_before_sleep() -> String:
+@@ -3129,11 +3449,20 @@ func _eat_before_sleep() -> String:
  
  func _shelter_command(cmd: String) -> bool:
  	if location != "避難所":
@@ -108228,7 +108485,7 @@ index 0f2add4..1af65f8 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,9 +3526,279 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,9 +3540,279 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -108509,7 +108766,7 @@ index 0f2add4..1af65f8 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -3457,6 +4042,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +4056,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -108519,7 +108776,7 @@ index 0f2add4..1af65f8 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +4061,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +4075,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -108538,7 +108795,7 @@ index 0f2add4..1af65f8 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,7 +4091,23 @@ func _district_map() -> String:
+@@ -3494,7 +4105,23 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -108562,7 +108819,7 @@ index 0f2add4..1af65f8 100644
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
  		return _district_map()
-@@ -3506,6 +4119,146 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +4133,146 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -108709,7 +108966,7 @@ index 0f2add4..1af65f8 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +4292,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +4306,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -108718,7 +108975,7 @@ index 0f2add4..1af65f8 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3670,18 +4423,23 @@ func _execute_command(cmd: String) -> String:
+@@ -3670,18 +4437,23 @@ func _execute_command(cmd: String) -> String:
  		if location != "屋外": return "探索には屋外に出る必要がある。"
  		return world.longplay_action("scavenge")
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
@@ -108748,7 +109005,7 @@ index 0f2add4..1af65f8 100644
  		var result: String = world.action("harvest")
  		if result.begins_with("収穫した"): world.advance(30)
  		return result
-@@ -3696,7 +4454,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4468,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -108758,7 +109015,7 @@ index 0f2add4..1af65f8 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3709,7 +4468,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3709,7 +4482,12 @@ func _execute_command(cmd: String) -> String:
  				return "食事をするには台所へ行こう。"
  		var light_meal := float(world.s.hunger) < 15.0
  		if not _eat_here():
@@ -108772,7 +109029,7 @@ index 0f2add4..1af65f8 100644
  		# A hungry person eats a proper meal, not one bite (up to 3 portions).
  		var portions := 1
  		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
-@@ -3718,7 +4482,11 @@ func _execute_command(cmd: String) -> String:
+@@ -3718,7 +4496,11 @@ func _execute_command(cmd: String) -> String:
  		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
  	if cmd.contains("水を飲") or cmd.contains("飲み水"):
  		if not _drink_here():
@@ -108785,7 +109042,7 @@ index 0f2add4..1af65f8 100644
  		var cups := 1
  		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
  			cups += 1
-@@ -3754,6 +4522,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4536,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -108800,7 +109057,7 @@ index 0f2add4..1af65f8 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3775,7 +4551,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3775,7 +4565,12 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("周囲") or cmd.contains("見回"):
  		world.advance(1)
  		return _look()
@@ -108814,7 +109071,7 @@ index 0f2add4..1af65f8 100644
  
  
  # Illustration choice is a pure function of current location, observation and
-@@ -3795,6 +4576,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4590,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -108855,7 +109112,7 @@ index 0f2add4..1af65f8 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4653,31 @@ func _scene_caption() -> String:
+@@ -3838,7 +4667,31 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -108887,7 +109144,7 @@ index 0f2add4..1af65f8 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4697,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4711,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -108906,7 +109163,7 @@ index 0f2add4..1af65f8 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4724,9 @@ func _site() -> String:
+@@ -3875,6 +4738,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -108916,7 +109173,7 @@ index 0f2add4..1af65f8 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4758,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4772,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -108925,7 +109182,7 @@ index 0f2add4..1af65f8 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4782,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4796,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -108940,7 +109197,7 @@ index 0f2add4..1af65f8 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4801,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4815,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -108953,7 +109210,7 @@ index 0f2add4..1af65f8 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4822,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4836,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -108964,7 +109221,7 @@ index 0f2add4..1af65f8 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4905,16 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4919,16 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -111703,7 +111960,7 @@ index 0000000..f6a012e
 +uid://bcxlhlowpkpj2
 diff --git a/scripts/residents.gd b/scripts/residents.gd
 new file mode 100644
-index 0000000..f02cb01
+index 0000000..7b30797
 --- /dev/null
 +++ b/scripts/residents.gd
 @@ -0,0 +1,1102 @@
@@ -112642,7 +112899,7 @@ index 0000000..f02cb01
 +		return "ドア越しに、%sのかすれた声がした。「すみません……食べる物、少しでも分けてもらえませんか。%s」（「食料を分ける」で渡せる）" % [name, "子どもがいるんです" if kids else "もう何日も、ろくに食べていなくて"]
 +	if int(w.kindness) >= 65 and food >= 6.0 * n and not flags & F_GAVE:
 +		var bag: Dictionary = world.s.district.bag
-+		if float(bag.food) + 1.0 <= District.FOOD_LIMIT:
++		if float(bag.food) + 1.0 <= load("res://scripts/items.gd").food_limit(world, bag):
 +			r[P_FOOD] = food - 1.0
 +			r[P_FLAGS] = int(r[P_FLAGS]) | F_GAVE
 +			bag.food = float(bag.food) + 1.0
@@ -112799,7 +113056,7 @@ index 0000000..f02cb01
 +		world.s.inside = {}
 +		return "錠が外れた瞬間、中から%sが飛び出してきた。%s 振り回された何かが肩に当たり、階段まで押し戻された。ドアがまた閉ざされ、内側から何かを積み上げる音がする。" % [name, "「子どもに手を出すな！」" if kids else "「出ていけ！」"]
 +	var bag: Dictionary = world.s.district.bag
-+	var take := minf(float(r[P_FOOD]), District.FOOD_LIMIT - float(bag.food))
++	var take := minf(float(r[P_FOOD]), maxf(0.0, load("res://scripts/items.gd").food_limit(world, bag) - float(bag.food)))
 +	r[P_FOOD] = float(r[P_FOOD]) - take
 +	bag.food = float(bag.food) + take
 +	r[P_FLAGS] = int(r[P_FLAGS]) | F_ROBBED
@@ -113756,7 +114013,7 @@ index e417aa6..2851046 100644
  ## Four hours at the gate and the entrance: newcomers are checked, the gate
  ## is looked after, and the watch is stronger tonight.
 diff --git a/scripts/shop_window.gd b/scripts/shop_window.gd
-index 79480a1..8c27599 100644
+index 79480a1..087480f 100644
 --- a/scripts/shop_window.gd
 +++ b/scripts/shop_window.gd
 @@ -28,6 +28,23 @@ static func offers(game_node) -> Array:
@@ -113803,6 +114060,15 @@ index 79480a1..8c27599 100644
  	var column := VBoxContainer.new()
  	column.add_theme_constant_override("separation", 8)
  	add_child(column)
+@@ -137,7 +164,7 @@ func _fill(items: Array) -> void:
+ 	var bag: Dictionary = world.s.district.get("bag", {})
+ 	var carry := ""
+ 	if place in ["コンビニ", "デパート地下"]:
+-		carry = "\n持てる量：食料 %.0f／%.0f ・ 水 %.0f／%.0f L" % [float(bag.get("food", 0.0)), District.FOOD_LIMIT, float(bag.get("water", 0.0)), District.WATER_LIMIT]
++		carry = "\nリュック：%s（食料 %.1f人日 ・ 水 %.1f L）" % [load("res://scripts/items.gd").weight_text(world, bag), float(bag.get("food", 0.0)), float(bag.get("water", 0.0))]
+ 	cash_label.text = "所持金 %d円%s" % [int(world.s.cash), carry]
+ 	for child in list_box.get_children():
+ 		list_box.remove_child(child)
 diff --git a/scripts/site_rooms.gd b/scripts/site_rooms.gd
 new file mode 100644
 index 0000000..1359ac5
@@ -114115,7 +114381,7 @@ index 0000000..8ecfd8f
 @@ -0,0 +1 @@
 +uid://bpirh6ao8ekbg
 diff --git a/scripts/survivors.gd b/scripts/survivors.gd
-index 5ea74f7..5edfd06 100644
+index 5ea74f7..192f852 100644
 --- a/scripts/survivors.gd
 +++ b/scripts/survivors.gd
 @@ -89,11 +89,92 @@ static func _pick_weighted(rng: RandomNumberGenerator, weights: Dictionary) -> S
@@ -114379,6 +114645,15 @@ index 5ea74f7..5edfd06 100644
  			return "%s「%sは、そんなに持ってない」" % [name, Trade.ITEMS[item].label]
  	if give.is_empty():
  		var item: String = want.keys()[0]
+@@ -562,7 +722,7 @@ static func close(world, id: String, deal: Dictionary) -> String:
+ 			"npc_lacks":
+ 				return "%s「%sは、そんなに持ってない」" % [name, Trade.ITEMS.get(str(verdict.item), {"label": "お金"}).label]
+ 			"no_room":
+-				return "これ以上は持ちきれない。（食料4人日分・水8Lまで）"
++				return "これ以上は持ちきれない。（リュックが重さの上限に近い）"
+ 		var item: String = deal.get.keys()[0]
+ 		var options: Array = Trade.asking(world, id, item, float(deal.get[item]))
+ 		if options.is_empty():
 @@ -622,7 +782,9 @@ static func ask(world, id: String) -> String:
  		return "%s「さあ……ニュースで言ってる以上のことは、何も知らないですね」" % call_name(world, id)
  	if int(p.trust) < 50:
@@ -114861,7 +115136,7 @@ index 0000000..d12fd61
 @@ -0,0 +1 @@
 +uid://c0drhclfqocjc
 diff --git a/scripts/trade.gd b/scripts/trade.gd
-index b76af42..388e8a6 100644
+index b76af42..31a17ab 100644
 --- a/scripts/trade.gd
 +++ b/scripts/trade.gd
 @@ -82,6 +82,22 @@ static func goods(world, id: String) -> Dictionary:
@@ -114887,7 +115162,19 @@ index b76af42..388e8a6 100644
  ## What the player has on them, in the same units.
  static func held(world, item: String) -> float:
  	var s = world.s
-@@ -134,8 +150,16 @@ const SCARCITY := {"normal": 1.0, "alert": 1.2, "disrupted": 1.8, "emergency": 3
+@@ -115,8 +131,9 @@ static func _add_player(world, item: String, amount: float) -> void:
+ ## Room left to carry food and water by hand.
+ static func room(world, item: String) -> float:
+ 	match item:
+-		"food": return 4.0 - float(world.s.district.bag.food)
+-		"water": return 8.0 - float(world.s.district.bag.water)
++		# v149.39: by the bag's weight.
++		"food": return load("res://scripts/items.gd").food_limit(world, world.s.district.bag) - float(world.s.district.bag.food)
++		"water": return load("res://scripts/items.gd").water_limit(world, world.s.district.bag) - float(world.s.district.bag.water)
+ 	return 1000.0
+ 
+ # ---------------------------------------------------------------------------
+@@ -134,8 +151,16 @@ const SCARCITY := {"normal": 1.0, "alert": 1.2, "disrupted": 1.8, "emergency": 3
  
  ## How far this person still trusts cash (0 = worthless to them). Never just
  ## the town's state: shops still open, their own habits and their hopes count.
@@ -114905,7 +115192,7 @@ index b76af42..388e8a6 100644
  	var base: float = {"normal": 1.0, "alert": 0.95, "disrupted": 0.6, "emergency": 0.25, "devastated": 0.08}.get(phase(world), 1.0)
  	var sites: Dictionary = world.s.get("district", {}).get("sites", {})
  	var open := 0
-@@ -151,7 +175,7 @@ static func cash_trust(world, id: String) -> float:
+@@ -151,7 +176,7 @@ static func cash_trust(world, id: String) -> float:
  
  static func reserve(world, id: String, item: String) -> float:
  	var p: Dictionary = world.s.survivors.people[id]
@@ -114914,7 +115201,7 @@ index b76af42..388e8a6 100644
  	if DAILY.has(item):
  		return float(DAILY[item]) * mouths * 2.0
  	if item == "bandage" and str(p.get("tag", "")) == "injured" and not bool(p.get("treated", false)):
-@@ -170,7 +194,7 @@ static func _unit_base(world, item: String) -> float:
+@@ -170,7 +195,7 @@ static func _unit_base(world, item: String) -> float:
  static func give_cost(world, id: String, item: String, qty: float) -> float:
  	if item == "cash":
  		return qty * cash_trust(world, id)
@@ -114923,7 +115210,7 @@ index b76af42..388e8a6 100644
  	var have := float(g.get(item, 0.0))
  	var keep := reserve(world, id, item)
  	var unit := _unit_base(world, item)
-@@ -186,7 +210,7 @@ static func receive_value(world, id: String, item: String, qty: float) -> float:
+@@ -186,7 +211,7 @@ static func receive_value(world, id: String, item: String, qty: float) -> float:
  	if item == "cash":
  		return qty * cash_trust(world, id)
  	var p: Dictionary = world.s.survivors.people[id]
@@ -114932,7 +115219,7 @@ index b76af42..388e8a6 100644
  	var have := float(g.get(item, 0.0))
  	var keep := reserve(world, id, item)
  	var unit := _unit_base(world, item)
-@@ -219,7 +243,7 @@ static func margin(world, id: String) -> float:
+@@ -219,7 +244,7 @@ static func margin(world, id: String) -> float:
  ## Checks a proposal against both sides' holdings and the person's judgement.
  ## Returns {ok, reason, got, gave} (got/gave: value to them).
  static func judge(world, id: String, deal: Dictionary) -> Dictionary:
@@ -114941,7 +115228,7 @@ index b76af42..388e8a6 100644
  	var p: Dictionary = world.s.survivors.people[id]
  	for item in deal.get("give", {}):
  		if held(world, item) < float(deal.give[item]):
-@@ -247,7 +271,7 @@ static func execute(world, id: String, deal: Dictionary) -> String:
+@@ -247,7 +272,7 @@ static func execute(world, id: String, deal: Dictionary) -> String:
  	if not bool(verdict.ok):
  		return str(verdict.reason)
  	var p: Dictionary = world.s.survivors.people[id]
@@ -114950,7 +115237,7 @@ index b76af42..388e8a6 100644
  	for item in deal.get("give", {}):
  		var q := float(deal.give[item])
  		_add_player(world, item, -q)
-@@ -307,9 +331,25 @@ static func daily(world, id: String) -> void:
+@@ -307,9 +332,25 @@ static func daily(world, id: String) -> void:
  	var g := goods(world, id)
  	var mouths := 1.0 + float(p.get("dependents", 0))
  	var day := int(world.s.minute) / 1440
@@ -114976,7 +115263,7 @@ index b76af42..388e8a6 100644
  	# Going out for supplies: the braver find more, less as the town empties.
  	var courage := float(p.get("traits", {}).get("courage", 50))
  	var luck := _hash(id, "forage-%d" % day) % 100
-@@ -322,6 +362,20 @@ static func daily(world, id: String) -> void:
+@@ -322,6 +363,20 @@ static func daily(world, id: String) -> void:
  			g.food = float(g.food) + mouths
  			g.water = float(g.water) + 2.0 * mouths
  		return
@@ -114997,7 +115284,7 @@ index b76af42..388e8a6 100644
  	if float(luck) < courage * town * 0.6:
  		g.food = float(g.get("food", 0.0)) + 1.0
  	if float(luck) < courage * town * 0.9:
-@@ -350,7 +404,7 @@ static func side_text(side: Dictionary) -> String:
+@@ -350,7 +405,7 @@ static func side_text(side: Dictionary) -> String:
  
  ## What they could part with now, and what they are short of.
  static func spare(world, id: String) -> Dictionary:
@@ -115006,7 +115293,7 @@ index b76af42..388e8a6 100644
  	var out := {}
  	for item in g:
  		if not ITEMS.has(item):
-@@ -363,7 +417,7 @@ static func spare(world, id: String) -> Dictionary:
+@@ -363,7 +418,7 @@ static func spare(world, id: String) -> Dictionary:
  	return out
  
  static func short_of(world, id: String) -> Array:
@@ -115521,7 +115808,7 @@ index 1e93ac4..dfc1830 100644
  const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
  ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 5d08c00..cc1105f 100644
+index 5d08c00..d791240 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -1,5 +1,6 @@
@@ -115649,6 +115936,15 @@ index 5d08c00..cc1105f 100644
  	if data.has("shelter") and not Shelter.valid(data.shelter):
  		return false
  	if data.has("raid") and not Raiders.valid(data.raid):
+@@ -452,7 +479,7 @@ func validate_state(data: Dictionary) -> bool:
+ 			return false
+ 		if person.has("water_errand") and not HouseholdErrands.valid(person.water_errand):
+ 			return false
+-		if person.has("request_bag") and not District._supplies(person.request_bag, District.FOOD_LIMIT, District.WATER_LIMIT):
++		if person.has("request_bag") and not District._supplies(person.request_bag, 200.0, 200.0):
+ 			return false
+ 		var goods = person.get("request_goods", {})
+ 		if not goods is Dictionary or goods.size() > CATALOG.size():
 @@ -513,6 +540,7 @@ func action(kind: String, household: bool = false) -> String:
  		return "補強を1段外し、木材2と部品1を回収した（%d分）。"%elapsed
  	if kind=="tend":
@@ -116814,6 +117110,33 @@ index 88e244a..5b785a4 100644
  	for spec in [["alert", 15, "alert"], ["emergency", 500, "collapse"]]:
  		w.s.society = spec[0]
  		w.s.regional_cases = spec[1]
+diff --git a/tests/test_district28.gd b/tests/test_district28.gd
+index e8b29c7..e15c004 100644
+--- a/tests/test_district28.gd
++++ b/tests/test_district28.gd
+@@ -49,15 +49,19 @@ func run() -> void:
+ 	await game._on_command("他の家に籠城する")
+ 	check(game.location == "近所の空き家" and state.sites[game.location].level == 1, "vacant house can become a shelter via one text command")
+ 	var house: Dictionary = state.sites["近所の空き家"]
++	# v149.39: the bag is limited by weight (items.gd).
++	var Items = load("res://scripts/items.gd")
++	var total := float(house.food) + float(state.bag.food)
+ 	await game._on_command("物資を探索する")
+-	check(house.food == 0.5 and house.water == 0.0 and state.bag.food == 4.0, "searching consumes local stock and obeys carrying limits")
++	check(house.water == 0.0 and is_equal_approx(float(house.food) + float(state.bag.food), total) and Items.weight(state.bag) <= Items.capacity(world) + 0.001, "searching consumes local stock and obeys carrying limits")
++	var carried := float(state.bag.food)
+ 	await game._on_command("物資を置く")
+-	check(house.cache.food == 4.0 and state.bag.food == 0.0, "stashing moves supplies from the bag")
++	check(is_equal_approx(float(house.cache.food), carried) and state.bag.food == 0.0, "stashing moves supplies from the bag")
+ 	world.s.hunger = 39.0
+ 	world.s.thirst = 24.0
+ 	var home_stock := Vector2(world.s.food, world.s.water)
+ 	await game._on_command("ここで一晩過ごす")
+-	check(game.active_wait.elapsed == 480 and house.cache.food < 4 and house.cache.water < 7, "overnight stay uses this shelter's supplies")
++	check(game.active_wait.elapsed == 480 and float(house.cache.food) < carried and house.cache.water < 7, "overnight stay uses this shelter's supplies")
+ 	check(home_stock == Vector2(world.s.food, world.s.water), "away from home never draws on household food or water")
+ 	world.s.inventory.wood = 2
+ 	world.s.inventory.parts = 1
 diff --git a/tests/test_door_invite149_35.gd b/tests/test_door_invite149_35.gd
 new file mode 100644
 index 0000000..f1aa070
@@ -116892,10 +117215,10 @@ index 0000000..77a1d59
 +uid://dy6gi76xp75mb
 diff --git a/tests/test_dwellings149_37.gd b/tests/test_dwellings149_37.gd
 new file mode 100644
-index 0000000..4ee0064
+index 0000000..803d901
 --- /dev/null
 +++ b/tests/test_dwellings149_37.gd
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,122 @@
 +extends SceneTree
 +## v149.37: homes searched one at a time — the same home is the same every
 +## time, only what changed is saved, locked doors can be forced (noisily),
@@ -116955,15 +117278,19 @@ index 0000000..4ee0064
 +	var got := float(w.s.district.bag.food) - food
 +	check(got > 0.0 and float(District.houses(w, "団地").food) == pool - got, "the kitchen gives food, taken from the area's store (shared with survivors)")
 +	# What cannot be carried stays there to come back for.
++	# v149.39: full by weight (12kg): 4 people-days and 9.5L leave 0.1kg.
 +	w.s.district.bag.food = 4.0
++	w.s.district.bag.water = 9.5
 +	var bedroom_i := open_i
 +	var st0: Dictionary = Dwellings.state(w, "団地", open_i)
 +	st0.left = {"台所": {"food": 2.0}}
 +	await g._on_command("台所を調べる")
 +	check(g.log_entries[-1].contains("置いてきた"), "a full bag leaves food behind in the room: " + g.log_entries[-1].left(80))
++	var first_take := float(w.s.district.bag.food) - 4.0
 +	w.s.district.bag.food = 0.0
++	w.s.district.bag.water = 0.0
 +	await g._on_command("台所を調べる")
-+	check(float(w.s.district.bag.food) == 2.0, "and it is still there when you come back")
++	check(is_equal_approx(float(w.s.district.bag.food), 2.0 - first_take), "and it is still there when you come back")
 +	await g._on_command("台所を調べる")
 +	check(g.log_entries[-1].contains("もう調べた"), "a room searched and emptied stays searched")
 +	# v149.38: no room photo made yet → nothing borrowed; the frame shows the address.
@@ -117144,6 +117471,95 @@ index 0000000..a0788b2
 +++ b/tests/test_hospital_rooms149_35.gd.uid
 @@ -0,0 +1 @@
 +uid://6on0qhklmjld
+diff --git a/tests/test_items149_39.gd b/tests/test_items149_39.gd
+new file mode 100644
+index 0000000..03a8043
+--- /dev/null
++++ b/tests/test_items149_39.gd
+@@ -0,0 +1,83 @@
++extends SceneTree
++## v149.39: the item ledger reads and writes what the game already kept
++## (food, wood, cigarettes, blankets, equipment) and keeps new things in
++## s.items; the bag is limited by weight (12kg daypack, 20kg hiking pack).
++const Main = preload("res://main.tscn")
++const Items = preload("res://scripts/items.gd")
++const Catalog = preload("res://scripts/item_catalog.gd")
++var failures := 0
++func check(ok: bool, what: String) -> void:
++	if not ok:
++		failures += 1
++		push_error("FAIL: " + what)
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	# The ledger is whole and sane.
++	check(Catalog.ITEMS.size() >= 400, "ledger has the items: %d" % Catalog.ITEMS.size())
++	for id in Catalog.ITEMS:
++		var it: Dictionary = Catalog.ITEMS[id]
++		check(float(it.kg) >= 0.0 and not str(it.name).is_empty() and not str(it.unit).is_empty(), "item %s is complete" % id)
++		for t in it.tags:
++			check(Catalog.TAGS.has(t), "tag %s of %s is known" % [t, id])
++	# Old places, read and written under ledger ids.
++	w.s.food = 5.0
++	w.s.inventory.wood = 2
++	w.s.cigarettes = 20
++	check(Items.count(w, "food") == 5.0 and Items.count(w, "wood") == 2.0 and Items.count(w, "cigarettes") == 20.0, "old stores read")
++	Items.add(w, "wood", 1)
++	check(int(w.s.inventory.wood) == 3 and w.s.inventory.wood is int, "wood stays a whole number in the inventory")
++	check(Items.take(w, "food", 2.0) == 2.0 and is_equal_approx(float(w.s.food), 3.0), "food taken from the home store")
++	Items.add(w, "blanket", 2)
++	check(Items.count(w, "blanket") == 2.0, "blankets kept where the cold rules read them")
++	# New things.
++	Items.add(w, "duct_tape", 1)
++	Items.add(w, "candle", 3)
++	check(Items.count(w, "duct_tape") == 1.0 and w.s.items.has("candle"), "new things in s.items")
++	check("candle" in Items.with_tag(w, "light"), "found by tag")
++	check(Items.take(w, "candle", 5) == 3.0 and not w.s.items.has("candle"), "taking more than there is takes what is there")
++	check(Catalog.named_in("老眼鏡で火をおこす") == "reading_glasses", "named in a sentence")
++	# Weight.
++	var bag: Dictionary = w.s.district.bag
++	bag.food = 4.0; bag.water = 8.0
++	check(is_equal_approx(Items.weight(bag), 10.4), "4 people-days and 8L weigh 10.4kg: %.2f" % Items.weight(bag))
++	check(is_equal_approx(Items.capacity(w), 12.0), "a daypack holds 12kg")
++	check(is_equal_approx(Items.food_limit(w, bag), 4.0 + 1.6 / 0.6), "room for a little more food")
++	bag.items = {"plywood": 1}
++	check(Items.room_kg(w, bag) == 0.0, "a sheet of plywood fills it")
++	bag.items = {}
++	Items.add(w, "hiking_pack", 1)
++	check(is_equal_approx(Items.capacity(w), 20.0), "a hiking pack holds 20kg")
++	Items.take(w, "hiking_pack", 1)
++	# Taking from home loads by weight: water stops when the pack is full.
++	bag.food = 0.0; bag.water = 0.0
++	w.s.food = 50.0; w.s.water = 50.0
++	g.location = "玄関"
++	var said := ""
++	for k in 6:
++		g.log_entries.clear()
++		await g._on_command("物資を持っていく")
++		said += str(g.log_entries)
++	check(Items.weight(bag) <= Items.capacity(w) + 0.001, "the bag never weighs more than it holds: %.2f" % Items.weight(bag))
++	check(Items.weight(bag) > Items.capacity(w) - 1.0, "and it fills up: %.2f" % Items.weight(bag))
++	check(said.contains("kg"), "the bag line says the weight: " + said.left(200))
++	# Saved and loaded.
++	Items.add(w, "rope", 2)
++	var path := "user://items_test.sav"
++	w.save_file(path)
++	w.s.items = {}
++	w.load_file(path)
++	check(Items.count(w, "rope") == 2.0 and Items.count(w, "duct_tape") == 1.0, "new things survive a save")
++	# An old save without s.items still reads.
++	w.s.erase("items")
++	check(Items.count(w, "rope") == 0.0 and Items.on_hand(w).size() > 0, "an old save reads")
++	print("items: %d failures" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_lair149_35.gd b/tests/test_lair149_35.gd
 new file mode 100644
 index 0000000..f47a3b0
@@ -117489,6 +117905,13 @@ index 0000000..6ddf22b
 +	check(str(w.s.get("scene_photo", {}).get("name", "")) != "lair_talk", "no handing-over photo for a member")
 +	print("lair member ask: %d failures" % failures)
 +	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_lair_member_ask149_35.gd.uid b/tests/test_lair_member_ask149_35.gd.uid
+new file mode 100644
+index 0000000..41fbc5b
+--- /dev/null
++++ b/tests/test_lair_member_ask149_35.gd.uid
+@@ -0,0 +1 @@
++uid://c6pu01jdpcj2l
 diff --git a/tests/test_meal_plan149_35.gd b/tests/test_meal_plan149_35.gd
 new file mode 100644
 index 0000000..8a5b274
@@ -118280,6 +118703,20 @@ index 0000000..7f0b8ba
 +++ b/tests/test_places_planters149_35.gd.uid
 @@ -0,0 +1 @@
 +uid://bqoj1hmwxypih
+diff --git a/tests/test_playtest149_24.gd b/tests/test_playtest149_24.gd
+index f79845f..c1299b2 100644
+--- a/tests/test_playtest149_24.gd
++++ b/tests/test_playtest149_24.gd
+@@ -48,7 +48,9 @@ func run() -> void:
+ 	await g._on_command("寝る")
+ 	check(g.location == "寝室" and float(w.s.fatigue) < 30.0, "sleep walks to the bedroom first")
+ 	# Konbini refusals say why.
++	# v149.39: by weight: 3 people-days (1.8kg) and 9.3L leave room for one more.
+ 	w.s.district.bag.food = 3.0
++	w.s.district.bag.water = 9.3
+ 	var said: String = g.District.buy(w, "コンビニ", "food", 3)
+ 	check(said.contains("あと1個まで"), "a full bag says how many more fit: " + said)
+ 	# Shops stay clear while society works.
 diff --git a/tests/test_raid_scene149_35.gd b/tests/test_raid_scene149_35.gd
 new file mode 100644
 index 0000000..de30140
