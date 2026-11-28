@@ -100278,6 +100278,130 @@ index 0000000..faf4633
 +		print(JSON.stringify({"text": text, "cmd": cmd, "via": via, "ok": good, "raw": raw, "ms": ms}))
 +	print(JSON.stringify({"summary": {"n": CASES.size(), "ok": ok, "wrong_action": wrong, "model_calls": calls, "avg_ms": (total_ms / maxi(1, calls))}}))
 +	quit()
+diff --git a/qa/items_audit.gd b/qa/items_audit.gd
+new file mode 100644
+index 0000000..191c0bd
+--- /dev/null
++++ b/qa/items_audit.gd
+@@ -0,0 +1,118 @@
++extends SceneTree
++## v149.39: every thing of the ledger, tried with every verb that might use it,
++## at home and outside, from the same starting state. Reports answers that
++## look broken (raw ids, format marks, "not had" when had, negative stock,
++## nothing said), and which things no verb ever put to use.
++const Main = preload("res://main.tscn")
++const Items = preload("res://scripts/items.gd")
++const IA = preload("res://scripts/item_actions.gd")
++const PI = preload("res://scripts/player_intents.gd")
++const Catalog = preload("res://scripts/item_catalog.gd")
++var g
++var w
++var issues := {}
++var used := {}
++func note(k: String, d: String) -> void:
++	var key := k + " | " + d.left(150)
++	issues[key] = int(issues.get(key, 0)) + 1
++func _initialize() -> void:
++	call_deferred("run")
++func goto(place: String) -> void:
++	g.location = place
++	g._sync_player_position()
++	w.set_meta("player_place", place)
++	w.set_meta("player_at_home", load("res://scripts/navigation.gd").indoor(place))
++func fingerprint() -> String:
++	var keep := {}
++	for k in ["food", "water", "rain_water", "hunger", "thirst", "health", "fatigue", "items", "inventory", "fort", "traps", "lamp", "blackout", "barricade", "door_hp", "door_broken", "raw_carry", "campfire", "gas_cans", "cash", "equipment", "radio", "cigarettes", "plots", "signs", "daily_use", "bank_used", "lamp_batteries", "longplay", "rescue", "mood"]:
++		keep[k] = w.s.get(k)
++	keep["bag"] = w.s.district.bag
++	keep["cold"] = w.s.get("cold", {})
++	keep["phone"] = w.s.sim.get("phone_charge", 0)
++	keep["wounds"] = load("res://scripts/weapons.gd").state(w).wounds
++	keep["weapons"] = load("res://scripts/weapons.gd").state(w).weapons
++	return JSON.stringify(keep)
++func run() -> void:
++	g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 1
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	w = g.world
++	w.s.society = "emergency"
++	w.s.grid_online = false
++	w.s.hunger = 60.0; w.s.thirst = 60.0; w.s.health = 70.0
++	w.s.rain_water = 8.0
++	w.s.longplay.shelter_integrity = 70.0
++	load("res://scripts/weapons.gd").wound(w, "arms", "cut")
++	load("res://scripts/weapons.gd").wound(w, "legs", "bruise")
++	w.s.minute = int(w.s.minute) / 1440 * 1440 + 1440 * 30
++	w.s.minute = int(w.s.minute) + ((21 - int(w.hour_of_day()) + 48) % 24) * 60
++	# A household's helpers, so a verb is not refused for lack of a second thing.
++	for id in ["lighter", "matches", "batteries_aa", "nails", "hammer", "duct_tape", "string", "pot", "cassette_stove", "scissors", "plywood", "empty_bottle", "cloth" ]:
++		if Catalog.ITEMS.has(id):
++			Items.add(w, id, 3)
++	w.s.gas_cans = 3.0
++	w.s.water = 10.0
++	var snap: Dictionary = w.s.duplicate(true)
++	var verbs: Array = PI.ITEM_VERBS.keys()
++	var places := {"home": "居間", "kitchen": "台所", "door": "玄関", "out": "公園", "river": "川沿いの土手", "street": "大通り"}
++	var n := 0
++	for id in Catalog.ITEMS:
++		var it: Dictionary = Catalog.ITEMS[id]
++		var name := str(it.name)
++		for verb in verbs + ["insulate", "battery", "lookout", "wash", "furniture"]:
++			var tpl: String = {"insulate": "{i}を窓に貼って断熱する", "battery": "{i}に電池を入れる", "lookout": "{i}で外を見渡す", "wash": "{i}で体を拭く", "furniture": "{i}で本棚を解体する"}.get(verb, "")
++			if tpl.is_empty():
++				if verb == "siphon" and not id in ["gasoline", "kerosene"]:
++					continue
++				tpl = str(PI.ITEM_VERBS[verb][1])
++			var cmd := tpl.replace("{i}", name).replace("{t}", {"fortify": "窓", "repair": "家", "tie": "裏口", "write": "SOS", "trap": "玄関"}.get(verb, ""))
++			if not IA.recognises(cmd):
++				continue
++			for where in (["out", "river", "street"] if verb in ["fish", "forage", "siphon", "campfire", "draw"] else (["kitchen"] if verb in ["eat", "drink", "boil", "filter"] else ["home"])):
++				w.s = snap.duplicate(true)
++				Items.add(w, str(id), 2)
++				if where in ["out", "river", "street"]:
++					if not w.s.district.bag.get("items") is Dictionary:
++						w.s.district.bag.items = {}
++					w.s.district.bag.items[id] = 2.0
++					for h in ["lighter", "jerry_can", "siphon_pump", "water_tank"]:
++						w.s.district.bag.items[h] = 1.0
++				goto(str(places[where]))
++				var before := fingerprint()
++				g.log_entries.clear()
++				var said: String = IA.handle(g, cmd)
++				n += 1
++				if said.is_empty():
++					continue
++				if said.contains("%s") or said.contains("%d") or said.contains("%.") or said.contains("{") or RegEx.create_from_string("[a-z]{3,}_[a-z]+").search(said) != null:
++					note("raw text", "%s: %s => %s" % [verb, cmd, said])
++				if said.contains("%sを持っていない" % name) and (Items.count(w, str(id)) > 0.0 or Items.bag_count(w, str(id)) > 0.0):
++					note("says not had", "%s: %s => %s" % [verb, cmd, said])
++				for k in w.s.get("items", {}):
++					if float(w.s.items[k]) < 0.0:
++						note("negative stock", "%s %s after %s" % [k, w.s.items[k], cmd])
++				var spent: bool = Items.count(w, str(id)) < 2.0 or Items.bag_count(w, str(id)) < (2.0 if where in ["out", "river", "street"] else 0.0)
++				if fingerprint() != before and (spent or said.contains(name) or Catalog.ITEMS[id].aliases.any(func(a): return said.contains(str(a)))):
++					used[id] = used.get(id, []) + [verb]
++				elif fingerprint() != before:
++					note("did something with another thing", "%s: %s => %s" % [verb, cmd, said.left(60)])
++	print("tried %d commands" % n)
++	# Weapons and armour have their own rules (equip, fight); the old stores
++	# (food, water, seeds...) their old commands; some are only shown.
++	var unused: Array = Catalog.ITEMS.keys().filter(func(id): return not used.has(id) and not str(Catalog.ITEMS[id].cat) in ["武器", "防具"] and not Items.LEGACY.has(id) and not str(Catalog.ITEMS[id].found).is_empty() and not id in ["river_water", "snow", "vending_drink", "cash_register_cash"])
++	print("=== USED BY NO VERB (%d) ===" % unused.size())
++	var by_cat := {}
++	for id in unused:
++		var c := str(Catalog.ITEMS[id].cat)
++		by_cat[c] = by_cat.get(c, []) + [str(Catalog.ITEMS[id].name)]
++	for c in by_cat:
++		print("  %s: %s" % [c, "、".join(by_cat[c])])
++	print("=== ISSUES (%d) ===" % issues.size())
++	for k in issues:
++		print("  %3d× %s" % [issues[k], k])
++	quit()
 diff --git a/qa/meal_talk_check.gd b/qa/meal_talk_check.gd
 new file mode 100644
 index 0000000..23ac28f
@@ -104346,7 +104470,7 @@ index 9eafec8..3976f48 100644
  
  ## The record so far, for the player to read back.
 diff --git a/scripts/cold.gd b/scripts/cold.gd
-index 5b0d45e..52e0245 100644
+index 5b0d45e..e5d5a85 100644
 --- a/scripts/cold.gd
 +++ b/scripts/cold.gd
 @@ -26,7 +26,7 @@ static func valid(value: Variant) -> bool:
@@ -104371,7 +104495,16 @@ index 5b0d45e..52e0245 100644
  	return ""
  
  static func heater_on(world) -> bool:
-@@ -96,15 +102,18 @@ static func hourly(world) -> void:
+@@ -68,6 +74,8 @@ static func indoor(world) -> float:
+ 	var t := outdoor(world) + 5.0
+ 	if bool(world.s.get("door_broken", false)):
+ 		t -= 3.0
++	# v149.39: windows and floors insulated (item_actions.gd).
++	t += 1.5 * float(world.s.get("insulation", 0))
+ 	if heated(world):
+ 		t = maxf(t, 18.0)
+ 	return t
+@@ -96,15 +104,18 @@ static func hourly(world) -> void:
  	var covered := clampf(float(blankets(world)) / maxf(1.0, float(count)), 0.0, 1.0)
  	if t < 10.0:
  		var chill := (10.0 - t) / 10.0 * (1.0 - 0.6 * covered)
@@ -106592,10 +106725,10 @@ index 971fbda..8bf3cc0 100644
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
 diff --git a/scripts/item_actions.gd b/scripts/item_actions.gd
 new file mode 100644
-index 0000000..1807639
+index 0000000..542acbf
 --- /dev/null
 +++ b/scripts/item_actions.gd
-@@ -0,0 +1,1183 @@
+@@ -0,0 +1,1469 @@
 +extends RefCounted
 +## v149.39: doing things with what you have (docs/ITEMS_VERBS.md, first wave).
 +##
@@ -106664,6 +106797,31 @@ index 0000000..1807639
 +			return str(id)
 +	return ""
 +
++## The thing to use for a role given by tags: what was named (if it fits and
++## is had; named but not had -> ""), then `prefer`, then anything with the tag.
++static func pick_tag(world, tags: Array, said: Array, at_home: bool, prefer: Array = []) -> String:
++	var fits := func(id): return tags.any(func(t): return Catalog.is_a(str(id), str(t)))
++	var asked := false
++	for id in said:
++		if fits.call(id):
++			asked = true
++			if have(world, str(id), at_home) > 0.0:
++				return str(id)
++	if asked:
++		return ""
++	for id in prefer:
++		if have(world, str(id), at_home) > 0.0:
++			return str(id)
++	for t in tags:
++		for id in Catalog.tagged(str(t)):
++			if have(world, str(id), at_home) > 0.0:
++				return str(id)
++	return ""
++
++## Things named that fit none of the roles a verb needs ("チョコレートで遊ぶ").
++static func misfits(said: Array, tags: Array) -> Array:
++	return said.filter(func(id): return not tags.any(func(t): return Catalog.is_a(str(id), str(t))))
++
 +static func name_of(id: String) -> String:
 +	return str(Catalog.ITEMS.get(id, {}).get("name", id))
 +
@@ -106690,7 +106848,7 @@ index 0000000..1807639
 +	return ""
 +
 +## Single-character names safe to look for (not parts of other words).
-+const ONE_CHAR := ["油", "笛", "鏡", "傘", "斧", "鉈", "竹", "石", "盾", "鈴", "炭", "薪", "網", "釘", "枝", "板"]
++const ONE_CHAR := ["飴", "塩", "酢", "卵", "鍋", "箸", "砂", "葦", "柿", "魚", "油", "笛", "鏡", "傘", "斧", "鉈", "竹", "石", "盾", "鈴", "炭", "薪", "網", "釘", "枝", "板"]
 +
 +# ------------------------------------------------------------------ state
 +
@@ -106726,7 +106884,7 @@ index 0000000..1807639
 +const WARM_WORDS := ["くるま", "羽織", "着る", "着て", "着込", "かぶる", "かぶって", "巻く", "巻いて", "貼る", "貼って", "暖を", "温ま", "暖ま", "はく", "履く"]
 +const FORT_WORDS := ["補強", "打ち付け", "打ちつけ", "バリケード", "釘で", "板を張", "板で"]
 +const TRAP_WORDS := ["仕掛け", "鳴子", "罠", "わな", "吊る", "吊し", "つるし", "つるす", "まく", "撒", "まいて", "塗る", "塗って", "並べ"]
-+const SOUND_WORDS := ["鳴らす", "鳴らして", "吹く", "吹いて", "叫ぶ", "呼びかけ"]
++const SOUND_WORDS := ["鳴らす", "鳴らして", "吹く", "吹いて", "叫ぶ", "呼びかけ", "叩いて音", "打ち鳴ら", "叩き鳴ら"]
 +const SIGNAL_WORDS := ["合図", "信号", "反射", "焚く", "知らせ"]
 +const TREAT_WORDS := ["手当て", "消毒", "縫う", "縫って", "縫合", "添え木", "固定", "湿布", "巻く", "巻いて", "貼る", "貼って", "当てる"]
 +const MED_WORDS := ["飲む", "飲ん", "飲も", "飲ませ", "服用"]
@@ -106737,6 +106895,8 @@ index 0000000..1807639
 +
 +## Does this read as doing something with one of the ledger's new things?
 +static func recognises(cmd: String) -> bool:
++	if recognises3(cmd):
++		return true
 +	if named(cmd).is_empty():
 +		return false
 +	for words in [LIGHT_WORDS, OFF_WORDS, WARM_WORDS, FORT_WORDS, TRAP_WORDS, SOUND_WORDS, SIGNAL_WORDS, TREAT_WORDS, MED_WORDS, EAT_WORDS, THIRST_WORDS, FILTER_WORDS, BOIL_WORDS, ["補強", "ふさ", "塞", "寒"]] + WAVE2:
@@ -106749,6 +106909,10 @@ index 0000000..1807639
 +	var world = game.world
 +	var at_home: bool = load("res://scripts/navigation.gd").indoor(str(game.location))
 +	var said := named(cmd)
++	if recognises3(cmd) and not has_word(cmd, ["買う", "買って", "購入"]):
++		var r3 := handle3(game, cmd, said, at_home)
++		if not r3.is_empty():
++			return r3
 +	# Only for what names a thing of the ledger the old rules do not know,
 +	# or a verb only this file answers.
 +	if said.is_empty():
@@ -106767,27 +106931,30 @@ index 0000000..1807639
 +	if (has_word(cmd, MED_WORDS) or has_word(cmd, THIRST_WORDS)) and said.any(func(id): return Catalog.is_a(id, "drink")) and not said.any(func(id): return Catalog.is_a(id, "medicine") and not Catalog.is_a(id, "drink")):
 +		return drink(game, said, at_home)
 +	if said.any(func(id): return Catalog.is_a(id, "medicine")) and has_word(cmd, MED_WORDS):
-+		return medicine(game, said, at_home)
-+	if has_word(cmd, TREAT_WORDS) or has_word(cmd, ["消毒", "縫", "添え木", "湿布"]):
++		var pills: Array = said.filter(func(id): return id in ["painkillers", "fever_reducer", "cold_medicine", "stomach_medicine", "antibiotics"])
++		if pills.is_empty():
++			return "%sは飲む物ではない。" % name_of(str(said.filter(func(id): return Catalog.is_a(id, "medicine"))[0]))
++		return medicine(game, pills, at_home)
++	if (has_word(cmd, TREAT_WORDS) or has_word(cmd, ["消毒", "縫", "添え木", "湿布"])) and said.any(func(id): return Catalog.is_a(id, "wound") or Catalog.is_a(id, "hygiene") or id in ["splint", "sling", "compress", "suture_kit", "honey", "first_aid_kit", "first_aid_bag"]):
 +		if said.any(func(id): return Catalog.is_a(id, "wound") or Catalog.is_a(id, "hygiene") or id in ["splint", "sling", "compress", "suture_kit", "honey"]):
 +			return treat(world, said, at_home)
-+	if has_word(cmd, SIGNAL_WORDS) or (said.has("flare") and has_word(cmd, ["焚", "擦", "使", "上げ", "掲げ"])):
++	if (has_word(cmd, SIGNAL_WORDS) or (said.has("flare") and has_word(cmd, ["焚", "擦", "使", "上げ", "掲げ"]))) and said.any(func(id): return Catalog.is_a(id, "signal") or Catalog.is_a(id, "reflect") or Catalog.is_a(id, "light")):
 +		return send_signal(game, said, at_home)
-+	if has_word(cmd, SOUND_WORDS) and said.any(func(id): return Catalog.is_a(id, "noise")):
++	if has_word(cmd, SOUND_WORDS) and said.any(func(id): return Catalog.is_a(id, "noise") or Catalog.is_a(id, "cookware") or Catalog.is_a(id, "metal")):
 +		return sound(game, said, at_home)
 +	if has_word(cmd, CRAFT_WORDS):
 +		var made := craft(game, cmd, said, at_home)
 +		if not made.is_empty():
 +			return made
-+	if has_word(cmd, TRAP_WORDS) and said.any(func(id): return Catalog.is_a(id, "noise") or Catalog.is_a(id, "slippery") or Catalog.is_a(id, "glass") or id == "noisemaker"):
++	if has_word(cmd, TRAP_WORDS) and said.any(func(id): return Catalog.is_a(id, "noise") or Catalog.is_a(id, "slippery") or id in ["beer_bottle", "window_glass", "glass_jar", "beaker", "mirror_large", "mirror", "wind_chime"] or id == "noisemaker"):
 +		return trap(world, cmd, said, at_home)
-+	if has_word(cmd, ["目張り", "光が漏れ", "光を漏ら"]):
++	if has_word(cmd, ["目張り", "光が漏れ", "光を漏ら"]) and said.any(func(id): return Catalog.is_a(id, "board") or Catalog.is_a(id, "tape") or Catalog.is_a(id, "big_cloth") or Catalog.is_a(id, "cloth")):
 +		return craft(game, "目張り", said, at_home)
-+	if (has_word(cmd, FORT_WORDS) or spot_in(cmd) != "") and said.any(func(id): return Catalog.is_a(id, "board") or Catalog.is_a(id, "tape") or Catalog.is_a(id, "fastener")):
++	if (has_word(cmd, FORT_WORDS) or spot_in(cmd) != "") and said.any(func(id): return Catalog.is_a(id, "board") or Catalog.is_a(id, "tape") or Catalog.is_a(id, "fastener") or (Catalog.is_a(id, "tool") and not Catalog.is_a(id, "blade"))):
 +		return fortify(world, cmd, said, at_home)
-+	if has_word(cmd, LIGHT_WORDS) and said.any(func(id): return id in ELECTRIC_LIGHTS or id in FLAME_LIGHTS or Catalog.is_a(id, "lens")):
++	if has_word(cmd, LIGHT_WORDS) and said.any(func(id): return id in ELECTRIC_LIGHTS or id in FLAME_LIGHTS or Catalog.is_a(id, "lens") or Catalog.is_a(id, "igniter")):
 +		return light(world, said, at_home)
-+	if (has_word(cmd, WARM_WORDS) or cmd.contains("寒")) and said.any(func(id): return Catalog.is_a(id, "warm")):
++	if (has_word(cmd, WARM_WORDS) or cmd.contains("寒") or has_word(cmd, LIGHT_WORDS)) and said.any(func(id): return Catalog.is_a(id, "warm") or id in ["gas_heater", "kerosene_heater"]):
 +		return warm(world, said, at_home)
 +	return handle2(game, cmd, said, at_home)
 +
@@ -106799,7 +106966,10 @@ index 0000000..1807639
 +	var lens := said.any(func(id): return Catalog.is_a(id, "lens"))
 +	# What was named, or (named nothing to light) whatever light there is.
 +	var asked: Array = said.filter(func(id): return id in ELECTRIC_LIGHTS or id in FLAME_LIGHTS)
-+	var thing := pick(world, asked if not asked.is_empty() else ELECTRIC_LIGHTS + FLAME_LIGHTS, said, at_home)
++	var fire_only := asked.is_empty() and said.any(func(id): return Catalog.is_a(id, "lens") or Catalog.is_a(id, "igniter"))
++	var thing := pick(world, asked if not asked.is_empty() else (FLAME_LIGHTS if fire_only else ELECTRIC_LIGHTS + FLAME_LIGHTS), said, at_home)
++	if thing.is_empty() and fire_only:
++		return "火をつけても、灯す物がない。（ロウソク、ランプ、松明）"
 +	if thing.is_empty():
 +		var want := said.filter(func(id): return id in ELECTRIC_LIGHTS or id in FLAME_LIGHTS)
 +		return "%sを持っていない。" % (name_of(str(want[0])) if not want.is_empty() else "明かりになる物")
@@ -106812,7 +106982,7 @@ index 0000000..1807639
 +				return "レンズで火をおこすには、晴れた昼の日差しが要る。"
 +			fire = "レンズで日差しを集めて"
 +		else:
-+			var ig := pick(world, IGNITERS, said, at_home)
++			var ig := pick_tag(world, ["igniter"], said, at_home, IGNITERS)
 +			if ig.is_empty():
 +				return "火をつける物がない。ライターかマッチが要る。（晴れた昼なら、虫眼鏡や老眼鏡でも火はおこせる）"
 +			if ig == "matches":
@@ -106872,6 +107042,17 @@ index 0000000..1807639
 +	"hot_water_bottle": [0.5, 8], "socks": [0.2, 24], "knit_cap": [0.2, 24], "scarf": [0.2, 24], "clothes": [0.2, 24]}
 +
 +static func warm(world, said: Array, at_home: bool) -> String:
++	# Heaters warm the room, not the one person.
++	if said.has("gas_heater") and have(world, "gas_heater", at_home) > 0.0:
++		return load("res://scripts/cold.gd").light_heater(world)
++	if said.has("kerosene_heater") and have(world, "kerosene_heater", at_home) > 0.0:
++		if have(world, "kerosene", at_home) < 0.5:
++			return "石油ストーブに入れる灯油がない。"
++		use_up(world, "kerosene", 0.5, at_home)
++		load("res://scripts/cold.gd").state(world).heater_until = int(world.s.minute) + 240
++		world.advance_safe(5)
++		load("res://scripts/walkers.gd").make_smell(world, 120)
++		return "石油ストーブに灯油を入れて、火をつけた。部屋がじんわり暖まっていく（4時間）。灯油のにおいが漂う。"
 +	var parts: Array = []
 +	var total := warmth_on(world)
 +	var hours := 24
@@ -106915,14 +107096,18 @@ index 0000000..1807639
 +	var spot := spot_in(cmd)
 +	if spot.is_empty():
 +		spot = "窓"
-+	var board := pick(world, BOARDS, said, at_home)
-+	var tape := pick(world, TAPES, said, at_home)
-+	var nails := pick(world, ["nails", "screws", "anchor_bolts"], said, at_home)
-+	var tool := pick(world, ["hammer", "drill", "screwdriver", "sledgehammer", "bar"], said, at_home)
++	var named_board := said.any(func(id): return Catalog.is_a(id, "board"))
++	var named_tape := said.any(func(id): return Catalog.is_a(id, "tape"))
++	var board := pick_tag(world, ["board"], said, at_home, BOARDS) if named_board or not named_tape else ""
++	var tape := pick_tag(world, ["tape"], said, at_home, TAPES)
++	var nails := pick_tag(world, ["fastener"], said, at_home, ["nails", "screws"])
++	var tool := pick_tag(world, ["tool"], said, at_home, ["hammer", "drill", "screwdriver"])
++	if nails == "parts":
++		nails = "parts"
 +	var strength := 0
 +	var how := ""
 +	var minutes := 30
-+	if not board.is_empty() and not board in ["cardboard", "cutting_board", "bath_board"] and not nails.is_empty() and not tool.is_empty():
++	if not board.is_empty() and not board in ["cardboard", "cutting_board", "bath_board"] and not nails.is_empty() and not tool.is_empty() and not (named_tape and not named_board):
 +		strength = 2
 +		minutes = 60
 +		how = "%sを%sと%sで打ちつけた" % [name_of(board), name_of(nails), name_of(tool)]
@@ -106956,13 +107141,13 @@ index 0000000..1807639
 +static func trap(world, cmd: String, said: Array, at_home: bool) -> String:
 +	var t := traps(world)
 +	# A noisemaker: cans (or bells) on a string across the way in.
-+	var noise := pick(world, ["noisemaker", "empty_can", "bells", "wind_chime"], said, at_home)
++	var noise := pick_tag(world, ["noise"], said, at_home, ["noisemaker", "empty_can", "bells"])
 +	var slip := pick(world, ["cooking_oil", "dish_soap", "motor_oil"], said, at_home)
-+	var glass := pick(world, ["beer_bottle", "window_glass", "glass_jar"], said, at_home)
-+	if said.any(func(id): return id in ["noisemaker", "empty_can", "bells", "wind_chime"]) or cmd.contains("鳴子"):
++	var glass := pick(world, ["beer_bottle", "window_glass", "glass_jar", "beaker", "mirror_large", "mirror", "wind_chime"], said, at_home)
++	if said.any(func(id): return Catalog.is_a(id, "noise")) or cmd.contains("鳴子"):
 +		if noise.is_empty():
 +			return "鳴子にする物がない。（空き缶か鈴）"
-+		var line := pick(world, ["string", "rope", "fishing_line", "wire", "zip_ties"], said, at_home)
++		var line := pick_tag(world, ["string"], said, at_home, ["string", "fishing_line", "wire"])
 +		if noise != "noisemaker" and line.is_empty():
 +			return "吊るすひもがない。（ひも、ロープ、釣り糸、針金）"
 +		if noise != "noisemaker":
@@ -106980,7 +107165,7 @@ index 0000000..1807639
 +		t.slip = spot
 +		world.advance_safe(10)
 +		return "%sの床に%sをまいた（10分）。知らずに踏み込めば、足を取られる。（家の者には伝えておいた）" % [spot, name_of(slip)]
-+	if said.any(func(id): return Catalog.is_a(id, "glass")):
++	if said.any(func(id): return id in ["beer_bottle", "window_glass", "glass_jar", "beaker", "mirror_large", "mirror", "wind_chime"]):
 +		if glass.is_empty():
 +			return "%sを持っていない。" % name_of(str(said.filter(func(id): return Catalog.is_a(id, "glass"))[0]))
 +		use_up(world, glass, 1.0, at_home)
@@ -107012,9 +107197,9 @@ index 0000000..1807639
 +
 +static func sound(game, said: Array, at_home: bool) -> String:
 +	var world = game.world
-+	var thing := pick(world, ["loudspeaker", "whistle", "alarm_buzzer", "firecrackers", "alarm_clock", "bells", "party_popper", "noisemaker"], said, at_home)
++	var thing := pick_tag(world, ["noise", "cookware", "metal"], said, at_home, ["whistle", "loudspeaker", "alarm_buzzer", "firecrackers"])
 +	if thing.is_empty():
-+		return "%sを持っていない。" % name_of(str(said.filter(func(id): return Catalog.is_a(id, "noise"))[0]))
++		return "鳴らせる物を持っていない。"
 +	if thing in ["loudspeaker", "alarm_buzzer", "alarm_clock"] and Catalog.is_a(thing, "uses_batteries") and pick(world, ["batteries_aa", "batteries_d"], [], at_home).is_empty() and not bool(world.s.get("lamp_batteries", {}).get(thing, false)):
 +		return "%sに入れる電池がない。" % name_of(thing)
 +	if thing in ["firecrackers", "party_popper"]:
@@ -107037,16 +107222,16 @@ index 0000000..1807639
 +	var world = game.world
 +	var R = load("res://scripts/rescue.gd")
 +	var place := str(game.location)
-+	var thing := pick(world, ["flare", "mirror", "cd", "mirror_large", "glowstick", "flashlight", "lantern", "headlamp", "work_lamp"], said, at_home)
++	var thing := pick(world, ["flare", "mirror", "cd", "mirror_large", "foil", "emergency_blanket", "glowstick", "flashlight", "lantern", "headlamp", "work_lamp"], said, at_home)
 +	if thing.is_empty():
 +		return "合図に使える物がない。（昼は鏡やCD、夜はライト、発煙筒はいつでも）"
 +	if thing in ["flashlight", "lantern", "headlamp", "work_lamp"]:
-+		return R.send_signal(world, place)
++		return str(R.send_signal(world, place)).replace("懐中電灯", name_of(thing))
 +	if not R.usable(world, place):
 +		return R._not_here(world, place)
 +	var r: Dictionary = R.state(world)
 +	var day := int(world.s.minute) / 1440
-+	if thing in ["mirror", "cd", "mirror_large"]:
++	if thing in ["mirror", "cd", "mirror_large", "foil", "emergency_blanket"]:
 +		if not sunny(world):
 +			return "%sで光を返すには、晴れた昼の日差しが要る。" % name_of(thing)
 +		if int(r.get("day_signal_day", -99)) >= day:
@@ -107083,7 +107268,8 @@ index 0000000..1807639
 +			return "%sを持っていない。" % name_of(str(id))
 +	var kinds := {"disinfectant": ["cut", "bleeding"], "hydrogen_peroxide": ["cut", "bleeding"], "saline": ["cut", "bleeding"], "honey": ["cut"],
 +		"suture_kit": ["cut", "bleeding"], "adhesive_bandage": ["cut"], "gauze": ["cut", "bleeding"], "bandage": ["cut", "bleeding", "fracture"],
-+		"splint": ["fracture"], "sling": ["fracture"], "compress": ["bruise"], "first_aid_kit": ["cut", "bleeding", "fracture", "bruise"]}
++		"splint": ["fracture"], "sling": ["fracture"], "compress": ["bruise"], "first_aid_kit": ["cut", "bleeding", "fracture", "bruise"],
++		"sewing_kit": ["cut"], "first_aid_bag": ["cut", "bleeding", "fracture", "bruise"]}
 +	for id in said:
 +		if not kinds.has(id):
 +			continue
@@ -107162,6 +107348,13 @@ index 0000000..1807639
 +
 +## What can heat food or water here: [label, fuel id or "", fuel used] or [] (none).
 +static func heat_source(world, said: Array, at_home: bool) -> Array:
++	# A stove named must be the one, with its own fuel.
++	var named_stoves: Array = said.filter(func(id): return Catalog.is_a(str(id), "stove") or Catalog.is_a(str(id), "heater"))
++	if not named_stoves.is_empty():
++		for o in [["cassette_stove", "gas_cans", 0.1], ["camping_stove", "propane", 0.1], ["kerosene_heater", "kerosene", 0.3], ["bbq_grill", "charcoal", 0.2], ["bbq_grill", "firewood", 0.2], ["rocket_stove", "ethanol", 0.1], ["rocket_stove", "branches", 0.3], ["gas_torch", "gas_cans", 0.05], ["gas_heater", "gas_cans", 0.1]]:
++			if str(o[0]) in named_stoves and have(world, str(o[0]), at_home) > 0.0 and have(world, str(o[1]), at_home) >= float(o[2]):
++				return [name_of(str(o[0])), str(o[1]), float(o[2])]
++		return []
 +	if at_home and world.has_home_power() and not said.any(func(id): return Catalog.is_a(id, "stove")):
 +		return ["電気のコンロ", "", 0.0]
 +	if fire_here(world, str(world.get_meta("player_place", ""))):
@@ -107300,7 +107493,7 @@ index 0000000..1807639
 +		use_up(world, "charcoal", 0.1, at_home)
 +		strong = "布と炭を重ねて"
 +	if strong.is_empty():
-+		var weak := pick(world, ["coffee_filter", "towel", "sheet", "bandana", "gauze", "clothes"], said, at_home)
++		var weak := pick_tag(world, ["cloth", "absorbent", "water_clean"], said, at_home, ["coffee_filter", "towel", "sheet", "bandana", "gauze", "sand"])
 +		if weak.is_empty():
 +			return "ろ過に使える物を持っていない。"
 +		world.advance_safe(15)
@@ -107317,7 +107510,7 @@ index 0000000..1807639
 +		return "ためた水は家にある。家で沸かす。"
 +	if float(world.s.get("rain_water", 0.0)) < 1.0:
 +		return "沸かす水（ためておいた雨水や川の水）がない。"
-+	var pot := pick(world, ["big_pot", "pot", "pressure_cooker", "kettle", "cast_iron_pan"], said, at_home)
++	var pot := pick_tag(world, ["cookware"], said, at_home, ["big_pot", "pot", "pressure_cooker", "kettle", "cast_iron_pan"])
 +	if pot.is_empty():
 +		return "水を沸かす鍋がない。"
 +	var heat := heat_source(world, said, at_home)
@@ -107325,7 +107518,7 @@ index 0000000..1807639
 +		return "火がない。コンロと燃料（カセットボンベ、OD缶、炭、薪、灯油）か、電気が要る。"
 +	if not str(heat[1]).is_empty():
 +		use_up(world, str(heat[1]), float(heat[2]), at_home)
-+	var size: float = {"big_pot": 10.0, "pot": 4.0, "pressure_cooker": 4.0, "kettle": 2.0, "cast_iron_pan": 3.0}[pot]
++	var size: float = float({"big_pot": 10.0, "pot": 4.0, "pressure_cooker": 4.0, "kettle": 2.0, "cast_iron_pan": 3.0, "frying_pan": 1.0, "ladle": 0.3, "rice_cooker": 2.0}.get(pot, 1.0))
 +	var litres := minf(size, floorf(float(world.s.rain_water)))
 +	world.s.rain_water = float(world.s.rain_water) - litres
 +	world.s.water = float(world.s.water) + litres
@@ -107356,7 +107549,7 @@ index 0000000..1807639
 +## Wave 2's verbs; "" when none fits.
 +static func handle2(game, cmd: String, said: Array, at_home: bool) -> String:
 +	var world = game.world
-+	if has_word(cmd, CHARGE_WORDS):
++	if has_word(cmd, CHARGE_WORDS) and said.any(func(id): return Catalog.is_a(id, "charge") or id in ["phone", "power_bank"]):
 +		return charge(world, said, at_home)
 +	if has_word(cmd, SIPHON_WORDS) and said.any(func(id): return id in ["siphon_pump", "gasoline", "kerosene", "jerry_can"]):
 +		return siphon(game, said)
@@ -107370,7 +107563,7 @@ index 0000000..1807639
 +		return craft(game, cmd, said, at_home)
 +	if has_word(cmd, CUT_WORDS) and said.any(func(id): return Catalog.is_a(id, "cloth") or Catalog.is_a(id, "big_cloth") or Catalog.is_a(id, "string")):
 +		return cut(world, said, at_home)
-+	if has_word(cmd, REPAIR_WORDS):
++	if has_word(cmd, REPAIR_WORDS) and said.any(func(id): return Catalog.is_a(id, "board") or Catalog.is_a(id, "tape") or Catalog.is_a(id, "fastener") or Catalog.is_a(id, "tool")):
 +		return repair(world, cmd, said, at_home)
 +	if has_word(cmd, TIE_WORDS) and said.any(func(id): return Catalog.is_a(id, "string")):
 +		return tie(world, cmd, said, at_home)
@@ -107384,7 +107577,7 @@ index 0000000..1807639
 +		return plant(world, said, at_home)
 +	if has_word(cmd, CARRY_WORDS) and said.any(func(id): return id in ["cart", "hiking_pack", "shopping_cart", "bicycle"]):
 +		return carry(world, said, at_home)
-+	if has_word(cmd, LEISURE_WORDS) and said.any(func(id): return Catalog.is_a(id, "leisure") or Catalog.is_a(id, "comfort")):
++	if has_word(cmd, LEISURE_WORDS) and said.any(func(id): return id in ["manga", "shogi", "handheld_game", "music_box", "photo_album", "toys_blocks", "stuffed_toy", "letter", "photo_frame"]):
 +		return leisure(game, said, at_home)
 +	return ""
 +
@@ -107428,7 +107621,7 @@ index 0000000..1807639
 +	for token in recipe.needs:
 +		var id := meet(world, str(token), at_home, said)
 +		if id.is_empty():
-+			missing.append("・".join(str(token).split("|")).replace("tape", "テープ").replace("string", "ひも").replace("cloth", "布").replace("big_cloth", "大きな布").replace("fuel", "燃える物").replace("blade", "刃物").replace("long", "長い棒").replace("write", "書く物"))
++			missing.append("か".join(Array(str(token).split("|")).map(func(t): return name_of(t) if Catalog.ITEMS.has(t) else {"tape": "テープ", "string": "ひも", "cloth": "布", "big_cloth": "大きな布", "fuel": "燃える物", "blade": "刃物", "long": "長い棒", "write": "書く物"}.get(t, str(Catalog.TAGS.get(t, t))))))
 +		else:
 +			chosen.append([id, str(token)])
 +	if not missing.is_empty():
@@ -107447,7 +107640,7 @@ index 0000000..1807639
 +	world.advance_safe(int(recipe.minutes))
 +	if makes == "window_seal":
 +		world.s.blackout = true
-+		return "窓を目張りした（%d分）。明かりをつけても、外に光は漏れない。" % int(recipe.minutes)
++		return "%sで窓を目張りした（%d分）。明かりをつけても、外に光は漏れない。" % ["と".join(chosen.map(func(c): return name_of(str(c[0])))), int(recipe.minutes)]
 +	if at_home:
 +		Items.add(world, makes, float(recipe.count))
 +	else:
@@ -107457,10 +107650,10 @@ index 0000000..1807639
 +static func repair(world, cmd: String, said: Array, at_home: bool) -> String:
 +	if not at_home:
 +		return "家の中で直す。"
-+	var board := pick(world, BOARDS, said, at_home)
-+	var nails := pick(world, ["nails", "screws", "hinges", "anchor_bolts"], said, at_home)
-+	var tool := pick(world, ["hammer", "drill", "screwdriver", "wrench"], said, at_home)
-+	var tape := pick(world, TAPES, said, at_home)
++	var board := pick_tag(world, ["board"], said, at_home, BOARDS)
++	var nails := pick_tag(world, ["fastener"], said, at_home, ["nails", "screws", "hinges"])
++	var tool := pick_tag(world, ["tool"], said, at_home, ["hammer", "drill", "screwdriver", "wrench"])
++	var tape := pick_tag(world, ["tape"], said, at_home, TAPES)
 +	if has_word(cmd, ["玄関", "扉", "ドア"]) and bool(world.s.get("door_broken", false)) or (has_word(cmd, ["玄関", "扉", "ドア"]) and float(world.s.get("door_hp", 100.0)) < 100.0):
 +		if board.is_empty() or nails.is_empty() or tool.is_empty():
 +			return "扉を直すには、板と釘（か蝶番）と工具が要る。"
@@ -107476,9 +107669,10 @@ index 0000000..1807639
 +		return "家に、直すほどの傷みはない。"
 +	var gain := 0.0
 +	var how := ""
-+	if not board.is_empty() and not nails.is_empty() and not tool.is_empty():
++	var tape_named := said.any(func(id): return Catalog.is_a(id, "tape")) and not said.any(func(id): return Catalog.is_a(id, "board"))
++	if not tape_named and not board.is_empty() and not nails.is_empty() and not tool.is_empty():
 +		gain = 12.0
-+		how = "%sを%sで打ちつけて" % [name_of(board), name_of(nails)]
++		how = "%sを%sと%sで打ちつけて" % [name_of(board), name_of(nails), name_of(tool)]
 +		use_up(world, board, 1.0, at_home)
 +		use_up(world, nails, 0.25, at_home)
 +	elif not tape.is_empty():
@@ -107492,10 +107686,14 @@ index 0000000..1807639
 +	return "%s、家の傷んだところを直した。（住居の耐久 %.0f／100）" % [how, float(lp.shelter_integrity)]
 +
 +static func cut(world, said: Array, at_home: bool) -> String:
-+	var blade := pick(world, ["scissors", "box_cutter", "kitchen_scissors", "knife", "scalpel", "machete", "saw"], said, at_home)
++	var blade := pick_tag(world, ["blade"], said, at_home, ["scissors", "box_cutter", "kitchen_scissors"])
 +	if blade.is_empty() and not load("res://scripts/weapons.gd").owns(world, "knife"):
 +		return "切る物がない。（はさみ、カッター、包丁）"
-+	var cloth := pick(world, ["sheet", "curtain", "towel", "clothes", "bandana", "shower_curtain", "tarp"], said, at_home)
++	if said.any(func(id): return Catalog.is_a(id, "string")) and not said.any(func(id): return Catalog.is_a(id, "cloth") or Catalog.is_a(id, "big_cloth")):
++		return "%sは裂けない。（布を裂くなら、シーツやタオル）" % name_of(str(said.filter(func(id): return Catalog.is_a(id, "string"))[0]))
++	var cloth := pick_tag(world, ["cloth", "big_cloth"], said, at_home, ["sheet", "towel", "clothes", "bandana"])
++	if cloth in ["bandage", "gauze", "sling", "sos_cloth", "futon", "blanket", "carpet"]:
++		return "%sは、裂いて使う物ではない。" % name_of(cloth)
 +	if cloth.is_empty():
 +		return "裂ける布がない。"
 +	use_up(world, cloth, 1.0, at_home)
@@ -107507,7 +107705,7 @@ index 0000000..1807639
 +static func tie(world, cmd: String, said: Array, at_home: bool) -> String:
 +	if not at_home:
 +		return ""
-+	var line := pick(world, ["rope", "chain", "wire", "string", "zip_ties", "tow_rope", "dog_leash", "belt", "shrine_rope"], said, at_home)
++	var line := pick_tag(world, ["string"], said, at_home, ["rope", "chain", "wire", "string"])
 +	if line.is_empty():
 +		return "縛るものがない。"
 +	var spot := spot_in(cmd)
@@ -107587,10 +107785,13 @@ index 0000000..1807639
 +
 +static func draw_water(game, said: Array, at_home: bool) -> String:
 +	var world = game.world
-+	var box := pick(world, CONTAINER_L.keys(), said, at_home)
++	var box := pick_tag(world, ["container", "big_cloth", "waterproof"], said, at_home, CONTAINER_L.keys())
 +	if box.is_empty():
 +		return "水を入れる物がない。"
-+	var size: float = CONTAINER_L[box] * maxf(1.0, have(world, box, at_home) if box == "empty_bottle" else 1.0)
++	var size: float = float(CONTAINER_L.get(box, 30.0 if Catalog.is_a(box, "big_cloth") or Catalog.is_a(box, "waterproof") else 1.0)) * maxf(1.0, have(world, box, at_home) if box == "empty_bottle" else 1.0)
++	if (Catalog.is_a(box, "big_cloth") or Catalog.is_a(box, "waterproof")) and not CONTAINER_L.has(box):
++		if not at_home or str(world.s.weather) != "rain":
++			return "%sは、雨の日に広げて雨水を集めるのに使える。" % name_of(box)
 +	if at_home:
 +		if str(world.s.weather) != "rain":
 +			return "雨が降っていない。雨の日に、%sを外に出して雨水をためられる。" % name_of(box)
@@ -107734,7 +107935,7 @@ index 0000000..1807639
 +static func carry(world, said: Array, at_home: bool) -> String:
 +	var thing: String = ""
 +	for id in said:
-+		if id in ["cart", "hiking_pack"]:
++		if id in ["cart", "hiking_pack", "bicycle", "shopping_cart"]:
 +			thing = str(id)
 +	if thing.is_empty():
 +		return "それでは運べない。"
@@ -107779,6 +107980,224 @@ index 0000000..1807639
 +			Mood.change(world.s, 3.0); line = "%sで、しばらく気を紛らわせた。" % name_of(thing)
 +	world.advance_safe(minutes)
 +	return line + "（%d分）" % minutes
++
++# ==================================================================== wave 3
++# v149.39: clever uses of ordinary things (furniture, a generator, batteries,
++# the sun and the snow, insulation, binoculars, washing up).
++
++const FURNITURE := {"本棚": 3, "タンス": 3, "箪笥": 3, "冷蔵庫": 4, "食器棚": 3, "ソファ": 2, "テーブル": 2, "机": 2, "洗濯機": 3, "ベッド": 2, "マットレス": 1, "ピアノ": 4}
++const BREAK_WORDS := ["壊して", "壊す", "解体", "ばらして", "ばらす", "割って薪", "薪にする"]
++const BATTERY_WORDS := ["電池を入れ", "電池を替え", "電池を換え", "電池を交換", "電池入れ"]
++const GENERATOR_WORDS := ["発電機"]
++const SUN_WORDS := ["日なた", "日向", "日光", "日に当て", "天日"]
++const INSULATE_WORDS := ["断熱", "敷く", "敷いて", "敷き詰め", "隙間風", "窓に貼"]
++const LOOKOUT_WORDS := ["見渡", "偵察", "遠くを", "見張", "外を見", "通りを見"]
++const WASH_WORDS := ["体を拭", "身体を拭", "手を洗", "歯を磨", "着替え", "顔を洗", "髪を洗"]
++
++static func furniture_in(text: String) -> String:
++	for f in FURNITURE:
++		if text.contains(str(f)):
++			return str(f)
++	return ""
++
++static func recognises3(cmd: String) -> bool:
++	if not furniture_in(cmd).is_empty() and (has_word(cmd, FORT_WORDS) or has_word(cmd, ["ふさ", "塞", "押し"]) or has_word(cmd, BREAK_WORDS)):
++		return true
++	if has_word(cmd, INSULATE_WORDS) and named(cmd).any(func(id): return Catalog.is_a(id, "insulation")):
++		return true
++	return has_word(cmd, GENERATOR_WORDS) or has_word(cmd, BATTERY_WORDS) or (has_word(cmd, SUN_WORDS) and cmd.contains("ペットボトル")) or cmd.contains("雪を溶か") or cmd.contains("経口補水液を作") or has_word(cmd, WASH_WORDS) or (cmd.contains("双眼鏡") and has_word(cmd, LOOKOUT_WORDS))
++
++static func handle3(game, cmd: String, said: Array, at_home: bool) -> String:
++	var world = game.world
++	var f := furniture_in(cmd)
++	if not f.is_empty() and has_word(cmd, BREAK_WORDS):
++		return break_furniture(world, f, said, at_home)
++	if not f.is_empty() and (has_word(cmd, FORT_WORDS) or has_word(cmd, ["ふさ", "塞", "押し"])):
++		return furniture_block(world, cmd, f, at_home)
++	if has_word(cmd, GENERATOR_WORDS):
++		return generator(world, at_home)
++	if has_word(cmd, BATTERY_WORDS):
++		return batteries_in(world, said, at_home)
++	if has_word(cmd, SUN_WORDS) and cmd.contains("ペットボトル"):
++		return sun_water(world, at_home)
++	if cmd.contains("雪を溶か"):
++		return melt_snow(game, said, at_home)
++	if cmd.contains("経口補水液を作"):
++		return make_ors(world, at_home)
++	if has_word(cmd, INSULATE_WORDS) and said.any(func(id): return Catalog.is_a(id, "insulation") or Catalog.is_a(id, "big_cloth")):
++		return insulate(world, said, at_home)
++	if cmd.contains("双眼鏡") and has_word(cmd, LOOKOUT_WORDS):
++		return lookout(game, at_home)
++	if has_word(cmd, WASH_WORDS):
++		return wash(world, cmd, said, at_home)
++	return ""
++
++static func furniture_block(world, cmd: String, f: String, at_home: bool) -> String:
++	if not at_home:
++		return "家具は家の中にある。"
++	var spot := spot_in(cmd)
++	if spot.is_empty():
++		spot = "玄関"
++	if not world.s.get("blocked_by") is Dictionary:
++		world.s.blocked_by = {}
++	if world.s.blocked_by.has(f):
++		return "%sは、もう%sの前に置いてある。" % [f, str(world.s.blocked_by[f])]
++	world.s.blocked_by[f] = spot
++	var fo := fort(world)
++	fo[spot] = mini(6, int(fo.get(spot, 0)) + int(FURNITURE[f]) / 2 + 1)
++	if spot == "玄関":
++		world.s.barricade = int(world.s.get("barricade", 0)) + 1
++	world.s.fatigue = minf(100.0, float(world.s.fatigue) + 10.0)
++	world.advance_safe(20)
++	load("res://scripts/walkers.gd").make_sound(world, 20)
++	return "%sを%sの前まで、少しずつ押していった（20分）。重さで、外からは簡単には開かない。汗だくになった。（出入りするときは、どかす必要がある）" % [f, spot]
++
++static func break_furniture(world, f: String, said: Array, at_home: bool) -> String:
++	if not at_home:
++		return "家具は家の中にある。"
++	if not said.is_empty() and said.all(func(id): return not (Catalog.is_a(str(id), "tool") or Catalog.is_a(str(id), "blade") or Catalog.is_a(str(id), "blunt"))):
++		return "%sでは、%sは壊せない。" % [name_of(str(said[0])), f]
++	var tool := pick_tag(world, ["tool", "blade", "blunt"], said, at_home, ["saw", "axe", "machete", "sledgehammer", "hammer", "bar"])
++	if tool.is_empty() or not tool in ["saw", "axe", "machete", "sledgehammer", "hammer", "bar", "pickaxe"]:
++		return "%sを壊す道具がない。（のこぎり、斧、大ハンマー、バール）" % f
++	if not world.s.get("broken_furniture") is Array:
++		world.s.broken_furniture = []
++	if f in world.s.broken_furniture:
++		return "%sは、もう壊してしまった。" % f
++	if f in ["冷蔵庫", "洗濯機"]:
++		return "%sは金属でできている。燃やす物にはならない。" % f
++	world.s.broken_furniture.append(f)
++	var wood := int(FURNITURE[f])
++	world.s.inventory.wood = int(world.s.inventory.get("wood", 0)) + wood
++	Items.add(world, "firewood", 1.0)
++	world.advance_safe(45)
++	load("res://scripts/walkers.gd").make_sound(world, 45)
++	return "%sで%sをばらした（45分）。木材%dと、薪ひと束になった。大きな音が出た。" % [name_of(tool), f, wood]
++
++static func generator(world, at_home: bool) -> String:
++	if have(world, "generator", at_home) <= 0.0:
++		return "発電機を持っていない。"
++	if have(world, "gasoline", at_home) < 2.0:
++		return "発電機を回すガソリンが足りない。（2Lで4時間）"
++	use_up(world, "gasoline", 2.0, at_home)
++	world.s.generator_until = int(world.s.minute) + 240
++	world.advance_safe(5)
++	load("res://scripts/walkers.gd").make_sound(world, 240)
++	return "発電機のひもを引いた。何度目かで、エンジンがうなりを上げた。家に電気が戻った（4時間）。……ひどい音だ。遠くまで聞こえているはずだ。"
++
++static func batteries_in(world, said: Array, at_home: bool) -> String:
++	var cell := pick(world, ["batteries_aa", "batteries_d"], said, at_home)
++	if cell.is_empty():
++		return "乾電池がない。"
++	var device := pick(world, ["flashlight", "lantern", "headlamp", "work_lamp", "radio", "handheld_game", "alarm_buzzer", "loudspeaker", "alarm_clock", "walkie_talkie"], said, at_home)
++	if device.is_empty():
++		return "電池を入れる物がない。"
++	use_up(world, cell, 1.0 if cell == "batteries_d" else 2.0, at_home)
++	if not world.s.get("lamp_batteries") is Dictionary:
++		world.s.lamp_batteries = {}
++	world.s.lamp_batteries[device] = true
++	if device == "radio":
++		world.s.radio = true
++	world.advance_safe(2)
++	return "%sに%sを入れた。%s" % [name_of(device), name_of(cell), "ラジオから、雑音まじりの声が聞こえた。（「ラジオを聞く」）" if device == "radio" else "また使える。"]
++
++static func sun_water(world, at_home: bool) -> String:
++	if not at_home:
++		return "家で、ためた水を使う。"
++	if not sunny(world):
++		return "日差しが要る。晴れた昼に、透明なペットボトルを日なたに並べる。"
++	var bottles := int(minf(4.0, have(world, "empty_bottle", at_home)))
++	if bottles <= 0:
++		return "透明なペットボトルがない。"
++	if float(world.s.get("rain_water", 0.0)) < 1.0:
++		return "ためた水がない。"
++	var litres := minf(float(bottles) * 1.5, floorf(float(world.s.rain_water)))
++	world.s.rain_water = float(world.s.rain_water) - litres
++	world.s.water = float(world.s.water) + litres
++	world.advance_safe(15)
++	return "ためた水を透明なペットボトル%d本に詰めて、ベランダの日なたに並べた。日差しで中の菌が死ぬまで、夕方まで置いておく。（飲み水%.1fL）" % [bottles, litres]
++
++static func melt_snow(game, said: Array, at_home: bool) -> String:
++	var world = game.world
++	if not load("res://scripts/cold.gd").snowy(world):
++		return "雪が積もっていない。"
++	var pot := pick_tag(world, ["cookware", "container"], said, at_home, ["pot", "big_pot", "kettle"])
++	if pot.is_empty():
++		return "雪を入れる鍋がない。"
++	var heat := heat_source(world, said, at_home)
++	if heat.is_empty():
++		return "雪を溶かす火がない。"
++	if not str(heat[1]).is_empty():
++		use_up(world, str(heat[1]), float(heat[2]), at_home)
++	world.s.water = float(world.s.water) + 3.0
++	world.advance_safe(40)
++	return "ベランダの雪を%sに詰めて、%sで溶かして煮立てた（40分）。飲み水が3Lできた。" % [name_of(pot), heat[0]]
++
++static func make_ors(world, at_home: bool) -> String:
++	if have(world, "salt", at_home) <= 0.0 or have(world, "sugar", at_home) <= 0.0:
++		return "経口補水液を作るには、塩と砂糖が要る。"
++	if float(world.s.get("water", 0.0)) < 1.0:
++		return "飲み水が1L要る。"
++	world.s.water = float(world.s.water) - 1.0
++	use_up(world, "salt", 0.01, at_home)
++	use_up(world, "sugar", 0.05, at_home)
++	Items.add(world, "ors", 2.0)
++	world.advance_safe(10)
++	return "水1Lに、塩をひとつまみと砂糖を溶かして、経口補水液を作った（10分）。熱や脱水のときに、体にすっと入る。"
++
++static func insulate(world, said: Array, at_home: bool) -> String:
++	if not at_home:
++		return "家の窓や床に使う。"
++	var thing := pick_tag(world, ["insulation", "big_cloth"], said, at_home, ["bubble_wrap", "styrofoam", "cardboard", "newspaper"])
++	if thing.is_empty():
++		return "断熱に使える物がない。（プチプチ、発泡スチロール、段ボール、新聞紙）"
++	var level := int(world.s.get("insulation", 0))
++	if level >= 3:
++		return "窓も床も、もうできるだけふさいである。"
++	use_up(world, thing, 1.0, at_home)
++	world.s.insulation = level + 1
++	world.advance_safe(30)
++	return "%sを窓ガラスと床に貼り重ねて、隙間風をふさいだ（30分）。部屋が少し暖かくなった。（断熱 %d／3）" % [name_of(thing), level + 1]
++
++static func lookout(game, at_home: bool) -> String:
++	var world = game.world
++	if have(world, "binoculars", at_home) <= 0.0:
++		return "双眼鏡を持っていない。"
++	var W = load("res://scripts/walkers.gd")
++	var parts: Array = []
++	for place in ["建物前", "住宅街", "北の住宅街", "南の住宅街", "商店通り", "大通り", "公園"]:
++		var n := int(W.count(world, place))
++		if n > 0:
++			parts.append("%s %d体" % [place, n])
++	world.advance_safe(10)
++	if parts.is_empty():
++		return "双眼鏡で、通りの先まで見渡した（10分）。動く影は見えない。"
++	return "双眼鏡で、通りの先まで見渡した（10分）。ふらつく人影が見える：%s。" % "、".join(parts)
++
++static func wash(world, cmd: String, said: Array, at_home: bool) -> String:
++	var Mood = load("res://scripts/mood.gd")
++	Mood.ensure(world)
++	if cmd.contains("着替え"):
++		if have(world, "clothes", at_home) <= 0.0:
++			return "着替えがない。"
++		Mood.change(world.s, 3.0)
++		world.advance_safe(10)
++		return "汗と埃のしみた服を脱いで、着替えた。少しだけ、人に戻った気がした。"
++	var wash_things := ["wet_wipes", "soap", "towel", "toothbrush", "bandana", "baking_soda", "vinegar", "disinfectant", "gloves_medical"]
++	if not said.is_empty() and said.all(func(id): return not id in wash_things and id != "clothes"):
++		return "%sでは、体は拭けない。" % name_of(str(said[0]))
++	var thing := pick(world, wash_things, said, at_home)
++	if thing.is_empty():
++		return "体を拭く物がない。（ウェットティッシュ、石けんとタオル）"
++	if thing in ["soap", "towel"] and float(world.s.get("water", 0.0)) < 0.5 and not world.tap_available():
++		return "体を洗う水が足りない。"
++	if thing in ["soap", "towel"] and not world.tap_available():
++		world.s.water = float(world.s.water) - 0.5
++	if thing == "wet_wipes":
++		use_up(world, thing, 0.1, at_home)
++	Mood.change(world.s, 3.0)
++	world.advance_safe(15)
++	return "%sで、体の汚れを落とした（15分）。さっぱりした。" % name_of(thing)
 diff --git a/scripts/item_actions.gd.uid b/scripts/item_actions.gd.uid
 new file mode 100644
 index 0000000..770bf84
@@ -107788,10 +108207,10 @@ index 0000000..770bf84
 +uid://bviuttqb85ueb
 diff --git a/scripts/item_catalog.gd b/scripts/item_catalog.gd
 new file mode 100644
-index 0000000..05765d8
+index 0000000..1f4e851
 --- /dev/null
 +++ b/scripts/item_catalog.gd
-@@ -0,0 +1,478 @@
+@@ -0,0 +1,479 @@
 +extends RefCounted
 +## v149.39: every item, what it is (tags), what it weighs and where it turns up.
 +## Generated from tools/items_source.py by tools/build_items.py — edit there.
@@ -107865,13 +108284,13 @@ index 0000000..05765d8
 +	"kerosene": {"name": "灯油", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "L", "kg": 0.8, "found": ["物置", "ガソリンスタンド"], "price": 120, "aliases": []},
 +	"firewood": {"name": "薪", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "束", "kg": 5.0, "found": ["物置", "公園", "神社", "ホームセンター"], "price": 600, "aliases": ["まき"]},
 +	"charcoal": {"name": "炭", "cat": "燃料・暖房", "tags": ["fuel", "water_clean"], "unit": "袋", "kg": 3.0, "found": ["物置", "ホームセンター"], "price": 800, "aliases": ["木炭"]},
-+	"newspaper": {"name": "新聞紙", "cat": "燃料・暖房", "tags": ["fuel", "material"], "unit": "束", "kg": 0.5, "found": ["居間", "玄関", "コンビニ"], "price": 0, "aliases": ["新聞"]},
++	"newspaper": {"name": "新聞紙", "cat": "燃料・暖房", "tags": ["fuel", "material", "insulation"], "unit": "束", "kg": 0.5, "found": ["居間", "玄関", "コンビニ"], "price": 0, "aliases": ["新聞"]},
 +	"hand_warmer": {"name": "使い捨てカイロ", "cat": "燃料・暖房", "tags": ["warm"], "unit": "個", "kg": 0.05, "found": ["押し入れ", "コンビニ", "薬局"], "price": 50, "aliases": ["カイロ"]},
 +	"hot_water_bottle": {"name": "湯たんぽ", "cat": "燃料・暖房", "tags": ["warm", "container"], "unit": "個", "kg": 0.6, "found": ["押し入れ", "寝室"], "price": 0, "aliases": []},
-+	"wood": {"name": "木材", "cat": "工具・材料", "tags": ["board", "material", "fuel"], "unit": "本", "kg": 3.0, "found": ["物置", "ホームセンター", "倉庫街"], "price": 500, "aliases": ["板", "角材", "木"]},
++	"wood": {"name": "木材", "cat": "工具・材料", "tags": ["board", "material", "fuel"], "unit": "本", "kg": 3.0, "found": ["物置", "ホームセンター", "倉庫街"], "price": 500, "aliases": ["板", "木"]},
 +	"parts": {"name": "部品", "cat": "工具・材料", "tags": ["material", "fastener"], "unit": "個", "kg": 0.5, "found": ["物置", "金物店", "ホームセンター"], "price": 800, "aliases": ["金具", "部材"]},
 +	"plywood": {"name": "ベニヤ板", "cat": "工具・材料", "tags": ["board", "material"], "unit": "枚", "kg": 5.0, "found": ["物置", "ホームセンター"], "price": 1500, "aliases": ["合板"]},
-+	"cardboard": {"name": "段ボール", "cat": "工具・材料", "tags": ["board", "material", "fuel"], "unit": "枚", "kg": 0.3, "found": ["物置", "玄関", "スーパー", "倉庫街", "コンビニ"], "price": 0, "aliases": ["ダンボール"]},
++	"cardboard": {"name": "段ボール", "cat": "工具・材料", "tags": ["board", "material", "fuel", "insulation"], "unit": "枚", "kg": 0.3, "found": ["物置", "玄関", "スーパー", "倉庫街", "コンビニ"], "price": 0, "aliases": ["ダンボール"]},
 +	"hammer": {"name": "金づち", "cat": "工具・材料", "tags": ["tool", "blunt"], "unit": "本", "kg": 0.6, "found": ["物置", "金物店", "ホームセンター"], "price": 1500, "aliases": ["ハンマー", "トンカチ"]},
 +	"nails": {"name": "釘", "cat": "工具・材料", "tags": ["fastener"], "unit": "箱", "kg": 0.3, "found": ["物置", "金物店", "ホームセンター"], "price": 300, "aliases": ["くぎ"]},
 +	"screws": {"name": "ネジ", "cat": "工具・材料", "tags": ["fastener"], "unit": "箱", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 300, "aliases": ["ビス", "木ネジ"]},
@@ -107991,7 +108410,7 @@ index 0000000..05765d8
 +	"water_filter_diy": {"name": "手作りの浄水器", "cat": "容器・台所", "tags": ["water_clean", "container"], "unit": "個", "kg": 0.5, "found": [], "price": 0, "aliases": ["簡易浄水器"]},
 +	"sos_cloth": {"name": "SOSの布", "cat": "布・衣類", "tags": ["big_cloth", "signal"], "unit": "枚", "kg": 0.8, "found": [], "price": 0, "aliases": ["SOS"]},
 +	"knife": {"name": "包丁", "cat": "武器", "tags": ["weapon", "blade"], "unit": "本", "kg": 0.2, "found": ["台所"], "price": 0, "aliases": []},
-+	"plank": {"name": "角材", "cat": "武器", "tags": ["weapon", "blunt"], "unit": "本", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 0, "aliases": []},
++	"plank": {"name": "角材", "cat": "武器", "tags": ["weapon", "blunt", "board"], "unit": "本", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 0, "aliases": []},
 +	"bat": {"name": "金属バット", "cat": "武器", "tags": ["weapon", "blunt"], "unit": "本", "kg": 1.0, "found": ["子ども部屋", "玄関", "中学校"], "price": 0, "aliases": ["バット"]},
 +	"pipe": {"name": "鉄パイプ", "cat": "武器", "tags": ["weapon", "blunt", "long"], "unit": "本", "kg": 2.0, "found": ["金物店", "ホームセンター", "倉庫街", "交番"], "price": 0, "aliases": []},
 +	"bar": {"name": "バール", "cat": "武器", "tags": ["weapon", "blunt", "pry", "tool"], "unit": "本", "kg": 2.5, "found": ["金物店", "ホームセンター", "倉庫街"], "price": 2000, "aliases": []},
@@ -108003,12 +108422,12 @@ index 0000000..05765d8
 +	"gloves": {"name": "作業用の手袋", "cat": "防具", "tags": ["armor"], "unit": "組", "kg": 0.2, "found": ["物置", "金物店", "ホームセンター"], "price": 800, "aliases": ["軍手", "手袋"]},
 +	"helmet": {"name": "ヘルメット", "cat": "防具", "tags": ["armor"], "unit": "個", "kg": 0.4, "found": ["物置", "金物店", "ホームセンター", "交番"], "price": 3000, "aliases": []},
 +	"magazine": {"name": "腕に巻いた雑誌", "cat": "防具", "tags": ["armor"], "unit": "組", "kg": 0.3, "found": ["居間"], "price": 0, "aliases": ["雑誌"]},
-+	"boots": {"name": "作業用のブーツ", "cat": "防具", "tags": ["armor"], "unit": "足", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 6000, "aliases": ["安全靴", "長靴"]},
++	"boots": {"name": "作業用のブーツ", "cat": "防具", "tags": ["armor"], "unit": "足", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 6000, "aliases": ["安全靴"]},
 +	"rubber_bands": {"name": "輪ゴム", "cat": "生活雑貨", "tags": ["elastic", "fastener"], "unit": "箱", "kg": 0.02, "found": ["台所", "居間"], "price": 100, "aliases": ["ゴム"]},
 +	"clothespins": {"name": "洗濯ばさみ", "cat": "生活雑貨", "tags": ["fastener"], "unit": "袋", "kg": 0.1, "found": ["風呂場", "ベランダ", "物置"], "price": 200, "aliases": ["せんたくばさみ"]},
 +	"hangers": {"name": "針金ハンガー", "cat": "生活雑貨", "tags": ["metal", "string", "material"], "unit": "本", "kg": 0.05, "found": ["寝室", "押し入れ"], "price": 0, "aliases": ["ハンガー"]},
 +	"safety_pins": {"name": "安全ピン", "cat": "生活雑貨", "tags": ["fastener", "sharp", "metal"], "unit": "箱", "kg": 0.01, "found": ["寝室", "居間"], "price": 100, "aliases": ["ピン"]},
-+	"sewing_kit": {"name": "裁縫セット", "cat": "生活雑貨", "tags": ["sew", "sharp"], "unit": "個", "kg": 0.2, "found": ["居間", "寝室", "押し入れ"], "price": 800, "aliases": ["針と糸", "ソーイングセット"]},
++	"sewing_kit": {"name": "裁縫セット", "cat": "生活雑貨", "tags": ["sew", "sharp", "wound"], "unit": "個", "kg": 0.2, "found": ["居間", "寝室", "押し入れ"], "price": 800, "aliases": ["針と糸", "ソーイングセット"]},
 +	"magnifier": {"name": "虫眼鏡", "cat": "生活雑貨", "tags": ["lens", "glass"], "unit": "個", "kg": 0.1, "found": ["居間", "子ども部屋"], "price": 500, "aliases": ["ルーペ"]},
 +	"reading_glasses": {"name": "老眼鏡", "cat": "生活雑貨", "tags": ["lens", "glass"], "unit": "個", "kg": 0.03, "found": ["居間", "寝室"], "price": 0, "aliases": ["メガネ", "眼鏡"]},
 +	"cd": {"name": "CD", "cat": "生活雑貨", "tags": ["reflect", "signal"], "unit": "枚", "kg": 0.02, "found": ["居間", "子ども部屋"], "price": 0, "aliases": []},
@@ -108241,8 +108660,9 @@ index 0000000..05765d8
 +	{"makes": "torch", "needs": ["wood|pole", "cloth", "fuel"], "count": 1, "minutes": 15, "note": "電池の要らない明かり"},
 +	{"makes": "noisemaker", "needs": ["empty_can", "string"], "count": 1, "minutes": 15, "note": "鳴子：夜の襲撃に早く気づく"},
 +	{"makes": "water_filter_diy", "needs": ["empty_bottle", "cloth", "charcoal"], "count": 1, "minutes": 30, "note": "簡易浄水器：雨水を飲める水に"},
-+	{"makes": "window_seal", "needs": ["cardboard|blanket|tarp", "tape"], "count": 1, "minutes": 20, "note": "窓の目張り：明かりが外に漏れない"},
++	{"makes": "window_seal", "needs": ["board|big_cloth|cloth|insulation", "tape"], "count": 1, "minutes": 20, "note": "窓の目張り：明かりが外に漏れない"},
 +	{"makes": "sos_cloth", "needs": ["big_cloth", "write|tape"], "count": 1, "minutes": 30, "note": "SOSの布：救助の合図"},
++	{"makes": "ors", "needs": ["salt", "sugar"], "count": 2, "minutes": 10, "note": "経口補水液：水1Lに塩ひとつまみと砂糖"},
 +	{"makes": "rocket_stove", "needs": ["empty_can", "blade"], "count": 1, "minutes": 20, "note": "空き缶のコンロ：アルコールや固形燃料で湯を沸かす"},
 +	{"makes": "tealight_heater", "needs": ["flower_pot", "tea_light|candle"], "count": 1, "minutes": 10, "note": "植木鉢ヒーター：小さな部屋を少しだけ暖める"},
 +]
@@ -108279,10 +108699,10 @@ index 0000000..2b1d4c6
 +uid://ddawpgaye57yc
 diff --git a/scripts/items.gd b/scripts/items.gd
 new file mode 100644
-index 0000000..260cca0
+index 0000000..14c0996
 --- /dev/null
 +++ b/scripts/items.gd
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,344 @@
 +extends RefCounted
 +## v149.39: things the player has, by the item ledger (item_catalog.gd).
 +##
@@ -108342,9 +108762,8 @@ index 0000000..260cca0
 +			"sb":
 +				world.s[where[1]] = amount >= 1.0
 +			"cold":
-+				if not world.s.get("cold") is Dictionary:
-+					world.s.cold = {}
-+				world.s.cold[where[1]] = int(round(amount))
++				# The cold rules make their state whole (warned, found...).
++				load("res://scripts/cold.gd").state(world)[where[1]] = int(round(amount))
 +		return
 +	var stock := store(world)
 +	if amount <= 0.0001:
@@ -108385,6 +108804,10 @@ index 0000000..260cca0
 +
 +static func capacity(world) -> float:
 +	var kg := HIKING_PACK_KG if count(world, "hiking_pack") > 0.0 or bag_count(world, "hiking_pack") > 0.0 else DAYPACK_KG
++	if bag_count(world, "bicycle") > 0.0:
++		kg += 10.0
++	if bag_count(world, "shopping_cart") > 0.0:
++		kg += 30.0
 +	if bag_count(world, "cart") > 0.0:
 +		kg += CART_EXTRA_KG
 +	return kg
@@ -108398,7 +108821,7 @@ index 0000000..260cca0
 +	var extra = bag.get("items", {})
 +	if extra is Dictionary:
 +		for id in extra:
-+			if str(id) in ["hiking_pack", "cart"]:
++			if str(id) in ["hiking_pack", "cart", "bicycle", "shopping_cart"]:
 +				continue
 +			kg += float(extra[id]) * kg_of(str(id))
 +	return kg
@@ -117778,7 +118201,7 @@ index 1e93ac4..dfc1830 100644
  const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
  ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 5d08c00..5e69e23 100644
+index 5d08c00..4469785 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -1,5 +1,6 @@
@@ -117893,7 +118316,7 @@ index 5d08c00..5e69e23 100644
  
  func can_trade(shop_id: String) -> bool:
  	if not s.shops.has(shop_id):return false
-@@ -381,7 +407,7 @@ func order_status() -> String:
+@@ -381,10 +407,11 @@ func order_status() -> String:
  	if s.longplay.orders.is_empty():return "通販の注文履歴はない。"
  	var lines:Array[String]=[]
  	for order in s.longplay.orders.slice(maxi(0,s.longplay.orders.size()-8)):
@@ -117901,8 +118324,13 @@ index 5d08c00..5e69e23 100644
 +		lines.append("%s ×%d / %s / 予定 %s"%["食料" if order.item=="food" else "飲料水",int(order.quantity),{"pending":"配送待ち","delivered":"配達済み","failed":"配送中止"}[order.status],Time.get_datetime_string_from_unix_time(int(Time.get_unix_time_from_datetime_string(start_time()))+int(order.due)*60).replace("T"," ").substr(0,16)])
  	return "\n".join(lines)
  func has_home_power() -> bool:
- 	return bool(s.grid_online) or (bool(s.equipment.battery) and float(s.battery)>1.0)
-@@ -431,6 +457,8 @@ func validate_state(data: Dictionary) -> bool:
+-	return bool(s.grid_online) or (bool(s.equipment.battery) and float(s.battery)>1.0)
++	# v149.39: a generator running on petrol (item_actions.gd).
++	return bool(s.grid_online) or (bool(s.equipment.battery) and float(s.battery)>1.0) or int(s.get("generator_until", -1)) > int(s.minute)
+ func tap_available() -> bool:
+ 	return bool(s.water_online) and float(s.player_pos[2])<3.0
+ 
+@@ -431,6 +458,8 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("world_traits") and not WorldTraits.valid(data.world_traits):
  		return false
@@ -117911,7 +118339,7 @@ index 5d08c00..5e69e23 100644
  	if data.has("shelter") and not Shelter.valid(data.shelter):
  		return false
  	if data.has("raid") and not Raiders.valid(data.raid):
-@@ -452,7 +480,7 @@ func validate_state(data: Dictionary) -> bool:
+@@ -452,7 +481,7 @@ func validate_state(data: Dictionary) -> bool:
  			return false
  		if person.has("water_errand") and not HouseholdErrands.valid(person.water_errand):
  			return false
@@ -117920,7 +118348,7 @@ index 5d08c00..5e69e23 100644
  			return false
  		var goods = person.get("request_goods", {})
  		if not goods is Dictionary or goods.size() > CATALOG.size():
-@@ -513,6 +541,7 @@ func action(kind: String, household: bool = false) -> String:
+@@ -513,6 +542,7 @@ func action(kind: String, household: bool = false) -> String:
  		return "補強を1段外し、木材2と部品1を回収した（%d分）。"%elapsed
  	if kind=="tend":
  		if s.plots.is_empty():return "栽培中の作物はない。"
@@ -119636,10 +120064,10 @@ index 0000000..35700a5
 +uid://e4udyoahoxju
 diff --git a/tests/test_item_actions2_149_39.gd b/tests/test_item_actions2_149_39.gd
 new file mode 100644
-index 0000000..621381a
+index 0000000..4bf9f12
 --- /dev/null
 +++ b/tests/test_item_actions2_149_39.gd
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,160 @@
 +extends SceneTree
 +## v149.39: the second wave of doing things with what one has.
 +const Main = preload("res://main.tscn")
@@ -119740,6 +120168,64 @@ index 0000000..621381a
 +	w.s.district.bag.items["lighter"] = 1.0
 +	said = await say("薪とライターで焚き火をする", "公園")
 +	check(IA.fire_here(w, "公園"), "a fire in the park: " + said)
++	# ---- wave 3: clever uses
++	g.location = "居間"
++	w.s.district.bag.items = {}
++	var f0 := int(IA.fort(w).get("玄関", 0))
++	said = await say("本棚で玄関をふさぐ", "玄関")
++	check(int(IA.fort(w).get("玄関", 0)) > f0, "a bookshelf against the door: " + said)
++	said = await say("本棚で玄関をふさぐ", "玄関")
++	check(said.contains("もう"), "the same shelf only once: " + said)
++	Items.add(w, "saw", 1)
++	var wood0 := int(w.s.inventory.wood)
++	said = await say("のこぎりでタンスを解体して薪にする")
++	check(int(w.s.inventory.wood) > wood0, "a wardrobe into timber: " + said)
++	said = await say("のこぎりで冷蔵庫を壊す")
++	check(said.contains("金属"), "a fridge does not burn: " + said)
++	Items.add(w, "generator", 1); Items.add(w, "gasoline", 4)
++	w.s.grid_online = false
++	said = await say("発電機を回す")
++	check(w.has_home_power(), "the generator gives power: " + said)
++	Items.add(w, "flashlight", 1)
++	Items.add(w, "batteries_aa", 2)
++	said = await say("懐中電灯に電池を入れる")
++	check(bool(w.s.get("lamp_batteries", {}).get("flashlight", false)), "batteries in the torch: " + said)
++	w.s.weather = "clear"
++	w.s.minute = int(w.s.minute) / 1440 * 1440 + 1440
++	w.s.minute = int(w.s.minute) + ((12 - int(w.hour_of_day()) + 48) % 24) * 60
++	w.s.rain_water = 6.0
++	Items.add(w, "empty_bottle", 2)
++	var water0 := float(w.s.water)
++	said = await say("ペットボトルに水を詰めて日なたに置く")
++	check(float(w.s.water) > water0, "sun on clear bottles makes water safe: " + said)
++	Items.add(w, "salt", 1); Items.add(w, "sugar", 1)
++	w.s.water = 5.0
++	said = await say("経口補水液を作る", "台所")
++	check(Items.count(w, "ors") >= 2.0, "oral rehydration salts made: " + said)
++	Items.add(w, "bubble_wrap", 1)
++	var t0: float = load("res://scripts/cold.gd").indoor(w)
++	w.s.grid_online = false
++	w.s.generator_until = -1
++	t0 = load("res://scripts/cold.gd").indoor(w)
++	said = await say("プチプチを窓に貼って断熱する")
++	check(load("res://scripts/cold.gd").indoor(w) > t0, "insulation warms the room: " + said)
++	Items.add(w, "binoculars", 1)
++	said = await say("双眼鏡で外を見渡す")
++	check(said.contains("双眼鏡"), "binoculars: " + said)
++	Items.add(w, "wet_wipes", 1)
++	said = await say("ウェットティッシュで体を拭く")
++	check(said.contains("さっぱり"), "wiping down: " + said)
++	Items.add(w, "kerosene_heater", 1); Items.add(w, "kerosene", 2)
++	said = await say("石油ストーブをつける")
++	check(load("res://scripts/cold.gd").heater_on(w), "a kerosene heater lit: " + said)
++	# Named things that do not fit are not swapped for others.
++	said = await say("チョコレートで遊ぶ")
++	check(not said.contains("アルバム"), "chocolate is not played with: " + said)
++	said = await say("救急箱を飲む")
++	check(not said.contains("痛み止め"), "a first-aid kit is not swallowed: " + said)
++	Items.add(w, "duct_tape", 1); Items.add(w, "plywood", 1); Items.add(w, "nails", 1); Items.add(w, "hammer", 1)
++	said = await say("ガムテープで窓を補強する")
++	check(said.contains("ガムテープ") and not said.contains("ベニヤ板"), "tape named, tape used: " + said)
 +	print("item actions 2: %d failures" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_item_actions2_149_39.gd.uid b/tests/test_item_actions2_149_39.gd.uid
@@ -122890,598 +123376,600 @@ index 54f2002..dd3551e 100644
  			mate_hit = true
 diff --git a/tools/__pycache__/items_source.cpython-313.pyc b/tools/__pycache__/items_source.cpython-313.pyc
 new file mode 100644
-index 0000000000000000000000000000000000000000..f0481738ff43d19d5c239efd2abe7f4dd0912aa2
+index 0000000000000000000000000000000000000000..b45d39087d0478d2eeb70287199fdcfb9633d97c
 GIT binary patch
-literal 70477
-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
+literal 70656
+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
+H1k`^4>cFSj
 
 literal 0
 HcmV?d00001
@@ -123595,10 +124083,10 @@ index 0000000..424e03c
 +print("items", len(S.ITEMS), "icons to make", len(todo))
 diff --git a/tools/items_source.py b/tools/items_source.py
 new file mode 100644
-index 0000000..681e888
+index 0000000..64d5a4f
 --- /dev/null
 +++ b/tools/items_source.py
-@@ -0,0 +1,514 @@
+@@ -0,0 +1,515 @@
 +# -*- coding: utf-8 -*-
 +"""The item ledger (v149.39). One row per item; tools/build_items.py turns it
 +into scripts/item_catalog.gd (the game's data) and docs/ITEM_ICON_PROMPTS.md
@@ -123699,14 +124187,14 @@ index 0000000..681e888
 +("kerosene", "灯油", "燃料・暖房", "fuel", "L", 0.8, "物置,ガソリンスタンド", 120, "", "B", "赤いポリタンクの灯油（18L）1つ。"),
 +("firewood", "薪", "燃料・暖房", "fuel", "束", 5.0, "物置,公園,神社,ホームセンター", 600, "まき", "B", "紐で束ねた薪の束。"),
 +("charcoal", "炭", "燃料・暖房", "fuel water_clean", "袋", 3.0, "物置,ホームセンター", 800, "木炭", "B", "紙袋から黒い木炭がのぞいている。"),
-+("newspaper", "新聞紙", "燃料・暖房", "fuel material", "束", 0.5, "居間,玄関,コンビニ", 0, "新聞", "B", "折りたたんだ新聞紙の束（文字は読めないようにぼかす）。"),
++("newspaper", "新聞紙", "燃料・暖房", "fuel material insulation", "束", 0.5, "居間,玄関,コンビニ", 0, "新聞", "B", "折りたたんだ新聞紙の束（文字は読めないようにぼかす）。"),
 +("hand_warmer", "使い捨てカイロ", "燃料・暖房", "warm", "個", 0.05, "押し入れ,コンビニ,薬局", 50, "カイロ", "A", "使い捨てカイロ1枚（白い袋、文字なし）。"),
 +("hot_water_bottle", "湯たんぽ", "燃料・暖房", "warm container", "個", 0.6, "押し入れ,寝室", 0, "", "B", "オレンジ色のプラスチックの湯たんぽ1つ。"),
 +# ---------------------------------------------------------------- 工具・材料
-+("wood", "木材", "工具・材料", "board material fuel", "本", 3.0, "物置,ホームセンター,倉庫街", 500, "板/角材/木", "A", "（既存）"),
++("wood", "木材", "工具・材料", "board material fuel", "本", 3.0, "物置,ホームセンター,倉庫街", 500, "板/木", "A", "（既存）"),
 +("parts", "部品", "工具・材料", "material fastener", "個", 0.5, "物置,金物店,ホームセンター", 800, "金具/部材", "A", "（既存）"),
 +("plywood", "ベニヤ板", "工具・材料", "board material", "枚", 5.0, "物置,ホームセンター", 1500, "合板", "A", "立てかけたベニヤ板1枚（90×180cm）。"),
-+("cardboard", "段ボール", "工具・材料", "board material fuel", "枚", 0.3, "物置,玄関,スーパー,倉庫街,コンビニ", 0, "ダンボール", "A", "たたんだ段ボールの束。"),
++("cardboard", "段ボール", "工具・材料", "board material fuel insulation", "枚", 0.3, "物置,玄関,スーパー,倉庫街,コンビニ", 0, "ダンボール", "A", "たたんだ段ボールの束。"),
 +("hammer", "金づち", "工具・材料", "tool blunt", "本", 0.6, "物置,金物店,ホームセンター", 1500, "ハンマー/トンカチ", "A", "木の柄の金づち1本。"),
 +("nails", "釘", "工具・材料", "fastener", "箱", 0.3, "物置,金物店,ホームセンター", 300, "くぎ", "A", "小箱から釘がこぼれている。"),
 +("screws", "ネジ", "工具・材料", "fastener", "箱", 0.2, "物置,金物店,ホームセンター", 300, "ビス/木ネジ", "B", "小箱に入った木ネジ。"),
@@ -123838,7 +124326,7 @@ index 0000000..681e888
 +("sos_cloth", "SOSの布", "布・衣類", "big_cloth signal", "枚", 0.8, "", 0, "SOS", "B", "たたんだ白いシーツ。黒い大きな字で「SOS」と書かれているのが端から見える。"),
 +# ---------------------------------------------------------------- 武器（今の9種）
 +("knife", "包丁", "武器", "weapon blade", "本", 0.2, "台所", 0, "", "A", "（武器）よく研いだ包丁1本。"),
-+("plank", "角材", "武器", "weapon blunt", "本", 1.5, "物置,ホームセンター", 0, "", "A", "（武器）手に持てる長さの角材1本。"),
++("plank", "角材", "武器", "weapon blunt board", "本", 1.5, "物置,ホームセンター", 0, "", "A", "（武器）手に持てる長さの角材1本。"),
 +("bat", "金属バット", "武器", "weapon blunt", "本", 1.0, "子ども部屋,玄関,中学校", 0, "バット", "A", "（武器）使い込まれた銀色の金属バット1本。"),
 +("pipe", "鉄パイプ", "武器", "weapon blunt long", "本", 2.0, "金物店,ホームセンター,倉庫街,交番", 0, "", "A", "（武器）錆びた鉄パイプ1本。"),
 +("bar", "バール", "武器", "weapon blunt pry tool", "本", 2.5, "金物店,ホームセンター,倉庫街", 2000, "", "A", "（武器）赤いバール1本。"),
@@ -123851,7 +124339,7 @@ index 0000000..681e888
 +("gloves", "作業用の手袋", "防具", "armor", "組", 0.2, "物置,金物店,ホームセンター", 800, "軍手/手袋", "A", "（防具）厚手の革の作業用手袋1組。"),
 +("helmet", "ヘルメット", "防具", "armor", "個", 0.4, "物置,金物店,ホームセンター,交番", 3000, "", "A", "（防具）白い工事用ヘルメット1つ。"),
 +("magazine", "腕に巻いた雑誌", "防具", "armor", "組", 0.3, "居間", 0, "雑誌", "B", "（防具）ガムテープで巻いた雑誌（表紙はぼかす）。"),
-+("boots", "作業用のブーツ", "防具", "armor", "足", 1.5, "物置,ホームセンター", 6000, "安全靴/長靴", "B", "（防具）茶色の作業用ブーツ1足。"),
++("boots", "作業用のブーツ", "防具", "armor", "足", 1.5, "物置,ホームセンター", 6000, "安全靴", "B", "（防具）茶色の作業用ブーツ1足。"),
 +]
 +
 +RECIPES = [
@@ -123861,7 +124349,7 @@ index 0000000..681e888
 +    ("torch", ["wood|pole", "cloth", "fuel"], 1, 15, "電池の要らない明かり"),
 +    ("noisemaker", ["empty_can", "string"], 1, 15, "鳴子：夜の襲撃に早く気づく"),
 +    ("water_filter_diy", ["empty_bottle", "cloth", "charcoal"], 1, 30, "簡易浄水器：雨水を飲める水に"),
-+    ("window_seal", ["cardboard|blanket|tarp", "tape"], 1, 20, "窓の目張り：明かりが外に漏れない"),
++    ("window_seal", ["board|big_cloth|cloth|insulation", "tape"], 1, 20, "窓の目張り：明かりが外に漏れない"),
 +    ("sos_cloth", ["big_cloth", "write|tape"], 1, 30, "SOSの布：救助の合図"),
 +]
 +
@@ -123874,7 +124362,7 @@ index 0000000..681e888
 +("clothespins", "洗濯ばさみ", "生活雑貨", "fastener", "袋", 0.1, "風呂場,ベランダ,物置", 200, "せんたくばさみ", "B", "色とりどりのプラスチックの洗濯ばさみ数個。"),
 +("hangers", "針金ハンガー", "生活雑貨", "metal string material", "本", 0.05, "寝室,押し入れ", 0, "ハンガー", "B", "クリーニング店の針金ハンガー数本を重ねたもの。"),
 +("safety_pins", "安全ピン", "生活雑貨", "fastener sharp metal", "箱", 0.01, "寝室,居間", 100, "ピン", "B", "小さな箱と、数本の安全ピン。"),
-+("sewing_kit", "裁縫セット", "生活雑貨", "sew sharp", "個", 0.2, "居間,寝室,押し入れ", 800, "針と糸/ソーイングセット", "A", "ふたを開けた裁縫箱。糸巻き、針山、はさみ。"),
++("sewing_kit", "裁縫セット", "生活雑貨", "sew sharp wound", "個", 0.2, "居間,寝室,押し入れ", 800, "針と糸/ソーイングセット", "A", "ふたを開けた裁縫箱。糸巻き、針山、はさみ。"),
 +("magnifier", "虫眼鏡", "生活雑貨", "lens glass", "個", 0.1, "居間,子ども部屋", 500, "ルーペ", "A", "木の柄の丸い虫眼鏡1つ。"),
 +("reading_glasses", "老眼鏡", "生活雑貨", "lens glass", "個", 0.03, "居間,寝室", 0, "メガネ/眼鏡", "B", "折りたたんだ黒縁の老眼鏡1つ。"),
 +("cd", "CD", "生活雑貨", "reflect signal", "枚", 0.02, "居間,子ども部屋", 0, "", "B", "銀色に光るCD1枚（レーベル面は無地）。"),
@@ -124110,6 +124598,7 @@ index 0000000..681e888
 +]
 +
 +RECIPES += [
++    ("ors", ["salt", "sugar"], 2, 10, "経口補水液：水1Lに塩ひとつまみと砂糖"),
 +    ("rocket_stove", ["empty_can", "blade"], 1, 20, "空き缶のコンロ：アルコールや固形燃料で湯を沸かす"),
 +    ("tealight_heater", ["flower_pot", "tea_light|candle"], 1, 10, "植木鉢ヒーター：小さな部屋を少しだけ暖める"),
 +]
