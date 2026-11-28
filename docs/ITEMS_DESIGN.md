@@ -1,9 +1,9 @@
 # アイテムの仕組み 設計案（v149.39〜）
 
 ## 決まったこと
-- アイテムは細かく：**205種**（台帳：`docs/ITEMS_LEDGER.md`、元データ：`tools/items_source.py`）
+- アイテムは細かく：**434種**（家や町に普通にある物を、性質で使い道が広がるように）（台帳：`docs/ITEMS_LEDGER.md`、元データ：`tools/items_source.py`）
 - 持ち運びは**重さ制**（リュック約15kg、登山用ザックやキャリーカートで増える）
-- 持ち物欄のアイコンは作ってもらう：**188枚**（プロンプト：`docs/ITEM_ICON_PROMPTS.md`、優先度A 66枚から）
+- 持ち物欄のアイコンは作ってもらう：**413枚**（プロンプト：`docs/ITEM_ICON_PROMPTS.md`、コピーと「作った」印のページ https://claude.ai/artifact/WULKLpuibiHQYvPsvemhxN）
 
 ## ねらい
 「書いたことが、持っている物で筋が通っていれば、できる」ようにする。

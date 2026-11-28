@@ -106210,15 +106210,15 @@ index 971fbda..8bf3cc0 100644
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
 diff --git a/scripts/item_catalog.gd b/scripts/item_catalog.gd
 new file mode 100644
-index 0000000..7c7104b
+index 0000000..a32f9cd
 --- /dev/null
 +++ b/scripts/item_catalog.gd
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,478 @@
 +extends RefCounted
 +## v149.39: every item, what it is (tags), what it weighs and where it turns up.
 +## Generated from tools/items_source.py by tools/build_items.py — edit there.
 +
-+const TAGS := {"edible": "食べられる", "ready": "火が要らない", "needs_heat": "加熱が要る", "needs_water": "水が要る", "perishable": "傷みやすい", "drink": "飲める", "container": "水が入る", "igniter": "着火具", "fuel": "燃料", "light": "明かり", "uses_batteries": "電池で動く", "cell": "電池", "blade": "刃物", "blunt": "打撃", "long": "長い", "pry": "こじ開け", "cloth": "布", "big_cloth": "大きな布", "string": "紐", "tape": "貼れる", "board": "板", "tool": "工具", "fastener": "留め具", "medicine": "薬", "wound": "傷の手当て", "noise": "音が鳴る", "warm": "暖かい", "heater": "暖房", "stove": "調理の火", "cookware": "調理器具", "write": "書ける", "valuable": "価値がある", "leisure": "気晴らし", "news": "情報が入る", "charge": "充電できる", "hygiene": "清潔", "seed": "植えられる", "garden": "畑", "reflect": "光を反射する", "lock": "鍵", "bag": "入れ物", "weapon": "武器", "armor": "防具", "signal": "合図", "water_clean": "水をきれいにする", "comfort": "心の支え", "material": "材料"}
++const TAGS := {"edible": "食べられる", "ready": "火が要らない", "needs_heat": "加熱が要る", "needs_water": "水が要る", "perishable": "傷みやすい", "drink": "飲める", "container": "水が入る", "igniter": "着火具", "fuel": "燃料", "light": "明かり", "uses_batteries": "電池で動く", "cell": "電池", "blade": "刃物", "blunt": "打撃", "long": "長い", "pry": "こじ開け", "cloth": "布", "big_cloth": "大きな布", "string": "紐", "tape": "貼れる", "board": "板", "tool": "工具", "fastener": "留め具", "medicine": "薬", "wound": "傷の手当て", "noise": "音が鳴る", "warm": "暖かい", "heater": "暖房", "stove": "調理の火", "cookware": "調理器具", "write": "書ける", "valuable": "価値がある", "leisure": "気晴らし", "news": "情報が入る", "charge": "充電できる", "hygiene": "清潔", "seed": "植えられる", "garden": "畑", "reflect": "光を反射する", "lock": "鍵", "bag": "入れ物", "weapon": "武器", "armor": "防具", "signal": "合図", "water_clean": "水をきれいにする", "comfort": "心の支え", "material": "材料", "lens": "レンズ（日光で火）", "sharp": "尖っている", "heavy": "重い", "absorbent": "水を吸う", "waterproof": "水を通さない", "insulation": "断熱", "accelerant": "よく燃える液体", "slippery": "滑る", "chemical": "薬品", "bait": "におい・えさ", "glass": "ガラス", "magnet": "磁石", "metal": "金属", "elastic": "伸び縮み", "forage": "自然の恵み", "fishing": "釣り", "sew": "縫える", "smoke": "煙が出る", "toxic": "口にしてはいけない", "dig": "掘れる", "net": "網", "vehicle": "乗り物", "throwable": "投げられる"}
 +
 +const ITEMS := {
 +	"food": {"name": "保存食（まとめ）", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "人日", "kg": 0.6, "found": ["台所", "押し入れ", "食品店", "コンビニ", "スーパー"], "price": 600, "aliases": ["食料", "食べ物", "保存食"]},
@@ -106426,6 +106426,235 @@ index 0000000..7c7104b
 +	"helmet": {"name": "ヘルメット", "cat": "防具", "tags": ["armor"], "unit": "個", "kg": 0.4, "found": ["物置", "金物店", "ホームセンター", "交番"], "price": 3000, "aliases": []},
 +	"magazine": {"name": "腕に巻いた雑誌", "cat": "防具", "tags": ["armor"], "unit": "組", "kg": 0.3, "found": ["居間"], "price": 0, "aliases": ["雑誌"]},
 +	"boots": {"name": "作業用のブーツ", "cat": "防具", "tags": ["armor"], "unit": "足", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 6000, "aliases": ["安全靴", "長靴"]},
++	"rubber_bands": {"name": "輪ゴム", "cat": "生活雑貨", "tags": ["elastic", "fastener"], "unit": "箱", "kg": 0.02, "found": ["台所", "居間"], "price": 100, "aliases": ["ゴム"]},
++	"clothespins": {"name": "洗濯ばさみ", "cat": "生活雑貨", "tags": ["fastener"], "unit": "袋", "kg": 0.1, "found": ["風呂場", "ベランダ", "物置"], "price": 200, "aliases": ["せんたくばさみ"]},
++	"hangers": {"name": "針金ハンガー", "cat": "生活雑貨", "tags": ["metal", "string", "material"], "unit": "本", "kg": 0.05, "found": ["寝室", "押し入れ"], "price": 0, "aliases": ["ハンガー"]},
++	"safety_pins": {"name": "安全ピン", "cat": "生活雑貨", "tags": ["fastener", "sharp", "metal"], "unit": "箱", "kg": 0.01, "found": ["寝室", "居間"], "price": 100, "aliases": ["ピン"]},
++	"sewing_kit": {"name": "裁縫セット", "cat": "生活雑貨", "tags": ["sew", "sharp"], "unit": "個", "kg": 0.2, "found": ["居間", "寝室", "押し入れ"], "price": 800, "aliases": ["針と糸", "ソーイングセット"]},
++	"magnifier": {"name": "虫眼鏡", "cat": "生活雑貨", "tags": ["lens", "glass"], "unit": "個", "kg": 0.1, "found": ["居間", "子ども部屋"], "price": 500, "aliases": ["ルーペ"]},
++	"reading_glasses": {"name": "老眼鏡", "cat": "生活雑貨", "tags": ["lens", "glass"], "unit": "個", "kg": 0.03, "found": ["居間", "寝室"], "price": 0, "aliases": ["メガネ", "眼鏡"]},
++	"cd": {"name": "CD", "cat": "生活雑貨", "tags": ["reflect", "signal"], "unit": "枚", "kg": 0.02, "found": ["居間", "子ども部屋"], "price": 0, "aliases": []},
++	"curtain": {"name": "カーテン", "cat": "生活雑貨", "tags": ["big_cloth", "cloth"], "unit": "枚", "kg": 1.5, "found": ["居間", "寝室"], "price": 0, "aliases": []},
++	"futon": {"name": "布団", "cat": "生活雑貨", "tags": ["warm", "insulation", "big_cloth"], "unit": "組", "kg": 6.0, "found": ["寝室", "押し入れ"], "price": 0, "aliases": ["敷布団", "掛け布団"]},
++	"cushion": {"name": "座布団", "cat": "生活雑貨", "tags": ["insulation"], "unit": "枚", "kg": 0.6, "found": ["居間"], "price": 0, "aliases": ["クッション"]},
++	"carpet": {"name": "カーペット", "cat": "生活雑貨", "tags": ["big_cloth", "insulation"], "unit": "枚", "kg": 4.0, "found": ["居間"], "price": 0, "aliases": ["ラグ", "じゅうたん"]},
++	"bubble_wrap": {"name": "プチプチ", "cat": "生活雑貨", "tags": ["insulation", "material"], "unit": "巻", "kg": 0.3, "found": ["物置", "押し入れ"], "price": 0, "aliases": ["緩衝材", "エアキャップ"]},
++	"styrofoam": {"name": "発泡スチロール", "cat": "生活雑貨", "tags": ["insulation", "material"], "unit": "個", "kg": 0.2, "found": ["台所", "物置", "スーパー"], "price": 0, "aliases": ["発泡スチロールの箱"]},
++	"trash_can": {"name": "ゴミ箱", "cat": "生活雑貨", "tags": ["container"], "unit": "個", "kg": 1.0, "found": ["台所", "居間"], "price": 0, "aliases": ["ポリバケツ"]},
++	"laundry_basket": {"name": "洗濯かご", "cat": "生活雑貨", "tags": ["bag"], "unit": "個", "kg": 0.6, "found": ["風呂場"], "price": 0, "aliases": ["かご"]},
++	"dish_soap": {"name": "台所用洗剤", "cat": "生活雑貨", "tags": ["hygiene", "slippery"], "unit": "本", "kg": 0.6, "found": ["台所"], "price": 200, "aliases": ["洗剤"]},
++	"baking_soda": {"name": "重曹", "cat": "生活雑貨", "tags": ["hygiene", "chemical"], "unit": "袋", "kg": 1.0, "found": ["台所"], "price": 300, "aliases": []},
++	"vinegar": {"name": "酢", "cat": "生活雑貨", "tags": ["hygiene", "material"], "unit": "本", "kg": 0.5, "found": ["台所"], "price": 200, "aliases": ["お酢"]},
++	"honey": {"name": "はちみつ", "cat": "生活雑貨", "tags": ["edible", "ready", "wound"], "unit": "びん", "kg": 0.5, "found": ["台所"], "price": 1000, "aliases": ["蜂蜜"]},
++	"hydrogen_peroxide": {"name": "オキシドール", "cat": "生活雑貨", "tags": ["wound", "hygiene", "chemical"], "unit": "本", "kg": 0.1, "found": ["風呂場", "押し入れ", "薬局"], "price": 300, "aliases": ["過酸化水素"]},
++	"lamp_oil": {"name": "ランプオイル", "cat": "生活雑貨", "tags": ["fuel", "accelerant"], "unit": "本", "kg": 0.5, "found": ["物置"], "price": 0, "aliases": []},
++	"lighter_fluid": {"name": "オイルライター用オイル", "cat": "生活雑貨", "tags": ["fuel", "accelerant"], "unit": "缶", "kg": 0.13, "found": ["居間"], "price": 0, "aliases": ["ライターオイル"]},
++	"oil_lighter": {"name": "オイルライター", "cat": "生活雑貨", "tags": ["igniter", "metal"], "unit": "個", "kg": 0.05, "found": ["居間", "寝室"], "price": 0, "aliases": ["ジッポ"]},
++	"bbq_lighter": {"name": "チャッカマン", "cat": "生活雑貨", "tags": ["igniter"], "unit": "本", "kg": 0.1, "found": ["台所", "物置"], "price": 400, "aliases": ["点火棒"]},
++	"incense": {"name": "線香", "cat": "生活雑貨", "tags": ["smoke", "fuel"], "unit": "箱", "kg": 0.1, "found": ["居間", "神社"], "price": 300, "aliases": ["お線香"]},
++	"mosquito_coil": {"name": "蚊取り線香", "cat": "生活雑貨", "tags": ["smoke"], "unit": "箱", "kg": 0.2, "found": ["物置"], "price": 400, "aliases": []},
++	"hair_dryer": {"name": "ドライヤー", "cat": "生活雑貨", "tags": [], "unit": "台", "kg": 0.5, "found": ["風呂場", "寝室"], "price": 0, "aliases": []},
++	"iron": {"name": "アイロン", "cat": "生活雑貨", "tags": ["heavy", "metal", "blunt"], "unit": "台", "kg": 1.2, "found": ["押し入れ"], "price": 0, "aliases": []},
++	"vacuum": {"name": "掃除機", "cat": "生活雑貨", "tags": [], "unit": "台", "kg": 3.0, "found": ["押し入れ"], "price": 0, "aliases": []},
++	"electric_fan": {"name": "扇風機", "cat": "生活雑貨", "tags": [], "unit": "台", "kg": 3.0, "found": ["押し入れ"], "price": 0, "aliases": []},
++	"kotatsu": {"name": "こたつ", "cat": "生活雑貨", "tags": ["warm"], "unit": "台", "kg": 10.0, "found": ["居間"], "price": 0, "aliases": []},
++	"electric_blanket": {"name": "電気毛布", "cat": "生活雑貨", "tags": ["warm"], "unit": "枚", "kg": 1.0, "found": ["寝室", "押し入れ"], "price": 0, "aliases": []},
++	"thermos": {"name": "魔法瓶", "cat": "生活雑貨", "tags": ["container", "insulation"], "unit": "本", "kg": 1.0, "found": ["台所"], "price": 0, "aliases": ["ポット", "保温ポット"]},
++	"cooler_box": {"name": "クーラーボックス", "cat": "生活雑貨", "tags": ["container", "insulation"], "unit": "個", "kg": 2.5, "found": ["物置"], "price": 0, "aliases": []},
++	"glass_jar": {"name": "ガラスびん", "cat": "生活雑貨", "tags": ["container", "glass"], "unit": "個", "kg": 0.3, "found": ["台所"], "price": 0, "aliases": ["空きびん", "保存びん"]},
++	"beer_bottle": {"name": "空きびん（ビール）", "cat": "生活雑貨", "tags": ["glass", "throwable"], "unit": "本", "kg": 0.5, "found": ["台所", "玄関"], "price": 0, "aliases": ["びん"]},
++	"mirror_large": {"name": "姿見", "cat": "生活雑貨", "tags": ["reflect", "glass"], "unit": "枚", "kg": 6.0, "found": ["寝室"], "price": 0, "aliases": ["鏡"]},
++	"window_glass": {"name": "窓ガラスの破片", "cat": "生活雑貨", "tags": ["glass", "sharp"], "unit": "枚", "kg": 0.5, "found": [], "price": 0, "aliases": ["ガラス片"]},
++	"door_wedge": {"name": "ドアストッパー", "cat": "生活雑貨", "tags": ["lock"], "unit": "個", "kg": 0.1, "found": ["玄関"], "price": 300, "aliases": []},
++	"bike_lock": {"name": "自転車の鍵", "cat": "生活雑貨", "tags": ["lock", "string"], "unit": "本", "kg": 0.5, "found": ["玄関"], "price": 1000, "aliases": ["ワイヤーロック"]},
++	"sink_plunger": {"name": "ラバーカップ", "cat": "生活雑貨", "tags": ["long"], "unit": "本", "kg": 0.5, "found": ["風呂場"], "price": 500, "aliases": ["スッポン"]},
++	"mop": {"name": "モップ", "cat": "生活雑貨", "tags": ["long"], "unit": "本", "kg": 0.8, "found": ["物置"], "price": 1000, "aliases": []},
++	"dustpan": {"name": "ちりとり", "cat": "生活雑貨", "tags": [], "unit": "個", "kg": 0.2, "found": ["玄関", "物置"], "price": 300, "aliases": []},
++	"bath_board": {"name": "風呂のふた", "cat": "生活雑貨", "tags": ["board"], "unit": "枚", "kg": 1.0, "found": ["風呂場"], "price": 0, "aliases": []},
++	"shower_curtain": {"name": "シャワーカーテン", "cat": "生活雑貨", "tags": ["big_cloth", "waterproof"], "unit": "枚", "kg": 0.5, "found": ["風呂場"], "price": 0, "aliases": []},
++	"umbrella_stand": {"name": "傘立て", "cat": "生活雑貨", "tags": ["heavy", "container"], "unit": "個", "kg": 3.0, "found": ["玄関"], "price": 0, "aliases": []},
++	"flower_pot": {"name": "植木鉢", "cat": "生活雑貨", "tags": ["garden", "container", "heavy", "throwable"], "unit": "個", "kg": 1.0, "found": ["ベランダ", "玄関"], "price": 300, "aliases": ["鉢"]},
++	"doormat": {"name": "玄関マット", "cat": "生活雑貨", "tags": ["cloth"], "unit": "枚", "kg": 0.8, "found": ["玄関"], "price": 0, "aliases": ["マット"]},
++	"calendar": {"name": "カレンダー", "cat": "生活雑貨", "tags": ["write", "material"], "unit": "部", "kg": 0.3, "found": ["居間", "台所"], "price": 0, "aliases": []},
++	"photo_album": {"name": "アルバム", "cat": "生活雑貨", "tags": ["comfort"], "unit": "冊", "kg": 1.0, "found": ["居間", "寝室"], "price": 0, "aliases": ["写真"]},
++	"letter": {"name": "手紙", "cat": "生活雑貨", "tags": ["comfort"], "unit": "通", "kg": 0.01, "found": ["居間", "寝室"], "price": 0, "aliases": []},
++	"phone_book": {"name": "電話帳", "cat": "生活雑貨", "tags": ["fuel", "material"], "unit": "冊", "kg": 1.0, "found": ["居間", "玄関"], "price": 0, "aliases": []},
++	"magazine_stack": {"name": "雑誌", "cat": "生活雑貨", "tags": ["fuel", "material", "armor"], "unit": "冊", "kg": 0.5, "found": ["居間"], "price": 0, "aliases": ["週刊誌"]},
++	"toys_blocks": {"name": "積み木", "cat": "生活雑貨", "tags": ["leisure"], "unit": "箱", "kg": 1.0, "found": ["子ども部屋"], "price": 0, "aliases": ["おもちゃ"]},
++	"crayons": {"name": "クレヨン", "cat": "生活雑貨", "tags": ["write"], "unit": "箱", "kg": 0.2, "found": ["子ども部屋"], "price": 300, "aliases": []},
++	"kids_bike_helmet": {"name": "子ども用ヘルメット", "cat": "生活雑貨", "tags": ["armor"], "unit": "個", "kg": 0.3, "found": ["子ども部屋", "玄関"], "price": 0, "aliases": []},
++	"water_gun": {"name": "水鉄砲", "cat": "生活雑貨", "tags": ["container"], "unit": "個", "kg": 0.2, "found": ["子ども部屋"], "price": 0, "aliases": []},
++	"firecrackers": {"name": "花火", "cat": "生活雑貨", "tags": ["noise", "smoke", "igniter"], "unit": "袋", "kg": 0.3, "found": ["物置", "子ども部屋", "コンビニ"], "price": 1000, "aliases": ["爆竹", "手持ち花火"]},
++	"party_popper": {"name": "クラッカー（鳴り物）", "cat": "生活雑貨", "tags": ["noise"], "unit": "個", "kg": 0.01, "found": ["子ども部屋", "居間"], "price": 100, "aliases": ["パーティークラッカー"]},
++	"bells": {"name": "鈴", "cat": "生活雑貨", "tags": ["noise"], "unit": "個", "kg": 0.02, "found": ["玄関", "神社"], "price": 200, "aliases": ["すず"]},
++	"wind_chime": {"name": "風鈴", "cat": "生活雑貨", "tags": ["noise", "glass"], "unit": "個", "kg": 0.1, "found": ["ベランダ", "居間"], "price": 0, "aliases": []},
++	"music_box": {"name": "オルゴール", "cat": "生活雑貨", "tags": ["comfort", "leisure"], "unit": "個", "kg": 0.3, "found": ["子ども部屋", "寝室"], "price": 0, "aliases": []},
++	"tv": {"name": "テレビ", "cat": "生活雑貨", "tags": ["news"], "unit": "台", "kg": 10.0, "found": ["居間"], "price": 0, "aliases": []},
++	"pc_laptop": {"name": "ノートパソコン", "cat": "生活雑貨", "tags": ["news"], "unit": "台", "kg": 1.5, "found": ["居間", "寝室"], "price": 0, "aliases": ["パソコン"]},
++	"kitchen_scissors": {"name": "キッチンばさみ", "cat": "容器・台所", "tags": ["tool", "blade"], "unit": "本", "kg": 0.1, "found": ["台所"], "price": 800, "aliases": []},
++	"ladle": {"name": "おたま", "cat": "容器・台所", "tags": ["cookware"], "unit": "本", "kg": 0.1, "found": ["台所"], "price": 300, "aliases": []},
++	"rice_cooker": {"name": "炊飯器", "cat": "容器・台所", "tags": ["cookware"], "unit": "台", "kg": 3.0, "found": ["台所"], "price": 0, "aliases": []},
++	"big_pot": {"name": "大鍋", "cat": "容器・台所", "tags": ["cookware", "container"], "unit": "個", "kg": 3.0, "found": ["中学校", "避難所"], "price": 0, "aliases": ["寸胴鍋"]},
++	"cutting_board": {"name": "まな板", "cat": "容器・台所", "tags": ["board"], "unit": "枚", "kg": 1.0, "found": ["台所"], "price": 1000, "aliases": []},
++	"rolling_pin": {"name": "めん棒", "cat": "容器・台所", "tags": ["blunt"], "unit": "本", "kg": 0.3, "found": ["台所"], "price": 500, "aliases": []},
++	"funnel": {"name": "じょうご", "cat": "容器・台所", "tags": ["tool"], "unit": "個", "kg": 0.05, "found": ["台所", "物置", "ガソリンスタンド"], "price": 200, "aliases": ["ロート"]},
++	"hose": {"name": "ホース", "cat": "容器・台所", "tags": ["string", "tool"], "unit": "本", "kg": 2.0, "found": ["ベランダ", "物置", "ホームセンター"], "price": 1500, "aliases": ["ゴムホース"]},
++	"coffee_filter": {"name": "コーヒーフィルター", "cat": "容器・台所", "tags": ["water_clean", "absorbent"], "unit": "箱", "kg": 0.05, "found": ["台所"], "price": 200, "aliases": []},
++	"paper_towels": {"name": "キッチンペーパー", "cat": "容器・台所", "tags": ["absorbent", "fuel"], "unit": "ロール", "kg": 0.2, "found": ["台所", "スーパー"], "price": 200, "aliases": []},
++	"tupperware": {"name": "保存容器", "cat": "容器・台所", "tags": ["container"], "unit": "個", "kg": 0.1, "found": ["台所"], "price": 300, "aliases": ["タッパー"]},
++	"mug": {"name": "マグカップ", "cat": "容器・台所", "tags": ["container"], "unit": "個", "kg": 0.3, "found": ["台所", "居間"], "price": 0, "aliases": ["コップ"]},
++	"chopsticks": {"name": "箸", "cat": "容器・台所", "tags": [], "unit": "膳", "kg": 0.02, "found": ["台所"], "price": 0, "aliases": []},
++	"pressure_cooker": {"name": "圧力鍋", "cat": "容器・台所", "tags": ["cookware", "heavy"], "unit": "個", "kg": 4.0, "found": ["台所"], "price": 0, "aliases": []},
++	"cast_iron_pan": {"name": "鋳物の鍋", "cat": "容器・台所", "tags": ["cookware", "heavy", "blunt", "throwable"], "unit": "個", "kg": 4.0, "found": ["台所"], "price": 0, "aliases": ["ダッチオーブン"]},
++	"dried_shiitake": {"name": "干し椎茸", "cat": "食べ物", "tags": ["edible", "needs_water"], "unit": "袋", "kg": 0.05, "found": ["台所"], "price": 600, "aliases": ["しいたけ"]},
++	"kanpyo_kombu": {"name": "昆布", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "袋", "kg": 0.1, "found": ["台所"], "price": 500, "aliases": ["だし昆布"]},
++	"dried_noodles": {"name": "乾麺（そうめん）", "cat": "食べ物", "tags": ["edible", "needs_heat", "needs_water"], "unit": "袋", "kg": 0.3, "found": ["台所", "スーパー"], "price": 300, "aliases": ["そうめん", "うどん", "そば"]},
++	"cereal": {"name": "シリアル", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "箱", "kg": 0.4, "found": ["台所", "スーパー", "コンビニ"], "price": 500, "aliases": ["コーンフレーク", "グラノーラ"]},
++	"peanut_butter": {"name": "ピーナッツバター", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "びん", "kg": 0.35, "found": ["台所", "スーパー"], "price": 500, "aliases": []},
++	"jam": {"name": "ジャム", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "びん", "kg": 0.3, "found": ["台所", "スーパー"], "price": 400, "aliases": []},
++	"instant_soup": {"name": "インスタントスープ", "cat": "食べ物", "tags": ["edible", "needs_water"], "unit": "箱", "kg": 0.1, "found": ["台所", "コンビニ"], "price": 300, "aliases": ["スープ", "味噌汁の素"]},
++	"alpha_rice": {"name": "アルファ米", "cat": "食べ物", "tags": ["edible", "needs_water"], "unit": "袋", "kg": 0.1, "found": ["中学校", "避難所", "押し入れ"], "price": 400, "aliases": ["非常食のご飯"]},
++	"snacks": {"name": "スナック菓子", "cat": "食べ物", "tags": ["edible", "ready", "comfort"], "unit": "袋", "kg": 0.08, "found": ["居間", "子ども部屋", "コンビニ"], "price": 150, "aliases": ["ポテトチップス", "お菓子"]},
++	"senbei": {"name": "せんべい", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "袋", "kg": 0.15, "found": ["居間", "スーパー"], "price": 300, "aliases": ["おせんべい"]},
++	"yokan": {"name": "ようかん", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "本", "kg": 0.3, "found": ["居間", "押し入れ"], "price": 600, "aliases": ["羊羹"]},
++	"baby_food": {"name": "離乳食", "cat": "食べ物", "tags": ["edible", "ready"], "unit": "個", "kg": 0.1, "found": ["子ども部屋", "薬局"], "price": 200, "aliases": ["ベビーフード"]},
++	"pet_food_dry": {"name": "ドッグフード", "cat": "ペット", "tags": ["edible", "ready", "bait"], "unit": "袋", "kg": 2.0, "found": ["台所", "玄関", "スーパー", "ホームセンター"], "price": 1500, "aliases": ["ペットフード", "キャットフード"]},
++	"pet_food_can": {"name": "猫の缶詰", "cat": "ペット", "tags": ["edible", "ready", "bait"], "unit": "個", "kg": 0.1, "found": ["台所", "スーパー"], "price": 150, "aliases": ["ねこ缶"]},
++	"cat_litter": {"name": "猫砂", "cat": "ペット", "tags": ["absorbent", "hygiene"], "unit": "袋", "kg": 5.0, "found": ["風呂場", "ホームセンター"], "price": 800, "aliases": []},
++	"dog_leash": {"name": "犬のリード", "cat": "ペット", "tags": ["string"], "unit": "本", "kg": 0.2, "found": ["玄関"], "price": 1500, "aliases": ["リード"]},
++	"pet_carrier": {"name": "ペットキャリー", "cat": "ペット", "tags": ["container"], "unit": "個", "kg": 1.5, "found": ["玄関", "押し入れ"], "price": 0, "aliases": ["ケージ"]},
++	"stones": {"name": "石", "cat": "自然・野外", "tags": ["heavy", "throwable", "blunt"], "unit": "個", "kg": 0.5, "found": ["公園", "川沿いの土手", "河川敷のグラウンド", "神社"], "price": 0, "aliases": ["小石", "石ころ"]},
++	"sand": {"name": "砂", "cat": "自然・野外", "tags": ["water_clean", "heavy", "material"], "unit": "袋", "kg": 5.0, "found": ["公園", "河川敷のグラウンド"], "price": 0, "aliases": []},
++	"soil": {"name": "土", "cat": "自然・野外", "tags": ["garden", "material", "heavy"], "unit": "袋", "kg": 5.0, "found": ["公園", "神社", "ベランダ"], "price": 0, "aliases": []},
++	"clay": {"name": "粘土", "cat": "自然・野外", "tags": ["material"], "unit": "かたまり", "kg": 1.0, "found": ["川沿いの土手", "子ども部屋"], "price": 0, "aliases": []},
++	"branches": {"name": "木の枝", "cat": "自然・野外", "tags": ["fuel", "long", "material"], "unit": "束", "kg": 1.0, "found": ["公園", "神社", "川沿いの土手"], "price": 0, "aliases": ["枝", "小枝"]},
++	"fallen_leaves": {"name": "落ち葉", "cat": "自然・野外", "tags": ["fuel", "insulation"], "unit": "袋", "kg": 0.5, "found": ["公園", "神社"], "price": 0, "aliases": ["枯れ葉"]},
++	"bamboo": {"name": "竹", "cat": "自然・野外", "tags": ["long", "material", "container"], "unit": "本", "kg": 2.0, "found": ["神社", "公園"], "price": 0, "aliases": ["竹竿"]},
++	"driftwood": {"name": "流木", "cat": "自然・野外", "tags": ["fuel", "blunt", "material"], "unit": "本", "kg": 2.0, "found": ["川沿いの土手", "河川敷のグラウンド"], "price": 0, "aliases": []},
++	"reeds": {"name": "葦", "cat": "自然・野外", "tags": ["fuel", "material"], "unit": "束", "kg": 0.5, "found": ["川沿いの土手"], "price": 0, "aliases": ["ヨシ", "すすき"]},
++	"river_water": {"name": "川の水", "cat": "自然・野外", "tags": [], "unit": "L", "kg": 1.0, "found": ["川沿いの土手", "河川敷のグラウンド", "橋"], "price": 0, "aliases": []},
++	"snow": {"name": "雪", "cat": "自然・野外", "tags": [], "unit": "kg", "kg": 1.0, "found": [], "price": 0, "aliases": []},
++	"wild_greens": {"name": "野草", "cat": "自然・野外", "tags": ["edible", "needs_heat", "forage", "perishable"], "unit": "束", "kg": 0.2, "found": ["川沿いの土手", "公園", "河川敷のグラウンド", "神社"], "price": 0, "aliases": ["よもぎ", "たんぽぽ", "のびる", "せり"]},
++	"acorns": {"name": "どんぐり", "cat": "自然・野外", "tags": ["edible", "needs_heat", "forage"], "unit": "袋", "kg": 0.3, "found": ["公園", "神社"], "price": 0, "aliases": []},
++	"ginkgo_nuts": {"name": "銀杏", "cat": "自然・野外", "tags": ["edible", "needs_heat", "forage"], "unit": "袋", "kg": 0.2, "found": ["神社", "公園"], "price": 0, "aliases": ["ぎんなん"]},
++	"persimmon": {"name": "柿", "cat": "自然・野外", "tags": ["edible", "ready", "forage", "perishable"], "unit": "個", "kg": 0.2, "found": ["北の住宅街", "南の住宅街", "神社"], "price": 0, "aliases": []},
++	"citrus": {"name": "庭のみかん", "cat": "自然・野外", "tags": ["edible", "ready", "forage", "perishable"], "unit": "個", "kg": 0.1, "found": ["北の住宅街", "南の住宅街"], "price": 0, "aliases": ["夏みかん", "柚子"]},
++	"fish": {"name": "魚", "cat": "自然・野外", "tags": ["edible", "needs_heat", "perishable"], "unit": "匹", "kg": 0.3, "found": ["川沿いの土手"], "price": 0, "aliases": ["フナ", "コイ"]},
++	"crayfish": {"name": "ザリガニ", "cat": "自然・野外", "tags": ["edible", "needs_heat", "perishable"], "unit": "匹", "kg": 0.05, "found": ["川沿いの土手", "公園"], "price": 0, "aliases": []},
++	"fishing_rod": {"name": "釣り竿", "cat": "自然・野外", "tags": ["fishing", "long"], "unit": "本", "kg": 0.5, "found": ["物置", "ホームセンター"], "price": 3000, "aliases": ["釣竿"]},
++	"fishing_line": {"name": "釣り糸と針", "cat": "自然・野外", "tags": ["fishing", "string", "sharp"], "unit": "組", "kg": 0.02, "found": ["物置", "ホームセンター"], "price": 800, "aliases": ["テグス", "釣り針"]},
++	"insect_net": {"name": "虫取り網", "cat": "自然・野外", "tags": ["net", "long"], "unit": "本", "kg": 0.3, "found": ["子ども部屋", "物置"], "price": 500, "aliases": ["網"]},
++	"bucket_fishing": {"name": "魚とりのかご", "cat": "自然・野外", "tags": ["net", "container"], "unit": "個", "kg": 0.5, "found": ["物置"], "price": 0, "aliases": ["びく"]},
++	"shrine_sake": {"name": "お神酒", "cat": "自然・野外", "tags": ["drink", "comfort"], "unit": "本", "kg": 0.3, "found": ["神社"], "price": 0, "aliases": []},
++	"offering_rice": {"name": "お供えの米", "cat": "自然・野外", "tags": ["edible", "needs_heat", "needs_water"], "unit": "袋", "kg": 0.5, "found": ["神社"], "price": 0, "aliases": []},
++	"shrine_rope": {"name": "しめ縄", "cat": "自然・野外", "tags": ["string"], "unit": "本", "kg": 2.0, "found": ["神社"], "price": 0, "aliases": []},
++	"fence_wire": {"name": "有刺鉄線", "cat": "自然・野外", "tags": ["sharp", "string", "metal"], "unit": "巻", "kg": 3.0, "found": ["倉庫街", "河川敷のグラウンド"], "price": 0, "aliases": ["バラ線"]},
++	"rebar": {"name": "鉄筋", "cat": "自然・野外", "tags": ["long", "metal", "blunt"], "unit": "本", "kg": 2.0, "found": ["倉庫街", "ホームセンター"], "price": 0, "aliases": ["鉄の棒"]},
++	"bricks": {"name": "レンガ", "cat": "自然・野外", "tags": ["heavy", "throwable", "board", "material"], "unit": "個", "kg": 2.0, "found": ["公園", "北の住宅街", "南の住宅街", "ホームセンター"], "price": 100, "aliases": ["ブロック"]},
++	"concrete_block": {"name": "コンクリートブロック", "cat": "自然・野外", "tags": ["heavy", "material"], "unit": "個", "kg": 10.0, "found": ["北の住宅街", "南の住宅街", "ホームセンター", "倉庫街"], "price": 200, "aliases": ["ブロック塀"]},
++	"sandbag": {"name": "土のう袋", "cat": "自然・野外", "tags": ["container", "material"], "unit": "枚", "kg": 0.1, "found": ["中学校", "ホームセンター"], "price": 50, "aliases": ["土嚢"]},
++	"traffic_cone": {"name": "カラーコーン", "cat": "自然・野外", "tags": ["signal"], "unit": "個", "kg": 1.0, "found": ["大通り", "倉庫街"], "price": 0, "aliases": ["三角コーン"]},
++	"bicycle": {"name": "自転車", "cat": "自然・野外", "tags": ["vehicle"], "unit": "台", "kg": 15.0, "found": ["玄関", "建物前", "駅前"], "price": 0, "aliases": ["チャリ", "ママチャリ"]},
++	"bike_tube": {"name": "自転車のチューブ", "cat": "自然・野外", "tags": ["elastic", "string"], "unit": "本", "kg": 0.2, "found": ["物置", "ホームセンター"], "price": 800, "aliases": ["ゴムチューブ"]},
++	"bike_pump": {"name": "空気入れ", "cat": "自然・野外", "tags": ["tool"], "unit": "本", "kg": 1.0, "found": ["玄関", "物置"], "price": 2000, "aliases": []},
++	"vending_drink": {"name": "自販機の飲み物", "cat": "自然・野外", "tags": ["drink"], "unit": "本", "kg": 0.5, "found": ["駅前", "大通り", "公園"], "price": 150, "aliases": ["自販機"]},
++	"gasoline": {"name": "ガソリン", "cat": "車・ガソリン", "tags": ["fuel", "accelerant", "toxic"], "unit": "L", "kg": 0.75, "found": ["ガソリンスタンド"], "price": 180, "aliases": []},
++	"jerry_can": {"name": "携行缶", "cat": "車・ガソリン", "tags": ["container", "metal"], "unit": "個", "kg": 2.0, "found": ["ガソリンスタンド", "物置"], "price": 5000, "aliases": ["ガソリン缶"]},
++	"siphon_pump": {"name": "灯油ポンプ", "cat": "車・ガソリン", "tags": ["tool"], "unit": "本", "kg": 0.1, "found": ["物置", "ガソリンスタンド", "ホームセンター"], "price": 300, "aliases": ["給油ポンプ"]},
++	"car_battery": {"name": "車のバッテリー", "cat": "車・ガソリン", "tags": ["charge", "heavy"], "unit": "個", "kg": 15.0, "found": ["ガソリンスタンド", "倉庫街"], "price": 0, "aliases": ["バッテリー"]},
++	"jumper_cables": {"name": "ブースターケーブル", "cat": "車・ガソリン", "tags": ["string"], "unit": "組", "kg": 1.5, "found": ["ガソリンスタンド", "物置"], "price": 2000, "aliases": []},
++	"flare": {"name": "発煙筒", "cat": "車・ガソリン", "tags": ["signal", "smoke", "light"], "unit": "本", "kg": 0.2, "found": ["ガソリンスタンド", "倉庫街", "大通り"], "price": 800, "aliases": ["非常信号"]},
++	"warning_triangle": {"name": "三角表示板", "cat": "車・ガソリン", "tags": ["signal", "reflect"], "unit": "個", "kg": 1.0, "found": ["ガソリンスタンド"], "price": 2000, "aliases": []},
++	"tow_rope": {"name": "牽引ロープ", "cat": "車・ガソリン", "tags": ["string"], "unit": "本", "kg": 1.5, "found": ["ガソリンスタンド"], "price": 2000, "aliases": []},
++	"car_jack": {"name": "ジャッキ", "cat": "車・ガソリン", "tags": ["tool", "pry", "heavy"], "unit": "台", "kg": 3.0, "found": ["ガソリンスタンド", "倉庫街"], "price": 0, "aliases": []},
++	"tire_iron": {"name": "タイヤレンチ", "cat": "車・ガソリン", "tags": ["tool", "blunt", "pry"], "unit": "本", "kg": 1.0, "found": ["ガソリンスタンド"], "price": 0, "aliases": ["十字レンチ"]},
++	"motor_oil": {"name": "エンジンオイル", "cat": "車・ガソリン", "tags": ["slippery", "fuel"], "unit": "缶", "kg": 4.0, "found": ["ガソリンスタンド"], "price": 3000, "aliases": ["オイル"]},
++	"antifreeze": {"name": "不凍液", "cat": "車・ガソリン", "tags": ["toxic", "chemical"], "unit": "本", "kg": 2.0, "found": ["ガソリンスタンド"], "price": 1500, "aliases": ["クーラント"]},
++	"car_cover": {"name": "車のカバー", "cat": "車・ガソリン", "tags": ["big_cloth", "waterproof"], "unit": "枚", "kg": 3.0, "found": ["物置", "北の住宅街"], "price": 0, "aliases": ["ボディカバー"]},
++	"dashcam": {"name": "ドライブレコーダー", "cat": "車・ガソリン", "tags": [], "unit": "台", "kg": 0.2, "found": ["ガソリンスタンド"], "price": 0, "aliases": []},
++	"car_keys": {"name": "車の鍵", "cat": "車・ガソリン", "tags": ["lock"], "unit": "個", "kg": 0.05, "found": ["玄関", "北の住宅街"], "price": 0, "aliases": []},
++	"road_map": {"name": "道路地図", "cat": "車・ガソリン", "tags": [], "unit": "冊", "kg": 1.0, "found": ["ガソリンスタンド"], "price": 0, "aliases": []},
++	"bunsen": {"name": "アルコールランプ", "cat": "学校・病院・交番", "tags": ["light", "fuel"], "unit": "個", "kg": 0.2, "found": ["中学校"], "price": 0, "aliases": []},
++	"ethanol": {"name": "燃料用アルコール", "cat": "学校・病院・交番", "tags": ["fuel", "accelerant", "hygiene"], "unit": "本", "kg": 0.5, "found": ["中学校", "薬局"], "price": 600, "aliases": ["エタノール", "アルコール"]},
++	"beaker": {"name": "ビーカー", "cat": "学校・病院・交番", "tags": ["container", "glass"], "unit": "個", "kg": 0.2, "found": ["中学校"], "price": 0, "aliases": []},
++	"chemicals": {"name": "理科室の薬品", "cat": "学校・病院・交番", "tags": ["chemical", "toxic"], "unit": "本", "kg": 0.5, "found": ["中学校"], "price": 0, "aliases": ["薬品"]},
++	"line_powder": {"name": "石灰", "cat": "学校・病院・交番", "tags": ["chemical", "hygiene"], "unit": "袋", "kg": 10.0, "found": ["中学校", "河川敷のグラウンド"], "price": 0, "aliases": ["ラインパウダー"]},
++	"sports_net": {"name": "体育倉庫のネット", "cat": "学校・病院・交番", "tags": ["net", "big_cloth"], "unit": "枚", "kg": 3.0, "found": ["中学校"], "price": 0, "aliases": ["ネット"]},
++	"gym_mat": {"name": "体操マット", "cat": "学校・病院・交番", "tags": ["insulation"], "unit": "枚", "kg": 8.0, "found": ["中学校"], "price": 0, "aliases": ["マット"]},
++	"whiteboard_marker": {"name": "ホワイトボード用ペン", "cat": "学校・病院・交番", "tags": ["write"], "unit": "本", "kg": 0.02, "found": ["中学校"], "price": 0, "aliases": []},
++	"school_backpack": {"name": "ランドセル", "cat": "学校・病院・交番", "tags": ["bag", "comfort"], "unit": "個", "kg": 1.2, "found": ["子ども部屋"], "price": 0, "aliases": []},
++	"generator": {"name": "発電機", "cat": "学校・病院・交番", "tags": ["charge", "heavy"], "unit": "台", "kg": 20.0, "found": ["中学校", "ホームセンター"], "price": 0, "aliases": []},
++	"emergency_water": {"name": "保存水", "cat": "学校・病院・交番", "tags": ["drink"], "unit": "本", "kg": 2.0, "found": ["中学校", "避難所", "押し入れ"], "price": 300, "aliases": ["備蓄水"]},
++	"aed": {"name": "AED", "cat": "学校・病院・交番", "tags": [], "unit": "台", "kg": 2.0, "found": ["中学校", "駅のホーム", "総合病院"], "price": 0, "aliases": []},
++	"loudspeaker": {"name": "拡声器", "cat": "学校・病院・交番", "tags": ["noise", "uses_batteries", "signal"], "unit": "台", "kg": 1.0, "found": ["中学校", "交番"], "price": 0, "aliases": ["メガホン"]},
++	"stretcher": {"name": "担架", "cat": "学校・病院・交番", "tags": ["long"], "unit": "台", "kg": 5.0, "found": ["中学校", "総合病院"], "price": 0, "aliases": []},
++	"first_aid_bag": {"name": "保健室の救急かばん", "cat": "学校・病院・交番", "tags": ["wound", "medicine", "bag"], "unit": "個", "kg": 2.0, "found": ["中学校"], "price": 0, "aliases": []},
++	"suture_kit": {"name": "縫合セット", "cat": "学校・病院・交番", "tags": ["wound", "sew", "sharp"], "unit": "組", "kg": 0.1, "found": ["総合病院"], "price": 0, "aliases": ["縫う道具"]},
++	"iv_bag": {"name": "点滴", "cat": "学校・病院・交番", "tags": ["medicine", "drink"], "unit": "袋", "kg": 0.5, "found": ["総合病院"], "price": 0, "aliases": ["輸液"]},
++	"saline": {"name": "生理食塩水", "cat": "学校・病院・交番", "tags": ["wound", "hygiene"], "unit": "本", "kg": 0.5, "found": ["総合病院", "薬局"], "price": 300, "aliases": []},
++	"splint": {"name": "添え木", "cat": "学校・病院・交番", "tags": ["wound", "board"], "unit": "本", "kg": 0.2, "found": ["総合病院", "中学校"], "price": 0, "aliases": ["副木"]},
++	"crutches": {"name": "松葉杖", "cat": "学校・病院・交番", "tags": ["long"], "unit": "組", "kg": 1.5, "found": ["総合病院"], "price": 0, "aliases": []},
++	"gloves_medical": {"name": "医療用手袋", "cat": "学校・病院・交番", "tags": ["hygiene"], "unit": "箱", "kg": 0.2, "found": ["総合病院", "薬局"], "price": 800, "aliases": ["ゴム手袋", "ニトリル手袋"]},
++	"syringe": {"name": "注射器", "cat": "学校・病院・交番", "tags": ["sharp"], "unit": "本", "kg": 0.01, "found": ["総合病院"], "price": 0, "aliases": []},
++	"scalpel": {"name": "メス", "cat": "学校・病院・交番", "tags": ["blade", "sharp"], "unit": "本", "kg": 0.01, "found": ["総合病院"], "price": 0, "aliases": []},
++	"oxygen_can": {"name": "酸素缶", "cat": "学校・病院・交番", "tags": [], "unit": "本", "kg": 0.2, "found": ["総合病院", "ホームセンター"], "price": 0, "aliases": []},
++	"wheelchair": {"name": "車いす", "cat": "学校・病院・交番", "tags": ["vehicle"], "unit": "台", "kg": 12.0, "found": ["総合病院", "避難所"], "price": 0, "aliases": []},
++	"baton": {"name": "警棒", "cat": "学校・病院・交番", "tags": ["weapon", "blunt"], "unit": "本", "kg": 0.5, "found": ["交番"], "price": 0, "aliases": []},
++	"sasumata": {"name": "さすまた", "cat": "学校・病院・交番", "tags": ["weapon", "long"], "unit": "本", "kg": 2.0, "found": ["交番", "中学校"], "price": 0, "aliases": ["刺股"]},
++	"riot_shield": {"name": "盾", "cat": "学校・病院・交番", "tags": ["armor"], "unit": "枚", "kg": 4.0, "found": ["交番"], "price": 0, "aliases": ["防護盾"]},
++	"stab_vest": {"name": "防刃ベスト", "cat": "学校・病院・交番", "tags": ["armor"], "unit": "着", "kg": 2.0, "found": ["交番"], "price": 0, "aliases": []},
++	"handcuffs": {"name": "手錠", "cat": "学校・病院・交番", "tags": ["lock", "metal"], "unit": "組", "kg": 0.3, "found": ["交番"], "price": 0, "aliases": []},
++	"police_radio": {"name": "警察無線", "cat": "学校・病院・交番", "tags": ["news", "uses_batteries"], "unit": "台", "kg": 0.5, "found": ["交番"], "price": 0, "aliases": ["無線"]},
++	"shopping_cart": {"name": "ショッピングカート", "cat": "道具", "tags": ["bag", "vehicle"], "unit": "台", "kg": 15.0, "found": ["スーパー", "食品店"], "price": 0, "aliases": ["カート"]},
++	"pallet": {"name": "パレット", "cat": "工具・材料", "tags": ["board", "fuel"], "unit": "枚", "kg": 15.0, "found": ["倉庫街", "スーパー"], "price": 0, "aliases": []},
++	"shrink_wrap": {"name": "ストレッチフィルム", "cat": "工具・材料", "tags": ["tape", "waterproof"], "unit": "巻", "kg": 2.0, "found": ["倉庫街"], "price": 0, "aliases": []},
++	"forklift_key": {"name": "フォークリフトの鍵", "cat": "道具", "tags": ["lock"], "unit": "個", "kg": 0.01, "found": ["倉庫街"], "price": 0, "aliases": []},
++	"cash_register_cash": {"name": "レジの現金", "cat": "貴重品", "tags": ["valuable"], "unit": "束", "kg": 0.1, "found": ["コンビニ", "スーパー", "食品店"], "price": 0, "aliases": []},
++	"ticket_machine_coins": {"name": "小銭", "cat": "貴重品", "tags": ["valuable"], "unit": "袋", "kg": 0.5, "found": ["駅前", "駅のホーム"], "price": 0, "aliases": []},
++	"umbrella_lost": {"name": "置き傘", "cat": "道具", "tags": ["long", "blunt"], "unit": "本", "kg": 0.5, "found": ["駅のホーム", "中学校", "コンビニ"], "price": 0, "aliases": ["ビニール傘"]},
++	"caulk": {"name": "コーキング剤", "cat": "工具・材料", "tags": ["tape", "waterproof"], "unit": "本", "kg": 0.4, "found": ["ホームセンター"], "price": 600, "aliases": ["シーリング"]},
++	"sheet_metal": {"name": "トタン板", "cat": "工具・材料", "tags": ["board", "metal", "waterproof"], "unit": "枚", "kg": 4.0, "found": ["物置", "倉庫街", "ホームセンター"], "price": 1500, "aliases": ["波板"]},
++	"wire_mesh": {"name": "金網", "cat": "工具・材料", "tags": ["net", "metal"], "unit": "枚", "kg": 2.0, "found": ["物置", "ホームセンター"], "price": 1500, "aliases": []},
++	"pvc_pipe": {"name": "塩ビパイプ", "cat": "工具・材料", "tags": ["long", "container"], "unit": "本", "kg": 1.0, "found": ["ホームセンター"], "price": 800, "aliases": []},
++	"anchor_bolts": {"name": "アンカーボルト", "cat": "工具・材料", "tags": ["fastener", "metal"], "unit": "箱", "kg": 1.0, "found": ["ホームセンター"], "price": 1000, "aliases": ["ボルト"]},
++	"hinges": {"name": "蝶番", "cat": "工具・材料", "tags": ["fastener", "metal"], "unit": "組", "kg": 0.2, "found": ["ホームセンター", "金物店"], "price": 500, "aliases": []},
++	"door_chain": {"name": "ドアチェーン", "cat": "工具・材料", "tags": ["lock"], "unit": "個", "kg": 0.2, "found": ["ホームセンター", "金物店"], "price": 1000, "aliases": []},
++	"sledgehammer": {"name": "大ハンマー", "cat": "工具・材料", "tags": ["tool", "blunt", "heavy", "weapon"], "unit": "本", "kg": 5.0, "found": ["ホームセンター", "倉庫街"], "price": 6000, "aliases": ["かけや"]},
++	"axe": {"name": "斧", "cat": "工具・材料", "tags": ["tool", "blade", "heavy", "weapon"], "unit": "本", "kg": 1.5, "found": ["物置", "ホームセンター"], "price": 5000, "aliases": ["手斧", "なた"]},
++	"machete": {"name": "鉈", "cat": "工具・材料", "tags": ["tool", "blade", "weapon"], "unit": "本", "kg": 0.8, "found": ["物置", "ホームセンター"], "price": 4000, "aliases": ["なた"]},
++	"pickaxe": {"name": "つるはし", "cat": "工具・材料", "tags": ["tool", "dig", "heavy", "blunt"], "unit": "本", "kg": 3.0, "found": ["ホームセンター", "倉庫街"], "price": 5000, "aliases": []},
++	"hand_shovel": {"name": "移植ごて", "cat": "工具・材料", "tags": ["tool", "dig", "garden"], "unit": "本", "kg": 0.2, "found": ["ベランダ", "物置", "ホームセンター"], "price": 500, "aliases": ["スコップ（小）"]},
++	"bolt_cutter": {"name": "ボルトクリッパー", "cat": "工具・材料", "tags": ["tool", "pry"], "unit": "本", "kg": 3.0, "found": ["ホームセンター", "倉庫街"], "price": 6000, "aliases": ["番線カッター"]},
++	"lock_pick": {"name": "ピッキングの道具", "cat": "工具・材料", "tags": ["tool"], "unit": "組", "kg": 0.05, "found": [], "price": 0, "aliases": []},
++	"crowbar_small": {"name": "釘抜き", "cat": "工具・材料", "tags": ["tool", "pry"], "unit": "本", "kg": 0.5, "found": ["物置", "金物店"], "price": 800, "aliases": []},
++	"gas_torch": {"name": "ガスバーナー", "cat": "工具・材料", "tags": ["igniter", "stove"], "unit": "個", "kg": 0.5, "found": ["物置", "ホームセンター"], "price": 3000, "aliases": ["トーチ"]},
++	"solder": {"name": "はんだごて", "cat": "工具・材料", "tags": ["tool"], "unit": "本", "kg": 0.2, "found": ["物置"], "price": 0, "aliases": []},
++	"multimeter": {"name": "テスター", "cat": "工具・材料", "tags": ["tool"], "unit": "台", "kg": 0.3, "found": ["物置", "ホームセンター"], "price": 0, "aliases": []},
++	"extension_cord": {"name": "延長コード", "cat": "工具・材料", "tags": ["string"], "unit": "本", "kg": 1.0, "found": ["居間", "物置", "ホームセンター"], "price": 1500, "aliases": ["コードリール"]},
++	"spray_foam": {"name": "断熱スプレー", "cat": "工具・材料", "tags": ["insulation", "tape"], "unit": "本", "kg": 0.6, "found": ["ホームセンター"], "price": 1500, "aliases": []},
++	"level_tool": {"name": "水平器", "cat": "工具・材料", "tags": ["tool"], "unit": "本", "kg": 0.3, "found": ["物置", "ホームセンター"], "price": 0, "aliases": []},
++	"tape_measure": {"name": "メジャー", "cat": "工具・材料", "tags": ["tool"], "unit": "個", "kg": 0.2, "found": ["物置", "居間"], "price": 500, "aliases": ["巻尺"]},
++	"sandpaper": {"name": "紙やすり", "cat": "工具・材料", "tags": ["tool"], "unit": "枚", "kg": 0.01, "found": ["物置", "ホームセンター"], "price": 100, "aliases": ["やすり"]},
++	"whetstone": {"name": "砥石", "cat": "工具・材料", "tags": ["tool"], "unit": "個", "kg": 0.8, "found": ["台所", "物置"], "price": 2000, "aliases": []},
++	"work_lamp": {"name": "作業灯", "cat": "明かり・火", "tags": ["light", "uses_batteries"], "unit": "台", "kg": 1.0, "found": ["物置", "ホームセンター"], "price": 4000, "aliases": ["投光器"]},
++	"solar_lantern": {"name": "ソーラーライト", "cat": "明かり・火", "tags": ["light", "charge"], "unit": "個", "kg": 0.3, "found": ["ベランダ", "ホームセンター"], "price": 1500, "aliases": ["ガーデンライト"]},
++	"oil_lamp": {"name": "オイルランプ", "cat": "明かり・火", "tags": ["light"], "unit": "個", "kg": 0.5, "found": ["物置"], "price": 0, "aliases": ["ランプ"]},
++	"tea_light": {"name": "キャンドル（ティーライト）", "cat": "明かり・火", "tags": ["light", "fuel"], "unit": "袋", "kg": 0.2, "found": ["居間", "スーパー"], "price": 400, "aliases": []},
++	"tealight_heater": {"name": "植木鉢ヒーター", "cat": "燃料・暖房", "tags": ["heater"], "unit": "個", "kg": 1.5, "found": [], "price": 0, "aliases": []},
++	"rocket_stove": {"name": "缶のコンロ", "cat": "燃料・暖房", "tags": ["stove"], "unit": "個", "kg": 0.3, "found": [], "price": 0, "aliases": ["アルコールストーブ"]},
++	"bbq_grill": {"name": "バーベキューコンロ", "cat": "燃料・暖房", "tags": ["stove"], "unit": "台", "kg": 5.0, "found": ["物置", "河川敷のグラウンド"], "price": 0, "aliases": []},
++	"camping_stove": {"name": "シングルバーナー", "cat": "燃料・暖房", "tags": ["stove"], "unit": "個", "kg": 0.4, "found": ["物置", "ホームセンター"], "price": 5000, "aliases": ["キャンプ用コンロ"]},
++	"propane": {"name": "OD缶", "cat": "燃料・暖房", "tags": ["fuel"], "unit": "本", "kg": 0.4, "found": ["物置", "ホームセンター"], "price": 600, "aliases": ["アウトドア用ガス缶"]},
++	"tent": {"name": "テント", "cat": "布・衣類", "tags": ["big_cloth", "waterproof", "insulation"], "unit": "張", "kg": 3.0, "found": ["物置", "ホームセンター"], "price": 15000, "aliases": []},
++	"rain_boots": {"name": "長靴", "cat": "布・衣類", "tags": ["armor", "waterproof"], "unit": "足", "kg": 1.2, "found": ["玄関"], "price": 2000, "aliases": []},
++	"down_jacket": {"name": "ダウンジャケット", "cat": "布・衣類", "tags": ["warm", "insulation"], "unit": "着", "kg": 0.8, "found": ["寝室", "デパート"], "price": 0, "aliases": ["ダウン"]},
++	"scarf": {"name": "マフラー", "cat": "布・衣類", "tags": ["warm", "cloth"], "unit": "本", "kg": 0.2, "found": ["寝室", "玄関"], "price": 0, "aliases": []},
++	"work_clothes": {"name": "作業着", "cat": "布・衣類", "tags": ["cloth", "armor"], "unit": "着", "kg": 1.0, "found": ["物置", "ホームセンター"], "price": 3000, "aliases": ["つなぎ"]},
++	"goggles": {"name": "ゴーグル", "cat": "布・衣類", "tags": ["armor"], "unit": "個", "kg": 0.1, "found": ["物置", "中学校", "ホームセンター"], "price": 1000, "aliases": ["保護メガネ"]},
++	"dust_mask": {"name": "防じんマスク", "cat": "布・衣類", "tags": ["armor", "hygiene"], "unit": "個", "kg": 0.1, "found": ["物置", "ホームセンター"], "price": 1500, "aliases": []},
++	"bandana": {"name": "バンダナ", "cat": "布・衣類", "tags": ["cloth"], "unit": "枚", "kg": 0.05, "found": ["寝室", "子ども部屋"], "price": 300, "aliases": ["手ぬぐい"]},
++	"belt": {"name": "ベルト", "cat": "布・衣類", "tags": ["string"], "unit": "本", "kg": 0.2, "found": ["寝室"], "price": 0, "aliases": []},
++	"shoes": {"name": "運動靴", "cat": "布・衣類", "tags": [], "unit": "足", "kg": 0.8, "found": ["玄関"], "price": 0, "aliases": ["スニーカー"]},
 +}
 +
 +const RECIPES := [
@@ -106436,6 +106665,8 @@ index 0000000..7c7104b
 +	{"makes": "water_filter_diy", "needs": ["empty_bottle", "cloth", "charcoal"], "count": 1, "minutes": 30, "note": "簡易浄水器：雨水を飲める水に"},
 +	{"makes": "window_seal", "needs": ["cardboard|blanket|tarp", "tape"], "count": 1, "minutes": 20, "note": "窓の目張り：明かりが外に漏れない"},
 +	{"makes": "sos_cloth", "needs": ["big_cloth", "write|tape"], "count": 1, "minutes": 30, "note": "SOSの布：救助の合図"},
++	{"makes": "rocket_stove", "needs": ["empty_can", "blade"], "count": 1, "minutes": 20, "note": "空き缶のコンロ：アルコールや固形燃料で湯を沸かす"},
++	{"makes": "tealight_heater", "needs": ["flower_pot", "tea_light|candle"], "count": 1, "minutes": 10, "note": "植木鉢ヒーター：小さな部屋を少しだけ暖める"},
 +]
 +
 +static func has(id: String) -> bool:
@@ -119850,323 +120081,600 @@ index 54f2002..dd3551e 100644
  			mate_hit = true
 diff --git a/tools/__pycache__/items_source.cpython-313.pyc b/tools/__pycache__/items_source.cpython-313.pyc
 new file mode 100644
-index 0000000000000000000000000000000000000000..333822123ca65f440941a7051d1840889dde5519
+index 0000000000000000000000000000000000000000..0765dd64111daaf3646880dcb9d455971d839e71
 GIT binary patch
-literal 36351
-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
+literal 70580
+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
 
 literal 0
 HcmV?d00001
@@ -120280,10 +120788,10 @@ index 0000000..424e03c
 +print("items", len(S.ITEMS), "icons to make", len(todo))
 diff --git a/tools/items_source.py b/tools/items_source.py
 new file mode 100644
-index 0000000..6b8049a
+index 0000000..646af3a
 --- /dev/null
 +++ b/tools/items_source.py
-@@ -0,0 +1,259 @@
+@@ -0,0 +1,514 @@
 +# -*- coding: utf-8 -*-
 +"""The item ledger (v149.39). One row per item; tools/build_items.py turns it
 +into scripts/item_catalog.gd (the game's data) and docs/ITEM_ICON_PROMPTS.md
@@ -120305,6 +120813,12 @@ index 0000000..6b8049a
 +    "charge": "充電できる", "hygiene": "清潔", "seed": "植えられる", "garden": "畑",
 +    "reflect": "光を反射する", "lock": "鍵", "bag": "入れ物", "weapon": "武器", "armor": "防具",
 +    "signal": "合図", "water_clean": "水をきれいにする", "comfort": "心の支え", "material": "材料",
++    # v149.39: what ordinary things can be turned to.
++    "lens": "レンズ（日光で火）", "sharp": "尖っている", "heavy": "重い", "absorbent": "水を吸う",
++    "waterproof": "水を通さない", "insulation": "断熱", "accelerant": "よく燃える液体", "slippery": "滑る",
++    "chemical": "薬品", "bait": "におい・えさ", "glass": "ガラス", "magnet": "磁石", "metal": "金属",
++    "elastic": "伸び縮み", "forage": "自然の恵み", "fishing": "釣り", "sew": "縫える", "smoke": "煙が出る",
++    "toxic": "口にしてはいけない", "dig": "掘れる", "net": "網", "vehicle": "乗り物", "throwable": "投げられる",
 +}
 +
 +ITEMS = [
@@ -120542,4 +121056,253 @@ index 0000000..6b8049a
 +    ("water_filter_diy", ["empty_bottle", "cloth", "charcoal"], 1, 30, "簡易浄水器：雨水を飲める水に"),
 +    ("window_seal", ["cardboard|blanket|tarp", "tape"], 1, 20, "窓の目張り：明かりが外に漏れない"),
 +    ("sos_cloth", ["big_cloth", "write|tape"], 1, 30, "SOSの布：救助の合図"),
++]
++
++# =================================================================== v149.39
++# Ordinary things found in homes and around town — survival by the player's
++# own wits: each has the tags that say what it can be turned to.
++ITEMS += [
++# ---------------------------------------------------------------- 生活雑貨（家）
++("rubber_bands", "輪ゴム", "生活雑貨", "elastic fastener", "箱", 0.02, "台所,居間", 100, "ゴム", "B", "小箱からあふれる輪ゴムの束。"),
++("clothespins", "洗濯ばさみ", "生活雑貨", "fastener", "袋", 0.1, "風呂場,ベランダ,物置", 200, "せんたくばさみ", "B", "色とりどりのプラスチックの洗濯ばさみ数個。"),
++("hangers", "針金ハンガー", "生活雑貨", "metal string material", "本", 0.05, "寝室,押し入れ", 0, "ハンガー", "B", "クリーニング店の針金ハンガー数本を重ねたもの。"),
++("safety_pins", "安全ピン", "生活雑貨", "fastener sharp metal", "箱", 0.01, "寝室,居間", 100, "ピン", "B", "小さな箱と、数本の安全ピン。"),
++("sewing_kit", "裁縫セット", "生活雑貨", "sew sharp", "個", 0.2, "居間,寝室,押し入れ", 800, "針と糸/ソーイングセット", "A", "ふたを開けた裁縫箱。糸巻き、針山、はさみ。"),
++("magnifier", "虫眼鏡", "生活雑貨", "lens glass", "個", 0.1, "居間,子ども部屋", 500, "ルーペ", "A", "木の柄の丸い虫眼鏡1つ。"),
++("reading_glasses", "老眼鏡", "生活雑貨", "lens glass", "個", 0.03, "居間,寝室", 0, "メガネ/眼鏡", "B", "折りたたんだ黒縁の老眼鏡1つ。"),
++("cd", "CD", "生活雑貨", "reflect signal", "枚", 0.02, "居間,子ども部屋", 0, "", "B", "銀色に光るCD1枚（レーベル面は無地）。"),
++("curtain", "カーテン", "生活雑貨", "big_cloth cloth", "枚", 1.5, "居間,寝室", 0, "", "A", "たたんだ厚手の遮光カーテン1枚（紺色）。"),
++("futon", "布団", "生活雑貨", "warm insulation big_cloth", "組", 6.0, "寝室,押し入れ", 0, "敷布団/掛け布団", "B", "たたんで重ねた敷布団と掛け布団。"),
++("cushion", "座布団", "生活雑貨", "insulation", "枚", 0.6, "居間", 0, "クッション", "B", "四角い座布団1枚。"),
++("carpet", "カーペット", "生活雑貨", "big_cloth insulation", "枚", 4.0, "居間", 0, "ラグ/じゅうたん", "B", "丸めたカーペット1本。"),
++("bubble_wrap", "プチプチ", "生活雑貨", "insulation material", "巻", 0.3, "物置,押し入れ", 0, "緩衝材/エアキャップ", "B", "丸めた緩衝材（エアキャップ）。"),
++("styrofoam", "発泡スチロール", "生活雑貨", "insulation material", "個", 0.2, "台所,物置,スーパー", 0, "発泡スチロールの箱", "B", "白い発泡スチロールの箱1つ。"),
++("trash_can", "ゴミ箱", "生活雑貨", "container", "個", 1.0, "台所,居間", 0, "ポリバケツ", "B", "ふた付きの青いポリバケツ1つ。"),
++("laundry_basket", "洗濯かご", "生活雑貨", "bag", "個", 0.6, "風呂場", 0, "かご", "B", "プラスチックの洗濯かご1つ。"),
++("dish_soap", "台所用洗剤", "生活雑貨", "hygiene slippery", "本", 0.6, "台所", 200, "洗剤", "B", "緑色の台所用洗剤のボトル（ラベル無地）。"),
++("baking_soda", "重曹", "生活雑貨", "hygiene chemical", "袋", 1.0, "台所", 300, "", "B", "白い粉の入った袋（文字なし）。"),
++("vinegar", "酢", "生活雑貨", "hygiene material", "本", 0.5, "台所", 200, "お酢", "B", "酢のびん1本（ラベル無地）。"),
++("honey", "はちみつ", "生活雑貨", "edible ready wound", "びん", 0.5, "台所", 1000, "蜂蜜", "B", "黄金色のはちみつの入ったびん。"),
++("hydrogen_peroxide", "オキシドール", "生活雑貨", "wound hygiene chemical", "本", 0.1, "風呂場,押し入れ,薬局", 300, "過酸化水素", "B", "茶色のプラスチックびん1本（ラベル無地）。"),
++("lamp_oil", "ランプオイル", "生活雑貨", "fuel accelerant", "本", 0.5, "物置", 0, "", "B", "透明な燃料の入ったプラスチックボトル1本。"),
++("lighter_fluid", "オイルライター用オイル", "生活雑貨", "fuel accelerant", "缶", 0.13, "居間", 0, "ライターオイル", "B", "小さな金属缶のライターオイル（ラベル無地）。"),
++("oil_lighter", "オイルライター", "生活雑貨", "igniter metal", "個", 0.05, "居間,寝室", 0, "ジッポ", "B", "ふたを閉めた銀色のオイルライター1つ（ロゴなし）。"),
++("bbq_lighter", "チャッカマン", "生活雑貨", "igniter", "本", 0.1, "台所,物置", 400, "点火棒", "B", "長い先の点火用ライター1本。"),
++("incense", "線香", "生活雑貨", "smoke fuel", "箱", 0.1, "居間,神社", 300, "お線香", "B", "線香の束と小さな線香立て。"),
++("mosquito_coil", "蚊取り線香", "生活雑貨", "smoke", "箱", 0.2, "物置", 400, "", "B", "渦巻き型の緑色の蚊取り線香。"),
++("hair_dryer", "ドライヤー", "生活雑貨", "", "台", 0.5, "風呂場,寝室", 0, "", "B", "黒いヘアドライヤー1台。"),
++("iron", "アイロン", "生活雑貨", "heavy metal blunt", "台", 1.2, "押し入れ", 0, "", "B", "スチームアイロン1台。"),
++("vacuum", "掃除機", "生活雑貨", "", "台", 3.0, "押し入れ", 0, "", "B", "スティック型の掃除機1台。"),
++("electric_fan", "扇風機", "生活雑貨", "", "台", 3.0, "押し入れ", 0, "", "B", "白い扇風機1台。"),
++("kotatsu", "こたつ", "生活雑貨", "warm", "台", 10.0, "居間", 0, "", "B", "こたつ布団をかけた正方形のこたつ。"),
++("electric_blanket", "電気毛布", "生活雑貨", "warm", "枚", 1.0, "寝室,押し入れ", 0, "", "B", "たたんだ電気毛布とコントローラー。"),
++("thermos", "魔法瓶", "生活雑貨", "container insulation", "本", 1.0, "台所", 0, "ポット/保温ポット", "B", "卓上の大きな魔法瓶1つ。"),
++("cooler_box", "クーラーボックス", "生活雑貨", "container insulation", "個", 2.5, "物置", 0, "", "B", "青と白のクーラーボックス1つ。"),
++("glass_jar", "ガラスびん", "生活雑貨", "container glass", "個", 0.3, "台所", 0, "空きびん/保存びん", "B", "ふた付きの空のガラスびん1つ。"),
++("beer_bottle", "空きびん（ビール）", "生活雑貨", "glass throwable", "本", 0.5, "台所,玄関", 0, "びん", "B", "茶色の空のビールびん1本（ラベルなし）。"),
++("mirror_large", "姿見", "生活雑貨", "reflect glass", "枚", 6.0, "寝室", 0, "鏡", "B", "壁に立てかけた細長い姿見1枚。"),
++("window_glass", "窓ガラスの破片", "生活雑貨", "glass sharp", "枚", 0.5, "", 0, "ガラス片", "B", "割れた窓ガラスの大きな破片。"),
++("door_wedge", "ドアストッパー", "生活雑貨", "lock", "個", 0.1, "玄関", 300, "", "B", "ゴムのくさび型ドアストッパー1つ。"),
++("bike_lock", "自転車の鍵", "生活雑貨", "lock string", "本", 0.5, "玄関", 1000, "ワイヤーロック", "B", "巻いたワイヤーロック1本。"),
++("sink_plunger", "ラバーカップ", "生活雑貨", "long", "本", 0.5, "風呂場", 500, "スッポン", "B", "木の柄のラバーカップ1本。"),
++("mop", "モップ", "生活雑貨", "long", "本", 0.8, "物置", 1000, "", "B", "柄の長いモップ1本。"),
++("dustpan", "ちりとり", "生活雑貨", "", "個", 0.2, "玄関,物置", 300, "", "B", "プラスチックのちりとり1つ。"),
++("bath_board", "風呂のふた", "生活雑貨", "board", "枚", 1.0, "風呂場", 0, "", "B", "巻き取り式の風呂のふた。"),
++("shower_curtain", "シャワーカーテン", "生活雑貨", "big_cloth waterproof", "枚", 0.5, "風呂場", 0, "", "B", "たたんだ半透明のシャワーカーテン。"),
++("umbrella_stand", "傘立て", "生活雑貨", "heavy container", "個", 3.0, "玄関", 0, "", "B", "陶器の傘立て1つ。"),
++("flower_pot", "植木鉢", "生活雑貨", "garden container heavy throwable", "個", 1.0, "ベランダ,玄関", 300, "鉢", "B", "素焼きの植木鉢1つ。"),
++("doormat", "玄関マット", "生活雑貨", "cloth", "枚", 0.8, "玄関", 0, "マット", "B", "茶色い玄関マット1枚。"),
++("calendar", "カレンダー", "生活雑貨", "write material", "部", 0.3, "居間,台所", 0, "", "B", "壁掛けカレンダー（数字はぼかす）。"),
++("photo_album", "アルバム", "生活雑貨", "comfort", "冊", 1.0, "居間,寝室", 0, "写真", "B", "古い布張りのアルバム1冊。"),
++("letter", "手紙", "生活雑貨", "comfort", "通", 0.01, "居間,寝室", 0, "", "B", "封の切られた手紙（文字はぼかす）。"),
++("phone_book", "電話帳", "生活雑貨", "fuel material", "冊", 1.0, "居間,玄関", 0, "", "B", "分厚い電話帳1冊（文字はぼかす）。"),
++("magazine_stack", "雑誌", "生活雑貨", "fuel material armor", "冊", 0.5, "居間", 0, "週刊誌", "B", "重ねた雑誌数冊（表紙はぼかす）。"),
++("toys_blocks", "積み木", "生活雑貨", "leisure", "箱", 1.0, "子ども部屋", 0, "おもちゃ", "B", "木の積み木の箱。"),
++("crayons", "クレヨン", "生活雑貨", "write", "箱", 0.2, "子ども部屋", 300, "", "B", "箱入りのクレヨン。"),
++("kids_bike_helmet", "子ども用ヘルメット", "生活雑貨", "armor", "個", 0.3, "子ども部屋,玄関", 0, "", "B", "子ども用の自転車ヘルメット（水色）。"),
++("water_gun", "水鉄砲", "生活雑貨", "container", "個", 0.2, "子ども部屋", 0, "", "B", "プラスチックの水鉄砲（オレンジ）。"),
++("firecrackers", "花火", "生活雑貨", "noise smoke igniter", "袋", 0.3, "物置,子ども部屋,コンビニ", 1000, "爆竹/手持ち花火", "A", "手持ち花火のセットの袋（絵柄のみ、文字なし）。"),
++("party_popper", "クラッカー（鳴り物）", "生活雑貨", "noise", "個", 0.01, "子ども部屋,居間", 100, "パーティークラッカー", "B", "円錐形のパーティー用クラッカー数個。"),
++("bells", "鈴", "生活雑貨", "noise", "個", 0.02, "玄関,神社", 200, "すず", "B", "赤いひもの付いた金色の鈴。"),
++("wind_chime", "風鈴", "生活雑貨", "noise glass", "個", 0.1, "ベランダ,居間", 0, "", "B", "ガラスの風鈴（金魚の絵）。"),
++("music_box", "オルゴール", "生活雑貨", "comfort leisure", "個", 0.3, "子ども部屋,寝室", 0, "", "B", "木の小箱のオルゴール。"),
++("tv", "テレビ", "生活雑貨", "news", "台", 10.0, "居間", 0, "", "B", "画面の消えた薄型テレビ（ロゴなし）。"),
++("pc_laptop", "ノートパソコン", "生活雑貨", "news", "台", 1.5, "居間,寝室", 0, "パソコン", "B", "閉じたノートパソコン（ロゴなし）。"),
++# ---------------------------------------------------------------- 台所の道具
++("kitchen_scissors", "キッチンばさみ", "容器・台所", "tool blade", "本", 0.1, "台所", 800, "", "B", "黒い柄のキッチンばさみ1本。"),
++("ladle", "おたま", "容器・台所", "cookware", "本", 0.1, "台所", 300, "", "B", "ステンレスのおたま1本。"),
++("rice_cooker", "炊飯器", "容器・台所", "cookware", "台", 3.0, "台所", 0, "", "B", "白い炊飯器1台。"),
++("big_pot", "大鍋", "容器・台所", "cookware container", "個", 3.0, "中学校,避難所", 0, "寸胴鍋", "B", "大きなアルミの寸胴鍋1つ。"),
++("cutting_board", "まな板", "容器・台所", "board", "枚", 1.0, "台所", 1000, "", "B", "使い込まれた木のまな板1枚。"),
++("rolling_pin", "めん棒", "容器・台所", "blunt", "本", 0.3, "台所", 500, "", "B", "木のめん棒1本。"),
++("funnel", "じょうご", "容器・台所", "tool", "個", 0.05, "台所,物置,ガソリンスタンド", 200, "ロート", "B", "白いプラスチックのじょうご1つ。"),
++("hose", "ホース", "容器・台所", "string tool", "本", 2.0, "ベランダ,物置,ホームセンター", 1500, "ゴムホース", "B", "巻いた緑色の散水ホース。"),
++("coffee_filter", "コーヒーフィルター", "容器・台所", "water_clean absorbent", "箱", 0.05, "台所", 200, "", "B", "白い紙のコーヒーフィルターの束。"),
++("paper_towels", "キッチンペーパー", "容器・台所", "absorbent fuel", "ロール", 0.2, "台所,スーパー", 200, "", "B", "キッチンペーパー1ロール。"),
++("tupperware", "保存容器", "容器・台所", "container", "個", 0.1, "台所", 300, "タッパー", "B", "ふた付きの透明な保存容器いくつか。"),
++("mug", "マグカップ", "容器・台所", "container", "個", 0.3, "台所,居間", 0, "コップ", "B", "白いマグカップ1つ。"),
++("chopsticks", "箸", "容器・台所", "", "膳", 0.02, "台所", 0, "", "B", "木の箸1膳。"),
++("pressure_cooker", "圧力鍋", "容器・台所", "cookware heavy", "個", 4.0, "台所", 0, "", "B", "ふたのしまった圧力鍋1つ。"),
++("cast_iron_pan", "鋳物の鍋", "容器・台所", "cookware heavy blunt throwable", "個", 4.0, "台所", 0, "ダッチオーブン", "B", "黒い鋳物の鍋1つ。"),
++("dried_shiitake", "干し椎茸", "食べ物", "edible needs_water", "袋", 0.05, "台所", 600, "しいたけ", "B", "袋に入った干し椎茸。"),
++("kanpyo_kombu", "昆布", "食べ物", "edible ready", "袋", 0.1, "台所", 500, "だし昆布", "B", "袋に入った乾燥昆布。"),
++("dried_noodles", "乾麺（そうめん）", "食べ物", "edible needs_heat needs_water", "袋", 0.3, "台所,スーパー", 300, "そうめん/うどん/そば", "B", "帯で束ねたそうめんの束。"),
++("cereal", "シリアル", "食べ物", "edible ready", "箱", 0.4, "台所,スーパー,コンビニ", 500, "コーンフレーク/グラノーラ", "B", "シリアルの箱と、手前にこぼれたシリアル（文字なし）。"),
++("peanut_butter", "ピーナッツバター", "食べ物", "edible ready", "びん", 0.35, "台所,スーパー", 500, "", "B", "ピーナッツバターのびん（ラベル無地）。"),
++("jam", "ジャム", "食べ物", "edible ready", "びん", 0.3, "台所,スーパー", 400, "", "B", "いちごジャムのびん（ラベル無地）。"),
++("instant_soup", "インスタントスープ", "食べ物", "edible needs_water", "箱", 0.1, "台所,コンビニ", 300, "スープ/味噌汁の素", "B", "スープの小袋がのぞく箱。"),
++("alpha_rice", "アルファ米", "食べ物", "edible needs_water", "袋", 0.1, "中学校,避難所,押し入れ", 400, "非常食のご飯", "A", "銀色の非常食のご飯の袋（文字なし）。"),
++("snacks", "スナック菓子", "食べ物", "edible ready comfort", "袋", 0.08, "居間,子ども部屋,コンビニ", 150, "ポテトチップス/お菓子", "B", "ポテトチップスの袋（文字なし）。"),
++("senbei", "せんべい", "食べ物", "edible ready", "袋", 0.15, "居間,スーパー", 300, "おせんべい", "B", "袋に入ったしょうゆせんべい。"),
++("yokan", "ようかん", "食べ物", "edible ready", "本", 0.3, "居間,押し入れ", 600, "羊羹", "B", "竹皮に包んだ一本のようかん。"),
++("baby_food", "離乳食", "食べ物", "edible ready", "個", 0.1, "子ども部屋,薬局", 200, "ベビーフード", "B", "小さなびんの離乳食（ラベル無地）。"),
++("pet_food_dry", "ドッグフード", "ペット", "edible ready bait", "袋", 2.0, "台所,玄関,スーパー,ホームセンター", 1500, "ペットフード/キャットフード", "B", "大きな袋のドライドッグフード（犬の絵、文字なし）。"),
++("pet_food_can", "猫の缶詰", "ペット", "edible ready bait", "個", 0.1, "台所,スーパー", 150, "ねこ缶", "B", "小さな猫用の缶詰（猫の絵、文字なし）。"),
++("cat_litter", "猫砂", "ペット", "absorbent hygiene", "袋", 5.0, "風呂場,ホームセンター", 800, "", "B", "猫砂の袋（猫の絵、文字なし）。"),
++("dog_leash", "犬のリード", "ペット", "string", "本", 0.2, "玄関", 1500, "リード", "B", "赤いナイロンの犬のリード。"),
++("pet_carrier", "ペットキャリー", "ペット", "container", "個", 1.5, "玄関,押し入れ", 0, "ケージ", "B", "プラスチックのペットキャリー。"),
++# ---------------------------------------------------------------- 自然・野外（川・公園・神社）
++("stones", "石", "自然・野外", "heavy throwable blunt", "個", 0.5, "公園,川沿いの土手,河川敷のグラウンド,神社", 0, "小石/石ころ", "A", "手のひら大の丸い石がいくつか。"),
++("sand", "砂", "自然・野外", "water_clean heavy material", "袋", 5.0, "公園,河川敷のグラウンド", 0, "", "B", "袋に入った乾いた砂。"),
++("soil", "土", "自然・野外", "garden material heavy", "袋", 5.0, "公園,神社,ベランダ", 0, "", "B", "袋に入った黒い土。"),
++("clay", "粘土", "自然・野外", "material", "かたまり", 1.0, "川沿いの土手,子ども部屋", 0, "", "B", "灰色の粘土のかたまり。"),
++("branches", "木の枝", "自然・野外", "fuel long material", "束", 1.0, "公園,神社,川沿いの土手", 0, "枝/小枝", "A", "拾い集めた枯れ枝の束。"),
++("fallen_leaves", "落ち葉", "自然・野外", "fuel insulation", "袋", 0.5, "公園,神社", 0, "枯れ葉", "B", "袋いっぱいの乾いた落ち葉。"),
++("bamboo", "竹", "自然・野外", "long material container", "本", 2.0, "神社,公園", 0, "竹竿", "B", "切った青竹1本。"),
++("driftwood", "流木", "自然・野外", "fuel blunt material", "本", 2.0, "川沿いの土手,河川敷のグラウンド", 0, "", "B", "白っぽく乾いた流木1本。"),
++("reeds", "葦", "自然・野外", "fuel material", "束", 0.5, "川沿いの土手", 0, "ヨシ/すすき", "B", "刈った葦の束。"),
++("river_water", "川の水", "自然・野外", "", "L", 1.0, "川沿いの土手,河川敷のグラウンド,橋", 0, "", "B", "（表示のみ・アイコンは水を使う）"),
++("snow", "雪", "自然・野外", "", "kg", 1.0, "", 0, "", "B", "（表示のみ）"),
++("wild_greens", "野草", "自然・野外", "edible needs_heat forage perishable", "束", 0.2, "川沿いの土手,公園,河川敷のグラウンド,神社", 0, "よもぎ/たんぽぽ/のびる/せり", "A", "摘んだばかりのよもぎ、たんぽぽ、のびるの束。"),
++("acorns", "どんぐり", "自然・野外", "edible needs_heat forage", "袋", 0.3, "公園,神社", 0, "", "B", "袋いっぱいのどんぐり。"),
++("ginkgo_nuts", "銀杏", "自然・野外", "edible needs_heat forage", "袋", 0.2, "神社,公園", 0, "ぎんなん", "B", "殻つきの銀杏の実。"),
++("persimmon", "柿", "自然・野外", "edible ready forage perishable", "個", 0.2, "北の住宅街,南の住宅街,神社", 0, "", "B", "枝付きの柿の実2つ。"),
++("citrus", "庭のみかん", "自然・野外", "edible ready forage perishable", "個", 0.1, "北の住宅街,南の住宅街", 0, "夏みかん/柚子", "B", "葉の付いたみかん2つ。"),
++("fish", "魚", "自然・野外", "edible needs_heat perishable", "匹", 0.3, "川沿いの土手", 0, "フナ/コイ", "B", "釣れたばかりのフナ1匹。"),
++("crayfish", "ザリガニ", "自然・野外", "edible needs_heat perishable", "匹", 0.05, "川沿いの土手,公園", 0, "", "B", "赤いザリガニ数匹。"),
++("fishing_rod", "釣り竿", "自然・野外", "fishing long", "本", 0.5, "物置,ホームセンター", 3000, "釣竿", "A", "リールの付いた釣り竿1本。"),
++("fishing_line", "釣り糸と針", "自然・野外", "fishing string sharp", "組", 0.02, "物置,ホームセンター", 800, "テグス/釣り針", "B", "巻いた釣り糸と小さな釣り針。"),
++("insect_net", "虫取り網", "自然・野外", "net long", "本", 0.3, "子ども部屋,物置", 500, "網", "B", "柄の長い虫取り網1本。"),
++("bucket_fishing", "魚とりのかご", "自然・野外", "net container", "個", 0.5, "物置", 0, "びく", "B", "竹で編んだ魚とりのかご。"),
++("shrine_sake", "お神酒", "自然・野外", "drink comfort", "本", 0.3, "神社", 0, "", "B", "白い陶器の徳利（お神酒）。"),
++("offering_rice", "お供えの米", "自然・野外", "edible needs_heat needs_water", "袋", 0.5, "神社", 0, "", "B", "小さな紙袋に入ったお供えの米。"),
++("shrine_rope", "しめ縄", "自然・野外", "string", "本", 2.0, "神社", 0, "", "B", "太いわらのしめ縄。"),
++("fence_wire", "有刺鉄線", "自然・野外", "sharp string metal", "巻", 3.0, "倉庫街,河川敷のグラウンド", 0, "バラ線", "B", "巻いた錆びた有刺鉄線。"),
++("rebar", "鉄筋", "自然・野外", "long metal blunt", "本", 2.0, "倉庫街,ホームセンター", 0, "鉄の棒", "B", "錆びた鉄筋1本。"),
++("bricks", "レンガ", "自然・野外", "heavy throwable board material", "個", 2.0, "公園,北の住宅街,南の住宅街,ホームセンター", 100, "ブロック", "A", "赤いレンガ数個。"),
++("concrete_block", "コンクリートブロック", "自然・野外", "heavy material", "個", 10.0, "北の住宅街,南の住宅街,ホームセンター,倉庫街", 200, "ブロック塀", "B", "灰色のコンクリートブロック1つ。"),
++("sandbag", "土のう袋", "自然・野外", "container material", "枚", 0.1, "中学校,ホームセンター", 50, "土嚢", "B", "空の白い土のう袋の束。"),
++("traffic_cone", "カラーコーン", "自然・野外", "signal", "個", 1.0, "大通り,倉庫街", 0, "三角コーン", "B", "赤と白のカラーコーン1つ。"),
++("bicycle", "自転車", "自然・野外", "vehicle", "台", 15.0, "玄関,建物前,駅前", 0, "チャリ/ママチャリ", "A", "スタンドを立てた銀色のママチャリ1台。"),
++("bike_tube", "自転車のチューブ", "自然・野外", "elastic string", "本", 0.2, "物置,ホームセンター", 800, "ゴムチューブ", "B", "丸めた黒いゴムのチューブ。"),
++("bike_pump", "空気入れ", "自然・野外", "tool", "本", 1.0, "玄関,物置", 2000, "", "B", "足踏み式の自転車の空気入れ。"),
++("vending_drink", "自販機の飲み物", "自然・野外", "drink", "本", 0.5, "駅前,大通り,公園", 150, "自販機", "B", "（表示のみ・アイコンは飲み物を使う）"),
++# ---------------------------------------------------------------- 車・ガソリン
++("gasoline", "ガソリン", "車・ガソリン", "fuel accelerant toxic", "L", 0.75, "ガソリンスタンド", 180, "", "A", "赤い携行缶（ガソリン用）1つ。"),
++("jerry_can", "携行缶", "車・ガソリン", "container metal", "個", 2.0, "ガソリンスタンド,物置", 5000, "ガソリン缶", "B", "空の赤い金属の携行缶1つ。"),
++("siphon_pump", "灯油ポンプ", "車・ガソリン", "tool", "本", 0.1, "物置,ガソリンスタンド,ホームセンター", 300, "給油ポンプ", "A", "赤いふたの手動の灯油ポンプ1本。"),
++("car_battery", "車のバッテリー", "車・ガソリン", "charge heavy", "個", 15.0, "ガソリンスタンド,倉庫街", 0, "バッテリー", "B", "黒い車のバッテリー1つ（端子の赤と黒のカバー）。"),
++("jumper_cables", "ブースターケーブル", "車・ガソリン", "string", "組", 1.5, "ガソリンスタンド,物置", 2000, "", "B", "赤と黒のブースターケーブル。"),
++("flare", "発煙筒", "車・ガソリン", "signal smoke light", "本", 0.2, "ガソリンスタンド,倉庫街,大通り", 800, "非常信号", "A", "赤い筒状の発煙筒1本（文字なし）。"),
++("warning_triangle", "三角表示板", "車・ガソリン", "signal reflect", "個", 1.0, "ガソリンスタンド", 2000, "", "B", "たたんだ赤い反射式の三角表示板。"),
++("tow_rope", "牽引ロープ", "車・ガソリン", "string", "本", 1.5, "ガソリンスタンド", 2000, "", "B", "黄色い牽引ロープ（フック付き）。"),
++("car_jack", "ジャッキ", "車・ガソリン", "tool pry heavy", "台", 3.0, "ガソリンスタンド,倉庫街", 0, "", "B", "パンタグラフ式のジャッキ1台。"),
++("tire_iron", "タイヤレンチ", "車・ガソリン", "tool blunt pry", "本", 1.0, "ガソリンスタンド", 0, "十字レンチ", "B", "十字形のタイヤレンチ1本。"),
++("motor_oil", "エンジンオイル", "車・ガソリン", "slippery fuel", "缶", 4.0, "ガソリンスタンド", 3000, "オイル", "B", "エンジンオイルの缶（ラベル無地）。"),
++("antifreeze", "不凍液", "車・ガソリン", "toxic chemical", "本", 2.0, "ガソリンスタンド", 1500, "クーラント", "B", "緑色の液体の入ったボトル（ラベル無地）。"),
++("car_cover", "車のカバー", "車・ガソリン", "big_cloth waterproof", "枚", 3.0, "物置,北の住宅街", 0, "ボディカバー", "B", "たたんだ銀色の車のカバー。"),
++("dashcam", "ドライブレコーダー", "車・ガソリン", "", "台", 0.2, "ガソリンスタンド", 0, "", "B", "小さなドライブレコーダー（ロゴなし）。"),
++("car_keys", "車の鍵", "車・ガソリン", "lock", "個", 0.05, "玄関,北の住宅街", 0, "", "B", "黒いリモコン付きの車の鍵。"),
++("road_map", "道路地図", "車・ガソリン", "", "冊", 1.0, "ガソリンスタンド", 0, "", "B", "使い込まれた道路地図帳（文字はぼかす）。"),
++# ---------------------------------------------------------------- 学校・避難所
++("bunsen", "アルコールランプ", "学校・病院・交番", "light fuel", "個", 0.2, "中学校", 0, "", "B", "ふた付きのガラスのアルコールランプ。"),
++("ethanol", "燃料用アルコール", "学校・病院・交番", "fuel accelerant hygiene", "本", 0.5, "中学校,薬局", 600, "エタノール/アルコール", "B", "透明な液体のボトル（ラベル無地）。"),
++("beaker", "ビーカー", "学校・病院・交番", "container glass", "個", 0.2, "中学校", 0, "", "B", "目盛りの付いたガラスのビーカー。"),
++("chemicals", "理科室の薬品", "学校・病院・交番", "chemical toxic", "本", 0.5, "中学校", 0, "薬品", "B", "茶色の薬品びん数本（ラベルはぼかす）。"),
++("line_powder", "石灰", "学校・病院・交番", "chemical hygiene", "袋", 10.0, "中学校,河川敷のグラウンド", 0, "ラインパウダー", "B", "白い粉の入った大きな袋。"),
++("sports_net", "体育倉庫のネット", "学校・病院・交番", "net big_cloth", "枚", 3.0, "中学校", 0, "ネット", "B", "たたんだ防球ネット。"),
++("gym_mat", "体操マット", "学校・病院・交番", "insulation", "枚", 8.0, "中学校", 0, "マット", "B", "青い体操マット1枚。"),
++("whiteboard_marker", "ホワイトボード用ペン", "学校・病院・交番", "write", "本", 0.02, "中学校", 0, "", "B", "ホワイトボードマーカー数本。"),
++("school_backpack", "ランドセル", "学校・病院・交番", "bag comfort", "個", 1.2, "子ども部屋", 0, "", "B", "赤いランドセル1つ。"),
++("generator", "発電機", "学校・病院・交番", "charge heavy", "台", 20.0, "中学校,ホームセンター", 0, "", "B", "小型のガソリン発電機1台（ロゴなし）。"),
++("emergency_water", "保存水", "学校・病院・交番", "drink", "本", 2.0, "中学校,避難所,押し入れ", 300, "備蓄水", "A", "銀色ラベルの長期保存水の2Lペットボトル（文字なし）。"),
++("aed", "AED", "学校・病院・交番", "", "台", 2.0, "中学校,駅のホーム,総合病院", 0, "", "B", "オレンジ色のAEDのケース（文字なし）。"),
++("loudspeaker", "拡声器", "学校・病院・交番", "noise uses_batteries signal", "台", 1.0, "中学校,交番", 0, "メガホン", "A", "白いハンドマイク型の拡声器1台。"),
++("stretcher", "担架", "学校・病院・交番", "long", "台", 5.0, "中学校,総合病院", 0, "", "B", "たたんだ布の担架。"),
++("first_aid_bag", "保健室の救急かばん", "学校・病院・交番", "wound medicine bag", "個", 2.0, "中学校", 0, "", "B", "赤い救急かばん（白十字ではなく緑の十字、文字なし）。"),
++# ---------------------------------------------------------------- 病院
++("suture_kit", "縫合セット", "学校・病院・交番", "wound sew sharp", "組", 0.1, "総合病院", 0, "縫う道具", "A", "滅菌パックに入った縫合針と持針器（文字なし）。"),
++("iv_bag", "点滴", "学校・病院・交番", "medicine drink", "袋", 0.5, "総合病院", 0, "輸液", "B", "透明な点滴の袋とチューブ（文字なし）。"),
++("saline", "生理食塩水", "学校・病院・交番", "wound hygiene", "本", 0.5, "総合病院,薬局", 300, "", "B", "透明なプラスチックボトル（ラベル無地）。"),
++("splint", "添え木", "学校・病院・交番", "wound board", "本", 0.2, "総合病院,中学校", 0, "副木", "B", "包帯を巻いた木の添え木。"),
++("crutches", "松葉杖", "学校・病院・交番", "long", "組", 1.5, "総合病院", 0, "", "B", "アルミの松葉杖1組。"),
++("gloves_medical", "医療用手袋", "学校・病院・交番", "hygiene", "箱", 0.2, "総合病院,薬局", 800, "ゴム手袋/ニトリル手袋", "B", "青いゴム手袋の箱と手袋1組。"),
++("syringe", "注射器", "学校・病院・交番", "sharp", "本", 0.01, "総合病院", 0, "", "B", "使っていないプラスチックの注射器（キャップ付き）。"),
++("scalpel", "メス", "学校・病院・交番", "blade sharp", "本", 0.01, "総合病院", 0, "", "B", "滅菌パックに入ったメス。"),
++("oxygen_can", "酸素缶", "学校・病院・交番", "", "本", 0.2, "総合病院,ホームセンター", 0, "", "B", "マスク付きの携帯酸素缶（文字なし）。"),
++("wheelchair", "車いす", "学校・病院・交番", "vehicle", "台", 12.0, "総合病院,避難所", 0, "", "B", "たたんだ車いす1台。"),
++# ---------------------------------------------------------------- 交番
++("baton", "警棒", "学校・病院・交番", "weapon blunt", "本", 0.5, "交番", 0, "", "A", "（武器）黒い伸縮式の警棒1本。"),
++("sasumata", "さすまた", "学校・病院・交番", "weapon long", "本", 2.0, "交番,中学校", 0, "刺股", "A", "（武器）U字の先の付いた長い棒（さすまた）。"),
++("riot_shield", "盾", "学校・病院・交番", "armor", "枚", 4.0, "交番", 0, "防護盾", "B", "（防具）透明なポリカーボネートの盾（文字なし）。"),
++("stab_vest", "防刃ベスト", "学校・病院・交番", "armor", "着", 2.0, "交番", 0, "", "B", "（防具）紺色の防刃ベスト（文字なし）。"),
++("handcuffs", "手錠", "学校・病院・交番", "lock metal", "組", 0.3, "交番", 0, "", "B", "銀色の手錠1組。"),
++("police_radio", "警察無線", "学校・病院・交番", "news uses_batteries", "台", 0.5, "交番", 0, "無線", "B", "黒い無線機（ロゴなし）。"),
++# ---------------------------------------------------------------- 店・駅・倉庫
++("shopping_cart", "ショッピングカート", "道具", "bag vehicle", "台", 15.0, "スーパー,食品店", 0, "カート", "B", "金属のショッピングカート1台。"),
++("pallet", "パレット", "工具・材料", "board fuel", "枚", 15.0, "倉庫街,スーパー", 0, "", "B", "木のパレット1枚。"),
++("shrink_wrap", "ストレッチフィルム", "工具・材料", "tape waterproof", "巻", 2.0, "倉庫街", 0, "", "B", "透明な梱包用フィルムのロール。"),
++("forklift_key", "フォークリフトの鍵", "道具", "lock", "個", 0.01, "倉庫街", 0, "", "B", "タグの付いた鍵1本。"),
++("cash_register_cash", "レジの現金", "貴重品", "valuable", "束", 0.1, "コンビニ,スーパー,食品店", 0, "", "B", "（表示のみ）"),
++("ticket_machine_coins", "小銭", "貴重品", "valuable", "袋", 0.5, "駅前,駅のホーム", 0, "", "B", "小さな布袋に入った小銭。"),
++("umbrella_lost", "置き傘", "道具", "long blunt", "本", 0.5, "駅のホーム,中学校,コンビニ", 0, "ビニール傘", "B", "閉じた透明のビニール傘1本。"),
++# ---------------------------------------------------------------- 工具・材料（ホームセンターの奥）
++("caulk", "コーキング剤", "工具・材料", "tape waterproof", "本", 0.4, "ホームセンター", 600, "シーリング", "B", "コーキングガンとチューブ（文字なし）。"),
++("sheet_metal", "トタン板", "工具・材料", "board metal waterproof", "枚", 4.0, "物置,倉庫街,ホームセンター", 1500, "波板", "B", "波形のトタン板1枚。"),
++("wire_mesh", "金網", "工具・材料", "net metal", "枚", 2.0, "物置,ホームセンター", 1500, "", "B", "巻いた金網。"),
++("pvc_pipe", "塩ビパイプ", "工具・材料", "long container", "本", 1.0, "ホームセンター", 800, "", "B", "灰色の塩ビパイプ1本。"),
++("anchor_bolts", "アンカーボルト", "工具・材料", "fastener metal", "箱", 1.0, "ホームセンター", 1000, "ボルト", "B", "小箱のボルトとナット。"),
++("hinges", "蝶番", "工具・材料", "fastener metal", "組", 0.2, "ホームセンター,金物店", 500, "", "B", "銀色の蝶番2つ。"),
++("door_chain", "ドアチェーン", "工具・材料", "lock", "個", 0.2, "ホームセンター,金物店", 1000, "", "B", "取り付け用のドアチェーン一式。"),
++("sledgehammer", "大ハンマー", "工具・材料", "tool blunt heavy weapon", "本", 5.0, "ホームセンター,倉庫街", 6000, "かけや", "B", "柄の長い大ハンマー1本。"),
++("axe", "斧", "工具・材料", "tool blade heavy weapon", "本", 1.5, "物置,ホームセンター", 5000, "手斧/なた", "A", "木の柄の手斧1本。"),
++("machete", "鉈", "工具・材料", "tool blade weapon", "本", 0.8, "物置,ホームセンター", 4000, "なた", "B", "鞘に入った鉈1本。"),
++("pickaxe", "つるはし", "工具・材料", "tool dig heavy blunt", "本", 3.0, "ホームセンター,倉庫街", 5000, "", "B", "木の柄のつるはし1本。"),
++("hand_shovel", "移植ごて", "工具・材料", "tool dig garden", "本", 0.2, "ベランダ,物置,ホームセンター", 500, "スコップ（小）", "B", "小さな園芸用の移植ごて。"),
++("bolt_cutter", "ボルトクリッパー", "工具・材料", "tool pry", "本", 3.0, "ホームセンター,倉庫街", 6000, "番線カッター", "A", "柄の長いボルトクリッパー1本。"),
++("lock_pick", "ピッキングの道具", "工具・材料", "tool", "組", 0.05, "", 0, "", "B", "細い金属の棒数本を束ねたもの。"),
++("crowbar_small", "釘抜き", "工具・材料", "tool pry", "本", 0.5, "物置,金物店", 800, "", "B", "小さな釘抜き1本。"),
++("gas_torch", "ガスバーナー", "工具・材料", "igniter stove", "個", 0.5, "物置,ホームセンター", 3000, "トーチ", "B", "カセットボンベに付けるガスバーナー。"),
++("solder", "はんだごて", "工具・材料", "tool", "本", 0.2, "物置", 0, "", "B", "はんだごてとはんだ。"),
++("multimeter", "テスター", "工具・材料", "tool", "台", 0.3, "物置,ホームセンター", 0, "", "B", "黄色いデジタルテスター。"),
++("extension_cord", "延長コード", "工具・材料", "string", "本", 1.0, "居間,物置,ホームセンター", 1500, "コードリール", "B", "巻いた延長コード。"),
++("spray_foam", "断熱スプレー", "工具・材料", "insulation tape", "本", 0.6, "ホームセンター", 1500, "", "B", "ウレタンフォームのスプレー缶（文字なし）。"),
++("level_tool", "水平器", "工具・材料", "tool", "本", 0.3, "物置,ホームセンター", 0, "", "B", "黄色い水平器。"),
++("tape_measure", "メジャー", "工具・材料", "tool", "個", 0.2, "物置,居間", 500, "巻尺", "B", "黄色い巻尺1つ。"),
++("sandpaper", "紙やすり", "工具・材料", "tool", "枚", 0.01, "物置,ホームセンター", 100, "やすり", "B", "数枚の紙やすり。"),
++("whetstone", "砥石", "工具・材料", "tool", "個", 0.8, "台所,物置", 2000, "", "B", "水に濡らした砥石。"),
++("work_lamp", "作業灯", "明かり・火", "light uses_batteries", "台", 1.0, "物置,ホームセンター", 4000, "投光器", "B", "スタンド付きのLED作業灯。"),
++("solar_lantern", "ソーラーライト", "明かり・火", "light charge", "個", 0.3, "ベランダ,ホームセンター", 1500, "ガーデンライト", "A", "庭に挿すソーラー式のガーデンライト。"),
++("oil_lamp", "オイルランプ", "明かり・火", "light", "個", 0.5, "物置", 0, "ランプ", "B", "ガラスのほやの付いたオイルランプ。"),
++("tea_light", "キャンドル（ティーライト）", "明かり・火", "light fuel", "袋", 0.2, "居間,スーパー", 400, "", "B", "アルミカップの小さなキャンドル数個。"),
++("tealight_heater", "植木鉢ヒーター", "燃料・暖房", "heater", "個", 1.5, "", 0, "", "B", "逆さにした植木鉢と小さなキャンドルで作った手作りの暖房。"),
++("rocket_stove", "缶のコンロ", "燃料・暖房", "stove", "個", 0.3, "", 0, "アルコールストーブ", "B", "空き缶で作った小さなコンロ（青い炎）。"),
++("bbq_grill", "バーベキューコンロ", "燃料・暖房", "stove", "台", 5.0, "物置,河川敷のグラウンド", 0, "", "B", "脚付きのバーベキューコンロ。"),
++("camping_stove", "シングルバーナー", "燃料・暖房", "stove", "個", 0.4, "物置,ホームセンター", 5000, "キャンプ用コンロ", "B", "ガス缶に付けるキャンプ用のシングルバーナー。"),
++("propane", "OD缶", "燃料・暖房", "fuel", "本", 0.4, "物置,ホームセンター", 600, "アウトドア用ガス缶", "B", "丸い小さなアウトドア用ガス缶（文字なし）。"),
++("tent", "テント", "布・衣類", "big_cloth waterproof insulation", "張", 3.0, "物置,ホームセンター", 15000, "", "B", "収納袋に入ったテント。"),
++("rain_boots", "長靴", "布・衣類", "armor waterproof", "足", 1.2, "玄関", 2000, "", "B", "黒いゴムの長靴1足。"),
++("down_jacket", "ダウンジャケット", "布・衣類", "warm insulation", "着", 0.8, "寝室,デパート", 0, "ダウン", "B", "たたんだ紺色のダウンジャケット。"),
++("scarf", "マフラー", "布・衣類", "warm cloth", "本", 0.2, "寝室,玄関", 0, "", "B", "ウールのマフラー1本。"),
++("work_clothes", "作業着", "布・衣類", "cloth armor", "着", 1.0, "物置,ホームセンター", 3000, "つなぎ", "B", "たたんだ作業着の上下。"),
++("goggles", "ゴーグル", "布・衣類", "armor", "個", 0.1, "物置,中学校,ホームセンター", 1000, "保護メガネ", "B", "透明な保護ゴーグル。"),
++("dust_mask", "防じんマスク", "布・衣類", "armor hygiene", "個", 0.1, "物置,ホームセンター", 1500, "", "B", "フィルター付きの防じんマスク。"),
++("bandana", "バンダナ", "布・衣類", "cloth", "枚", 0.05, "寝室,子ども部屋", 300, "手ぬぐい", "B", "赤いバンダナ1枚。"),
++("belt", "ベルト", "布・衣類", "string", "本", 0.2, "寝室", 0, "", "B", "革のベルト1本。"),
++("shoes", "運動靴", "布・衣類", "", "足", 0.8, "玄関", 0, "スニーカー", "B", "使い込まれた運動靴1足。"),
++]
++
++RECIPES += [
++    ("rocket_stove", ["empty_can", "blade"], 1, 20, "空き缶のコンロ：アルコールや固形燃料で湯を沸かす"),
++    ("tealight_heater", ["flower_pot", "tea_light|candle"], 1, 10, "植木鉢ヒーター：小さな部屋を少しだけ暖める"),
 +]
