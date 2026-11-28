@@ -101943,7 +101943,7 @@ index 35febbb..2e38eb4 100644
  			return found
  	return ""
 diff --git a/scripts/action_plan.gd b/scripts/action_plan.gd
-index 2c13ef6..6c8d879 100644
+index 2c13ef6..c897f44 100644
 --- a/scripts/action_plan.gd
 +++ b/scripts/action_plan.gd
 @@ -2,7 +2,7 @@ extends RefCounted
@@ -101951,7 +101951,7 @@ index 2c13ef6..6c8d879 100644
  # plan before mutation. AI plans use the same validation and action executor.
  const District = preload("res://scripts/district.gd")
 -const QUERIES = ["持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る"]
-+const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る","略奪者の拠点をうかがう","忍び込む","取引を持ちかける","情報を買う","略奪に加わる","略奪者の拠点を叩こうと持ちかける","奥へ進む","箱を運び出す","物陰でやり過ごす","引き上げる","正面から一斉に踏み込む","物音で気をそらして裏から入る","感染者をおびき寄せてぶつける","見張りの交代を待つ","一番前の相手に打ちかかる","押さえ込む","仲間に任せて下がる","全部持っていく","少し残していく","迎え撃つ準備をする","外の音に耳をすます","玄関で待ち構える","窓のそばで待ち構える","裏口で待ち構える","一番前の男に打ちかかる","家具で押し返す","食料を投げて引かせる","降参する","見張りの交代まで待つ","家具で裏口をふさぐ","家具で窓をふさぐ","家具で玄関をふさぐ","玄関へ駆けつける","窓へ駆けつける","裏口へ駆けつける","差し出された分を受け取って引き上げる","全部よこせと押し入る","2階へ押し入る","置いてある分だけで引き上げる","止める","見て見ぬふりをする","屋根にSOSを書く","ベランダにSOSを掲げる","屋上にSOSを書く","みんなでSOSを並べる","光で合図を送る","救助の車両に乗る","みんなで乗る","自分の席を譲る","同居人とだけ乗る","武器を置いてみんなで乗る","救助を呼ぼうと持ちかける","頭を説き伏せる","こっそり合図を送る"]
++const QUERIES = ["集まりを訪ねる","集まりの様子","話を聞く","うわさを聞く","ノックする","声をかける","食料を分ける","食べ物を分ける","一緒に来ないか誘う","次の部屋を探す","部屋を出る","ドアをこじ開ける","台所を調べる","居間を調べる","寝室を調べる","押し入れを調べる","子ども部屋を調べる","風呂場を調べる","物置を調べる","水を汲む","川の水を汲む","池の水を汲む","水を煮沸する","煮沸する","ここを集落にする","集落の様子","町のうわさ","うわさを思い出す","空き家を探す","手伝う","物資を寄付する","食料を寄付する","水を寄付する","仲間に入れてもらう","ここを出る","持ち物","状態","主人公情報","生存記録","世界の出来事","配送状況","同居人の様子を見る","店の在庫を見る","在庫を見る","品物を見る","品揃えを見る","品ぞろえを見る","商品を見る","売り物を見る","買い物する","住居を点検","近くの住民を観察","街の地図を見る","拠点の状態を見る","略奪者の拠点をうかがう","忍び込む","取引を持ちかける","情報を買う","次の狙いを聞く","略奪に加わる","略奪者の拠点を叩こうと持ちかける","奥へ進む","箱を運び出す","物陰でやり過ごす","引き上げる","正面から一斉に踏み込む","物音で気をそらして裏から入る","感染者をおびき寄せてぶつける","見張りの交代を待つ","一番前の相手に打ちかかる","押さえ込む","仲間に任せて下がる","全部持っていく","少し残していく","迎え撃つ準備をする","外の音に耳をすます","玄関で待ち構える","窓のそばで待ち構える","裏口で待ち構える","一番前の男に打ちかかる","家具で押し返す","食料を投げて引かせる","降参する","見張りの交代まで待つ","家具で裏口をふさぐ","家具で窓をふさぐ","家具で玄関をふさぐ","玄関へ駆けつける","窓へ駆けつける","裏口へ駆けつける","差し出された分を受け取って引き上げる","全部よこせと押し入る","2階へ押し入る","置いてある分だけで引き上げる","止める","見て見ぬふりをする","屋根にSOSを書く","ベランダにSOSを掲げる","屋上にSOSを書く","みんなでSOSを並べる","光で合図を送る","救助の車両に乗る","みんなで乗る","自分の席を譲る","同居人とだけ乗る","武器を置いてみんなで乗る","救助を呼ぼうと持ちかける","頭を説き伏せる","こっそり合図を送る"]
  const COMMANDS = ["周囲を見る","窓から外を見る","ニュースを見る","テレビを見る","SNSを見る","ラジオを聞く","寝る","食事する","水を飲む","1時間休息","玄関を補強","玄関の補強を外す","住居を修繕","浄水する","プランターを作る","種を植える","水やり","収穫","物資を探索する","街を観察する","鍵を開ける","鍵を閉める","玄関の扉を開ける","扉を閉める","傷を手当てする","在宅で仕事をする","勉強する"]
  const DRINK_ALIASES = ["水を飲む", "喉を潤す", "喉をうるおす", "水分補給する", "水分を取る", "喉かわいた", "喉が渇いた", "喉渇いた", "のどかわいた", "のどが渇いた", "喉がかわいた", "水飲む", "水飲もう", "水を飲もう"]
  const NEWS_ALIASES = ["ニュースをチェック", "ニュースをチェックする", "報道をチェック", "報道をチェックする", "報道を確認する"]
@@ -106210,10 +106210,10 @@ index 971fbda..8bf3cc0 100644
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
 diff --git a/scripts/lair.gd b/scripts/lair.gd
 new file mode 100644
-index 0000000..ee7ecff
+index 0000000..3e23b06
 --- /dev/null
 +++ b/scripts/lair.gd
-@@ -0,0 +1,468 @@
+@@ -0,0 +1,473 @@
 +extends RefCounted
 +## v149.35: what the player can do about a gang's lair (gangs.gd).
 +##  - watch it from the street next to it (how many, when the guard is thin)
@@ -106426,7 +106426,10 @@ index 0000000..ee7ecff
 +	n.seen = true
 +	n.gap_known = true
 +	n.fighters = Gangs.fighters(world, g)
-+	_show(world, "lair_talk")
++	# v149.35: a member just asks (nothing is paid, so no handing-over photo).
++	var member := is_member(world, g)
++	if not member:
++		_show(world, "lair_talk")
 +	var target := ""
 +	var best: Dictionary = {}
 +	for key in Communities.all(world):
@@ -106441,6 +106444,8 @@ index 0000000..ee7ecff
 +	for o in Gangs.active(world):
 +		if str(o.id) != str(g.id):
 +			others.append(str(o.lair))
++	if member:
++		return "頭らしい男が、焚き火のそばで声を落とした。%s%s" % [target, ("　%sにも、別の連中がいるらしい。" % "・".join(others)) if not others.is_empty() else ""]
 +	return "男は受け取った物を懐にしまい、声を落とした。%s　ここには%s見張りは%d時ごろに交代する。%s" % [target, Force.describe(Force.gang(world, g)), gap(g), ("　%sにも、別の連中がいるらしい。" % "・".join(others)) if not others.is_empty() else ""]
 +
 +# ------------------------------------------------------------------ joining
@@ -106704,7 +106709,7 @@ index 2c72ddd..a50f2d7 100644
  				return {}
  		"npc":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..f7046c1 100644
+index 0f2add4..1af65f8 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -63,6 +63,7 @@ var place_label: Label
@@ -107613,7 +107618,7 @@ index 0f2add4..f7046c1 100644
 +		var den: Dictionary = load("res://scripts/gangs.gd").at(world, _site())
 +		if not den.is_empty():
 +			if Lair.is_member(world, den):
-+				out = ["略奪に加わる", "情報を買う", "ここを出る"] + out
++				out = ["略奪に加わる", "次の狙いを聞く", "ここを出る"] + out
 +			else:
 +				out = ["忍び込む", "取引を持ちかける", "情報を買う", "仲間に入れてもらう"] + out
 +		var group_here: Dictionary = load("res://scripts/npc_groups.gd").at(world, location) if world.s.get("survivors") is Dictionary else {}
@@ -108131,7 +108136,7 @@ index 0f2add4..f7046c1 100644
 +			return Lair.sneak_in(world, _site())
 +		if clean in ["取引を持ちかける", "見逃してもらう", "話をつける", "取引する"]:
 +			return Lair.bargain(world, _site())
-+		if clean in ["情報を買う", "話を聞く"]:
++		if clean in ["情報を買う", "話を聞く", "次の狙いを聞く", "次の狙いは", "次はどこを狙う"]:
 +			return Lair.buy_info(world, _site())
 +		if clean in ["仲間に入れてもらう", "仲間に入れて", "ここに住ませてもらう"]:
 +			return Lair.ask_join(world, _site())
@@ -116933,6 +116938,73 @@ index 0000000..761e508
 +++ b/tests/test_lair149_35.gd.uid
 @@ -0,0 +1 @@
 +uid://b46vb2xwd0rm2
+diff --git a/tests/test_lair_member_ask149_35.gd b/tests/test_lair_member_ask149_35.gd
+new file mode 100644
+index 0000000..6ddf22b
+--- /dev/null
++++ b/tests/test_lair_member_ask149_35.gd
+@@ -0,0 +1,61 @@
++extends SceneTree
++## v149.35: a member of the gang asks where they go next (nothing to buy,
++## no money changes hands, no handing-over photo); an outsider buys it.
++const Main = preload("res://main.tscn")
++const Lair = preload("res://scripts/lair.gd")
++const Gangs = preload("res://scripts/gangs.gd")
++const R = preload("res://scripts/residents.gd")
++var failures := 0
++func check(ok: bool, what: String) -> void:
++	if not ok:
++		failures += 1
++		push_error("FAIL: " + what)
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	g._start_new_game(p)
++	g._finish_intro()
++	g.local_model.enabled = false
++	var w = g.world
++	w.s.society = "emergency"
++	for h in 26: w.advance_safe(60)
++	var homes: Array = []
++	for i in load("res://scripts/dwellings.gd").count("団地"):
++		if homes.size() >= 3: break
++		var who: Dictionary = R.who(w, "団地", i)
++		if who.people.any(func(q): return bool(q.able)):
++			var row: Array = R.row(w, "団地", i)
++			row[R.P_PATH] = "looter"
++			row[R.P_ALIVE] = (1 << who.people.size()) - 1
++			homes.append(["団地", i])
++	Gangs.all(w)["gang_t"] = {"id": "gang_t", "lair": "倉庫街", "since": 1, "store": 300.0, "hungry": 0, "ended": false, "last_raid": 99999, "leader": homes[0], "homes": homes, "announced": true}
++	w.s.residents.confronted_at = 99999999
++	g.location = "倉庫街"
++	w.set_meta("player_place", "倉庫街")
++	w.s.cash = 10000
++	# An outsider: the chip says buy, money is paid, the handing-over photo.
++	check("情報を買う" in g._suggestions(), "outsider is offered 情報を買う")
++	var cash := int(w.s.cash)
++	w.s.erase("scene_photo")
++	var said := Lair.buy_info(w, "倉庫街")
++	check(said.contains("受け取った物") and int(w.s.cash) < cash, "outsider pays: " + said.left(40))
++	check(str(w.s.get("scene_photo", {}).get("name", "")) == "lair_talk", "outsider gets the handing-over photo")
++	# A member: asks, pays nothing, no handing-over photo.
++	w.s.residents.player_gang = "gang_t"
++	var chips: Array = g._suggestions()
++	check("次の狙いを聞く" in chips and not "情報を買う" in chips, "member is offered 次の狙いを聞く: " + str(chips))
++	cash = int(w.s.cash)
++	var food := float(w.s.district.bag.food)
++	w.s.erase("scene_photo")
++	g.log_entries.clear()
++	await g._on_command("次の狙いを聞く")
++	var text := "\n".join(g.log_entries)
++	check(text.contains("頭らしい男が、焚き火のそばで声を落とした") and not text.contains("受け取った物"), "member is told, not sold: " + text.left(60))
++	check(int(w.s.cash) == cash and float(w.s.district.bag.food) == food, "member pays nothing")
++	check(str(w.s.get("scene_photo", {}).get("name", "")) != "lair_talk", "no handing-over photo for a member")
++	print("lair member ask: %d failures" % failures)
++	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_meal_plan149_35.gd b/tests/test_meal_plan149_35.gd
 new file mode 100644
 index 0000000..8a5b274
