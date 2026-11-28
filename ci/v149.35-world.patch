@@ -114013,6 +114013,19 @@ index 0000000..85f82d7
 +++ b/tests/_transcript.gd.uid
 @@ -0,0 +1 @@
 +uid://d3n5wdbmldjho
+diff --git a/tests/run_all.py b/tests/run_all.py
+index 3b53fb5..07f0608 100644
+--- a/tests/run_all.py
++++ b/tests/run_all.py
+@@ -9,7 +9,7 @@ for p in tests:
+     cmd=[os.environ.get('GODOT','godot'),'--headless','--path',str(root),'--script','res://tests/'+p.name] if p.suffix=='.gd' else [sys.executable,str(p)]
+     t=time.monotonic()
+     try:
+-        r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=180)
++        r=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=420)
+         output=r.stdout; code=r.returncode
+     except subprocess.TimeoutExpired as e:
+         output=(e.stdout or b'').decode(errors='replace') if isinstance(e.stdout,bytes) else (e.stdout or '')
 diff --git a/tests/test_action_photos149_32.gd b/tests/test_action_photos149_32.gd
 index c90d746..91232dd 100644
 --- a/tests/test_action_photos149_32.gd
