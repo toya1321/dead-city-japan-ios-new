@@ -106337,10 +106337,10 @@ index 971fbda..8bf3cc0 100644
  	result[0].body=str(result[0].body).replace("この家で、一人で暮らしている。",household)
 diff --git a/scripts/item_actions.gd b/scripts/item_actions.gd
 new file mode 100644
-index 0000000..a255569
+index 0000000..4c26aaa
 --- /dev/null
 +++ b/scripts/item_actions.gd
-@@ -0,0 +1,510 @@
+@@ -0,0 +1,693 @@
 +extends RefCounted
 +## v149.39: doing things with what you have (docs/ITEMS_VERBS.md, first wave).
 +##
@@ -106475,7 +106475,7 @@ index 0000000..a255569
 +static func recognises(cmd: String) -> bool:
 +	if named(cmd).filter(func(id): return not Items.LEGACY.has(id)).is_empty():
 +		return false
-+	for words in [LIGHT_WORDS, OFF_WORDS, WARM_WORDS, FORT_WORDS, TRAP_WORDS, SOUND_WORDS, SIGNAL_WORDS, TREAT_WORDS, MED_WORDS, ["補強", "ふさ", "塞", "寒"]]:
++	for words in [LIGHT_WORDS, OFF_WORDS, WARM_WORDS, FORT_WORDS, TRAP_WORDS, SOUND_WORDS, SIGNAL_WORDS, TREAT_WORDS, MED_WORDS, EAT_WORDS, FILTER_WORDS, BOIL_WORDS, ["補強", "ふさ", "塞", "寒"]]:
 +		if has_word(cmd, words):
 +			return true
 +	return false
@@ -106492,6 +106492,14 @@ index 0000000..a255569
 +		return ""
 +	if has_word(cmd, OFF_WORDS) and said.any(func(id): return id in ELECTRIC_LIGHTS or id in FLAME_LIGHTS):
 +		return put_out(world)
++	if has_word(cmd, FILTER_WORDS) and said.any(func(id): return Catalog.is_a(id, "water_clean") or Catalog.is_a(id, "cloth")):
++		return purify(game, said, at_home)
++	if has_word(cmd, BOIL_WORDS) and said.any(func(id): return Catalog.is_a(id, "stove") or Catalog.is_a(id, "cookware")):
++		return boil(game, said, at_home)
++	if has_word(cmd, EAT_WORDS) and said.any(func(id): return Catalog.is_a(id, "edible")):
++		return eat(game, said, at_home)
++	if has_word(cmd, MED_WORDS) and said.any(func(id): return Catalog.is_a(id, "drink")) and not said.any(func(id): return Catalog.is_a(id, "medicine") and not Catalog.is_a(id, "drink")):
++		return drink(game, said, at_home)
 +	if said.any(func(id): return Catalog.is_a(id, "medicine")) and has_word(cmd, MED_WORDS):
 +		return medicine(game, said, at_home)
 +	if said.any(func(id): return Catalog.is_a(id, "wound")) or (has_word(cmd, ["消毒", "縫", "添え木", "湿布"]) and has_word(cmd, TREAT_WORDS)):
@@ -106851,6 +106859,181 @@ index 0000000..a255569
 +			return "抗生物質を飲んだ。傷が膿まないことを祈った。"
 +	Mood.change(world.s, 1.0)
 +	return "%sを飲んだ。" % name_of(med)
++
++# ---- food and drink --------------------------------------------------------
++
++const EAT_WORDS := ["食べ", "食う", "食って", "口にする", "かじ", "すする"]
++const FILTER_WORDS := ["ろ過", "濾過", "こす", "こして", "浄水", "きれいに"]
++const BOIL_WORDS := ["沸か", "煮沸", "湯を"]
++
++## People-days of food in one of each thing.
++const FOOD := {"canned_fish": 0.3, "canned_chicken": 0.2, "canned_fruit": 0.25, "corned_beef": 0.3, "tuna": 0.2,
++	"rice": 6.0, "rice_pack": 0.35, "cup_noodle": 0.35, "instant_noodle": 0.35, "pasta": 2.5, "pasta_sauce": 0.2,
++	"retort_curry": 0.3, "retort_porridge": 0.2, "hardtack": 0.4, "crackers": 0.4, "biscuits": 0.4, "chocolate": 0.25,
++	"candy": 0.2, "nuts": 0.6, "dried_fruit": 0.2, "energy_bar": 0.4, "jelly_drink": 0.15, "powdered_milk": 2.0,
++	"miso": 1.0, "sugar": 2.0, "flour": 2.0, "mochi": 2.5, "umeboshi": 0.2, "nori": 0.1, "bread": 0.8, "eggs": 0.8,
++	"frozen_food": 0.5, "vegetables": 0.6, "wild_greens": 0.1, "acorns": 0.5, "ginkgo_nuts": 0.3, "persimmon": 0.15,
++	"citrus": 0.1, "fish": 0.3, "crayfish": 0.1, "honey": 1.0, "cereal": 1.2, "peanut_butter": 1.5, "jam": 0.8,
++	"instant_soup": 0.1, "alpha_rice": 0.35, "snacks": 0.3, "senbei": 0.4, "yokan": 0.8, "baby_food": 0.1,
++	"pet_food_dry": 5.0, "pet_food_can": 0.15, "dried_shiitake": 0.1, "kanpyo_kombu": 0.1, "dried_noodles": 1.0, "offering_rice": 1.0}
++## Water it takes to make (L per people-day eaten).
++const NEEDS_WATER := {"cup_noodle": 1.0, "instant_noodle": 1.4, "pasta": 1.0, "rice": 0.8, "alpha_rice": 0.45, "instant_soup": 1.5, "powdered_milk": 0.5, "dried_noodles": 1.0, "dried_shiitake": 1.0, "offering_rice": 0.8}
++## Litres in one of each drink.
++const DRINK := {"bottled_tea": 0.5, "sports_drink": 0.5, "ors": 0.5, "canned_coffee": 0.19, "beer": 0.35, "sake": 0.18,
++	"jelly_drink": 0.18, "vending_drink": 0.5, "emergency_water": 2.0, "shrine_sake": 0.1}
++
++## What can heat food or water here: [label, fuel id or "", fuel used] or [] (none).
++static func heat_source(world, said: Array, at_home: bool) -> Array:
++	if at_home and world.has_home_power() and not said.any(func(id): return Catalog.is_a(id, "stove")):
++		return ["電気のコンロ", "", 0.0]
++	var options := [["cassette_stove", "gas_cans", 0.1], ["camping_stove", "propane", 0.1], ["kerosene_heater", "kerosene", 0.3],
++		["bbq_grill", "charcoal", 0.2], ["bbq_grill", "firewood", 0.2], ["rocket_stove", "ethanol", 0.1], ["rocket_stove", "branches", 0.3], ["gas_torch", "gas_cans", 0.05]]
++	for prefer in [true, false]:
++		for o in options:
++			if prefer and not str(o[0]) in said:
++				continue
++			if have(world, str(o[0]), at_home) > 0.0 and have(world, str(o[1]), at_home) >= float(o[2]):
++				return [name_of(str(o[0])), str(o[1]), float(o[2])]
++	if at_home and world.has_home_power():
++		return ["電気のコンロ", "", 0.0]
++	return []
++
++static func eat(game, said: Array, at_home: bool) -> String:
++	var world = game.world
++	var food := ""
++	for id in said:
++		if Catalog.is_a(str(id), "edible"):
++			food = str(id)
++			break
++	if food.is_empty() or not FOOD.has(food):
++		return ""
++	if have(world, food, at_home) <= 0.0:
++		return "%sを持っていない。" % name_of(food)
++	if float(world.s.hunger) < 10.0:
++		return "今は、おなかが空いていない。"
++	var value: float = FOOD[food]
++	var portion := minf(value, maxf(0.15, minf(0.35, float(world.s.hunger) / 100.0)))
++	var how := ""
++	if Catalog.is_a(food, "needs_heat") and not (food == "alpha_rice"):
++		var heat := heat_source(world, said, at_home)
++		if heat.is_empty():
++			return "%sは火を通さないと食べられない。（コンロと燃料、電気、焚き火など）" % name_of(food)
++		if not str(heat[1]).is_empty():
++			use_up(world, str(heat[1]), float(heat[2]), at_home)
++		how = "%sで火を通して、" % heat[0]
++		load("res://scripts/walkers.gd").make_smell(world, 60)
++	if NEEDS_WATER.has(food):
++		var litres: float = float(NEEDS_WATER[food]) * portion
++		if float(world.s.get("water", 0.0)) < litres:
++			return "%sを作る水が足りない（%.1fL要る）。" % [name_of(food), litres]
++		world.s.water = float(world.s.water) - litres
++	use_up(world, food, portion / value, at_home)
++	world.s.hunger = maxf(0.0, float(world.s.hunger) - portion * 100.0)
++	var Mood = load("res://scripts/mood.gd")
++	Mood.ensure(world)
++	var taste := ""
++	if Catalog.is_a(food, "comfort"):
++		Mood.change(world.s, 3.0)
++		taste = "甘さが、じんわり体にしみた。"
++	elif food.begins_with("pet_food"):
++		Mood.change(world.s, -3.0)
++		taste = "ひどい味だった。それでも、腹は満ちた。"
++	elif not how.is_empty():
++		Mood.change(world.s, 2.0)
++		taste = "温かいものが、少しありがたかった。"
++	world.advance_safe(15 if how.is_empty() else 30)
++	return "%s%sを食べた。%s" % [how, name_of(food), taste]
++
++static func drink(game, said: Array, at_home: bool) -> String:
++	var world = game.world
++	var what := ""
++	for id in said:
++		if DRINK.has(str(id)):
++			what = str(id)
++			break
++	if what.is_empty():
++		return ""
++	if have(world, what, at_home) <= 0.0:
++		return "%sを持っていない。" % name_of(what)
++	var litres: float = minf(float(DRINK[what]), 0.5)
++	use_up(world, what, litres / float(DRINK[what]), at_home)
++	world.s.thirst = maxf(0.0, float(world.s.thirst) - litres * 100.0 / 3.0)
++	var Mood = load("res://scripts/mood.gd")
++	Mood.ensure(world)
++	var after := ""
++	match what:
++		"sports_drink", "ors":
++			if float(world.s.thirst) > 30.0 or bool(world.s.get("symptomatic", false)):
++				world.s.health = minf(100.0, float(world.s.health) + 2.0)
++			after = "体にすっと入っていく。"
++		"beer", "sake", "shrine_sake":
++			Mood.change(world.s, 4.0)
++			world.s.fatigue = minf(100.0, float(world.s.fatigue) + 5.0)
++			after = "少しだけ、気が緩んだ。"
++		"canned_coffee":
++			Mood.change(world.s, 2.0)
++			world.s.fatigue = maxf(0.0, float(world.s.fatigue) - 5.0)
++	if what == "jelly_drink":
++		world.s.hunger = maxf(0.0, float(world.s.hunger) - 15.0)
++	world.advance_safe(3)
++	return "%sを飲んだ。%s" % [name_of(what), after]
++
++## Making stored (rain or river) water safe to drink with what one has.
++static func purify(game, said: Array, at_home: bool) -> String:
++	var world = game.world
++	if not at_home:
++		return "ためた水は家にある。家でろ過する。"
++	if float(world.s.get("rain_water", 0.0)) < 1.0:
++		return "ろ過する水（ためておいた雨水や川の水）がない。"
++	var litres := minf(5.0, floorf(float(world.s.rain_water)))
++	var strong := ""
++	if said.has("filter") and bool(world.s.equipment.get("filter", false)):
++		strong = "浄水器"
++	elif pick(world, ["water_filter_diy"], said, at_home) != "":
++		strong = "手作りの浄水器"
++	elif pick(world, ["purification_tablets"], said, at_home) != "" and said.has("purification_tablets"):
++		use_up(world, "purification_tablets", litres / 30.0, at_home)
++		strong = "浄水剤"
++	elif pick(world, ["bleach"], said, at_home) != "" and said.has("bleach"):
++		use_up(world, "bleach", litres * 0.005, at_home)
++		strong = "漂白剤を数滴たらして"
++	elif pick(world, ["charcoal"], said, at_home) != "" and said.has("charcoal") and pick(world, ["coffee_filter", "towel", "sheet", "bandana", "gauze"], said, at_home) != "":
++		use_up(world, "charcoal", 0.1, at_home)
++		strong = "布と炭を重ねて"
++	if strong.is_empty():
++		var weak := pick(world, ["coffee_filter", "towel", "sheet", "bandana", "gauze", "clothes"], said, at_home)
++		if weak.is_empty():
++			return "ろ過に使える物を持っていない。"
++		world.advance_safe(15)
++		return "%sで水をこした（15分）。濁りは取れたが、これだけでは飲めない。煮沸するか、浄水剤や炭が要る。" % name_of(weak)
++	world.s.rain_water = float(world.s.rain_water) - litres
++	world.s.water = float(world.s.water) + litres
++	world.advance_safe(20)
++	return "%s、ためておいた水%.0fLを飲める水にした（20分）。" % [strong if strong.ends_with("て") else strong + "で", litres]
++
++## Boiling stored water on whatever heat one has, in whatever pot.
++static func boil(game, said: Array, at_home: bool) -> String:
++	var world = game.world
++	if not at_home:
++		return "ためた水は家にある。家で沸かす。"
++	if float(world.s.get("rain_water", 0.0)) < 1.0:
++		return "沸かす水（ためておいた雨水や川の水）がない。"
++	var pot := pick(world, ["big_pot", "pot", "pressure_cooker", "kettle", "cast_iron_pan"], said, at_home)
++	if pot.is_empty():
++		return "水を沸かす鍋がない。"
++	var heat := heat_source(world, said, at_home)
++	if heat.is_empty():
++		return "火がない。コンロと燃料（カセットボンベ、OD缶、炭、薪、灯油）か、電気が要る。"
++	if not str(heat[1]).is_empty():
++		use_up(world, str(heat[1]), float(heat[2]), at_home)
++	var size: float = {"big_pot": 10.0, "pot": 4.0, "pressure_cooker": 4.0, "kettle": 2.0, "cast_iron_pan": 3.0}[pot]
++	var litres := minf(size, floorf(float(world.s.rain_water)))
++	world.s.rain_water = float(world.s.rain_water) - litres
++	world.s.water = float(world.s.water) + litres
++	world.advance_safe(30)
++	if str(heat[1]) in ["charcoal", "firewood", "branches"]:
++		load("res://scripts/walkers.gd").make_smell(world, 90)
++	return "%sに水を%.0fL入れて、%sで煮沸した。冷まして飲み水にした（30分）。" % [name_of(pot), litres, heat[0]]
 diff --git a/scripts/item_actions.gd.uid b/scripts/item_actions.gd.uid
 new file mode 100644
 index 0000000..770bf84
@@ -107351,10 +107534,10 @@ index 0000000..2b1d4c6
 +uid://ddawpgaye57yc
 diff --git a/scripts/items.gd b/scripts/items.gd
 new file mode 100644
-index 0000000..2ed79da
+index 0000000..e8f1033
 --- /dev/null
 +++ b/scripts/items.gd
-@@ -0,0 +1,321 @@
+@@ -0,0 +1,341 @@
 +extends RefCounted
 +## v149.39: things the player has, by the item ledger (item_catalog.gd).
 +##
@@ -107503,8 +107686,7 @@ index 0000000..2ed79da
 +	var it: Dictionary = Catalog.ITEMS.get(id, {})
 +	if it.is_empty() or str(it.cat) in ["武器", "防具"]:
 +		return false
-+	var tags: Array = it.tags
-+	return not ("edible" in tags or "drink" in tags)
++	return true
 +
 +static func _h(world, salt: String) -> int:
 +	return absi(hash([int(world.s.get("seed", 0)), salt]))
@@ -107676,6 +107858,27 @@ index 0000000..2ed79da
 +		for id in _pick(world, candidates(room), 2 + _h(world, "home" + room) % 3, "home|" + room):
 +			if not stock.has(id):
 +				stock[id] = float(_batch(world, str(id), "home" + room))
++
++## Hourly: when the home's food (people-days) runs low, what was kept aside
++## and needs no fire (cans, crackers...) goes on the table, so the household's
++## meals keep drawing on it.
++static func top_up_food(world) -> void:
++	if float(world.s.get("food", 0.0)) >= 0.5 or not world.s.get("items") is Dictionary:
++		return
++	var IA = load("res://scripts/item_actions.gd")
++	var opened: Array = []
++	for id in world.s.items.keys():
++		if float(world.s.get("food", 0.0)) >= 1.0:
++			break
++		if not IA.FOOD.has(id) or Catalog.is_a(str(id), "needs_heat") or IA.NEEDS_WATER.has(id) or str(id).begins_with("pet_food"):
++			continue
++		while float(world.s.items.get(id, 0)) >= 1.0 and float(world.s.food) < 1.0:
++			take(world, str(id), 1.0)
++			world.s.food = float(world.s.food) + float(IA.FOOD[id])
++			if not str(Catalog.ITEMS[id].name) in opened:
++				opened.append(str(Catalog.ITEMS[id].name))
++	if not opened.is_empty() and world.s.has("walkers"):
++		world.s.walkers.notices.append("【記録】食料が尽きかけたので、取っておいた%sを食卓に回した。" % "・".join(opened))
 diff --git a/scripts/items.gd.uid b/scripts/items.gd.uid
 new file mode 100644
 index 0000000..bf522bb
@@ -116643,7 +116846,7 @@ index 1e93ac4..dfc1830 100644
  const PART_NAMES := {"arms": "腕", "hands": "手", "legs": "脚", "torso": "胴", "head": "頭", "neck": "首"}
  ## Hours until a wound stops mattering (untreated / treated).
 diff --git a/scripts/world.gd b/scripts/world.gd
-index 5d08c00..d791240 100644
+index 5d08c00..5e69e23 100644
 --- a/scripts/world.gd
 +++ b/scripts/world.gd
 @@ -1,5 +1,6 @@
@@ -116691,7 +116894,12 @@ index 5d08c00..d791240 100644
  		Mood.hourly(self, sleeping)
  		Roles.hourly(self)
  		OutbreakNews.hourly(self)
-@@ -107,6 +115,7 @@ func step(sleeping: bool) -> void:
+@@ -103,10 +111,12 @@ func step(sleeping: bool) -> void:
+ 		Chronicle.hourly(self)
+ 		Requests.hourly(self)
+ 		Cold.hourly(self)
++		load("res://scripts/items.gd").top_up_food(self)
+ 		Weapons.hourly(self)
  		load("res://scripts/combat_record.gd").hourly(self)
  		WorldTraits.hourly(self)
  		WorldTraits.restore(self)
@@ -116699,7 +116907,7 @@ index 5d08c00..d791240 100644
  		Shelter.hourly(self)
  		if int(s.minute) % 1440 == 0:
  			Survivors.daily(self, func(place): return Walkers.count(self, place))
-@@ -192,7 +201,7 @@ func _road_connector() -> float:
+@@ -192,7 +202,7 @@ func _road_connector() -> float:
  func _traffic_speed_factor() -> float:
  	return float(s.sim.traffic)*60.0
  func _crop_growth_factor() -> float:
@@ -116708,7 +116916,7 @@ index 5d08c00..d791240 100644
  	return 0.45 if month in [12,1,2] else 1.0
  func _weather_for_day(day: int) -> String:
  	return Events.seasonal_weather(self,day)
-@@ -231,6 +240,13 @@ func household_activity_at(hour: int) -> String:
+@@ -231,6 +241,13 @@ func household_activity_at(hour: int) -> String:
  	return "外出" if hour >= HOUSEHOLD_LEAVE and hour < HOUSEHOLD_RETURN and s.society == "normal" else "在宅"
  
  func _household_hour() -> void:
@@ -116722,7 +116930,7 @@ index 5d08c00..d791240 100644
  	var scheduled := household_activity_at(int(hour_of_day()))
  	for person in s.household_members:
  		if float(person.health)<=0:continue
-@@ -260,16 +276,25 @@ func _household_hour() -> void:
+@@ -260,16 +277,25 @@ func _household_hour() -> void:
  			# During a requested meal, defer automatic eating for its recipient.
  			# Otherwise the hourly tick can consume an extra serving before delivery.
  			var awaiting_meal: bool = bool(person.get("awaiting_meal", false))
@@ -116753,7 +116961,7 @@ index 5d08c00..d791240 100644
  
  func can_trade(shop_id: String) -> bool:
  	if not s.shops.has(shop_id):return false
-@@ -381,7 +406,7 @@ func order_status() -> String:
+@@ -381,7 +407,7 @@ func order_status() -> String:
  	if s.longplay.orders.is_empty():return "通販の注文履歴はない。"
  	var lines:Array[String]=[]
  	for order in s.longplay.orders.slice(maxi(0,s.longplay.orders.size()-8)):
@@ -116762,7 +116970,7 @@ index 5d08c00..d791240 100644
  	return "\n".join(lines)
  func has_home_power() -> bool:
  	return bool(s.grid_online) or (bool(s.equipment.battery) and float(s.battery)>1.0)
-@@ -431,6 +456,8 @@ func validate_state(data: Dictionary) -> bool:
+@@ -431,6 +457,8 @@ func validate_state(data: Dictionary) -> bool:
  		return false
  	if data.has("world_traits") and not WorldTraits.valid(data.world_traits):
  		return false
@@ -116771,7 +116979,7 @@ index 5d08c00..d791240 100644
  	if data.has("shelter") and not Shelter.valid(data.shelter):
  		return false
  	if data.has("raid") and not Raiders.valid(data.raid):
-@@ -452,7 +479,7 @@ func validate_state(data: Dictionary) -> bool:
+@@ -452,7 +480,7 @@ func validate_state(data: Dictionary) -> bool:
  			return false
  		if person.has("water_errand") and not HouseholdErrands.valid(person.water_errand):
  			return false
@@ -116780,7 +116988,7 @@ index 5d08c00..d791240 100644
  			return false
  		var goods = person.get("request_goods", {})
  		if not goods is Dictionary or goods.size() > CATALOG.size():
-@@ -513,6 +540,7 @@ func action(kind: String, household: bool = false) -> String:
+@@ -513,6 +541,7 @@ func action(kind: String, household: bool = false) -> String:
  		return "補強を1段外し、木材2と部品1を回収した（%d分）。"%elapsed
  	if kind=="tend":
  		if s.plots.is_empty():return "栽培中の作物はない。"
@@ -118308,10 +118516,10 @@ index 0000000..a0788b2
 +uid://6on0qhklmjld
 diff --git a/tests/test_item_actions149_39.gd b/tests/test_item_actions149_39.gd
 new file mode 100644
-index 0000000..982bf78
+index 0000000..24dbe4d
 --- /dev/null
 +++ b/tests/test_item_actions149_39.gd
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,157 @@
 +extends SceneTree
 +## v149.39: doing things with what one has, through the real command path.
 +const Main = preload("res://main.tscn")
@@ -118424,6 +118632,49 @@ index 0000000..982bf78
 +	# Things one does not have.
 +	said = await say("ランタンをつける")
 +	check(said.contains("持っていない") or said.contains("電池"), "no lantern, no light: " + said)
++	# ---- food and drink
++	w.s.hunger = 60.0
++	Items.add(w, "canned_fish", 2)
++	var h0 := float(w.s.hunger)
++	said = await say("サバの缶詰を食べる", "台所")
++	check(float(w.s.hunger) < h0 and Items.count(w, "canned_fish") < 2.0, "a can eaten: " + said)
++	Items.add(w, "cup_noodle", 1)
++	Items.take(w, "cassette_stove", 99); Items.take(w, "camping_stove", 99); Items.take(w, "bbq_grill", 99); Items.take(w, "gas_torch", 99); Items.take(w, "rocket_stove", 99); Items.take(w, "kerosene_heater", 99)
++	w.s.hunger = 60.0
++	said = await say("カップ麺を食べる", "台所")
++	check(said.contains("火を通さないと") and Items.count(w, "cup_noodle") == 1.0, "cup noodles need heat: " + said)
++	Items.add(w, "cassette_stove", 1)
++	w.s.gas_cans = 1.0
++	w.s.water = 5.0
++	said = await say("カセットコンロでカップ麺を作って食べる", "台所")
++	check(said.contains("カセットコンロ") and float(w.s.water) < 5.0 and float(w.s.gas_cans) < 1.0, "cup noodles on the stove: " + said)
++	Items.add(w, "sports_drink", 1)
++	w.s.thirst = 50.0
++	said = await say("スポーツドリンクを飲む", "台所")
++	check(float(w.s.thirst) < 50.0 and Items.count(w, "sports_drink") < 1.0, "a sports drink: " + said)
++	Items.add(w, "pet_food_can", 1)
++	w.s.hunger = 60.0
++	said = await say("猫の缶詰を食べる", "台所")
++	check(said.contains("ひどい味"), "pet food in a pinch: " + said)
++	# ---- water
++	w.s.rain_water = 6.0
++	var water0 := float(w.s.water)
++	Items.add(w, "coffee_filter", 1)
++	said = await say("コーヒーフィルターで雨水をろ過する", "台所")
++	check(said.contains("これだけでは飲めない") and float(w.s.water) == water0, "a coffee filter only clears it: " + said)
++	Items.add(w, "purification_tablets", 1)
++	said = await say("浄水タブレットで水をきれいにする", "台所")
++	check(float(w.s.water) > water0 and float(w.s.rain_water) < 6.0, "tablets make it safe: " + said)
++	w.s.rain_water = 6.0
++	water0 = float(w.s.water)
++	Items.add(w, "kettle", 1)
++	said = await say("やかんとカセットコンロで湯を沸かす", "台所")
++	check(float(w.s.water) == water0 + 2.0, "a kettle boils two litres: " + said)
++	# ---- the household eats what was put by when the food runs low
++	w.s.food = 0.0
++	Items.add(w, "hardtack", 2)
++	load("res://scripts/items.gd").top_up_food(w)
++	check(float(w.s.food) >= 0.4, "put-by food goes on the table: %.2f" % float(w.s.food))
 +	print("item actions: %d failures" % failures)
 +	quit(1 if failures > 0 else 0)
 diff --git a/tests/test_items149_39.gd b/tests/test_items149_39.gd
