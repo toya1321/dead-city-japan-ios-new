@@ -97889,6 +97889,19 @@ index 82fc247..6036a60 100644
  application/export_project_only=true
  application/delete_old_export_files_unconditionally=true
  application/targeted_device_family=0
+diff --git a/project.godot b/project.godot
+index f56dcfd..8fe92ac 100644
+--- a/project.godot
++++ b/project.godot
+@@ -14,6 +14,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+ 
+ [application]
+ 
++config/version="0.149.35"
++
+ config/name="DEAD CITY JAPAN — CHRONICLE Longplay"
+ run/main_scene="res://main.tscn"
+ config/features=PackedStringArray("4.6", "GL Compatibility")
 diff --git a/qa/autoplay.gd b/qa/autoplay.gd
 index 9136871..f5d92d5 100644
 --- a/qa/autoplay.gd
@@ -99961,6 +99974,42 @@ index 0000000..ddf6c11
 +++ b/qa/street_census.gd.uid
 @@ -0,0 +1 @@
 +uid://bx2jqxsykgf2u
+diff --git a/qa/title_shot.gd b/qa/title_shot.gd
+new file mode 100644
+index 0000000..1651b6d
+--- /dev/null
++++ b/qa/title_shot.gd
+@@ -0,0 +1,23 @@
++extends SceneTree
++## Renders the title, its options and the new-game form (DCJ_SHOT prefix).
++func _initialize() -> void:
++	call_deferred("run")
++func shot(name: String) -> void:
++	for i in 10: await process_frame
++	root.get_texture().get_image().save_png(OS.get_environment("DCJ_SHOT") + name + ".png")
++func run() -> void:
++	var g = preload("res://main.tscn").instantiate()
++	root.add_child(g)
++	for i in 10: await process_frame
++	var t = g.title_screen
++	await shot("title")
++	t._open_options()
++	await shot("options")
++	t._close_options()
++	t._open_form()
++	await shot("form")
++	t.age_input.text = "４５"
++	print("AGE ", t._age())
++	t.age_input.text = "abc"
++	print("AGE ", t._age())
++	quit()
+diff --git a/qa/title_shot.gd.uid b/qa/title_shot.gd.uid
+new file mode 100644
+index 0000000..8cd2efe
+--- /dev/null
++++ b/qa/title_shot.gd.uid
+@@ -0,0 +1 @@
++uid://bjwf2r3qy32su
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
 index 35febbb..4dad1f4 100644
 --- a/scripts/action_photos.gd
@@ -104819,7 +104868,7 @@ index 2c72ddd..a50f2d7 100644
  				return {}
  		"npc":
 diff --git a/scripts/main.gd b/scripts/main.gd
-index 0f2add4..5192dc9 100644
+index 0f2add4..b6a4a4c 100644
 --- a/scripts/main.gd
 +++ b/scripts/main.gd
 @@ -63,6 +63,7 @@ var place_label: Label
@@ -105239,7 +105288,25 @@ index 0f2add4..5192dc9 100644
  	log_scroll.custom_minimum_size.y = 44 if portrait else 50
  	command_input.custom_minimum_size.y = (56 if compact else 60) if portrait else (64 if compact else 96)
  	send_button.custom_minimum_size = Vector2(64, 52) if portrait else Vector2(96, 64 if compact else 96)
-@@ -1215,14 +1304,14 @@ func _show_intro() -> void:
+@@ -1164,8 +1253,17 @@ func _show_title() -> void:
+ 	title_screen.save_exists = FileAccess.file_exists(SAVE_PATH)
+ 	title_screen.new_game_requested.connect(_start_new_game)
+ 	title_screen.continue_requested.connect(_continue_from_title)
++	title_screen.delete_save_requested.connect(_delete_save)
+ 	add_child(title_screen)
+ 
++## v149.35: from the title's options. The save and any half-written copy go.
++func _delete_save() -> void:
++	for path in [SAVE_PATH, SAVE_PATH + ".tmp"]:
++		if FileAccess.file_exists(path):
++			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
++	if is_instance_valid(title_screen):
++		title_screen.save_deleted()
++
+ func _start_new_game(profile: Dictionary) -> void:
+ 	if not world.configure(profile):
+ 		if is_instance_valid(title_screen): title_screen.message.text = "主人公の設定を確認してください。"
+@@ -1215,14 +1313,14 @@ func _show_intro() -> void:
  	intro_layer.mouse_filter = Control.MOUSE_FILTER_STOP
  	add_child(intro_layer)
  	var shade := ColorRect.new()
@@ -105256,7 +105323,7 @@ index 0f2add4..5192dc9 100644
  	intro_margin.add_child(panel)
  	var column := VBoxContainer.new()
  	column.add_theme_constant_override("separation", 14)
-@@ -1364,6 +1453,14 @@ func _action_card_for(line: String) -> void:
+@@ -1364,6 +1462,14 @@ func _action_card_for(line: String) -> void:
  	if path.is_empty():
  		return
  	action_card_kind = str(hit.kind)
@@ -105271,7 +105338,7 @@ index 0f2add4..5192dc9 100644
  	_show_action_card(load(path), str(hit.caption))
  
  func _show_action_card(texture: Texture2D, caption: String) -> void:
-@@ -1372,7 +1469,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1372,7 +1478,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		var card_style := UI.box(UI.PANEL, UI.LINE.lightened(0.25), 16, 10, 10)
  		card_style.shadow_color = Color(0, 0, 0, 0.6)
  		card_style.shadow_size = 18
@@ -105282,7 +105349,7 @@ index 0f2add4..5192dc9 100644
  		action_card.mouse_filter = Control.MOUSE_FILTER_STOP
  		action_card.gui_input.connect(func(event):
  			if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
-@@ -1392,7 +1491,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1392,7 +1500,9 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  		label.name = "Caption"
  		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
  		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -105293,7 +105360,7 @@ index 0f2add4..5192dc9 100644
  		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
  		column.add_child(label)
  		add_child(action_card)
-@@ -1405,7 +1506,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1405,7 +1515,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	photo_rect.custom_minimum_size = Vector2(width - 20.0, (width - 20.0) * 0.75)
  	caption_label.text = caption
  	caption_label.add_theme_font_size_override("font_size", ui_font_size)
@@ -105302,7 +105369,7 @@ index 0f2add4..5192dc9 100644
  	action_card.size = Vector2(width, 0)
  	action_card.reset_size()
  	action_card.call_deferred("reset_size")
-@@ -1417,9 +1518,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
+@@ -1417,9 +1527,7 @@ func _show_action_card(texture: Texture2D, caption: String) -> void:
  	action_card.modulate.a = 0.0
  	action_tween = create_tween()
  	action_tween.tween_property(action_card, "modulate:a", 1.0, 0.25)
@@ -105313,7 +105380,7 @@ index 0f2add4..5192dc9 100644
  
  ## v149.34: arriving at an open shop shows what it sells; leaving closes it.
  func _refresh_shop_window() -> void:
-@@ -1476,6 +1575,37 @@ func _member_names() -> Array:
+@@ -1476,6 +1584,37 @@ func _member_names() -> Array:
  	names.append_array(Survivors.names(world))
  	return names
  
@@ -105351,7 +105418,7 @@ index 0f2add4..5192dc9 100644
  ## One chronicle entry, styled by what it is.
  func _make_entry(entry: String) -> Control:
  	var info := UI.kind(entry, _member_names())
-@@ -1487,9 +1617,9 @@ func _make_entry(entry: String) -> Control:
+@@ -1487,9 +1626,9 @@ func _make_entry(entry: String) -> Control:
  			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
  			row.add_child(spacer)
  			var bubble := PanelContainer.new()
@@ -105363,7 +105430,7 @@ index 0f2add4..5192dc9 100644
  			bubble.add_child(text)
  			log_bubbles.append([text, str(info.text), 0.78])
  			_fit_bubble(text, str(info.text), 0.78)
-@@ -1509,7 +1639,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1509,7 +1648,7 @@ func _make_entry(entry: String) -> Control:
  			var line := HBoxContainer.new()
  			column.add_child(line)
  			var bubble := PanelContainer.new()
@@ -105372,7 +105439,7 @@ index 0f2add4..5192dc9 100644
  			line.add_child(bubble)
  			var text := UI.label(str(info.text), size, UI.TEXT)
  			bubble.add_child(text)
-@@ -1518,7 +1648,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1518,7 +1657,7 @@ func _make_entry(entry: String) -> Control:
  			return column
  		"fail":
  			var panel := PanelContainer.new()
@@ -105381,7 +105448,7 @@ index 0f2add4..5192dc9 100644
  			var body := VBoxContainer.new()
  			body.add_theme_constant_override("separation", 6)
  			panel.add_child(body)
-@@ -1529,7 +1659,7 @@ func _make_entry(entry: String) -> Control:
+@@ -1529,7 +1668,7 @@ func _make_entry(entry: String) -> Control:
  			return panel
  		"news", "notice":
  			var note := UI.label(str(info.text), size - 2, UI.WARN_TEXT if str(info.kind) == "notice" else UI.BODY)
@@ -105390,7 +105457,7 @@ index 0f2add4..5192dc9 100644
  			return note
  	var block := VBoxContainer.new()
  	block.add_theme_constant_override("separation", 4)
-@@ -1575,13 +1705,15 @@ func _refresh() -> void:
+@@ -1575,13 +1714,15 @@ func _refresh() -> void:
  	_refresh_shop_window()
  	# v149.29: a death ends the story (no succession); the life is told back,
  	# with what became of those left behind.
@@ -105408,7 +105475,7 @@ index 0f2add4..5192dc9 100644
  			_append(Chronicle.epilogue(world))
  	_drain_walker_notices()
  	_update_dialogue_input()
-@@ -1589,7 +1721,7 @@ func _refresh() -> void:
+@@ -1589,7 +1730,7 @@ func _refresh() -> void:
  	day_label.text = "%d日目" % _day_number()
  	clock_label.text = stamp.right(5)
  	place_label.text = location
@@ -105417,7 +105484,7 @@ index 0f2add4..5192dc9 100644
  	subline_label.text = "%d月%d日（%s） %s" % [int(date.month), int(date.day), ["日","月","火","水","木","金","土"][int(date.weekday)], _weather_text()]
  	var stage: Array = UI.SOCIETY.get(str(world.s.society), ["平常", 0])
  	danger_label.text = "街：" + str(stage[0])
-@@ -1607,19 +1739,25 @@ func _refresh() -> void:
+@@ -1607,19 +1748,25 @@ func _refresh() -> void:
  	elif not horde.is_empty() and Navigation.indoor(location) and str(horde.place) in ["住宅街", "屋外"]:
  		danger_label.text = "群れが通過中" if str(horde.place) == "屋外" else "群れ接近"
  		stage = ["", 3]
@@ -105449,7 +105516,7 @@ index 0f2add4..5192dc9 100644
  	inventory_status.text = "食料 %.1f人日\n飲料水 %.1f L\n雨水 %.1f L\n現金 %d円\n住居耐久 %.0f / 100" % [float(world.s.food),float(world.s.water),float(world.s.rain_water),int(world.s.cash),float(world.s.longplay.shelter_integrity)]
  	world_status.text = "%s / %s\n%s\n\n確認した報道\n%s" % [str(world.s.profile.name),str(world.s.profile.housing),str(world.s.profile.address),observed_news]
  	world_status.add_theme_font_size_override("font_size",18)
-@@ -1629,12 +1767,17 @@ func _refresh() -> void:
+@@ -1629,12 +1776,17 @@ func _refresh() -> void:
  	scene_view.update_view(location,world.hour_of_day(),str(world.s.weather),world.has_home_power() if Navigation.indoor(location) else bool(world.s.grid_online),world.can_trade(shop_id) if not shop_id.is_empty() else true,visible_count,visual_focus)
  	picture.texture = _base_texture()
  	# v149.29: after the end, the picture of how it ended.
@@ -105468,7 +105535,7 @@ index 0f2add4..5192dc9 100644
  	# v149.33: during an encounter the picture shows the fight as it stands.
  	if ending.is_empty() and float(world.s.health) > 0:
  		var fight_photo: String = Combat.picture_path(world) if Combat.active(world) else (Combat.picture_path(world, "fight_after") if combat_after else "")
-@@ -1642,22 +1785,55 @@ func _refresh() -> void:
+@@ -1642,22 +1794,55 @@ func _refresh() -> void:
  			picture.texture = load(fight_photo)
  			scene_view.ending = true
  			scene_view.queue_redraw()
@@ -105527,7 +105594,7 @@ index 0f2add4..5192dc9 100644
  	scene_caption.text = caption.get_slice("\n", 0) if main_layout.vertical else caption
  
  func _on_command(raw: String) -> void:
-@@ -1667,11 +1843,15 @@ func _on_command(raw: String) -> void:
+@@ -1667,11 +1852,15 @@ func _on_command(raw: String) -> void:
  	if cmd.length()>1200:_append("文章は1200文字以内で入力してください。何も実行していません。");return
  	command_input.clear()
  	command_input.release_focus()
@@ -105544,7 +105611,7 @@ index 0f2add4..5192dc9 100644
  		if cmd.contains("新しい世界") or cmd.contains("はじめから") or cmd.contains("最初から"):
  			_show_title()
  			return
-@@ -1704,6 +1884,8 @@ func _on_command(raw: String) -> void:
+@@ -1704,6 +1893,8 @@ func _on_command(raw: String) -> void:
  		return
  	if await _survivor_command(cmd):
  		return
@@ -105553,7 +105620,7 @@ index 0f2add4..5192dc9 100644
  	if _care_command(cmd):
  		return
  	if NPCConversation.normalize(cmd) == "提案を実行":
-@@ -1735,7 +1917,11 @@ func _on_command(raw: String) -> void:
+@@ -1735,7 +1926,11 @@ func _on_command(raw: String) -> void:
  			await _talk_to(dialogue.partner, speech)
  			return
  	var model_read := PlayerIntents.negated(cmd)   # a declining line is not guessed at
@@ -105566,7 +105633,7 @@ index 0f2add4..5192dc9 100644
  		# v149.24: the player's own action in free wording; the model names it,
  		# the game checks the line and runs the fixed command.
  		_set_local_inference(true)
-@@ -1766,6 +1952,9 @@ func _on_command(raw: String) -> void:
+@@ -1766,6 +1961,9 @@ func _on_command(raw: String) -> void:
  	if cancel_requested:
  		_append("文章の解釈を中断しました。何も実行していません。")
  		return
@@ -105576,7 +105643,7 @@ index 0f2add4..5192dc9 100644
  	if not last_plan.ok:_append(str(last_plan.clarification));return
  	await _run_plan(last_plan)
  
-@@ -1776,19 +1965,19 @@ func _update_dialogue_input() -> void:
+@@ -1776,19 +1974,19 @@ func _update_dialogue_input() -> void:
  		var person: Dictionary = world.s.household_members[dialogue.partner]
  		if (person.location != location and not local_model.available()) or not dialogue.obstacle(world, location, person).is_empty():
  			dialogue.partner = -1
@@ -105599,7 +105666,7 @@ index 0f2add4..5192dc9 100644
  		convo_label.text = "%sと会話中" % partner_name
  		convo_avatar.text = partner_name.left(1)
  		_show_convo_face(Portraits.housemate_face(world, dialogue.partner))
-@@ -1803,10 +1992,12 @@ func _show_convo_face(texture: Texture2D) -> void:
+@@ -1803,10 +2001,12 @@ func _show_convo_face(texture: Texture2D) -> void:
  ## and things to do otherwise. They send the text as if typed.
  func _suggestions() -> Array:
  	var out: Array = []
@@ -105613,7 +105680,7 @@ index 0f2add4..5192dc9 100644
  	if Navigation.indoor(location) and Siege.porch(world) > 0 and float(world.s.health) > 0:
  		out.append("家の中から迎え撃つ")
  	if str(NeighborFate.state(world).stage) == "attack" and (Navigation.indoor(location) or location == str(NeighborFate._person(world).get("place", ""))):
-@@ -1817,8 +2008,14 @@ func _suggestions() -> Array:
+@@ -1817,8 +2017,14 @@ func _suggestions() -> Array:
  			"help": return ["手伝う", "断る"]
  			"refuge": return ["家に入れる", "断る"]
  		return ["玄関に出る", "居留守を使う"]
@@ -105629,7 +105696,7 @@ index 0f2add4..5192dc9 100644
  		if world.has_home_power() and not bool(world.s.get("lights_off", false)):
  			raid_chips.push_front("明かりを消す")
  		return raid_chips
-@@ -1844,6 +2041,8 @@ func _suggestions() -> Array:
+@@ -1844,6 +2050,8 @@ func _suggestions() -> Array:
  		chips.append("何か知っていることはないか聞く")
  		if bool(sd.joinable):
  			chips.append("一緒に来ないか誘う")
@@ -105638,7 +105705,7 @@ index 0f2add4..5192dc9 100644
  		chips.append("会話を終える")
  		return chips
  	if dialogue.partner >= 0:
-@@ -1899,6 +2098,11 @@ func _suggestions() -> Array:
+@@ -1899,6 +2107,11 @@ func _suggestions() -> Array:
  			if HomeLife._nobody_awake_home(self) and (world.has_home_power() or float(world.s.sim.get("phone_charge", 0.0)) >= 20.0):
  				out.append("映画を観る")
  			out.append("本を読む")
@@ -105650,7 +105717,7 @@ index 0f2add4..5192dc9 100644
  	if location == "避難所" and Shelter.is_open(world):
  		out.append("配給を受け取る")
  		out.append("避難所の様子を聞く")
-@@ -1910,6 +2114,8 @@ func _suggestions() -> Array:
+@@ -1910,6 +2123,8 @@ func _suggestions() -> Array:
  		if int(world.s.inventory.get("wood", 0)) >= 1:
  			out.append("門を補強する")
  		out.append("掲示板を見る")
@@ -105659,7 +105726,7 @@ index 0f2add4..5192dc9 100644
  		if float(world.s.fatigue) >= 60.0 or world.hour_of_day() >= 21.0 or world.hour_of_day() < 5.0:
  			out.append("避難所で寝る")
  	if location == "コンビニ" and not bool(world.s.district.sites["コンビニ"].vacant):
-@@ -1946,7 +2152,7 @@ func _suggestions() -> Array:
+@@ -1946,7 +2161,7 @@ func _suggestions() -> Array:
  		if str(person.location) == location and float(person.health) > 0 and str(person.get("isolated", "")).is_empty():
  			out.append("%sに話しかける" % person.name)
  	for sid in Survivors.here(world, location):
@@ -105668,7 +105735,7 @@ index 0f2add4..5192dc9 100644
  			out.push_front("%sに話しかける" % Survivors.call_name(world, sid))
  	var graph := Navigation.graph(str(world.s.profile.housing))
  	for place in graph.get(location, []):
-@@ -1971,11 +2177,62 @@ func _suggestions() -> Array:
+@@ -1971,11 +2186,62 @@ func _suggestions() -> Array:
  			var req: Dictionary = mate.get("request", {})
  			if str(req.get("kind", "")) == "family" and (location == str(req.place) or _site() == str(req.place)):
  				out.push_front("%sの%sを探す" % [mate.name, req.rel])
@@ -105731,7 +105798,7 @@ index 0f2add4..5192dc9 100644
  	return out.slice(0, 6)
  
  func _refresh_suggestions() -> void:
-@@ -1984,7 +2241,7 @@ func _refresh_suggestions() -> void:
+@@ -1984,7 +2250,7 @@ func _refresh_suggestions() -> void:
  	for child in chips_row.get_children():
  		chips_row.remove_child(child)
  		child.queue_free()
@@ -105740,17 +105807,17 @@ index 0f2add4..5192dc9 100644
  	if (not ui_show_chips and not ended) or (world.s.health <= 0 and not ended):
  		chips_scroll.visible = false
  		return
-@@ -2614,7 +2871,19 @@ func _drain_walker_notices() -> void:
+@@ -2614,7 +2880,19 @@ func _drain_walker_notices() -> void:
  	var w := Walkers.ensure(world)
  	var notices: Array = w.notices
  	w.notices = []
 +	# v149.35: the same warning over and over (a long sleep, a long wait) is
 +	# told once, with how often it came back.
 +	var times := {}
-+	for line in notices:
+ 	for line in notices:
 +		times[str(line)] = int(times.get(str(line), 0)) + 1
 +	var told := {}
- 	for line in notices:
++	for line in notices:
 +		if told.has(str(line)):
 +			continue
 +		told[str(line)] = true
@@ -105760,7 +105827,7 @@ index 0f2add4..5192dc9 100644
  		var said := false
  		for person in world.s.household_members:
  			said = said or str(line).begins_with(str(person.name) + "「")
-@@ -2838,7 +3107,8 @@ func _survivor_command(cmd: String) -> bool:
+@@ -2838,7 +3116,8 @@ func _survivor_command(cmd: String) -> bool:
  		result = Survivors.ask(world, id)
  		Survivors.talked(world, id)
  	elif not negated and NPCMemory._mentions(text, ["仲間", "一緒に来", "うちに来", "家に来", "一緒に行こう", "来ないか", "誘", "一緒に暮らそう", "一緒に住", "うちに住", "同居"]):
@@ -105770,7 +105837,7 @@ index 0f2add4..5192dc9 100644
  		result = str(answer[0])
  		if bool(answer[1]):
  			survivor_partner = ""
-@@ -2955,10 +3225,35 @@ func _process_leavers() -> void:
+@@ -2955,10 +3234,35 @@ func _process_leavers() -> void:
  		Mood.change(world.s, -15.0)
  		_remove_housemate(i)
  
@@ -105806,7 +105873,7 @@ index 0f2add4..5192dc9 100644
  	var kind := ""
  	if NPCMemory._mentions(cmd, ["追い払", "怒鳴", "大声", "出ていけ", "帰れ", "叫"]):
  		kind = "shout"
-@@ -3129,11 +3424,20 @@ func _eat_before_sleep() -> String:
+@@ -3129,11 +3433,20 @@ func _eat_before_sleep() -> String:
  
  func _shelter_command(cmd: String) -> bool:
  	if location != "避難所":
@@ -105827,7 +105894,7 @@ index 0f2add4..5192dc9 100644
  	if NPCMemory._mentions(cmd, ["掲示板", "張り紙", "貼り紙"]):
  		world.advance_safe(5)
  		_append(Shelter.board(world))
-@@ -3211,9 +3515,279 @@ func _comfort_command(cmd: String) -> bool:
+@@ -3211,9 +3524,279 @@ func _comfort_command(cmd: String) -> bool:
  		return true
  	return false
  
@@ -106108,7 +106175,7 @@ index 0f2add4..5192dc9 100644
  		return true
  	for index in world.s.household_members.size():
  		var person: Dictionary = world.s.household_members[index]
-@@ -3457,6 +4031,9 @@ func _parse_wait_minutes(cmd: String) -> int:
+@@ -3457,6 +4040,9 @@ func _parse_wait_minutes(cmd: String) -> int:
  # substring-based execution. This is a bounded Japanese grammar, not an LLM.
  func _canonical_command(raw: String) -> String:
  	var cmd := raw.strip_edges().trim_suffix("。").replace("　", " ")
@@ -106118,7 +106185,7 @@ index 0f2add4..5192dc9 100644
  	for ending in ["してください", "して下さい", "してほしい"]:
  		if cmd.ends_with(ending): cmd = cmd.trim_suffix(ending) + "する"
  	var aliases := {
-@@ -3473,8 +4050,17 @@ func _canonical_command(raw: String) -> String:
+@@ -3473,8 +4059,17 @@ func _canonical_command(raw: String) -> String:
  		"家に入る":"家に戻る", "周りを見る":"周囲を見る"
  	}
  	if aliases.has(cmd): return aliases[cmd]
@@ -106137,7 +106204,7 @@ index 0f2add4..5192dc9 100644
  	if _parse_wait_minutes(cmd) != -1: return cmd
  	var movement := RegEx.new()
  	movement.compile("^(寝室|居間|リビング|台所|キッチン|玄関)(へ|に)(移動|移動する|行く|戻る)$")
-@@ -3494,7 +4080,23 @@ func _district_map() -> String:
+@@ -3494,7 +4089,23 @@ func _district_map() -> String:
  
  func _interpret(raw: String) -> String:
  	var clean := raw.strip_edges().trim_suffix("。")
@@ -106161,7 +106228,7 @@ index 0f2add4..5192dc9 100644
  	if not target.is_empty(): return _move_to(target)
  	if clean == "街の地図を見る":
  		return _district_map()
-@@ -3506,6 +4108,146 @@ func _interpret(raw: String) -> String:
+@@ -3506,6 +4117,146 @@ func _interpret(raw: String) -> String:
  			return _move_to(str(neighbours[0]))
  		var index := Navigation.STREETS.find(location)
  		return _move_to(Navigation.STREETS[(index + 1) % Navigation.STREETS.size()])
@@ -106308,7 +106375,7 @@ index 0f2add4..5192dc9 100644
  	if location == "デパート" and clean == "物資を探索する":
  		return "1階は化粧品や雑貨の売り場で、食べ物や水はほとんどない。食品売場は地下1階だ（「デパ地下へ行く」）。"
  	if clean in District.COMMANDS or (clean == "物資を探索する" and District.SITES.has(_site())):
-@@ -3539,7 +4281,7 @@ func _interpret(raw: String) -> String:
+@@ -3539,7 +4290,7 @@ func _interpret(raw: String) -> String:
  		if District.SITES.has(_site()) and not District.is_shop(_site()):
  			if not bought.get_string(1).is_empty() and bought.get_string(1) != location:
  				return "指定した店にいない。"
@@ -106317,7 +106384,7 @@ index 0f2add4..5192dc9 100644
  			if location == "デパート" and not stock_item.is_empty():
  				return "食料品と飲み水は、地下1階の食品売場で売っている（「デパ地下へ行く」）。"
  			var stock_quantity := 1 if bought.get_string(3).is_empty() else int(bought.get_string(3))
-@@ -3670,18 +4412,23 @@ func _execute_command(cmd: String) -> String:
+@@ -3670,18 +4421,23 @@ func _execute_command(cmd: String) -> String:
  		if location != "屋外": return "探索には屋外に出る必要がある。"
  		return world.longplay_action("scavenge")
  	if cmd.contains("プランター") and (cmd.contains("作") or cmd.contains("製作")):
@@ -106347,7 +106414,7 @@ index 0f2add4..5192dc9 100644
  		var result: String = world.action("harvest")
  		if result.begins_with("収穫した"): world.advance(30)
  		return result
-@@ -3696,7 +4443,8 @@ func _execute_command(cmd: String) -> String:
+@@ -3696,7 +4452,8 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("寝る") or cmd.contains("睡眠"):
  		if location != "寝室" and Navigation.indoor(location):
  			_append(_move_to("寝室"))
@@ -106357,7 +106424,7 @@ index 0f2add4..5192dc9 100644
  			return "寝室か、寝泊まりできる拠点に移動する必要がある。"
  		var before := _eat_before_sleep()
  		var elapsed: int = world.advance_safe(480, true)
-@@ -3709,7 +4457,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3709,7 +4466,12 @@ func _execute_command(cmd: String) -> String:
  				return "食事をするには台所へ行こう。"
  		var light_meal := float(world.s.hunger) < 15.0
  		if not _eat_here():
@@ -106371,7 +106438,7 @@ index 0f2add4..5192dc9 100644
  		# A hungry person eats a proper meal, not one bite (up to 3 portions).
  		var portions := 1
  		while portions < 3 and float(world.s.hunger) >= 20.0 and _eat_here():
-@@ -3718,7 +4471,11 @@ func _execute_command(cmd: String) -> String:
+@@ -3718,7 +4480,11 @@ func _execute_command(cmd: String) -> String:
  		return "軽くつまんだ。まだあまりお腹は空いていなかった。" if light_meal else ("しっかり食事を取った。" if portions > 1 else "食事を取った。")
  	if cmd.contains("水を飲") or cmd.contains("飲み水"):
  		if not _drink_here():
@@ -106384,7 +106451,7 @@ index 0f2add4..5192dc9 100644
  		var cups := 1
  		while cups < 3 and float(world.s.thirst) >= 20.0 and _drink_here():
  			cups += 1
-@@ -3754,6 +4511,14 @@ func _execute_command(cmd: String) -> String:
+@@ -3754,6 +4520,14 @@ func _execute_command(cmd: String) -> String:
  			var far := Walkers.far_sounds(world, location)
  			if not far.is_empty():
  				observed += "\n" + far
@@ -106399,7 +106466,7 @@ index 0f2add4..5192dc9 100644
  			var sign := NeighborFate.sign(world, false)
  			if not sign.is_empty():
  				observed += "\n" + sign
-@@ -3775,7 +4540,12 @@ func _execute_command(cmd: String) -> String:
+@@ -3775,7 +4549,12 @@ func _execute_command(cmd: String) -> String:
  	if cmd.contains("周囲") or cmd.contains("見回"):
  		world.advance(1)
  		return _look()
@@ -106413,7 +106480,7 @@ index 0f2add4..5192dc9 100644
  
  
  # Illustration choice is a pure function of current location, observation and
-@@ -3795,6 +4565,40 @@ func _base_texture() -> Texture2D:
+@@ -3795,6 +4574,40 @@ func _base_texture() -> Texture2D:
  			return scene_view.location_texture(location, name, "")
  	return null
  
@@ -106454,7 +106521,7 @@ index 0f2add4..5192dc9 100644
  func _visual_phase() -> String:
  	# v149.28: the shelter looks the way it is, not the way the city is.
  	if location == "避難所":
-@@ -3838,7 +4642,31 @@ func _scene_caption() -> String:
+@@ -3838,7 +4651,31 @@ func _scene_caption() -> String:
  func _can_live_here() -> bool:
  	return Navigation.indoor(location) or District.prepared(world, _site())
  
@@ -106486,7 +106553,7 @@ index 0f2add4..5192dc9 100644
  	return world.eat() if Navigation.indoor(location) else District.consume(world, _site(), "food")
  
  func _drink_here() -> bool:
-@@ -3858,8 +4686,18 @@ func _look(inspect_details: bool = true) -> String:
+@@ -3858,8 +4695,18 @@ func _look(inspect_details: bool = true) -> String:
  	if inspect_details or observed != "新しく確認できた出来事はない。":
  		paragraphs.append(observed)
  	# Stage 6: how safe it is here, once the city has broken down.
@@ -106505,7 +106572,7 @@ index 0f2add4..5192dc9 100644
  		var far := Walkers.far_sounds(world, location)
  		if not far.is_empty():
  			paragraphs.append(far)
-@@ -3875,6 +4713,9 @@ func _site() -> String:
+@@ -3875,6 +4722,9 @@ func _site() -> String:
  
  func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if world.s.health<=0:return "死亡している。保存した記録を読み込める。"
@@ -106515,7 +106582,7 @@ index 0f2add4..5192dc9 100644
  	var path := Navigation.route(location,destination,str(world.s.profile.housing))
  	if path.is_empty():return "この住居からその場所へ移動する経路がない。"
  	if path.size()==1:return "すでに%sにいる。"%destination
-@@ -3906,6 +4747,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3906,6 +4756,8 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if District.SITES.has(next_place) and not District.can_enter(world, next_place):
  			break
  		location=next_place
@@ -106524,7 +106591,7 @@ index 0f2add4..5192dc9 100644
  		_sync_player_position()
  		if not companion.is_empty():
  			companion.location = location
-@@ -3928,8 +4771,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3928,8 +4780,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  		if elapsed<=0 or world.s.health<=0:break
  		# v149.24: the dead on the way stop the walk there.
  		if location != path[-1] and Walkers.count(world, location) > 0:
@@ -106539,7 +106606,7 @@ index 0f2add4..5192dc9 100644
  	visual_focus=""
  	event_visual=""
  	selected_event.clear()
-@@ -3943,6 +4790,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3943,6 +4799,12 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  	if location != destination and District.SITES.has(destination) and world.s.health > 0:
  		result += " 到着時には%sに入れなかった。" % destination
  	# v149.28: what was carried home goes into the kitchen stock.
@@ -106552,7 +106619,7 @@ index 0f2add4..5192dc9 100644
  	if Navigation.indoor(location) and not Navigation.indoor(str(path[0])) and world.s.health > 0:
  		var bag: Dictionary = world.s.district.bag
  		var food := float(bag.food)
-@@ -3958,6 +4811,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
+@@ -3958,6 +4820,10 @@ func _move_to(destination: String, companion: Dictionary = {}) -> String:
  			result += "\n持ち帰った%sを、台所の備蓄にしまった。" % "と".join(parts)
  	if world.s.health <= 0:
  		return result
@@ -106563,7 +106630,7 @@ index 0f2add4..5192dc9 100644
  	return result + "\n\n" + _look(false)
  func _door_action(command: String) -> String:
  	if world.s.health<=0:return "死亡している。"
-@@ -4037,6 +4894,16 @@ func _read_news(command: String) -> String:
+@@ -4037,6 +4903,16 @@ func _read_news(command: String) -> String:
  	if not outbreak.is_empty() and channel != "radio":
  		var top := "\n".join(outbreak)
  		report = top if report=="新しく確認できた出来事はない。" else top + "\n" + report
@@ -112037,18 +112104,28 @@ index 5ea74f7..5edfd06 100644
  		var who := call_name(world, id)
  		match str(p.get("cause", "")):
 diff --git a/scripts/title_screen.gd b/scripts/title_screen.gd
-index dc4101a..2c2ce49 100644
+index dc4101a..7e95394 100644
 --- a/scripts/title_screen.gd
 +++ b/scripts/title_screen.gd
-@@ -7,6 +7,7 @@ var continue_button: Button
+@@ -2,11 +2,17 @@ extends Control
+ const HouseholdDialogue = preload("res://scripts/household_dialogue.gd")
+ signal new_game_requested(profile: Dictionary)
+ signal continue_requested
++## v149.35: the options screen asks main to delete the save.
++signal delete_save_requested
+ var save_exists := false
+ var continue_button: Button
  var message: Label
  var form: VBoxContainer
  var name_input: LineEdit
-+var age_input: SpinBox
++var age_input: LineEdit
++var options_box: VBoxContainer
++var delete_button: Button
++var delete_confirm: ConfirmationDialog
  var form_scroll: ScrollContainer
  var heading_label: Label
  var subtitle_label: Label
-@@ -24,7 +25,7 @@ func _ready() -> void:
+@@ -24,7 +30,7 @@ func _ready() -> void:
  	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  	mouse_filter = Control.MOUSE_FILTER_STOP
  	var bg := ColorRect.new()
@@ -112057,16 +112134,37 @@ index dc4101a..2c2ce49 100644
  	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  	add_child(bg)
  	margin = MarginContainer.new()
-@@ -74,6 +75,8 @@ func _ready() -> void:
+@@ -41,7 +47,7 @@ func _ready() -> void:
+ 	column.add_child(title)
+ 	var subtitle := Label.new()
+ 	subtitle_label=subtitle
+-	subtitle.text = "いつもの暮らしから、その先へ。   /   v0.149.29"
++	subtitle.text = "いつもの暮らしから、その先へ。   /   v" + str(ProjectSettings.get_setting("application/config/version", "0.149.35"))
+ 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	subtitle.add_theme_font_size_override("font_size",22)
+ 	column.add_child(subtitle)
+@@ -54,6 +60,9 @@ func _ready() -> void:
+ 	continue_button=resume
+ 	resume.disabled = not save_exists
+ 	resume.pressed.connect(func(): continue_requested.emit())
++	# v149.35: options (save data now; sound and more later).
++	var options := _button("オプション",row)
++	options.pressed.connect(_open_options)
+ 	title_art = TextureRect.new()
+ 	title_art.texture = preload("res://assets/photos/bedroom.jpg")
+ 	title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+@@ -74,6 +83,10 @@ func _ready() -> void:
  	scroll.add_child(form)
  	form.visible = false
  	name_input = _text_field("名前", "トウヤ")
-+	# v149.35: the player's age (it was always 31).
-+	age_input = _number_field("年齢", randi_range(20, 55), 16, 80)
++	# v149.35: the player's age, typed in (it was always 31).
++	age_input = _text_field("年齢", "20")
++	age_input.max_length = 3
++	age_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
  	name_input.max_length = 24
  	# v149.28: only a name. Everyone starts alone in Tokyo; the house type and
  	# the world are new each time. Housemates come later, from the people met.
-@@ -82,7 +85,7 @@ func _ready() -> void:
+@@ -82,7 +95,7 @@ func _ready() -> void:
  	note.text = "東京の住宅街で、一人暮らしの朝から始まります。住まいや街の様子は、始めるたびに変わります。"
  	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
  	note.add_theme_font_size_override("font_size", 16)
@@ -112075,12 +112173,92 @@ index dc4101a..2c2ce49 100644
  	form.add_child(note)
  	var begin := _button("この名前で始める",form)
  	begin.pressed.connect(_request_start)
-@@ -160,7 +163,7 @@ func _request_start() -> void:
+@@ -99,6 +112,7 @@ func _ready() -> void:
+ 	confirmation.cancel_button_text = "キャンセル"
+ 	confirmation.confirmed.connect(func(): new_game_requested.emit(pending_profile))
+ 	add_child(confirmation)
++	_build_options(column)
+ 	get_viewport().size_changed.connect(_layout)
+ 	_layout()
+ 
+@@ -109,7 +123,71 @@ func _button(text: String,parent: Node) -> Button:
+ 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+ 	parent.add_child(b)
+ 	return b
++## The age as typed: a whole number from 10 to 99, else 20.
++func _age() -> int:
++	var t := age_input.text.strip_edges() if age_input != null else ""
++	# Full-width digits typed on a Japanese keyboard count too.
++	var half := ""
++	for ch in t:
++		var i := "０１２３４５６７８９".find(ch)
++		half += str(i) if i >= 0 else ch
++	return clampi(int(half), 10, 99) if half.is_valid_int() else 20
++
++func _build_options(column: VBoxContainer) -> void:
++	options_box = VBoxContainer.new()
++	options_box.add_theme_constant_override("separation", 10)
++	options_box.hide()
++	column.add_child(options_box)
++	_section("データ")
++	delete_button = _button("セーブデータを削除", options_box)
++	delete_button.pressed.connect(func(): delete_confirm.popup_centered(Vector2i(mini(680, int(get_viewport_rect().size.x) - 32), 220)))
++	var note := Label.new()
++	note.text = "保存した記録を消して、「続きから」を始められないようにする。元には戻せない。"
++	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	note.add_theme_font_size_override("font_size", 15)
++	note.add_theme_color_override("font_color", Color("#A9A596"))
++	options_box.add_child(note)
++	var back := _button("タイトルに戻る", options_box)
++	back.pressed.connect(_close_options)
++	delete_confirm = ConfirmationDialog.new()
++	delete_confirm.title = "セーブデータを削除しますか"
++	delete_confirm.dialog_text = "保存した記録を消します。元には戻せません。"
++	delete_confirm.get_label().autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
++	delete_confirm.ok_button_text = "削除する"
++	delete_confirm.cancel_button_text = "やめる"
++	delete_confirm.confirmed.connect(func(): delete_save_requested.emit())
++	add_child(delete_confirm)
++
++## A heading for a group of options (more groups — sound and so on — go the same way).
++func _section(text: String) -> void:
++	var l := Label.new()
++	l.text = text
++	l.add_theme_font_size_override("font_size", 18)
++	l.add_theme_color_override("font_color", Color("#D8C28A"))
++	options_box.add_child(l)
++
++func _open_options() -> void:
++	form.hide()
++	form_scroll.hide()
++	title_art.hide()
++	options_box.show()
++	delete_button.disabled = not save_exists
++	message.text = "オプション"
++
++func _close_options() -> void:
++	options_box.hide()
++	title_art.show()
++	message.text = "ごく普通の日本の朝から始まります。" if not save_exists else "保存した記録から再開できます。"
++
++## Called by main once the save is gone.
++func save_deleted() -> void:
++	save_exists = false
++	continue_button.disabled = true
++	delete_button.disabled = true
++	message.text = "セーブデータを削除した。"
++
+ func _open_form() -> void:
++	options_box.hide()
+ 	form.show()
+ 	form_scroll.show()
+ 	title_art.hide()
+@@ -160,7 +238,7 @@ func _request_start() -> void:
  		DisplayServer.virtual_keyboard_hide()
  	var seed_value := randi_range(1, 999999999)
  	var player_name := name_input.text.strip_edges()
 -	pending_profile = {"name": player_name if not player_name.is_empty() else "トウヤ", "age": 31, "address": "東京", "job": "無職",
-+	pending_profile = {"name": player_name if not player_name.is_empty() else "トウヤ", "age": int(age_input.value) if age_input != null else 31, "address": "東京", "job": "無職",
++	pending_profile = {"name": player_name if not player_name.is_empty() else "トウヤ", "age": _age(), "address": "東京", "job": "無職",
  		"housing": "集合住宅" if seed_value % 2 == 0 else "一戸建て", "cohabitants": 0, "companion_names": [], "companion_genders": [],
  		"seed": seed_value, "has_key": true}
  	if save_exists:
@@ -116882,6 +117060,55 @@ index 424a484..01ee2b9 100644
  		await g._on_command("%sを譲ってほしい" % Trade.ITEMS[item].label)
  		await g._on_command("それで交換する")
  	check(spare.is_empty() or p.get("trades", []).size() == 1, "a trade happens: " + g.log_entries[-1])
+diff --git a/tests/test_title_options149_35.gd b/tests/test_title_options149_35.gd
+new file mode 100644
+index 0000000..c9108f2
+--- /dev/null
++++ b/tests/test_title_options149_35.gd
+@@ -0,0 +1,36 @@
++extends SceneTree
++## v149.35: the title's options delete the save; the age is typed in (20 by default).
++var failures := 0
++func _initialize() -> void:
++	call_deferred("run")
++func check(c: bool, label: String) -> void:
++	print(("PASS " if c else "FAIL ") + label)
++	if not c:
++		failures += 1
++func run() -> void:
++	var g = preload("res://main.tscn").instantiate()
++	root.add_child(g)
++	for i in 5: await process_frame
++	var t = g.title_screen
++	t._open_form()
++	check(t.age_input.text == "20", "the age starts at 20")
++	t.age_input.text = "６７"
++	check(t._age() == 67, "full-width digits are read")
++	t.age_input.text = "やまだ"
++	check(t._age() == 20, "anything else counts as 20")
++	t.age_input.text = "150"
++	check(t._age() == 99, "kept within 10 to 99")
++	# A save to delete.
++	var f := FileAccess.open(g.SAVE_PATH, FileAccess.WRITE)
++	f.store_string("{}")
++	f.close()
++	t.save_exists = true
++	t._open_options()
++	check(t.options_box.visible and not t.delete_button.disabled, "the options offer to delete the save")
++	t.delete_confirm.confirmed.emit()
++	check(not FileAccess.file_exists(g.SAVE_PATH), "confirmed, the save is gone")
++	check(t.continue_button.disabled and t.delete_button.disabled, "and there is nothing to continue or delete")
++	t._close_options()
++	check(not t.options_box.visible, "back to the title")
++	print("TOTAL FAILURES ", failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_title_options149_35.gd.uid b/tests/test_title_options149_35.gd.uid
+new file mode 100644
+index 0000000..c1155fc
+--- /dev/null
++++ b/tests/test_title_options149_35.gd.uid
+@@ -0,0 +1 @@
++uid://c48cmw06jjysr
 diff --git a/tests/test_town149_36.gd b/tests/test_town149_36.gd
 new file mode 100644
 index 0000000..ab28243
