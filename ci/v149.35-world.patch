@@ -1,8 +1,8 @@
 diff --git a/assets/actions/README.md b/assets/actions/README.md
-index 59ce0d1..0aa088d 100644
+index 59ce0d1..412fd8f 100644
 --- a/assets/actions/README.md
 +++ b/assets/actions/README.md
-@@ -13,6 +13,8 @@ act_welcome 迎え入れる / act_door 来客に応対 / act_help 隣人を手
+@@ -13,6 +13,14 @@ act_welcome 迎え入れる / act_door 来客に応対 / act_help 隣人を手
  act_search_family 人を探す / act_trade 物々交換 / act_donate 避難所に寄付 / act_shelter_sleep 体育館で眠る
  act_supply_run 物資の調達 / act_mend_gate 校門を直す / act_base 拠点にする / act_base_fortify 拠点を補強
  act_repair_door 扉を直す / act_blankets 毛布を探す / act_shop 買い物 / act_back_door 裏口 / act_wait_clear 静かになるのを待つ
@@ -11,6 +11,150 @@ index 59ce0d1..0aa088d 100644
  （どれも _crisis を付けた崩壊後の版を置ける）
  
  崩壊後（街が disrupted / emergency）は _crisis があればそれ、無ければ平常の写真。ファイルを消せばその行動では何も出ない。
++
++v149.35 場面ごとの出し分け：act_news_tv / act_news_radio（act_news はSNS）、act_movie_tv / act_movie_phone、
++act_eat_together（平常）/ act_eat_together_crisis、act_laundry_hand（たらい）、act_hide_out / act_distract_stone（外）、
++act_back_door_flat（避難はしご）、act_blankets_store / act_blankets_gym、act_care_isolate（部屋に移す）、
++act_request_cigarettes / act_request_gas / act_request_seeds（act_request は包帯）、act_help_soy（醤油）。
++まだ無い：act_shop_hardware / act_shop_pharmacy / act_sleep_base / act_request_bandage（置けば使うようにする）
+diff --git a/assets/actions/act_back_door_flat.jpg.import b/assets/actions/act_back_door_flat.jpg.import
+new file mode 100644
+index 0000000..747ed6e
+--- /dev/null
++++ b/assets/actions/act_back_door_flat.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dw51xassb5kux"
++path="res://.godot/imported/act_back_door_flat.jpg-05d59afcd2a70e021f0a426c7232cde4.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_back_door_flat.jpg"
++dest_files=["res://.godot/imported/act_back_door_flat.jpg-05d59afcd2a70e021f0a426c7232cde4.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_blankets_gym.jpg.import b/assets/actions/act_blankets_gym.jpg.import
+new file mode 100644
+index 0000000..c3e0e5f
+--- /dev/null
++++ b/assets/actions/act_blankets_gym.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://xjj6yjpnpwwh"
++path="res://.godot/imported/act_blankets_gym.jpg-1e878d7cbd24c515161e74cbfd3bf011.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_blankets_gym.jpg"
++dest_files=["res://.godot/imported/act_blankets_gym.jpg-1e878d7cbd24c515161e74cbfd3bf011.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_blankets_store.jpg.import b/assets/actions/act_blankets_store.jpg.import
+new file mode 100644
+index 0000000..5fd4d90
+--- /dev/null
++++ b/assets/actions/act_blankets_store.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c5ryqsaxjsmge"
++path="res://.godot/imported/act_blankets_store.jpg-bde5f61b491ccd6131ff023fc53816fb.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_blankets_store.jpg"
++dest_files=["res://.godot/imported/act_blankets_store.jpg-bde5f61b491ccd6131ff023fc53816fb.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_boil.jpg.import b/assets/actions/act_boil.jpg.import
 new file mode 100644
 index 0000000..f4b3e3f
@@ -149,6 +293,52 @@ index 0000000..82882e3
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_care_isolate.jpg.import b/assets/actions/act_care_isolate.jpg.import
+new file mode 100644
+index 0000000..790dca7
+--- /dev/null
++++ b/assets/actions/act_care_isolate.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dofirwn58h8ch"
++path="res://.godot/imported/act_care_isolate.jpg-3058634365d19dcb171fcbcbd0bc40f8.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_care_isolate.jpg"
++dest_files=["res://.godot/imported/act_care_isolate.jpg-3058634365d19dcb171fcbcbd0bc40f8.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_cook_home.jpg.import b/assets/actions/act_cook_home.jpg.import
 new file mode 100644
 index 0000000..05de28b
@@ -169,6 +359,52 @@ index 0000000..05de28b
 +
 +source_file="res://assets/actions/act_cook_home.jpg"
 +dest_files=["res://.godot/imported/act_cook_home.jpg-b0a6268ec74fdcd7a8b96694c4158cc6.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_distract_stone.jpg.import b/assets/actions/act_distract_stone.jpg.import
+new file mode 100644
+index 0000000..835ae25
+--- /dev/null
++++ b/assets/actions/act_distract_stone.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://7n1lgbtgew4j"
++path="res://.godot/imported/act_distract_stone.jpg-2a60c17cd27cdca3930a6231ca80c193.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_distract_stone.jpg"
++dest_files=["res://.godot/imported/act_distract_stone.jpg-2a60c17cd27cdca3930a6231ca80c193.ctex"]
 +
 +[params]
 +
@@ -261,6 +497,52 @@ index 0000000..0753773
 +
 +source_file="res://assets/actions/act_draw_river.jpg"
 +dest_files=["res://.godot/imported/act_draw_river.jpg-bd7a64643d20c83eab1d7a543d1c1057.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_eat_together_crisis.jpg.import b/assets/actions/act_eat_together_crisis.jpg.import
+new file mode 100644
+index 0000000..875fdef
+--- /dev/null
++++ b/assets/actions/act_eat_together_crisis.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bldoxqaapgww5"
++path="res://.godot/imported/act_eat_together_crisis.jpg-69708a50c97986e476d7307567336d56.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_eat_together_crisis.jpg"
++dest_files=["res://.godot/imported/act_eat_together_crisis.jpg-69708a50c97986e476d7307567336d56.ctex"]
 +
 +[params]
 +
@@ -471,6 +753,98 @@ index 0000000..f1bdf6f
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_help_soy.jpg.import b/assets/actions/act_help_soy.jpg.import
+new file mode 100644
+index 0000000..e04eca0
+--- /dev/null
++++ b/assets/actions/act_help_soy.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://jv6rip7067ef"
++path="res://.godot/imported/act_help_soy.jpg-49d9972a0b9003989bf7c1e5fa652299.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_help_soy.jpg"
++dest_files=["res://.godot/imported/act_help_soy.jpg-49d9972a0b9003989bf7c1e5fa652299.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_hide_out.jpg.import b/assets/actions/act_hide_out.jpg.import
+new file mode 100644
+index 0000000..70963c0
+--- /dev/null
++++ b/assets/actions/act_hide_out.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://ceuo3whokfyn7"
++path="res://.godot/imported/act_hide_out.jpg-56bd80cc2d6f9bc4f011f43e277a6832.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_hide_out.jpg"
++dest_files=["res://.godot/imported/act_hide_out.jpg-56bd80cc2d6f9bc4f011f43e277a6832.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_knock.jpg.import b/assets/actions/act_knock.jpg.import
 new file mode 100644
 index 0000000..3b55e3e
@@ -563,6 +937,52 @@ index 0000000..ec60121
 +process/hdr_clamp_exposure=false
 +process/size_limit=0
 +detect_3d/compress_to=1
+diff --git a/assets/actions/act_laundry_hand.jpg.import b/assets/actions/act_laundry_hand.jpg.import
+new file mode 100644
+index 0000000..abd0685
+--- /dev/null
++++ b/assets/actions/act_laundry_hand.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dqd8y41ihv8wg"
++path="res://.godot/imported/act_laundry_hand.jpg-3cd5e2a575a8263a404ce4dc41cebc1b.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_laundry_hand.jpg"
++dest_files=["res://.godot/imported/act_laundry_hand.jpg-3cd5e2a575a8263a404ce4dc41cebc1b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
 diff --git a/assets/actions/act_listen.jpg.import b/assets/actions/act_listen.jpg.import
 new file mode 100644
 index 0000000..7077a52
@@ -629,6 +1049,190 @@ index 0000000..9d2fb7b
 +
 +source_file="res://assets/actions/act_listen_2.jpg"
 +dest_files=["res://.godot/imported/act_listen_2.jpg-007a82c27663d332cdb74ddf12012191.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_movie_phone.jpg.import b/assets/actions/act_movie_phone.jpg.import
+new file mode 100644
+index 0000000..c6fb398
+--- /dev/null
++++ b/assets/actions/act_movie_phone.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://cgk6bwogkkw0q"
++path="res://.godot/imported/act_movie_phone.jpg-94c21879d9ce7c3746bb53921cc1b4ea.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_movie_phone.jpg"
++dest_files=["res://.godot/imported/act_movie_phone.jpg-94c21879d9ce7c3746bb53921cc1b4ea.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_movie_tv.jpg.import b/assets/actions/act_movie_tv.jpg.import
+new file mode 100644
+index 0000000..bbc5e5a
+--- /dev/null
++++ b/assets/actions/act_movie_tv.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://b5133shbjd6ti"
++path="res://.godot/imported/act_movie_tv.jpg-034086051fede4977b82e281b36a58a5.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_movie_tv.jpg"
++dest_files=["res://.godot/imported/act_movie_tv.jpg-034086051fede4977b82e281b36a58a5.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_news_radio.jpg.import b/assets/actions/act_news_radio.jpg.import
+new file mode 100644
+index 0000000..cfe4c63
+--- /dev/null
++++ b/assets/actions/act_news_radio.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://bc4ayqf8mh5ql"
++path="res://.godot/imported/act_news_radio.jpg-93dfb4a1c1733a87ab3a5fee554c2893.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_news_radio.jpg"
++dest_files=["res://.godot/imported/act_news_radio.jpg-93dfb4a1c1733a87ab3a5fee554c2893.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_news_tv.jpg.import b/assets/actions/act_news_tv.jpg.import
+new file mode 100644
+index 0000000..26f2a47
+--- /dev/null
++++ b/assets/actions/act_news_tv.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dmifwxhsimfyo"
++path="res://.godot/imported/act_news_tv.jpg-6e639199f4be80ccc4148c09487ba0ac.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_news_tv.jpg"
++dest_files=["res://.godot/imported/act_news_tv.jpg-6e639199f4be80ccc4148c09487ba0ac.ctex"]
 +
 +[params]
 +
@@ -905,6 +1509,144 @@ index 0000000..1bcb73d
 +
 +source_file="res://assets/actions/act_planter_withered.jpg"
 +dest_files=["res://.godot/imported/act_planter_withered.jpg-1d82879f23fcf03dfa6b50140a54ce7b.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_request_cigarettes.jpg.import b/assets/actions/act_request_cigarettes.jpg.import
+new file mode 100644
+index 0000000..64d74de
+--- /dev/null
++++ b/assets/actions/act_request_cigarettes.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c87nkv1xhdjq"
++path="res://.godot/imported/act_request_cigarettes.jpg-c8c189d1c3e1aa842309f16c7ca89651.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_request_cigarettes.jpg"
++dest_files=["res://.godot/imported/act_request_cigarettes.jpg-c8c189d1c3e1aa842309f16c7ca89651.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_request_gas.jpg.import b/assets/actions/act_request_gas.jpg.import
+new file mode 100644
+index 0000000..6567964
+--- /dev/null
++++ b/assets/actions/act_request_gas.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://dbaecqdqldwp4"
++path="res://.godot/imported/act_request_gas.jpg-b4a1f345123ec48d8a90ffd35a8b753a.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_request_gas.jpg"
++dest_files=["res://.godot/imported/act_request_gas.jpg-b4a1f345123ec48d8a90ffd35a8b753a.ctex"]
++
++[params]
++
++compress/mode=1
++compress/high_quality=false
++compress/lossy_quality=0.8
++compress/uastc_level=0
++compress/rdo_quality_loss=0.0
++compress/hdr_compression=1
++compress/normal_map=0
++compress/channel_pack=0
++mipmaps/generate=false
++mipmaps/limit=-1
++roughness/mode=0
++roughness/src_normal=""
++process/channel_remap/red=0
++process/channel_remap/green=1
++process/channel_remap/blue=2
++process/channel_remap/alpha=3
++process/fix_alpha_border=true
++process/premult_alpha=false
++process/normal_map_invert_y=false
++process/hdr_as_srgb=false
++process/hdr_clamp_exposure=false
++process/size_limit=0
++detect_3d/compress_to=1
+diff --git a/assets/actions/act_request_seeds.jpg.import b/assets/actions/act_request_seeds.jpg.import
+new file mode 100644
+index 0000000..ad1aa65
+--- /dev/null
++++ b/assets/actions/act_request_seeds.jpg.import
+@@ -0,0 +1,40 @@
++[remap]
++
++importer="texture"
++type="CompressedTexture2D"
++uid="uid://c30jet0gm3wpo"
++path="res://.godot/imported/act_request_seeds.jpg-984b0d75473f768500ff226861397a13.ctex"
++metadata={
++"vram_texture": false
++}
++
++[deps]
++
++source_file="res://assets/actions/act_request_seeds.jpg"
++dest_files=["res://.godot/imported/act_request_seeds.jpg-984b0d75473f768500ff226861397a13.ctex"]
 +
 +[params]
 +
@@ -100113,10 +100855,10 @@ index 0000000..8cd2efe
 @@ -0,0 +1 @@
 +uid://bjwf2r3qy32su
 diff --git a/scripts/action_photos.gd b/scripts/action_photos.gd
-index 35febbb..4dad1f4 100644
+index 35febbb..82fe9d4 100644
 --- a/scripts/action_photos.gd
 +++ b/scripts/action_photos.gd
-@@ -14,9 +14,28 @@ const KINDS := [
+@@ -14,9 +14,29 @@ const KINDS := [
  	["grabbed", "^(【危険】)?[^\\n]{0,60}(腕をつかまれた|もつれ合ったはずみに|爪が服を裂)", "つかみかかられた。"],
  	["fight_head", "^力いっぱい打ちつけた", "力いっぱい振り下ろした。"],
  	["fight_miss", "^打ちかかった", "空を切った。"],
@@ -100141,17 +100883,36 @@ index 35febbb..4dad1f4 100644
  	["cook", "^台所で、.*温かい食事を作って食べた", "温かい食事を作った。"],
 +	["reversi", "^[^【「（\\n]{1,12}とリバーシを打った（", "リバーシを打った。"],
 +	["cards", "^[^【「（\\n]{1,40}とトランプをした（", "トランプをした。"],
++	["laundry_hand", "^たらいに水を張って", "たらいで手洗いした。"],
 +	["laundry", "^(洗濯機を回し|たらいに水を張って)", "洗濯物を干した。"],
  	["smoke", "^(換気扇の下で|窓を少し開けて、)?タバコに火をつけ", "一服した。"],
  	["drink", "^水を飲んだ", "水を飲んだ。"],
  	["bandage", "^傷を手当てした", "傷に包帯を巻いた。"],
-@@ -34,12 +53,17 @@ const KINDS := [
+@@ -24,22 +44,34 @@ const KINDS := [
+ 	["heater", "^カセットガスストーブに火をつけた", "ストーブに手をかざした。"],
+ 	["water_plants", "^最初の鉢に水", "プランターに水をやった。"],
+ 	["window", "^通りを観察した", "カーテンの隙間から外を見た。"],
++	["news_tv", "^情報源：テレビ", "テレビをつけた。"],
++	["news_radio", "^情報源：ラジオ", "ラジオに耳を傾けた。"],
+ 	["news", "^情報源：", "画面に目を落とした。"],
+ 	["scavenge", "^(残っていた物資を回収した|荒らされた棚の奥から)", "棚の奥を探った。"],
++	["hide_out", "^物陰に身を潜めて息を殺した", "物陰に身を潜めた。"],
+ 	["hide", "^(物陰に身を潜めて息を殺した|明かりを消し、(床に身を伏せて息をひそめた|物音を立てないようにじっとしていた))", "息をひそめた。"],
++	["distract_stone", "^足元の石を拾い", "石を投げて、気をそらした。"],
+ 	["distract", "^(二階の窓をそっと開け、空き瓶|足元の石を拾い)", "物を投げて、気をそらした。"],
+ 	["comfort", "^[^【「（\\n]{1,12}(の隣に座|の話を、急かさずに聞いた|とゆっくり話した)", "そばにいた。"],
++	["care_isolate", "^[^【「（\\n]{1,12}を[^、]{1,6}に移し、扉を閉めた", "部屋に移して、扉を閉めた。"],
+ 	["care", "^[^【「（\\n]{1,12}(の額を冷やし|を[^、]{1,6}に移し、扉を閉めた)", "看病した。"],
+ 	["farewell", "^[^【「（\\n]{1,12}は小さな荷物を背負って", "見送った。"],
  	["read", "^棚から本を一冊取って読んだ", "本を読んだ。"],
- 	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
+-	["movie", "^(一人で|電気が来ないので、スマホに保存してあった)『", "映画を観た。"],
++	["movie_phone", "^電気が来ないので、スマホに保存してあった『", "スマホで映画を観た。"],
++	["movie_tv", "^一人で『", "映画を観た。"],
  	["fill_bath", "^浴槽に水をためた", "浴槽に水をためた。"],
 +	["draw_river", "^川べりにしゃがみ、空のポリタンクに水", "川の水を汲んだ。"],
 +	["draw_pond", "^池のほとりにかがみ、空のポリタンクに水", "池の水を汲んだ。"],
 +	["boil", "^ためておいた水[0-9]+Lを鍋で煮沸し", "水を煮沸した。"],
++	["boil", "^浴槽から水を汲んで煮沸し", "水を煮沸した。"],
  	["purify", "^(雨水1Lを浄水器に通し|浴槽から水を汲んで)", "水をきれいにした。"],
 -	["plant", "^植え付けた", "種をまいた。"],
 +	["plant", "^([^【「（\\n]{1,10}を)?植え付けた", "種をまいた。"],
@@ -100165,8 +100926,16 @@ index 35febbb..4dad1f4 100644
  	["trade", "^[^【「（\\n]{1,16}を受け取った。", "物を交換した。"],
  	["give", "^[^【「（\\n]{1,20}を渡した。", "手渡した。"],
  	["ration", "^体育館の長い列に1時間並び、配給を受け取った", "配給を受け取った。"],
-@@ -53,6 +77,11 @@ const KINDS := [
+@@ -50,9 +82,19 @@ const KINDS := [
+ 	["rescue", "^(【危険】)?隣の家に飛び込んだ", "隣の家へ走った。"],
+ 	["raid_pay", "^扉の隙間から食料（1人日分）を差し出すと", "扉の隙間から食料を渡した。"],
+ 	["welcome", "^[^【「（\\n]{1,12}を家に招き入れた", "家に迎え入れた。"],
++	["help_soy", "^小皿に醤油を分けて", "醤油を分けた。"],
  	["help", "^(隣の家で40分、重い棚を二人で動かした|小皿に醤油を分けて)", "隣人を手伝った。"],
++	["request_cigarettes", "^[^【「（\\n]{1,12}は、タバコに火をつけて、ゆっくり", "頼まれていたタバコを渡した。"],
++	["request_gas", "^[^【「（\\n]{1,12}「これで、しばらくは温かいものが作れる", "頼まれていたボンベを渡した。"],
++	["request_seeds", "^[^【「（\\n]{1,12}は、種の袋を光にかざした", "頼まれていた種を渡した。"],
++	["request_bandage", "^[^【「（\\n]{1,12}は、包帯を受け取ると", "頼まれていた包帯を渡した。"],
  	["request", "^[^【「（\\n]{1,12}(は、包帯を受け取ると|は、タバコに火をつけて、ゆっくり|「これで、しばらくは温かいものが作れる|は、種の袋を光にかざした)", "頼まれていた物を渡した。"],
  	["search_family", "^[^【「（\\n]{1,10}(の中を、一時間かけて探した|を一時間探したが|を探し回った)", "人を探して歩いた。"],
 +	["knock", "^(ノックしたが|ノックすると|何度かノックしたが|ドアの向こうで|ドア越しに|[^【「（\\n]{1,12}がチェーンをかけたまま)", "ドアをノックした。"],
@@ -100177,16 +100946,28 @@ index 35febbb..4dad1f4 100644
  	["donate", "^持ち出し袋の食料[0-9.]+人日分を、倉庫の係に渡した", "避難所に食料を渡した。"],
  	["shelter_sleep", "^[0-9]+分、体育館の毛布の上で眠った", "体育館で眠った。"],
  	["supply_run", "^(避難所の班と5時間、空き家を回った|【危険】班で住宅を回っている途中)", "物資を探しに出た。"],
-@@ -112,7 +141,7 @@ static func _find(base: String) -> String:
+@@ -60,8 +102,11 @@ const KINDS := [
+ 	["base", "^[^【「（\\n]{1,10}を寝泊まりできる拠点にした", "ここを拠点にした。"],
+ 	["base_fortify", "^拠点を補強した", "拠点を補強した。"],
+ 	["repair_door", "^60分かけて、玄関の扉を板と金具で直した", "玄関の扉を直した。"],
++	["blankets_store", "^寝具売り場の棚から、毛布を", "売り場の毛布を持ち出した。"],
++	["blankets_gym", "^誰もいなくなった体育館で、床に残された毛布", "体育館の毛布を拾い集めた。"],
+ 	["blankets", "^(押し入れの奥から、毛布を|寝具売り場の棚から、毛布を|誰もいなくなった体育館で、床に残された毛布)", "毛布を見つけた。"],
+ 	["shop", "^(購入した|[^【「（\\n]{1,12}で購入した（|タバコを[0-9]+箱買った|カセットボンベを[0-9]+本買った)", "買い物をした。"],
++	["back_door_flat", "^(ベランダの避難はしごのふたを開け|避難はしごを登って)", "避難はしごで出入りした。"],
+ 	["back_door", "^(台所の勝手口をそっと開け|ベランダの避難はしごのふたを開け|避難はしごを登って|家の裏手に回り)", "裏口からそっと出入りした。"],
+ 	["wait_clear", "^窓の隙間から(、ときどき)?通りをうかがい", "外が静かになるのを待った。"],
+ ]
+@@ -112,7 +157,7 @@ static func _find(base: String) -> String:
  
  ## The picture for this action now, or "" if none has been made yet.
  ## A moment with no picture of its own borrows a broader one.
 -const FALLBACK := {"siege_stab": "siege_hold", "siege_drop": "fight", "siege_hold": "fight", "fight_head": "fight", "fight_legs": "fight", "fight_miss": "fight", "push": "fight", "pin": "fight", "grabbed": "fight", "bitten": "fight"}
-+const FALLBACK := {"cook_home": "cook", "pack_home": "pack", "siege_stab": "siege_hold", "siege_drop": "fight", "siege_hold": "fight", "fight_head": "fight", "fight_legs": "fight", "fight_miss": "fight", "push": "fight", "pin": "fight", "grabbed": "fight", "bitten": "fight"}
++const FALLBACK := {"request_bandage": "request", "cook_home": "cook", "pack_home": "pack", "siege_stab": "siege_hold", "siege_drop": "fight", "siege_hold": "fight", "fight_head": "fight", "fight_legs": "fight", "fight_miss": "fight", "push": "fight", "pin": "fight", "grabbed": "fight", "bitten": "fight"}
  
  static func path(world, kind: String) -> String:
  	var found := _path(world, kind)
-@@ -120,8 +149,28 @@ static func path(world, kind: String) -> String:
+@@ -120,15 +165,47 @@ static func path(world, kind: String) -> String:
  		found = _path(world, str(FALLBACK[kind]))
  	return found
  
@@ -100212,10 +100993,20 @@ index 35febbb..4dad1f4 100644
 +			options.append("act_pack_bare")
 +	if kind in ["planter", "water_plants"]:
 +		options.append("act_planter_%s" % planter_stage(world))
++	# v149.35: where it happened (the shop, sleeping at a base).
++	var place := str(world.get_meta("player_place", "")) if world.has_meta("player_place") else ""
++	if kind == "shop":
++		var shop := {"金物店": "act_shop_hardware", "薬局": "act_shop_pharmacy"}
++		if shop.has(place):
++			options.append(shop[place])
++	if kind == "sleep" and load("res://scripts/district.gd").SITES.has(place) and place != "避難所":
++		options.append("act_sleep_base")
  	if kind == "eat" and not world.s.household_members.is_empty():
- 		options.append("act_eat_together")
+-		options.append("act_eat_together")
++		options.append("act_eat_together_crisis" if crisis(world) else "act_eat_together")
  	if crisis(world):
-@@ -130,5 +179,9 @@ static func _path(world, kind: String) -> String:
+ 		options.append("act_%s_crisis" % kind)
+ 	options.append("act_%s" % kind)
  	for base in options:
  		var found := _find(str(base))
  		if not found.is_empty():
@@ -114027,9 +114818,18 @@ index 3b53fb5..07f0608 100644
      except subprocess.TimeoutExpired as e:
          output=(e.stdout or b'').decode(errors='replace') if isinstance(e.stdout,bytes) else (e.stdout or '')
 diff --git a/tests/test_action_photos149_32.gd b/tests/test_action_photos149_32.gd
-index c90d746..91232dd 100644
+index c90d746..6b248ad 100644
 --- a/tests/test_action_photos149_32.gd
 +++ b/tests/test_action_photos149_32.gd
+@@ -13,7 +13,7 @@ func run() -> void:
+ 	var cases := {"しっかり食事を取った。": "eat", "軽くつまんだ。まだあまり": "eat", "480分眠った。目が覚めると": "sleep",
+ 		"（寝る前に食事をした）\n480分眠った。": "sleep", "水を飲んだ。": "drink", "居間でタバコに火をつけ": "", "タバコに火をつけ、ゆっくり": "smoke", "換気扇の下でタバコに火をつけ、": "smoke",
+ 		"傷を手当てした。": "bandage", "玄関を補強した（60分）。": "barricade", "カセットガスストーブに火をつけた。": "heater",
+-		"最初の鉢に水1Lを与えた。": "water_plants", "通りを観察した。天候：晴れ。": "window", "情報源：テレビ\n": "news",
++		"最初の鉢に水1Lを与えた。": "water_plants", "通りを観察した。天候：晴れ。": "window", "情報源：テレビ\n": "news_tv",
+ 		"詩音が水を飲んだ。": "", "【記録】あなたは眠った": "", "日常生活：食事2回": ""}
+ 	for line in cases:
+ 		check(str(ActionPhotos.detect(line).get("kind", "")) == cases[line], "detect %s → %s" % [line.get_slice("\n", 0), cases[line]])
 @@ -35,7 +35,16 @@ func run() -> void:
  	w.s.hunger = 70.0
  	g.location = "台所"
@@ -114048,8 +114848,92 @@ index c90d746..91232dd 100644
  	g._hide_action_card()
  	check(not g.action_card.visible, "a tap hides it")
  	print("v149.32 action photo checks failed: %d" % failures)
+diff --git a/tests/test_action_photos_match149_35.gd b/tests/test_action_photos_match149_35.gd
+new file mode 100644
+index 0000000..e2132cd
+--- /dev/null
++++ b/tests/test_action_photos_match149_35.gd
+@@ -0,0 +1,71 @@
++extends SceneTree
++## v149.35: an action's photo matches what the line says happened (TV or
++## radio or phone, DVD or phone film, by-hand laundry, outdoors or indoors,
++## the flat's ladder, where the blankets came from, which requested item).
++const AP = preload("res://scripts/action_photos.gd")
++const Main = preload("res://main.tscn")
++var failures := 0
++func check(ok: bool, what: String) -> void:
++	if not ok:
++		failures += 1
++		push_error("FAIL: " + what)
++func _initialize() -> void:
++	call_deferred("run")
++func run() -> void:
++	var cases := {
++		"情報源：テレビ\n新しい報道は確認できない。": "news_tv",
++		"情報源：ラジオ\n新しい報道は確認できない。": "news_radio",
++		"情報源：スマートフォン・SNS\n新しい報道は確認できない。": "news",
++		"一人で『遠い夏』を観た（95分）。少しの間、外のことを忘れられた。": "movie_tv",
++		"電気が来ないので、スマホに保存してあった『遠い夏』をイヤホンで観た（95分）。": "movie_phone",
++		"たらいに水を張って手で洗い、固く絞って、タオルと服を物干しに干した（60分、水10L）。": "laundry_hand",
++		"洗濯機を回し、タオルと服を脱衣所の物干しに干した（40分）。": "laundry",
++		"物陰に身を潜めて息を殺した。足音とうめき声が、やがて遠ざかっていった。": "hide_out",
++		"明かりを消し、物音を立てないようにじっとしていた（1時間）。": "hide",
++		"足元の石を拾い、北の方へ思い切り投げた。": "distract_stone",
++		"二階の窓をそっと開け、空き瓶を隣の通りの方へ思い切り投げた。": "distract",
++		"ベランダの避難はしごのふたを開け、下の階へ降りて、建物の裏から通りへ出た（6分）。": "back_door_flat",
++		"避難はしごを登って、ベランダから居間に戻った（6分）。": "back_door_flat",
++		"台所の勝手口をそっと開け、家の裏手を回って通りへ出た（2分）。": "back_door",
++		"寝具売り場の棚から、毛布を2枚持ち出した。（毛布 3枚）": "blankets_store",
++		"誰もいなくなった体育館で、床に残された毛布を2枚拾い集めた。（毛布 2枚）": "blankets_gym",
++		"押し入れの奥から、毛布を2枚見つけた。（毛布 2枚）": "blankets",
++		"美咲を寝室に移し、扉を閉めた。中から「ありがとう。……ごめんね」と、かすれた声がした。": "care_isolate",
++		"美咲の額を冷やし、水を飲ませた。": "care",
++		"健太は、タバコに火をつけて、ゆっくり煙を吐いた。「……生き返った。ありがとう」": "request_cigarettes",
++		"健太「これで、しばらくは温かいものが作れる。ありがとう」": "request_gas",
++		"健太は、種の袋を光にかざした。「春になったら、何か実るかな」": "request_seeds",
++		"健太は、包帯を受け取ると、少し泣きそうな顔をした。": "request_bandage",
++		"小皿に醤油を分けて渡した。佐藤「助かった。この借りは返す」": "help_soy",
++		"浴槽から水を汲んで煮沸し、飲み水にした（20分、5リットル）。": "boil",
++		"浴槽から水を汲んで浄水器でろ過し、飲み水にした（20分、5リットル）。": "purify",
++	}
++	for line in cases:
++		var d: Dictionary = AP.detect(line)
++		check(str(d.get("kind", "")) == cases[line], "%s -> %s (want %s)" % [line.left(24), d.get("kind", ""), cases[line]])
++	# Every kind that can be detected has a photo (or a fallback).
++	var g = Main.instantiate()
++	root.add_child(g)
++	for i in 3: await process_frame
++	var p: Dictionary = g.world.DEFAULT_PROFILE.duplicate(true)
++	p.cohabitants = 1
++	g._start_new_game(p)
++	g._finish_intro()
++	var w = g.world
++	for k in ["news_tv", "news_radio", "movie_tv", "movie_phone", "laundry_hand", "hide_out", "distract_stone", "back_door_flat", "blankets_store", "blankets_gym", "care_isolate", "request_cigarettes", "request_gas", "request_seeds", "help_soy"]:
++		check(not AP.path(w, k).is_empty(), "photo for " + k)
++	# Eating together: a bright table in ordinary times, the candle after the breakdown.
++	w.s.society = "normal"
++	check(AP.path(w, "eat").contains("act_eat_together"), "eat together normal: " + AP.path(w, "eat"))
++	check(not AP.path(w, "eat").contains("crisis"), "eat together normal is not the crisis one")
++	w.s.society = "emergency"
++	check(AP.path(w, "eat").contains("act_eat_together_crisis"), "eat together crisis: " + AP.path(w, "eat"))
++	# Until its own picture is made, the bandage borrows the request photo.
++	check(not AP.path(w, "request_bandage").is_empty(), "bandage photo")
++	# A shop or a base with no picture of its own yet falls back to the usual one.
++	w.set_meta("player_place", "金物店")
++	check(AP.path(w, "shop").contains("act_shop"), "shop at the hardware store: " + AP.path(w, "shop"))
++	w.set_meta("player_place", "居間")
++	check(AP.path(w, "sleep").contains("act_sleep"), "sleep at home: " + AP.path(w, "sleep"))
++	print("action photo match: %d failures" % failures)
++	quit(1 if failures > 0 else 0)
+diff --git a/tests/test_action_photos_match149_35.gd.uid b/tests/test_action_photos_match149_35.gd.uid
+new file mode 100644
+index 0000000..f1fb45c
+--- /dev/null
++++ b/tests/test_action_photos_match149_35.gd.uid
+@@ -0,0 +1 @@
++uid://buyy7xlh6q3dl
 diff --git a/tests/test_action_play149_32.gd b/tests/test_action_play149_32.gd
-index 7be9f4a..df0dea0 100644
+index 7be9f4a..e44b9c3 100644
 --- a/tests/test_action_play149_32.gd
 +++ b/tests/test_action_play149_32.gd
 @@ -41,7 +41,8 @@ func play(g, place: String, cmd: String, kind: String) -> void:
@@ -114062,6 +114946,15 @@ index 7be9f4a..df0dea0 100644
  	if verbose or not ok:
  		print("   ", cmd, " → [", g.action_card_kind, "] ", str(g.log_entries.slice(-2)).left(260))
  	check(ok, "%s shows %s" % [cmd, kind])
+@@ -145,7 +146,7 @@ func more_scenes(family: Dictionary) -> void:
+ 	mate.activity = "在宅"
+ 	mate.request = {"kind": "item", "item": "bandage", "day": int(w.s.minute) / 1440}
+ 	w.s.inventory.bandage = 2
+-	await play(g, "居間", "%sに包帯を渡す" % mate.name, "request")
++	await play(g, "居間", "%sに包帯を渡す" % mate.name, "request_bandage")
+ 	mate.request = family
+ 	await play(g, "避難所", "%sの母を探す" % mate.name, "search_family")
+ 	g.queue_free()
 @@ -156,7 +157,7 @@ func run() -> void:
  	w.s.hunger = 70.0
  	await play(g, "台所", "食事する", "eat")
@@ -114071,6 +114964,21 @@ index 7be9f4a..df0dea0 100644
  	w.s.cigarettes = 10
  	await play(g, "居間", "タバコを吸う", "smoke")
  	w.s.thirst = 60.0
+@@ -177,11 +178,11 @@ func run() -> void:
+ 	w.s.rain_water = 5.0
+ 	await play(g, "台所", "水やり", "water_plants")
+ 	await play(g, "寝室", "窓から外を見る", "window")
+-	await play(g, "居間", "ニュースを見る", "news")
++	await play(g, "居間", "ニュースを見る", "news_tv")
+ 	await play(g, "居間", "本を読む", "read")
+-	await play(g, "居間", "映画を観る", "movie")
++	await play(g, "居間", "映画を観る", "movie_tv")
+ 	await play(g, "台所", "浴槽に水をためる", "fill_bath")
+-	await play(g, "台所", "浴槽の水を飲み水にする", "purify")
++	await play(g, "台所", "浴槽の水を飲み水にする", "boil")
+ 	w.s.inventory.seeds = 5
+ 	w.s.inventory.planter = 2
+ 	await play(g, "台所", "種を植える", "plant")
 @@ -192,7 +193,7 @@ func run() -> void:
  	await play(g, "玄関", "鍵を閉める", "lock")
  	w.s.food = 10.0
